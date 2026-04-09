@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (options) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_FROM,
+            from: `"${process.env.EMAIL_FROM}" <${process.env.SMTP_USER}>`,
             to: options.to,
             subject: options.subject,
             text: options.text,
@@ -32,14 +32,14 @@ const sendEmail = async (options) => {
     }
 };
 
-const sendVerificationEmail = async (to, code, expireTime) => {
+const sendVerificationEmail = async (to, code, expireTime, fullName) => {
     await sendEmail({
         to,
         subject: 'Verify your email - Data Collection System',
         html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #333;">Welcome to Data Collection System!</h2>
-        <p>Hello <strong>${full_name}</strong>,</p>
+        <p>Hello <strong>${fullName}</strong>,</p>
         <p>Thank you for registering. Please verify your email address using the verification code below:</p>
         
         <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 30px 0; border-radius: 8px;">
