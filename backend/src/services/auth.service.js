@@ -47,7 +47,7 @@ class AuthService {
     user.last_verification_code_sent_at = new Date();
     await user.save();
 
-    await sendVerificationEmail(email, otp, otpExpires);
+    await sendVerificationEmail(email, otp, otpExpires, full_name);
 
     return {
       user_id: user.id,
