@@ -24,6 +24,10 @@ export default (sequelize) => {
             type: DataTypes.STRING(255),
             allowNull: true,
         },
+        avatar_public_id: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
         phone_number: {
             type: DataTypes.STRING(20),
             unique: true,

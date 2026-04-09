@@ -7,7 +7,7 @@ export const register = async (req, res, next) => {
     const result = await AuthService.register(req.body);
     res.status(201).json(result);
   } catch (err) {
-    next(err); // AppError hay lỗi khác đều xử lý chung ở middleware
+    next(err);
   }
 };
 
@@ -48,7 +48,6 @@ export const resendVerifyCode = async (req, res, next) => {
   }
 }
 
-// controllers/auth.controller.js
 export const checkAuth = async (req, res, next) => {
   try {
     res.json({
