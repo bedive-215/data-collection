@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+/* =============================================
+   🎨 Tech Store Premium Dark Theme
+   Based on Stitch Design - Apple-inspired
+   ============================================= */
+@theme {
+  /* === Màu chủ đạo (Apple Blue) === */
+  --color-primary:   #2997ff;  /* Primary blue */
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #5856d6;  /* Purple accent */
+  --color-accent:    #2997ff;  /* Apple blue */
+  --color-accent-orange: #ff6b00; /* Orange for highlights */
+
+  /* === Màu nền Dark Theme === */
+  --color-background: #000000;      /* Pure black */
+  --color-surface:    #1d1d1f;      /* Dark surface */
+  --color-surface-2:  #121212;      /* Card surface */
+  --color-on-background: #ffffff;
+  --color-on-surface:   #ffffff;
+
+  /* === Trạng thái === */
+  --color-error:   #ff453a;  /* iOS red */
+  --color-success: #30d158;  /* iOS green */
+  --color-warning: #ff9f0a;  /* iOS orange */
+
+  /* === Gray scale === */
+  --color-gray-50:  #f5f5f7;
+  --color-gray-100: #d2d2d7;
+  --color-gray-200: #aeaeb2;
+  --color-gray-300: #8e8e93;
+  --color-gray-400: #636366;
+  --color-gray-500: #48484a;
+  --color-gray-600: #3a3a3c;
+  --color-gray-700: #2c2c2e;
+  --color-gray-800: #1c1c1e;
+  --color-gray-900: #000000;
+}
+
+/* =============================================
+   🌙 Dark mode utilities
+   ============================================= */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =============================================
+   🔮 Glass Morphism Utilities
+   ============================================= */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10;
+  }
+  .glass-pill {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+  }
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400;
+  }
+  .orange-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-orange-500 to-red-500;
+  }
+  .blue-gloss {
+    @apply bg-gradient-to-b from-blue-400 to-blue-600 shadow-[0_10px_30px_-10px_rgba(41,151,255,0.5)] hover:from-blue-300 hover:to-blue-500 transition-all duration-300;
+  }
+}
+
+/* =============================================
+   ✨ Global Styles
+   ============================================= */
+html {
+  scroll-behavior: smooth;
+  background-color: #000000;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: #000000;
+}
+
+/* Links */
+a {
+  @apply text-gray-300 hover:text-white transition-colors;
+  text-decoration: none;
+}
+
+/* Inputs - Dark Theme */
+input, select, textarea {
+  @apply border border-white/10 rounded-xl px-4 py-3
+         bg-white/5 backdrop-blur-md text-white
+         placeholder:text-gray-500
+         focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent;
+}
+
+/* Primary Button */
+.btn-primary {
+  @apply bg-[var(--color-primary)] text-white px-6 py-3 rounded-full font-semibold
+         hover:bg-blue-400 transition-all duration-300
+         shadow-[0_10px_30px_-10px_rgba(41,151,255,0.5)];
+}
+
+/* Ghost Button */
+.btn-ghost {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full font-semibold
+         hover:bg-white/20 transition-all duration-300;
+}
+
+/* Card */
+.card {
+  @apply bg-[var(--color-surface-2)] border border-white/5 rounded-2xl p-4
+         hover:border-white/20 transition-all duration-300;
+}
+
+/* Badge */
+.badge {
+  @apply bg-[var(--color-primary)] text-white px-2 py-1 rounded-full text-xs font-bold;
+}
+.badge-success {
+  @apply bg-[var(--color-success)] text-black px-3 py-1 rounded-full text-xs font-bold;
+}
+.badge-warning {
+  @apply bg-[var(--color-warning)] text-black px-3 py-1 rounded-full text-xs font-bold;
+}
+.badge-error {
+  @apply bg-[var(--color-error)] text-white px-3 py-1 rounded-full text-xs font-bold;
+}
+
+/* Alerts */
+.alert-error {
+  @apply bg-[var(--color-error)]/20 border border-[var(--color-error)]/50 text-[var(--color-error)] px-4 py-3 rounded-xl;
+}
+.alert-success {
+  @apply bg-[var(--color-success)]/20 border border-[var(--color-success)]/50 text-[var(--color-success)] px-4 py-3 rounded-xl;
+}
+.alert-warning {
+  @apply bg-[var(--color-warning)]/20 border border-[var(--color-warning)]/50 text-[var(--color-warning)] px-4 py-3 rounded-xl;
+}
+
+/* Custom scrollbar - Dark */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 6s ease-in-out 3s infinite;
+}
+
+/* =============================================
+   🏢 Admin Light Theme Override
+   Use .admin-light class on admin page containers
+   ============================================= */
+.admin-light {
+  background-color: #F3F4F6 !important;
+  color: #111827 !important;
+}
+
+.admin-light h1,
+.admin-light h2,
+.admin-light h3,
+.admin-light h4,
+.admin-light p,
+.admin-light span,
+.admin-light label,
+.admin-light div,
+.admin-light td,
+.admin-light th {
+  color: #111827;
+}
+
+.admin-light input,
+.admin-light select,
+.admin-light textarea {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border-color: #D1D5DB !important;
+}
+
+.admin-light input::placeholder {
+  color: #9CA3AF !important;
+}
+
+.admin-light a {
+  color: #2563EB;
+}
+
+.admin-light a:hover {
+  color: #1D4ED8;
+}
+
