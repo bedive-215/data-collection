@@ -10,6 +10,11 @@ export default (sequelize) => {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: {
+        model: "users",
+        key: "id"
+      },
+      onDelete: "CASCADE"
     },
     provider_uid: {
       type: DataTypes.STRING(255),
