@@ -3,7 +3,6 @@ import 'dotenv/config';
 
 export const register = async (req, res, next) => {
   try {
-    console.log(req.body);
     const result = await AuthService.register(req.body);
     res.status(201).json(result);
   } catch (err) {

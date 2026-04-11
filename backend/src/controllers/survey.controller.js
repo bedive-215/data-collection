@@ -13,7 +13,7 @@ export const createSurvey = async (req, res, next) => {
 
 export const getSurveyById = async (req, res, next) => {
     try {
-        const survey_id = req.params;
+        const { survey_id } = req.params;
         const result = await SurveyService.getSurveyById(survey_id);
         res.json(result);
     } catch (error) {
@@ -33,11 +33,20 @@ export const getSurveyByUserId = async (req, res, next) => {
 
 export const deleteSurveyById = async (req, res, next) => {
     try{
-        const survey_id = req.params;
+        const {survey_id} = req.params;
         const id = req.user.id;
         const result = await SurveyService.deleteSurvey(survey_id, id)
         res.json(result);
     } catch (err) {
         next(err);
+    }
+}
+
+export const getAllSurvey = async (req, res, next) => {
+    try {
+        const result = await SurveyService.getAllSurvey();
+        res.json(result);
+    } catch (error) {
+        next(error);
     }
 }

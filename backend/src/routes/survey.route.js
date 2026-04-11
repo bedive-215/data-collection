@@ -1,4 +1,4 @@
-import { createSurvey, getSurveyById, getSurveyByUserId, deleteSurveyById } from "../controllers/survey.controller.js";
+import { createSurvey, getSurveyById, getSurveyByUserId, deleteSurveyById, getAllSurvey } from "../controllers/survey.controller.js";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -13,5 +13,6 @@ route.post('/', authMiddleware.checkRole('admin'), validate(createSurveyRequest)
 route.get('/:survey_id', validate(surveyIdParams), getSurveyById);
 route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), getSurveyByUserId);
 route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), deleteSurveyById);
+route.get('/', getAllSurvey);
 
 export default route;

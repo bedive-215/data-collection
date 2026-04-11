@@ -29,7 +29,7 @@ class SurveyService {
         }
     }
 
-     async getSurveyById(survey_id) {
+    async getSurveyById(survey_id) {
         if (!survey_id) {
             throw new AppError("Survey id is required!", 400);
         }
@@ -39,7 +39,6 @@ class SurveyService {
         if (!survey) {
             throw new AppError("Survey not found!", 404);
         }
-
         return {
             message: "Get survey successfully!",
             survey
@@ -76,7 +75,6 @@ class SurveyService {
             throw new AppError("Survey not found!", 404);
         }
 
-        // check ownership
         if (survey.created_by !== user_id) {
             throw new AppError("Forbidden", 403);
         }
@@ -85,6 +83,18 @@ class SurveyService {
 
         return {
             message: "Deleted survey successfully"
+        };
+    }
+
+    async getAllSurvey() {
+        const surveys = await this.Survey.findAll({
+            order: [["created_at", "DESC"]]
+        });
+
+        return {
+            message: "Get surveys successfully!",
+            count: surveys.length,
+            surveys
         };
     }
 }
