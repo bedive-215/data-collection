@@ -103,6 +103,66 @@ class ResponseService {
             throw err;
         }
     }
+
+    async getSurveySubmitByUserId(user_id, survey_id) {
+        const responses = await this.Response.findAll({
+            where: {
+                user_id,
+                survey_id
+            },
+            include: [
+                {
+                    model: this.Answer,
+                    as: "answers",
+                    include: [
+                        {
+                            model: this.Question,
+                            as: "question",
+                            attributes: ["id", "content", "type", "order_index"]
+                        },
+                        {
+                            model: this.QuestionOption,
+                            as: "option",
+                            attributes: ["id", "content"]
+                        }
+                    ]
+                }
+            ],
+            order: [
+                [{ model: this.Answer, as: "answers" }, { model: this.Question, as: "question" }, "order_index", "ASC"]
+            ]
+        });
+
+        const result = responses.map(r => ({
+            response_id: r.id,
+            submitted_at: r.created_at,
+            answers: r.answers.map(a => ({
+                question_id: a.question.id,
+                question: a.question.content,
+                type: a.question.type,
+                answer: a.answer_text || a.option?.content
+            }))
+        }));
+
+        return {
+            message: "Get user answers successfully",
+            count: result.length,
+            data: result
+        };
+    }
+
+    async getResponseByUserId(user_id) {
+        const responses = await this.Response.findAll({
+            where: {user_id},
+            order: [["created_at", "ASC"]]
+        });
+
+        return {
+            message: "Get user responses successfully",
+            count: responses.length,
+            data: responses
+        }
+    }
 }
 
 export default new ResponseService();
