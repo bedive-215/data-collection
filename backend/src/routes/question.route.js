@@ -19,7 +19,6 @@ router.post(
 // Get all questions of survey
 router.get(
     "/:survey_id",
-    authMiddleware.checkRole('admin'),
     validate(surveyIdParams),
     QuestionController.getBySurvey
 );
