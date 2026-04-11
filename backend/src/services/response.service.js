@@ -7,6 +7,7 @@ class ResponseService {
         this.Answer = models.Answer;
         this.Question = models.Question;
         this.QuestionOption = models.QuestionOption;
+        this.Survey = models.Survey;
         this.sequelize = models.sequelize;
     }
 
@@ -153,7 +154,7 @@ class ResponseService {
 
     async getResponseByUserId(user_id) {
         const responses = await this.Response.findAll({
-            where: {user_id},
+            where: { user_id },
             order: [["created_at", "ASC"]]
         });
 
@@ -162,6 +163,40 @@ class ResponseService {
             count: responses.length,
             data: responses
         }
+    }
+
+    async getAllAnswerByResponseId(response_id) {
+        const response = await this.Response.findOne({
+            where: { id: response_id },
+            include: [
+                {
+                    model: this.Survey,
+                    as: "survey",
+                    attributes: ["id", "title", "description"]
+                },
+                {
+                    model: this.Answer,
+                    as: "answers",
+                    include: [
+                        {
+                            model: this.Question,
+                            as: "question",
+                            attributes: ["id", "content", "type", "order_index"]
+                        },
+                        {
+                            model: this.QuestionOption,
+                            as: "option",
+                            attributes: ["id", "content"],
+                            required: false
+                        }
+                    ]
+                }
+            ]
+        });
+
+        if (!response) throw new AppError("Response not found", 404);
+
+        return response;
     }
 }
 
