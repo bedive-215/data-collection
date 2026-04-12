@@ -49,7 +49,7 @@ const Icons = {
 const navItems = [
   { label: "Dashboard", icon: "dashboard", path: ROUTERS.ADMIN.DASHBOARD },
   { label: "Users",     icon: "group",     path: ROUTERS.ADMIN.USERS },
-  { label: "Questions", icon: "quiz",       path: ROUTERS.ADMIN.QUESTIONS },
+  { label: "Questions", icon: "quiz",       path: ROUTERS.ADMIN.SURVEYS  },
   { label: "Settings",  icon: "settings",   path: ROUTERS.ADMIN.SETTINGS },
 ];
 
