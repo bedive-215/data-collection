@@ -64,6 +64,16 @@ class ResponseController {
             next(error);
         }
     }
+
+    async getAllAnswerByResponseId (req, res, next) {
+        try {
+            const {response_id} = req.params;
+            const result = await ResponseService.getAllAnswerByResponseId(response_id);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 export default new ResponseController();

@@ -57,7 +57,8 @@ const models = {
     Question,
     QuestionOption,
     Response,
-    Answer
+    Answer,
+    sequelize
 };
 
 export default models;
