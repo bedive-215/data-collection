@@ -50,6 +50,7 @@ QuestionOption.hasMany(Answer, { foreignKey: "option_id", as: "answers" });
 Answer.belongsTo(QuestionOption, { foreignKey: "option_id", as: "option" });
 
 const models = {
+    sequelize,
     User,
     UserOAuth,
     Survey,
