@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, useCallback } from "react";
 import { userService } from "@/services/userService";
 import { toast } from "react-toastify";
+import { useEffect } from "react";
 
 // Tạo context
 export const UserContext = createContext();
@@ -32,6 +33,7 @@ const UserProvider = ({ children }) => {
       null
     );
   };
+
 
   // Lấy thông tin cá nhân (GET /me)
   const fetchMyInfo = useCallback(async () => {
@@ -80,6 +82,19 @@ const UserProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+  useEffect(() => {
+  const token =
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("token");
+
+  console.log("TOKEN:", token);
+
+  if (token) {
+    fetchMyInfo();
+  } else {
+    console.log("NO TOKEN → SKIP FETCH");
+  }
+}, [fetchMyInfo]);
 
   // Cập nhật thông tin cá nhân + avatar (PATCH /me)
   const updateMyInfo = async (payload) => {
