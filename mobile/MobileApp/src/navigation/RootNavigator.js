@@ -10,6 +10,9 @@ import ForgotPassword from "../screens/auth/ForgotPassword";
 // Bottom Tab Navigator
 import BottomTabNavigator from "./BottomTabNavigator";
 
+// ✅ IMPORT THÊM
+import UserSurveyScreen from "../screens/home/Surveytakepage";
+
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -26,7 +29,13 @@ export default function RootNavigator() {
       {/* Main App */}
       <Stack.Screen name="MainApp" component={BottomTabNavigator} />
 
-      {/* Legacy (giữ nếu code cũ còn dùng) */}
+      {/* ✅ THÊM SCREEN Ở ĐÂY */}
+      <Stack.Screen 
+        name="UserSurvey" 
+        component={UserSurveyScreen}
+      />
+
+      {/* Legacy */}
       <Stack.Screen 
         name="UserHome" 
         component={BottomTabNavigator}

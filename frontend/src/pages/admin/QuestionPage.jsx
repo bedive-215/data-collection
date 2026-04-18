@@ -20,23 +20,23 @@ const TYPE_CONFIG = {
   TEXT: {
     label: "Văn bản",
     Icon: MessageSquare,
-    bg: "#eef2ff",
-    color: "#4f6ef7",
-    border: "#c7d2fe",
+    bg: "#1e2540",
+    color: "#6c7ef7",
+    border: "#2e3d70",
   },
   MULTIPLE_CHOICE: {
     label: "Nhiều lựa chọn",
     Icon: CheckSquare,
-    bg: "#f0fdf4",
-    color: "#16a34a",
-    border: "#bbf7d0",
+    bg: "#0d2318",
+    color: "#22c55e",
+    border: "#14532d",
   },
   SINGLE_CHOICE: {
     label: "Một lựa chọn",
     Icon: CircleDot,
-    bg: "#fff7ed",
-    color: "#ea580c",
-    border: "#fed7aa",
+    bg: "#1f1508",
+    color: "#f97316",
+    border: "#7c2d12",
   },
 };
 
@@ -74,10 +74,10 @@ function OptionTag({ label }) {
       style={{
         padding: "2px 10px",
         borderRadius: 20,
-        background: "#f3f4f6",
-        border: "1px solid #e5e7eb",
+        background: "#1a1f30",
+        border: "1px solid #2a3050",
         fontSize: 12,
-        color: "#374151",
+        color: "#9ca3af",
         fontWeight: 500,
       }}
     >
@@ -143,7 +143,7 @@ export default function QuestionPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f4f5f7",
+        background: "#0f1117",
         padding: "2.5rem 2rem",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
@@ -164,7 +164,7 @@ export default function QuestionPage() {
               style={{
                 fontSize: 22,
                 fontWeight: 700,
-                color: "#111827",
+                color: "#f9fafb",
                 margin: "0 0 4px",
               }}
             >
@@ -174,12 +174,12 @@ export default function QuestionPage() {
               <span
                 style={{
                   fontSize: 12,
-                  color: "#9ca3af",
+                  color: "#6b7280",
                   fontFamily: "monospace",
-                  background: "#f3f4f6",
+                  background: "#161b2e",
                   padding: "2px 8px",
                   borderRadius: 6,
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid #1f2740",
                 }}
               >
                 {surveyId}
@@ -197,9 +197,9 @@ export default function QuestionPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 18px",
-              background: showForm ? "#f3f4f6" : "#4f6ef7",
-              color: showForm ? "#374151" : "#fff",
-              border: "none",
+              background: showForm ? "#1a1f30" : "#4f6ef7",
+              color: showForm ? "#9ca3af" : "#fff",
+              border: showForm ? "1px solid #2a3050" : "none",
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 600,
@@ -216,19 +216,19 @@ export default function QuestionPage() {
         {showForm && (
           <div
             style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
+              background: "#161b2e",
+              border: "1px solid #1f2740",
               borderRadius: 16,
               padding: "1.75rem",
               marginBottom: "1.5rem",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
             }}
           >
             <h2
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#111827",
+                color: "#f9fafb",
                 margin: "0 0 16px",
               }}
             >
@@ -246,13 +246,13 @@ export default function QuestionPage() {
                   onChange={(e) => { setContent(e.target.value); setFormError(""); }}
                   style={{
                     padding: "10px 14px",
-                    border: `1.5px solid ${formError && !content.trim() ? "#ef4444" : "#e5e7eb"}`,
+                    border: `1.5px solid ${formError && !content.trim() ? "#ef4444" : "#2a3050"}`,
                     borderRadius: 10,
                     fontSize: 14,
-                    color: "#111827",
+                    color: "#f9fafb",
                     outline: "none",
                     resize: "vertical",
-                    background: "#fafafa",
+                    background: "#0f1117",
                     fontFamily: "inherit",
                   }}
                 />
@@ -265,11 +265,11 @@ export default function QuestionPage() {
                     style={{
                       width: "100%",
                       padding: "10px 36px 10px 14px",
-                      border: "1.5px solid #e5e7eb",
+                      border: "1.5px solid #2a3050",
                       borderRadius: 10,
                       fontSize: 14,
-                      color: "#111827",
-                      background: "#fafafa",
+                      color: "#f9fafb",
+                      background: "#0f1117",
                       outline: "none",
                       appearance: "none",
                       cursor: "pointer",
@@ -282,7 +282,7 @@ export default function QuestionPage() {
                   </select>
                   <ChevronDown
                     size={16}
-                    color="#9ca3af"
+                    color="#6b7280"
                     style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
                   />
                 </div>
@@ -297,11 +297,11 @@ export default function QuestionPage() {
                       style={{
                         width: "100%",
                         padding: "10px 14px",
-                        border: `1.5px solid ${formError && !options.trim() ? "#ef4444" : "#e5e7eb"}`,
+                        border: `1.5px solid ${formError && !options.trim() ? "#ef4444" : "#2a3050"}`,
                         borderRadius: 10,
                         fontSize: 14,
-                        color: "#111827",
-                        background: "#fafafa",
+                        color: "#f9fafb",
+                        background: "#0f1117",
                         outline: "none",
                         boxSizing: "border-box",
                         fontFamily: "inherit",
@@ -342,11 +342,11 @@ export default function QuestionPage() {
                     style={{
                       padding: "9px 18px",
                       background: "transparent",
-                      border: "1.5px solid #e5e7eb",
+                      border: "1.5px solid #2a3050",
                       borderRadius: 10,
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#6b7280",
+                      color: "#9ca3af",
                       cursor: "pointer",
                       fontFamily: "inherit",
                     }}
@@ -361,7 +361,7 @@ export default function QuestionPage() {
                       alignItems: "center",
                       gap: 8,
                       padding: "9px 20px",
-                      background: loading ? "#93a8fb" : "#4f6ef7",
+                      background: loading ? "#3a4f9e" : "#4f6ef7",
                       color: "#fff",
                       border: "none",
                       borderRadius: 10,
@@ -392,18 +392,18 @@ export default function QuestionPage() {
               alignItems: "center",
               justifyContent: "center",
               padding: "5rem 0",
-              color: "#9ca3af",
+              color: "#4b5563",
               gap: 12,
             }}
           >
             <Inbox size={48} strokeWidth={1.2} />
-            <p style={{ fontSize: 15, margin: 0 }}>Chưa có câu hỏi nào.</p>
+            <p style={{ fontSize: 15, margin: 0, color: "#6b7280" }}>Chưa có câu hỏi nào.</p>
             <button
               onClick={() => setShowForm(true)}
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#4f6ef7",
+                color: "#6c7ef7",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -418,14 +418,14 @@ export default function QuestionPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {questions.map((q, index) => {
               const cfg = TYPE_CONFIG[q.type] ?? TYPE_CONFIG.TEXT;
-              const { Icon, bg, color } = cfg;
+              const { bg, color } = cfg;
 
               return (
                 <div
                   key={q.id}
                   style={{
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
+                    background: "#161b2e",
+                    border: "1px solid #1f2740",
                     borderRadius: 14,
                     padding: "1rem 1.25rem",
                     display: "flex",
@@ -434,12 +434,14 @@ export default function QuestionPage() {
                     transition: "box-shadow .15s, transform .15s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = "0 2px 12px rgba(79,110,247,0.08)";
+                    e.currentTarget.style.boxShadow = "0 2px 16px rgba(79,110,247,0.12)";
                     e.currentTarget.style.transform = "translateX(2px)";
+                    e.currentTarget.style.borderColor = "#2e3d70";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.boxShadow = "none";
                     e.currentTarget.style.transform = "translateX(0)";
+                    e.currentTarget.style.borderColor = "#1f2740";
                   }}
                 >
                   {/* Number badge */}
@@ -467,7 +469,7 @@ export default function QuestionPage() {
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "#111827",
+                        color: "#f9fafb",
                         margin: "0 0 6px",
                         lineHeight: 1.5,
                       }}
@@ -481,12 +483,12 @@ export default function QuestionPage() {
                       {/* Options preview */}
                       {Array.isArray(q.options) && q.options.length > 0 && (
                         <>
-                          <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#d1d5db" }} />
+                          <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#4b5563" }} />
                           {q.options.slice(0, 3).map((o, i) => (
                             <OptionTag key={i} label={typeof o === "object" ? o.content ?? o.label ?? JSON.stringify(o) : o} />
                           ))}
                           {q.options.length > 3 && (
-                            <span style={{ fontSize: 11, color: "#9ca3af" }}>
+                            <span style={{ fontSize: 11, color: "#6b7280" }}>
                               +{q.options.length - 3} nữa
                             </span>
                           )}
@@ -506,15 +508,15 @@ export default function QuestionPage() {
                       width: 32,
                       height: 32,
                       borderRadius: 8,
-                      border: "1px solid #fee2e2",
-                      background: "#fff",
+                      border: "1px solid #3a1a1a",
+                      background: "transparent",
                       cursor: deletingId === q.id ? "not-allowed" : "pointer",
                       color: "#ef4444",
                       transition: "background .12s",
                       flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#1f1010")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     {deletingId === q.id
                       ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />

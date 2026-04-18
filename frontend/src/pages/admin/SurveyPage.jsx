@@ -91,7 +91,7 @@ export default function SurveyPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f4f5f7",
+        background: "#0f1117",
         padding: "2.5rem 2rem",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
@@ -113,20 +113,20 @@ export default function SurveyPage() {
                 width: 44,
                 height: 44,
                 borderRadius: 12,
-                background: "#eef2ff",
+                background: "#1e2233",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ClipboardList size={22} color="#4f6ef7" />
+              <ClipboardList size={22} color="#6c7ef7" />
             </div>
             <div>
               <h1
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  color: "#111827",
+                  color: "#f9fafb",
                   margin: 0,
                   lineHeight: 1.2,
                 }}
@@ -146,9 +146,9 @@ export default function SurveyPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 18px",
-              background: showForm ? "#f3f4f6" : "#4f6ef7",
-              color: showForm ? "#374151" : "#fff",
-              border: "none",
+              background: showForm ? "#1a1f30" : "#4f6ef7",
+              color: showForm ? "#9ca3af" : "#fff",
+              border: showForm ? "1px solid #2a3050" : "none",
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 600,
@@ -165,19 +165,19 @@ export default function SurveyPage() {
         {showForm && (
           <div
             style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
+              background: "#161b2e",
+              border: "1px solid #1f2740",
               borderRadius: 16,
               padding: "1.75rem",
               marginBottom: "1.5rem",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
             }}
           >
             <h2
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#111827",
+                color: "#f9fafb",
                 marginBottom: 16,
                 marginTop: 0,
               }}
@@ -193,13 +193,13 @@ export default function SurveyPage() {
                   onChange={(e) => { setTitle(e.target.value); setFormError(""); }}
                   style={{
                     padding: "10px 14px",
-                    border: formError ? "1.5px solid #ef4444" : "1.5px solid #e5e7eb",
+                    border: formError ? "1.5px solid #ef4444" : "1.5px solid #2a3050",
                     borderRadius: 10,
                     fontSize: 14,
-                    color: "#111827",
+                    color: "#f9fafb",
                     outline: "none",
                     transition: "border-color .15s",
-                    background: "#fafafa",
+                    background: "#0f1117",
                   }}
                 />
 
@@ -210,13 +210,13 @@ export default function SurveyPage() {
                   rows={3}
                   style={{
                     padding: "10px 14px",
-                    border: "1.5px solid #e5e7eb",
+                    border: "1.5px solid #2a3050",
                     borderRadius: 10,
                     fontSize: 14,
-                    color: "#111827",
+                    color: "#f9fafb",
                     outline: "none",
                     resize: "vertical",
-                    background: "#fafafa",
+                    background: "#0f1117",
                     fontFamily: "inherit",
                   }}
                 />
@@ -243,11 +243,11 @@ export default function SurveyPage() {
                     style={{
                       padding: "9px 18px",
                       background: "transparent",
-                      border: "1.5px solid #e5e7eb",
+                      border: "1.5px solid #2a3050",
                       borderRadius: 10,
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#6b7280",
+                      color: "#9ca3af",
                       cursor: "pointer",
                     }}
                   >
@@ -261,7 +261,7 @@ export default function SurveyPage() {
                       alignItems: "center",
                       gap: 8,
                       padding: "9px 20px",
-                      background: loading ? "#93a8fb" : "#4f6ef7",
+                      background: loading ? "#3a4f9e" : "#4f6ef7",
                       color: "#fff",
                       border: "none",
                       borderRadius: 10,
@@ -292,12 +292,12 @@ export default function SurveyPage() {
               alignItems: "center",
               gap: 10,
               padding: "14px 18px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: "#1f1010",
+              border: "1px solid #3a1a1a",
               borderRadius: 12,
               marginBottom: "1.5rem",
               fontSize: 14,
-              color: "#991b1b",
+              color: "#fca5a5",
             }}
           >
             <AlertCircle size={16} color="#ef4444" />
@@ -308,7 +308,7 @@ export default function SurveyPage() {
                 marginLeft: "auto",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#4f6ef7",
+                color: "#6c7ef7",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -328,19 +328,19 @@ export default function SurveyPage() {
               alignItems: "center",
               justifyContent: "center",
               padding: "5rem 0",
-              color: "#9ca3af",
+              color: "#4b5563",
               gap: 12,
             }}
           >
             <Inbox size={48} strokeWidth={1.2} />
-            <p style={{ fontSize: 15, margin: 0 }}>Chưa có khảo sát nào.</p>
+            <p style={{ fontSize: 15, margin: 0, color: "#6b7280" }}>Chưa có khảo sát nào.</p>
             <button
               onClick={() => setShowForm(true)}
               style={{
                 marginTop: 4,
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#4f6ef7",
+                color: "#6c7ef7",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -363,8 +363,8 @@ export default function SurveyPage() {
                 key={s.id}
                 onClick={() => openSurvey(s.id)}
                 style={{
-                  background: "#fff",
-                  border: "1px solid #e5e7eb",
+                  background: "#161b2e",
+                  border: "1px solid #1f2740",
                   borderRadius: 16,
                   padding: "1.25rem 1.25rem 1rem",
                   cursor: "pointer",
@@ -375,12 +375,14 @@ export default function SurveyPage() {
                   position: "relative",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(79,110,247,0.10)";
+                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(79,110,247,0.15)";
                   e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.borderColor = "#2e3d70";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.boxShadow = "none";
                   e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = "#1f2740";
                 }}
               >
                 {/* Card top */}
@@ -390,14 +392,14 @@ export default function SurveyPage() {
                       width: 38,
                       height: 38,
                       borderRadius: 10,
-                      background: "#eef2ff",
+                      background: "#1e2540",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
                     }}
                   >
-                    <FileText size={18} color="#4f6ef7" />
+                    <FileText size={18} color="#6c7ef7" />
                   </div>
 
                   {/* Delete button */}
@@ -414,15 +416,15 @@ export default function SurveyPage() {
                       width: 32,
                       height: 32,
                       borderRadius: 8,
-                      border: "1px solid #fee2e2",
-                      background: "#fff",
+                      border: "1px solid #3a1a1a",
+                      background: "transparent",
                       cursor: deletingId === s.id ? "not-allowed" : "pointer",
                       color: "#ef4444",
                       transition: "background .12s",
                       flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#1f1010")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     {deletingId === s.id ? (
                       <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
@@ -438,7 +440,7 @@ export default function SurveyPage() {
                     style={{
                       fontSize: 15,
                       fontWeight: 700,
-                      color: "#111827",
+                      color: "#f9fafb",
                       margin: "0 0 6px",
                       lineHeight: 1.4,
                       display: "-webkit-box",
@@ -472,15 +474,15 @@ export default function SurveyPage() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     paddingTop: 10,
-                    borderTop: "1px solid #f3f4f6",
+                    borderTop: "1px solid #1f2740",
                   }}
                 >
-                  <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: "monospace" }}>
+                  <span style={{ fontSize: 11, color: "#4b5563", fontFamily: "monospace" }}>
                     #{s.id.slice(0, 8)}
                   </span>
 
                   {s.createdAt && (
-                    <span style={{ fontSize: 11, color: "#9ca3af" }}>
+                    <span style={{ fontSize: 11, color: "#4b5563" }}>
                       {formatDate(s.createdAt)}
                     </span>
                   )}
@@ -492,7 +494,7 @@ export default function SurveyPage() {
                       gap: 4,
                       fontSize: 12,
                       fontWeight: 600,
-                      color: "#4f6ef7",
+                      color: "#6c7ef7",
                     }}
                   >
                     Xem chi tiết

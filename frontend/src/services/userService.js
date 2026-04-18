@@ -7,26 +7,22 @@ export const userService = {
 
   // PATCH /me - Cập nhật thông tin user hiện tại (có upload avatar)
   updateUserInfo: (payload) => {
-    const formData = new FormData();
+  // ❗ Loại bỏ avatar ra khỏi payload
+  const { avatar, ...rest } = payload;
 
-    // Nếu có avatar file
-    if (payload.avatar) {
-      formData.append("avatar", payload.avatar);
-    }
+  return apiClient.patch("/api/v1/users/me", rest); // 👈 gửi JSON
+},
+// PATCH /me/avatar - Upload avatar riêng
+updateAvatar: (file) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
 
-    // Append các field khác
-    Object.keys(payload).forEach((key) => {
-      if (key !== "avatar" && payload[key] !== undefined) {
-        formData.append(key, payload[key]);
-      }
-    });
-
-    return apiClient.patch("/api/v1/users/me", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  },
+  return apiClient.patch("/api/v1/users/me/avatar", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+},
 
   // GET /:id - Lấy thông tin user theo ID
   getUserById: (id) => apiClient.get(`/api/v1/users/${id}`),

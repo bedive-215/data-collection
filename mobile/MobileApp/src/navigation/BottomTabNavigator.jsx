@@ -13,9 +13,9 @@ import {
 
 // Screens
 import HomeScreen from '../screens/home/HomeScreen';
-const OrdersScreen = () => <View><Text>Orders</Text></View>;
+import OrdersScreen from '../screens/home/Surveyspage';
 const WarrantyScreen = () => <View><Text>Warranty</Text></View>;
-const ProfileScreen = () => <View><Text>Profile</Text></View>;
+import ProfileScreen from '../screens/home/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -174,7 +174,7 @@ export default function BottomTabNavigator() {
         name="OrdersTab"
         component={OrdersScreen}
         options={{
-          tabBarLabel: 'Đơn hàng',
+          tabBarLabel: 'Khảo sát',
           tabBarButton: (props) => <CustomTabButton {...props} />,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
