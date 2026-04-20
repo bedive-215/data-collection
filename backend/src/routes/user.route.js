@@ -1,4 +1,4 @@
-import { getUserById, getListOfUser, getUserInfo, updateUserProfile, updateUserAvatar, deleteUser } from "../controllers/user.controller.js";
+import UserController from "../controllers/user.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
 
@@ -10,11 +10,11 @@ import { Router } from "express";
 
 const route = Router();
 
-route.get('/me', getUserInfo);
-route.patch('/me', validate(updateUserProfileRequest), updateUserProfile);
-route.patch('/me/avatar', upload.single('avatar'), updateUserAvatar);
-route.get('/:id', validate(userIdParams), getUserById);
-route.get('/', authMiddleware.checkRole("admin"), getListOfUser);
-route.delete('/:id', validate(userIdParams), authMiddleware.checkRole("admin"), deleteUser);
+route.get('/me', UserController.getUserInfo);
+route.patch('/me', validate(updateUserProfileRequest), UserController.updateUserProfile);
+route.patch('/me/avatar', upload.single('avatar'), UserController.updateUserAvatar);
+route.get('/:id', validate(userIdParams), UserController.getUserById);
+route.get('/', authMiddleware.checkRole("admin"), UserController.getListOfUser);
+route.delete('/:id', validate(userIdParams), authMiddleware.checkRole("admin"), UserController.deleteUser);
 
 export default route;
