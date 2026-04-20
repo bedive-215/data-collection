@@ -4,6 +4,7 @@ import routerUser from './user.route.js';
 import routerSurvey from './survey.route.js';
 import routerQuestion from './question.route.js';
 import routerResponse from './response.route.js';
+import routerOption from './option.route.js';
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -22,5 +23,8 @@ router.use('/questions', routerQuestion);
 
 router.use('/responses', authMiddleware.auth.bind(authMiddleware));
 router.use('/responses', routerResponse);
+
+router.use('/options', authMiddleware.auth.bind(authMiddleware));
+router.use('/options', routerOption);
 
 export default router;
