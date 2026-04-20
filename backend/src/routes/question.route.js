@@ -13,14 +13,14 @@ router.post(
     "/:survey_id",
     authMiddleware.checkRole('admin'),
     validate(surveyIdParams),
-    QuestionController.create
+    QuestionController.createQuestions
 );
 
 // Get all questions of survey
 router.get(
     "/:survey_id",
     validate(surveyIdParams),
-    QuestionController.getBySurvey
+    QuestionController.getQuestionsBySurvey
 );
 
 // Delete question
@@ -28,7 +28,31 @@ router.delete(
     "/:question_id",
     authMiddleware.checkRole('admin'),
     validate(questionIdParams),
-    QuestionController.delete
+    QuestionController.deleteQuestion
+);
+
+// Update question
+router.patch(
+    "/:question_id",
+    authMiddleware.checkRole('admin'),
+    validate(questionIdParams),
+    QuestionController.updateQuestion
+);
+
+// Reorder questions
+router.patch(
+    "/:survey_id/reorder",
+    authMiddleware.checkRole('admin'),
+    validate(surveyIdParams),
+    QuestionController.reorderQuestions
+);
+
+// Bulk update questions
+router.patch(
+    "/:survey_id/bulk",
+    authMiddleware.checkRole('admin'),
+    validate(surveyIdParams),
+    QuestionController.bulkUpdateQuestions
 );
 
 export default router;
