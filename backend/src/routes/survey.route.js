@@ -1,4 +1,4 @@
-import { createSurvey, getSurveyById, getSurveyByUserId, deleteSurveyById, getAllSurvey } from "../controllers/survey.controller.js";
+import SurveyController from "../controllers/survey.controller.js";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -9,10 +9,11 @@ import { Router } from "express";
 
 const route = Router();
 
-route.post('/', authMiddleware.checkRole('admin'), validate(createSurveyRequest), createSurvey);
-route.get('/:survey_id', validate(surveyIdParams), getSurveyById);
-route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), getSurveyByUserId);
-route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), deleteSurveyById);
-route.get('/', getAllSurvey);
+route.post('/', authMiddleware.checkRole('admin'), validate(createSurveyRequest), SurveyController.createSurvey);
+route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyById);
+route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), SurveyController.getSurveyByUserId);
+route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.deleteSurveyById);
+route.get('/', SurveyController.getAllSurvey);
+route.put('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.updateSurvey);
 
 export default route;

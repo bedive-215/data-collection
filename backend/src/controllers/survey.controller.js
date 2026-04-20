@@ -1,52 +1,117 @@
+// controllers/survey.controller.js
 import SurveyService from "../services/survey.service.js";
 
-export const createSurvey = async (req, res, next) => {
-    try{
-        const id = req.user.id;
-        const { title, description } = req.body;
-        const result = await SurveyService.createSurvey(id, title, description);
-        res.json(result);
-    } catch (err) {
-        next(err);
+class SurveyController {
+
+    // Create survey
+    async createSurvey(req, res, next) {
+        try {
+            const userId = req.user.id;
+            const { title, description } = req.body;
+
+            const result = await SurveyService.createSurvey(
+                userId,
+                title,
+                description
+            );
+
+            return res.status(201).json({
+                message: result.message,
+                data: result.survey
+            });
+        } catch (err) {
+            next(err);
+        }
     }
+
+    // Get survey by id
+    async getSurveyById(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+
+            const result = await SurveyService.getSurveyById(survey_id);
+
+            return res.status(200).json({
+                message: result.message,
+                data: result.survey
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // Get surveys by user
+    async getSurveyByUserId(req, res, next) {
+        try {
+            const userId = req.user.id;
+
+            const result = await SurveyService.getSurveyByUserId(userId);
+
+            return res.status(200).json({
+                message: result.message,
+                count: result.count,
+                data: result.surveys
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // Delete survey
+    async deleteSurveyById(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const userId = req.user.id;
+
+            const result = await SurveyService.deleteSurvey(
+                survey_id,
+                userId
+            );
+
+            return res.status(200).json({
+                message: result.message
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // Get all surveys (admin)
+    async getAllSurvey(req, res, next) {
+        try {
+            const result = await SurveyService.getAllSurvey();
+
+            return res.status(200).json({
+                message: result.message,
+                count: result.count,
+                data: result.surveys
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // Update survey
+    async updateSurvey(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const userId = req.user.id;
+            const payload = req.body;
+
+            const result = await SurveyService.updateSurvey(
+                survey_id,
+                userId,
+                payload
+            );
+            return res.status(200).json({
+                message: result.message,
+                data: result.survey
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }
 
-export const getSurveyById = async (req, res, next) => {
-    try {
-        const { survey_id } = req.params;
-        const result = await SurveyService.getSurveyById(survey_id);
-        res.json(result);
-    } catch (error) {
-        next(error)
-    }
-}
-
-export const getSurveyByUserId = async (req, res, next) => {
-    try {
-        const id = req.user.id;
-        const result = await SurveyService.getSurveyByUserId(id);
-        res.json(result);
-    } catch (error) {
-        next(error)
-    }
-}
-
-export const deleteSurveyById = async (req, res, next) => {
-    try{
-        const {survey_id} = req.params;
-        const id = req.user.id;
-        const result = await SurveyService.deleteSurvey(survey_id, id)
-        res.json(result);
-    } catch (err) {
-        next(err);
-    }
-}
-
-export const getAllSurvey = async (req, res, next) => {
-    try {
-        const result = await SurveyService.getAllSurvey();
-        res.json(result);
-    } catch (error) {
-        next(error);
-    }
-}
+export default new SurveyController();
