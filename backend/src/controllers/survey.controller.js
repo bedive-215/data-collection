@@ -84,7 +84,9 @@ class SurveyController {
             return res.status(200).json({
                 message: result.message,
                 count: result.count,
-                data: result.surveys
+                surveys: result.surveys,
+                page: result.page,
+                totalPages: result.totalPages
             });
         } catch (err) {
             next(err);
