@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuestion } from "@/providers/QuestionProvider";
 import { useResponse } from "@/providers/ResponseProvider";
+import { useOption } from "@/providers/OptionProvider";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, CircleDot,
   AlignLeft, CheckSquare, Loader2, Send, Home,
@@ -57,7 +58,6 @@ function SuccessScreen({ onGoHome }) {
         textAlign: "center", boxShadow: "0 4px 32px rgba(79,110,247,0.12)",
         animation: "fadeUp .4s ease",
       }}>
-        {/* Icon vòng tròn xanh lá */}
         <div style={{
           width: 80, height: 80, borderRadius: "50%",
           background: "linear-gradient(135deg,#d1fae5,#a7f3d0)",
@@ -68,21 +68,17 @@ function SuccessScreen({ onGoHome }) {
           <CheckCircle2 size={40} color="#16a34a" />
         </div>
 
-        {/* Tiêu đề */}
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 10px" }}>
           Gửi thành công! 🎉
         </h2>
 
-        {/* Mô tả */}
         <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 2rem", lineHeight: 1.7 }}>
           Câu trả lời của bạn đã được ghi nhận.<br />
           Cảm ơn bạn đã dành thời gian hoàn thành khảo sát này.
         </p>
 
-        {/* Divider */}
         <div style={{ height: 1, background: "#f3f4f6", margin: "0 0 1.75rem" }} />
 
-        {/* Nút về trang chủ */}
         <button
           onClick={onGoHome}
           style={{
@@ -117,6 +113,8 @@ function SuccessScreen({ onGoHome }) {
 function QuestionCard({ question, answer, onChange }) {
   const cfg = TYPE_CONFIG[question.type] ?? TYPE_CONFIG.TEXT;
   const { Icon, label, color, bg, border } = cfg;
+
+  // Sắp xếp options từ props (đã được merge từ OptionProvider)
   const sorted = [...(question.options ?? [])].sort((a, b) =>
     (a.content ?? "").localeCompare(b.content ?? "")
   );
@@ -147,46 +145,54 @@ function QuestionCard({ question, answer, onChange }) {
         />
       )}
 
-      {question.type === "SINGLE_CHOICE" && sorted.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {sorted.map((opt) => {
-            const selected = answer === opt.id;
-            return (
-              <button key={opt.id} onClick={() => onChange(question.id, opt.id)}
-                style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#4f6ef7" : "#e5e7eb"}`, background: selected ? "#eef2ff" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
-                onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#a5b4fc"; }}
-                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
-              >
-                <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${selected ? "#4f6ef7" : "#d1d5db"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-                  {selected && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4f6ef7" }} />}
-                </div>
-                <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#1e3a8a" : "#374151" }}>{opt.content}</span>
-                {selected && <CheckCircle2 size={16} color="#4f6ef7" style={{ marginLeft: "auto" }} />}
-              </button>
-            );
-          })}
-        </div>
+      {question.type === "SINGLE_CHOICE" && (
+        sorted.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {sorted.map((opt) => {
+              const selected = answer === opt.id;
+              return (
+                <button key={opt.id} onClick={() => onChange(question.id, opt.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#4f6ef7" : "#e5e7eb"}`, background: selected ? "#eef2ff" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
+                  onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#a5b4fc"; }}
+                  onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                >
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${selected ? "#4f6ef7" : "#d1d5db"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+                    {selected && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4f6ef7" }} />}
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#1e3a8a" : "#374151" }}>{opt.content}</span>
+                  {selected && <CheckCircle2 size={16} color="#4f6ef7" style={{ marginLeft: "auto" }} />}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>Đang tải lựa chọn...</p>
+        )
       )}
 
-      {question.type === "MULTIPLE_CHOICE" && sorted.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 4px" }}>Có thể chọn nhiều đáp án</p>
-          {sorted.map((opt) => {
-            const selected = answer instanceof Set && answer.has(opt.id);
-            return (
-              <button key={opt.id} onClick={() => toggleMulti(opt.id)}
-                style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#16a34a" : "#e5e7eb"}`, background: selected ? "#f0fdf4" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
-                onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#86efac"; }}
-                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
-              >
-                <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${selected ? "#16a34a" : "#d1d5db"}`, background: selected ? "#16a34a" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-                  {selected && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                </div>
-                <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#14532d" : "#374151" }}>{opt.content}</span>
-              </button>
-            );
-          })}
-        </div>
+      {question.type === "MULTIPLE_CHOICE" && (
+        sorted.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 4px" }}>Có thể chọn nhiều đáp án</p>
+            {sorted.map((opt) => {
+              const selected = answer instanceof Set && answer.has(opt.id);
+              return (
+                <button key={opt.id} onClick={() => toggleMulti(opt.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#16a34a" : "#e5e7eb"}`, background: selected ? "#f0fdf4" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
+                  onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#86efac"; }}
+                  onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                >
+                  <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${selected ? "#16a34a" : "#d1d5db"}`, background: selected ? "#16a34a" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+                    {selected && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#14532d" : "#374151" }}>{opt.content}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>Đang tải lựa chọn...</p>
+        )
       )}
     </div>
   );
@@ -197,17 +203,44 @@ export default function SurveyTakePage() {
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const { questions, fetchQuestionsBySurvey, loading } = useQuestion();
+  const { options, fetchOptions } = useOption(); // ← thêm OptionProvider
   const { submitSurvey, submitting } = useResponse();
 
   const [answers, setAnswers] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [submitted, setSubmitted] = useState(false);   // ← hiện màn hình thành công
+  const [submitted, setSubmitted] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(false); // ← loading riêng cho options
 
+  /* ── Fetch questions, sau đó fetch options cho từng câu hỏi có lựa chọn ── */
   useEffect(() => {
-    if (surveyId) fetchQuestionsBySurvey(surveyId);
+    if (!surveyId) return;
+
+    fetchQuestionsBySurvey(surveyId).then(async (list) => {
+      const choiceQuestions = list.filter(
+        (q) => q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE"
+      );
+
+      if (choiceQuestions.length === 0) return;
+
+      setOptionsLoading(true);
+      try {
+        // Fetch tất cả options song song
+        await Promise.all(choiceQuestions.map((q) => fetchOptions(q.id)));
+      } finally {
+        setOptionsLoading(false);
+      }
+    });
   }, [surveyId]);
 
-  const sorted = [...questions].sort((a, b) => a.order_index - b.order_index);
+  /* ── Merge options từ OptionProvider vào questions ── */
+  const sorted = [...questions]
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((q) => ({
+      ...q,
+      // Ưu tiên options từ OptionProvider (đã fetch riêng), fallback về q.options
+      options: options[q.id] ?? q.options ?? [],
+    }));
+
   const total   = sorted.length;
   const current = sorted[currentIndex];
   const isFirst = currentIndex === 0;
@@ -250,7 +283,7 @@ export default function SurveyTakePage() {
 
     try {
       await submitSurvey(surveyId, { answers: formattedAnswers });
-      setSubmitted(true);   // ← API thành công → hiện màn hình hoàn thành
+      setSubmitted(true);
     } catch {
       // toast đã xử lý trong ResponseProvider
     }
@@ -260,6 +293,8 @@ export default function SurveyTakePage() {
   if (submitted) {
     return <SuccessScreen onGoHome={() => navigate("/user/home")} />;
   }
+
+  const isPageLoading = loading || optionsLoading;
 
   /* ── Main render ── */
   return (
@@ -277,23 +312,25 @@ export default function SurveyTakePage() {
           </div>
         </div>
 
-        {/* Loading questions */}
-        {loading && (
+        {/* Loading */}
+        {isPageLoading && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 14, color: "#9ca3af" }}>
             <Loader2 size={32} color="#4f6ef7" style={{ animation: "spin 1s linear infinite" }} />
-            <p style={{ fontSize: 14, margin: 0 }}>Đang tải câu hỏi...</p>
+            <p style={{ fontSize: 14, margin: 0 }}>
+              {loading ? "Đang tải câu hỏi..." : "Đang tải lựa chọn..."}
+            </p>
           </div>
         )}
 
         {/* Empty */}
-        {!loading && total === 0 && (
+        {!isPageLoading && total === 0 && (
           <div style={{ background: "#fff", borderRadius: 20, padding: "3rem", textAlign: "center", color: "#9ca3af", border: "1px solid #e5e7eb" }}>
             <p style={{ fontSize: 15, margin: 0 }}>Khảo sát này chưa có câu hỏi nào.</p>
           </div>
         )}
 
         {/* Main */}
-        {!loading && total > 0 && (
+        {!isPageLoading && total > 0 && (
           <>
             <ProgressBar current={currentIndex + 1} total={total} />
 
