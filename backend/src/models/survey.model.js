@@ -27,7 +27,12 @@ export default (sequelize) => {
     }, {
         tableName: "surveys",
         timestamps: true,
-        underscored: true
+        underscored: true,
+        indexes: [
+            {
+                fields: ["created_at"]
+            }
+        ]
     });
 
     return Survey;

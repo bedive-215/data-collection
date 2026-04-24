@@ -10,8 +10,8 @@ import { Router } from "express";
 const route = Router();
 
 route.post('/', authMiddleware.checkRole('admin'), validate(createSurveyRequest), SurveyController.createSurvey);
-route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyById);
 route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), SurveyController.getSurveyByUserId);
+route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyById);
 route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.deleteSurveyById);
 route.get('/', SurveyController.getAllSurvey);
 route.put('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.updateSurvey);

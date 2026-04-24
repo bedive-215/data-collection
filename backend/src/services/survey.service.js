@@ -26,26 +26,32 @@ class SurveyService {
         };
     }
 
-    // Get survey by id (FULL DATA)
+    // Get survey by id
     async getSurveyById(survey_id) {
         if (!survey_id) {
             throw new AppError("Survey id is required!", 400);
         }
 
         const survey = await this.Survey.findByPk(survey_id, {
+            attributes: ["id", "title", "description", "created_at"],
+
             include: [
                 {
                     model: this.Question,
                     as: "questions",
+                    attributes: ["id", "content", "order_index", "type", "required"],
+                    separate: true,
+                    order: [["order_index", "ASC"]],
                     include: [
                         {
                             model: this.QuestionOption,
-                            as: "options"
+                            as: "options",
+                            attributes: ["id", "content"]
                         }
-                    ],
-                    order: [["order_index", "ASC"]]
+                    ]
                 }
-            ]
+            ],
+            
         });
 
         if (!survey) {
