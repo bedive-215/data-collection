@@ -1,7 +1,7 @@
 // ─── DashboardPage.jsx ────────────────────────────────────────────
 
 import { useEffect, useState } from "react";
-import { surveyService } from "@/services/surveyService";
+import  surveyService  from "@/services/surveyService";
 
 // ── SurveyCard ──────────────────────────────────────────────────────
 function SurveyCard({ icon, iconColor, iconBg, tag, title, desc, duration }) {

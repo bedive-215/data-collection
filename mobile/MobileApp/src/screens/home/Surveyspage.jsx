@@ -164,7 +164,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
                     ? item.answer.split(",").map((a) => a.trim()).filter(Boolean)
                     : null;
                   return (
-                    <View key={item.question_id ?? i} style={ms.answerCard}>
+                    <View key={`${item.question_id}-${i}`} style={ms.answerCard}>
                       <View style={ms.qRow}>
                         <View style={ms.qNum}>
                           <Text style={ms.qNumText}>{i + 1}</Text>
@@ -184,7 +184,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
                       {chips ? (
                         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                           {chips.map((a, ci) => (
-                            <View key={ci} style={ms.chip}>
+  <View key={`${a}-${ci}`}>
                               <Text style={ms.chipText}>✔ {a}</Text>
                             </View>
                           ))}
@@ -478,8 +478,8 @@ export default function SurveysPage() {
 
   // Chỉ chạy 1 lần khi mount
   useEffect(() => { fetchData(); }, []);
-
-  const handleStart          = (id) => navigation.navigate("SurveyDetail", { id });
+const handleStart = (id) =>
+  navigation.navigate("UserSurvey", { surveyId: id });
   const handleViewSubmission = (id, title) => setModalSurvey({ id, title });
 
   // ── Derived counts ─────────────────────────────────────────────────────────
@@ -719,7 +719,7 @@ export default function SurveysPage() {
 
       <FlatList
         data={displayed}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => String(item.id ?? index)}
         numColumns={viewMode === "grid" ? NUM_COLS : 1}
         key={viewMode === "grid" ? `grid-${NUM_COLS}` : "list"}   // force re-mount when layout changes
         ListHeaderComponent={ListHeader}
