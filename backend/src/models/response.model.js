@@ -18,7 +18,7 @@ export default (sequelize) => {
         },
         user_id: {
             type: DataTypes.UUID,
-            allowNull: true,
+            allowNull: false,
             references: {
                 model: "users",
                 key: "id"
@@ -28,7 +28,13 @@ export default (sequelize) => {
     }, {
         tableName: "responses",
         timestamps: true,
-        underscored: true
+        underscored: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ["user_id", "survey_id"]
+            }
+        ]
     });
 
     return Response;

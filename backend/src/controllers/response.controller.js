@@ -1,14 +1,12 @@
 import ResponseService from "../services/response.service.js";
 
 class ResponseController {
+    // submit
     async submit(req, res, next) {
         try {
-            const { survey_id } = req.params;
-            const user_id = req.user?.id || null;
-
             const result = await ResponseService.submitSurvey(
-                user_id,
-                survey_id,
+                req.user?.id || null,
+                req.params.survey_id,
                 req.body.answers
             );
 
@@ -18,57 +16,94 @@ class ResponseController {
         }
     }
 
-    async getMySubmission(req, res, next) {
+    
+    
+    // get answers by response id
+    async getAnswers(req, res, next) {
         try {
-            const userId = req.user.id;
-            const { survey_id } = req.params;
-
-            const result = await ResponseService.getSurveySubmitByUserId(
-                userId,
-                survey_id
+            const result = await ResponseService.getAllAnswerByResponseId(
+                req.params.response_id
             );
-
-            return res.json(result);
+            res.json(result);
         } catch (err) {
             next(err);
         }
     }
 
-    async getUserSubmit(req, res, next) {
+    // update
+    async update(req, res, next) {
         try {
-            const { survey_id } = req.params;
-            const id = req.user.id;
-            const result = await ResponseService.getSurveySubmitByUserId(id, survey_id);
-            return res.json(result);
+            const result = await ResponseService.updateResponse(
+                req.user.id,
+                req.params.survey_id,
+                req.body.answers
+            );
+            
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    
+    // delete
+    async delete(req, res, next) {
+        try {
+            const result = await ResponseService.deleteResponse(
+                req.user.id,
+                req.params.response_id,
+                req.user.role === "admin"
+            );
+            
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    
+    // get my response for a survey
+    async getMyResponse(req, res, next) {
+        try {
+            const result = await ResponseService.getSurveySubmitByUserId(
+                req.user.id,
+                req.params.survey_id
+            );
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    
+    // get all my responses
+    async getMyResponses(req, res, next) {
+        try {
+            const result = await ResponseService.getAllResponsesByUserId(
+                req.user.id
+            );
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    
+    // admin: get response by user and survey
+    async getUserResponse(req, res, next) {
+        try {
+            const result = await ResponseService.getSurveySubmitByUserId(
+                req.params.id,
+                req.params.survey_id
+            );
+            res.json(result);
         } catch (err) {
             next(err);
         }
     }
 
-    async getAllMyResponse (req, res, next) {
+    // admin: get all responses of a user
+    async getUserResponses(req, res, next) {
         try {
-            const id = req.user.id;
-            const result = await ResponseService.getResponseByUserId(id);
-            return res.json(result);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async getAllUserResponse (req, res, next) {
-        try {
-            const {id} = req.params;
-            const result = await ResponseService.getResponseByUserId(id);
-            return res.json(result);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async getAllAnswerByResponseId (req, res, next) {
-        try {
-            const {response_id} = req.params;
-            const result = await ResponseService.getAllAnswerByResponseId(response_id);
+            const result = await ResponseService.getAllResponsesByUserId(
+                req.params.id
+            );
             res.json(result);
         } catch (err) {
             next(err);
