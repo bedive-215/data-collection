@@ -11,6 +11,7 @@ import UserProvider from "@/providers/UserProvider";
 import SurveyProvider from "@/providers/Surveyprovider";
 import QuestionProvider from "@/providers/Questionprovider";
 import ResponseProvider from "@/providers/Responseprovider";
+import OptionProvider from "./providers/OptionProvider";
 
 console.log("🚀 Rendering App...");
 
@@ -24,7 +25,9 @@ root.render(
           <SurveyProvider>
             <QuestionProvider>
               <ResponseProvider>
+                <OptionProvider>
                 <App />
+                </OptionProvider>
               </ResponseProvider>
             </QuestionProvider>
           </SurveyProvider>
