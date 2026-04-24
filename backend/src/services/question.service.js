@@ -5,10 +5,11 @@ class QuestionService {
     constructor() {
         this.Question = models.Question;
         this.Survey = models.Survey;
+        this.QuestionOption = models.QuestionOption;
     }
 
     // Create
-    async createQuestion(survey_id, payload) {
+    async createQuestionWithOptions(survey_id, payload) {
         const { content, type, required, order_index } = payload;
 
         if (!survey_id) throw new AppError("Survey id is required", 400);
@@ -109,6 +110,13 @@ class QuestionService {
 
         const questions = await this.Question.findAll({
             where: { survey_id },
+            include: [
+                {
+                    model: this.QuestionOption,
+                    as: "options",
+                    attributes: ["id", "content"]
+                }
+            ],
             order: [["order_index", "ASC"]]
         });
 
@@ -166,18 +174,17 @@ class QuestionService {
         const t = await models.sequelize.transaction();
 
         try {
-            for (const q of questions) {
-                await this.Question.update(
-                    { order_index: q.order_index },
-                    {
-                        where: {
-                            id: q.id,
-                            survey_id
-                        },
-                        transaction: t
-                    }
-                );
-            }
+            await Promise.all(
+                questions.map(q =>
+                    this.Question.update(
+                        { order_index: q.order_index },
+                        {
+                            where: { id: q.id, survey_id },
+                            transaction: t
+                        }
+                    )
+                )
+            );
 
             await t.commit();
 

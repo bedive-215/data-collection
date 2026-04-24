@@ -7,7 +7,7 @@ class QuestionController {
             const { survey_id } = req.params;
             const payload = req.body;
 
-            const result = await QuestionService.createQuestion(
+            const result = await QuestionService.createQuestionWithOptions(
                 survey_id,
                 payload
             );

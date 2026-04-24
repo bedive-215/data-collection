@@ -1,47 +1,72 @@
 import express from "express";
 import ResponseController from "../controllers/response.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+
 import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { userIdParams } from "../validates/userIdParams.validate.js";
 import { responseIdParams } from "../validates/responseIdParams.validate.js";
-import { surveySubmissionParams } from "../validates/surveySubmissionParams.validate.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import { getUserResponse } from "../validates/getUserResponse.validate.js";
 
 const router = express.Router();
 
-// submit survey (allow anonymous → có thể bỏ authMiddleware nếu muốn)
+
+// submit survey
 router.post(
-    "/:survey_id/submit",
+    "/surveys/:survey_id",
     validate(surveyIdParams),
     ResponseController.submit
 );
 
+// get my response in survey
 router.get(
-    "/:survey_id/submissions/me",
+    "/:survey_id/me",
     validate(surveyIdParams),
-    ResponseController.getMySubmission
+    ResponseController.getMyResponse
 );
 
-router.get(
-    '/:response_id/submissions',
+// update response
+router.put(
+    "/:survey_id",
+    validate(surveyIdParams),
+    ResponseController.update
+);
+
+// delete response
+router.delete(
+    "/:response_id",
     validate(responseIdParams),
-    ResponseController.getAllAnswerByResponseId
-)
-
-router.get(
-    '/:survey_id/submissions/:id', 
-    validate(surveySubmissionParams),
-    authMiddleware.checkRole('admin'),
-    ResponseController.getUserSubmit
+    ResponseController.delete
 );
 
-router.get('/', ResponseController.getAllMyResponse);
-
 router.get(
-    '/users/:id',
+    "/:response_id/answers",
+    validate(responseIdParams),
+    ResponseController.getAnswers
+);
+
+// get all my responses
+router.get(
+    "/me",
+    ResponseController.getMyResponses
+);
+
+
+
+// get specific user's response in a survey
+router.get(
+    "/admin/surveys/:survey_id/users/:id",
+    authMiddleware.checkRole("admin"),
+    validate(getUserResponse),
+    ResponseController.getUserResponse
+);
+
+// get all responses of a user
+router.get(
+    "/admin/users/:id",
+    authMiddleware.checkRole("admin"),
     validate(userIdParams),
-    authMiddleware.checkRole('admin'),
-    ResponseController.getAllUserResponse
+    ResponseController.getUserResponses
 );
 
 export default router;
