@@ -2,41 +2,43 @@
 import apiClient from "../api/apiClient";
 
 export const responseService = {
-  // 🟢 Submit survey (anonymous hoặc user)
+  // 🟢 Submit survey
   submitSurvey: async (surveyId, payload) => {
     const res = await apiClient.post(
-      `/api/v1/responses/${surveyId}/submit`,
+      `/api/v1/responses/surveys/${surveyId}`,
       payload
     );
     return res.data;
   },
 
-  // 🟢 Lấy submission của chính mình theo survey
+  // 🟢 Lấy response của chính mình trong survey
   getMySubmission: async (surveyId) => {
     const res = await apiClient.get(
-      `/api/v1/responses/${surveyId}/submissions/me`
+      `/api/v1/responses/${surveyId}/me`
     );
     return res.data;
   },
 
-  // 🔴 Admin: lấy submission của 1 user theo survey
+  // 🔴 Admin: lấy response của 1 user trong survey
   getUserSubmission: async (surveyId, userId) => {
     const res = await apiClient.get(
-      `/api/v1/responses/${surveyId}/submission/${userId}`
+      `/api/v1/responses/admin/surveys/${surveyId}/users/${userId}`
     );
     return res.data;
   },
 
-  // 🟢 Lấy tất cả response của user hiện tại
+  // 🟢 Lấy tất cả response của mình
   getAllMyResponses: async () => {
-    const res = await apiClient.get(`/api/v1/responses`);
+    const res = await apiClient.get(
+      `/api/v1/responses/me`
+    );
     return res.data;
   },
 
   // 🔴 Admin: lấy tất cả response của 1 user
   getAllUserResponses: async (userId) => {
     const res = await apiClient.get(
-      `/api/v1/responses/users/${userId}`
+      `/api/v1/responses/admin/users/${userId}`
     );
     return res.data;
   },

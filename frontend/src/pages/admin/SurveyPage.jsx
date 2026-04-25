@@ -2,10 +2,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import surveyService from "@/services/surveyService";
 import { useSurvey } from "@/providers/SurveyProvider";
+import { useAdminStats } from "@/providers/AdminStatsProvider";
 import { useNavigate } from "react-router-dom";
 import {
-  Plus, Trash2, ArrowRight, FileText, ClipboardList,
+  Plus, Trash2, FileText, ClipboardList,
   Loader2, Inbox, AlertCircle, X, Pencil, Check, ChevronRight,
+  Users,
 } from "lucide-react";
 
 /* ─── Styles ─────────────────────────────────────────────────────── */
@@ -18,7 +20,6 @@ const S = {
   },
   wrap: { maxWidth: 1020, margin: "0 auto" },
 
-  /* header */
   pageHeader: {
     display: "flex", alignItems: "center",
     justifyContent: "space-between", marginBottom: "2rem",
@@ -32,7 +33,6 @@ const S = {
   h1: { fontSize: 22, fontWeight: 800, color: "#f1f5f9", margin: 0, letterSpacing: "-0.02em" },
   subtext: { fontSize: 13, color: "#475569", margin: "3px 0 0" },
 
-  /* btn */
   btnPrimary: (active) => ({
     display: "flex", alignItems: "center", gap: 7,
     padding: "9px 18px",
@@ -64,7 +64,6 @@ const S = {
     transition: "background .12s", flexShrink: 0,
   },
 
-  /* form card */
   formCard: {
     background: "#0d1120",
     border: "1px solid #1a2035",
@@ -89,10 +88,8 @@ const S = {
   errRow: { display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#ef4444" },
   formActions: { display: "flex", justifyContent: "flex-end", gap: 10 },
 
-  /* grid */
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: "1rem" },
 
-  /* card */
   card: {
     background: "#0d1120", border: "1px solid #1a2035",
     borderRadius: 18, padding: "1.25rem",
@@ -115,21 +112,26 @@ const S = {
   },
   cardFooter: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    paddingTop: 10, borderTop: "1px solid #1a2035",
+    paddingTop: 10, borderTop: "1px solid #1a2035", gap: 8,
   },
-  cardId: { fontSize: 11, color: "#334155", fontFamily: "monospace" },
   cardDate: { fontSize: 11, color: "#334155" },
-  cardLink: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#6c7ef7" },
+  cardLink: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#6c7ef7", flexShrink: 0 },
 
-  /* error banner */
+  participantBadge: {
+    display: "inline-flex", alignItems: "center", gap: 5,
+    padding: "3px 9px",
+    background: "rgba(79,110,247,0.10)",
+    border: "1px solid rgba(79,110,247,0.18)",
+    borderRadius: 20, fontSize: 11, fontWeight: 700,
+    color: "#6c7ef7", flexShrink: 0,
+  },
+
   errBanner: {
     display: "flex", alignItems: "center", gap: 10,
     padding: "14px 18px", background: "#150f0f",
     border: "1px solid #2a1010", borderRadius: 12,
     marginBottom: "1.5rem", fontSize: 14, color: "#fca5a5",
   },
-
-  /* empty */
   empty: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
@@ -137,40 +139,67 @@ const S = {
   },
 };
 
-/* ─── Inline editable card ───────────────────────────────────────── */
+/* ─── Participant Badge ───────────────────────────────────────────── */
+function ParticipantBadge({ surveyId }) {
+  const { answeredBySurvey, fetchUsersAnsweredBySurvey } = useAdminStats();
+  const [loadingCount, setLoadingCount] = useState(false);
+
+  useEffect(() => {
+    if (answeredBySurvey[surveyId] !== undefined) return;
+    let cancelled = false;
+    const load = async () => {
+      setLoadingCount(true);
+      try {
+        await fetchUsersAnsweredBySurvey(surveyId);
+      } catch { /* hiện "—" */ }
+      finally { if (!cancelled) setLoadingCount(false); }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [surveyId]);
+
+  const count = answeredBySurvey[surveyId]?.count;
+
+  return (
+    <span style={S.participantBadge}>
+      <Users size={11} />
+      {loadingCount ? "..." : count !== undefined ? `${count} tham gia` : "—"}
+    </span>
+  );
+}
+
+/* ─── Survey Card ────────────────────────────────────────────────── */
 function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(s.title);
+  const [editing, setEditing]       = useState(false);
+  const [title, setTitle]           = useState(s.title);
   const [description, setDescription] = useState(s.description || "");
   const titleRef = useRef(null);
 
-  const startEdit = (e) => { e.stopPropagation(); setEditing(true); setTimeout(() => titleRef.current?.focus(), 50); };
-  const cancel = (e) => { e?.stopPropagation(); setEditing(false); setTitle(s.title); setDescription(s.description || ""); };
- const save = async (e) => {
-  console.log("🔥 CLICK SAVE");
-  e.stopPropagation();
+  const startEdit = (e) => {
+    e.stopPropagation();
+    setEditing(true);
+    setTimeout(() => titleRef.current?.focus(), 50);
+  };
 
-  if (!title.trim()) {
-    console.log("❌ TITLE EMPTY");
-    return;
-  }
+  const cancel = (e) => {
+    e?.stopPropagation();
+    setEditing(false);
+    setTitle(s.title);
+    setDescription(s.description || "");
+  };
 
-  console.log("➡️ CALL onUpdate", s.id);
-
-  await onUpdate(s.id, {
-    title: title.trim(),
-    description: description.trim(),
-  });
-
-  console.log("✅ DONE UPDATE");
-  setEditing(false);
-};
+  const save = async (e) => {
+    e.stopPropagation();
+    if (!title.trim()) return;
+    await onUpdate(s.id, { title: title.trim(), description: description.trim() });
+    setEditing(false);
+  };
 
   const formatDate = (iso) =>
     iso ? new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
 
   const isDeleting = deletingId === s.id;
-  const isSaving = updatingId === s.id;
+  const isSaving   = updatingId === s.id;
 
   return (
     <div
@@ -197,7 +226,6 @@ function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
         <div style={{ display: "flex", gap: 6 }}>
           {!editing ? (
             <>
-              {/* Edit btn */}
               <button
                 onClick={startEdit}
                 title="Chỉnh sửa"
@@ -207,8 +235,6 @@ function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
               >
                 <Pencil size={13} />
               </button>
-
-              {/* Delete btn */}
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
                 disabled={isDeleting}
@@ -224,7 +250,6 @@ function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
             </>
           ) : (
             <>
-              {/* Save btn */}
               <button
                 onClick={save}
                 disabled={isSaving}
@@ -233,10 +258,10 @@ function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
                 onMouseEnter={(e) => (e.currentTarget.style.background = "#0a1a0a")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                {isSaving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Check size={13} />}
+                {isSaving
+                  ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                  : <Check size={13} />}
               </button>
-
-              {/* Cancel btn */}
               <button
                 onClick={cancel}
                 title="Huỷ"
@@ -282,8 +307,11 @@ function SurveyCard({ s, onDelete, onUpdate, onOpen, deletingId, updatingId }) {
       {/* Footer */}
       {!editing && (
         <div style={S.cardFooter}>
-          <span style={S.cardId}>#{String(s.id).slice(0, 8)}</span>
+          {/* Số người tham gia thay cho id */}
+          <ParticipantBadge surveyId={s.id} />
+
           {s.createdAt && <span style={S.cardDate}>{formatDate(s.createdAt)}</span>}
+
           <div style={S.cardLink}>
             Xem chi tiết <ChevronRight size={13} />
           </div>
@@ -298,30 +326,25 @@ export default function SurveyPage() {
   const { createSurvey, deleteSurvey, updateSurvey, loading } = useSurvey();
   const navigate = useNavigate();
 
-  const [surveys, setSurveys] = useState([]);
-  const [fetchError, setFetchError] = useState(null);
-  const [fetching, setFetching] = useState(false);
-
-  const [title, setTitle] = useState("");
+  const [surveys, setSurveys]         = useState([]);
+  const [fetchError, setFetchError]   = useState(null);
+  const [fetching, setFetching]       = useState(false);
+  const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
-  const [formError, setFormError] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError]     = useState("");
+  const [showForm, setShowForm]       = useState(false);
+  const [deletingId, setDeletingId]   = useState(null);
+  const [updatingId, setUpdatingId]   = useState(null);
 
-  const [deletingId, setDeletingId] = useState(null);
-  const [updatingId, setUpdatingId] = useState(null);
-
-  /* ── normalize ── */
   const normalize = (s) => ({
     id: s.id, title: s.title,
     description: s.description, createdAt: s.createdAt,
   });
 
-  /* ── fetch ── */
   const fetchAll = async () => {
-    setFetchError(null);
-    setFetching(true);
+    setFetchError(null); setFetching(true);
     try {
-      const res = await surveyService.getAllSurveys();
+      const res  = await surveyService.getAllSurveys();
       const data = res.data ?? res;
       setSurveys((data.surveys || []).map(normalize));
     } catch {
@@ -333,41 +356,29 @@ export default function SurveyPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  /* ── create ── */
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!title.trim()) { setFormError("Tiêu đề không được để trống."); return; }
     setFormError("");
     try {
-      const res = await createSurvey({ title, description: description || "" });
+      const res     = await createSurvey({ title, description: description || "" });
       const created = res?.survey ? normalize(res.survey) : normalize(res);
       setSurveys((prev) => [created, ...prev]);
       setTitle(""); setDescription(""); setShowForm(false);
     } catch { /* toast handled in provider */ }
   };
 
-  /* ── update ── */
-const handleUpdate = async (id, payload) => {
-  setUpdatingId(id);
-
-  try {
-    const updated = await updateSurvey(id, payload);
-
-    if (!updated?.id) {
-      console.error("❌ Update trả về id undefined");
-      return;
+  const handleUpdate = async (id, payload) => {
+    setUpdatingId(id);
+    try {
+      const updated = await updateSurvey(id, payload);
+      if (!updated?.id) return;
+      setSurveys((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    } finally {
+      setUpdatingId(null);
     }
+  };
 
-    setSurveys((prev) =>
-      prev.map((s) => (s.id === id ? updated : s))
-    );
-
-  } finally {
-    setUpdatingId(null);
-  }
-};
-
-  /* ── delete ── */
   const handleDelete = async (id) => {
     setDeletingId(id);
     try {
@@ -384,7 +395,7 @@ const handleUpdate = async (id, payload) => {
     <div style={S.page}>
       <div style={S.wrap}>
 
-        {/* ── Page Header ── */}
+        {/* ── Header ── */}
         <div style={S.pageHeader}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={S.iconBox}><ClipboardList size={22} color="#6c7ef7" /></div>
@@ -395,7 +406,6 @@ const handleUpdate = async (id, payload) => {
               </p>
             </div>
           </div>
-
           <button
             onClick={() => { setShowForm((v) => !v); setFormError(""); }}
             style={S.btnPrimary(showForm)}
@@ -430,11 +440,7 @@ const handleUpdate = async (id, payload) => {
                 )}
                 <div style={S.formActions}>
                   <button type="button" onClick={() => setShowForm(false)} style={S.btnGhost}>Huỷ</button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    style={S.btnPrimary(false)}
-                  >
+                  <button type="submit" disabled={loading} style={S.btnPrimary(false)}>
                     {loading
                       ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                       : <Plus size={14} />}
@@ -460,7 +466,7 @@ const handleUpdate = async (id, payload) => {
           </div>
         )}
 
-        {/* ── Loading skeleton ── */}
+        {/* ── Loading ── */}
         {fetching && surveys.length === 0 && (
           <div style={{ display: "flex", justifyContent: "center", padding: "4rem 0", color: "#334155" }}>
             <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
