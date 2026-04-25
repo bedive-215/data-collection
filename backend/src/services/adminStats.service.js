@@ -1,6 +1,5 @@
-import { Op, fn, col, literal, where } from "sequelize";
+import { Op, fn, col, literal } from "sequelize";
 import models from "../models/index.js";
-import { response } from "express";
 
 class AdminStatsService {
     constructor() {
@@ -12,7 +11,6 @@ class AdminStatsService {
         this.Response = models.Response;
     }
 
-    // Tổng quan hệ thống
     async getOverviewStats() {
         const [
             totalUsers,
@@ -37,7 +35,6 @@ class AdminStatsService {
         };
     }
 
-    // Thống kê theo ngày (7 ngày gần nhất)
     async getSurveyStatsByDay() {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
@@ -63,7 +60,6 @@ class AdminStatsService {
         };
     }
 
-    // Dashboard tổng hợp
     async getDashboard() {
         const [overview, surveyByDay] = await Promise.all([
             this.getOverviewStats(),
@@ -79,14 +75,16 @@ class AdminStatsService {
         };
     }
 
+    // ✅ Đã fix: thêm const total =
     async getTotalUsersAnsweredSurvey() {
-        await this.Response.count({
+        const total = await this.Response.count({
             where: {
                 user_id: {
                     [Op.ne]: null
                 }
             }
         });
+
         return {
             message: "Get total users answered survey successfully!",
             data: {
@@ -96,7 +94,6 @@ class AdminStatsService {
     }
 
     async getUsersAnsweredBySurvey(survey_id) {
-
         if (!survey_id) {
             throw new AppError("Survey id is required!", 400);
         }
