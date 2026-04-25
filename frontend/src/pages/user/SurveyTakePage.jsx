@@ -262,32 +262,55 @@ export default function SurveyTakePage() {
 
   /* ── Build payload & gọi API ── */
   const handleSubmit = async () => {
-    if (!canProceed() || submitting) return;
+  if (!canProceed() || submitting) return;
 
-    const formattedAnswers = [];
-    sorted.forEach((q) => {
-      const val = answers[q.id];
-      if (q.type === "TEXT") {
-        formattedAnswers.push({ question_id: q.id, answer_text: val || null, option_id: null });
-      }
-      if (q.type === "SINGLE_CHOICE") {
-        formattedAnswers.push({ question_id: q.id, answer_text: null, option_id: val || null });
-      }
-      if (q.type === "MULTIPLE_CHOICE") {
-        const selected = val instanceof Set ? [...val] : [];
-        selected.forEach((optId) => {
-          formattedAnswers.push({ question_id: q.id, answer_text: null, option_id: optId });
+  const formattedAnswers = [];
+
+  sorted.forEach((q) => {
+    const val = answers[q.id];
+
+    // TEXT
+    if (q.type === "TEXT") {
+      if (val) {
+        formattedAnswers.push({
+          question_id: q.id,
+          answer_text: val,
         });
       }
-    });
-
-    try {
-      await submitSurvey(surveyId, { answers: formattedAnswers });
-      setSubmitted(true);
-    } catch {
-      // toast đã xử lý trong ResponseProvider
     }
-  };
+
+    // SINGLE_CHOICE
+    if (q.type === "SINGLE_CHOICE") {
+      if (val) {
+        formattedAnswers.push({
+          question_id: q.id,
+          option_id: val,
+        });
+      }
+    }
+
+    // MULTIPLE_CHOICE ⚠️ chỉ lấy 1 option
+    if (q.type === "MULTIPLE_CHOICE") {
+      const selected = val instanceof Set ? [...val] : [];
+
+      if (selected.length > 0) {
+        formattedAnswers.push({
+          question_id: q.id,
+          option_id: selected[0], // 👈 chỉ lấy 1 cái
+        });
+      }
+    }
+  });
+
+  console.log("payload:", formattedAnswers); // debug
+
+  try {
+    await submitSurvey(surveyId, { answers: formattedAnswers });
+    setSubmitted(true);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   /* ── Màn hình hoàn thành ── */
   if (submitted) {
