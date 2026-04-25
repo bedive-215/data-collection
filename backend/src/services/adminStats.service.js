@@ -80,7 +80,7 @@ class AdminStatsService {
     }
 
     async getTotalUsersAnsweredSurvey() {
-        await this.Response.count({
+        const total = await this.Response.count({
             where: {
                 user_id: {
                     [Op.ne]: null
