@@ -1,26 +1,12 @@
-// src/services/surveyService.js
-import apiClient from "@/api/apiClient";
+import apiClient from "../api/apiClient";
 
-export const surveyService = {
-  // 🟢 Tạo survey (admin)
-  createSurvey: (payload) =>
-    apiClient.post("/api/v1/survey", payload),
-
-  // 🟢 Lấy survey theo ID
-  getSurveyById: (surveyId) =>
-    apiClient.get(`/api/v1/survey/${surveyId}`),
-
-  // 🟢 Lấy survey theo user (admin)
-  getSurveyByUserId: (userId) =>
-    apiClient.get(`/api/v1/surveys/users/${userId}`),
-
-  // 🔴 Xoá survey (admin)
-  deleteSurveyById: (surveyId) =>
-    apiClient.delete(`/api/v1/survey/${surveyId}`),
-    // 🟢 Lấy tất cả survey
-  getAllSurveys: (params) =>
-    apiClient.get("/api/v1/survey", { params }),
-
+const surveyService = {
+  createSurvey:      (payload)            => apiClient.post("/api/v1/survey", payload),
+  getSurveyById:     (surveyId)           => apiClient.get(`/api/v1/survey/${surveyId}`),
+  getSurveyByUserId: (userId)             => apiClient.get(`/api/v1/survey/users/${userId}`),
+  getAllSurveys:      (params)             => apiClient.get("/api/v1/survey", { params }),
+  deleteSurveyById:  (surveyId)           => apiClient.delete(`/api/v1/survey/${surveyId}`),
+  updateSurvey:      (surveyId, payload)  => apiClient.put(`/api/v1/survey/${surveyId}`, payload),
 };
 
 export default surveyService;
