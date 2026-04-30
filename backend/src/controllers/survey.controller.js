@@ -7,12 +7,14 @@ class SurveyController {
     async createSurvey(req, res, next) {
         try {
             const userId = req.user.id;
-            const { title, description } = req.body;
+            const { title, description, start_at, end_at } = req.body;
 
             const result = await SurveyService.createSurvey(
                 userId,
                 title,
-                description
+                description,
+                start_at,
+                end_at
             );
 
             return res.status(201).json({
@@ -40,12 +42,29 @@ class SurveyController {
         }
     }
 
-    // Get surveys by user
-    async getSurveyByUserId(req, res, next) {
+    // Get surveys my survey (created by user)
+    async getMySurveys(req, res, next) {
         try {
             const userId = req.user.id;
 
             const result = await SurveyService.getSurveyByUserId(userId);
+
+            return res.status(200).json({
+                message: result.message,
+                count: result.count,
+                data: result.surveys
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+
+    async getSurveyByUserId(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const result = await SurveyService.getSurveyByUserId(id);
 
             return res.status(200).json({
                 message: result.message,
