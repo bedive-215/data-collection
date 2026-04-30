@@ -4,85 +4,147 @@ import { AppError } from "../middlewares/handleException.middlware.js";
 class QuestionService {
     constructor() {
         this.Question = models.Question;
+        this.Option = models.QuestionOption;
         this.Survey = models.Survey;
-        this.QuestionOption = models.QuestionOption;
+        this.User = models.User;
     }
 
-    // Create
-    async createQuestionWithOptions(survey_id, payload) {
-        const { content, type, required, order_index } = payload;
-
-        if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!content) throw new AppError("Content is required", 400);
-
-        const survey = await this.Survey.findByPk(survey_id);
-        if (!survey) throw new AppError("Survey not found", 404);
-
-        const question = await this.Question.create({
-            survey_id,
-            content,
-            type,
-            required,
-            order_index
-        });
-
-        return {
-            message: "Created question successfully",
-            question
-        };
+    _isChoiceType(type) {
+        return ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(type);
     }
 
-    // create question with options
-    async createQuestions(survey_id, payload) {
-        const { content, type, required, order_index, options } = payload;
-
-        if (!survey_id) throw new AppError("Survey id is required", 400);
+    _validateQuestionInput({ content, type }) {
         if (!content || !content.trim()) {
             throw new AppError("Content is required", 400);
         }
 
+        if (!type) {
+            throw new AppError("Type is required", 400);
+        }
+    }
+
+    _validateOptions(type, options) {
+        if (!this._isChoiceType(type)) return [];
+
+        if (!Array.isArray(options) || options.length < 2) {
+            throw new AppError("At least 2 options are required", 400);
+        }
+
+        const cleaned = options
+            .map(opt => ({
+                label: opt.label?.trim(),
+                value: opt.value?.trim(),
+                order_index: opt.order_index ?? 0,
+                is_other: opt.is_other || false
+            }))
+            .filter(opt => opt.label && opt.value);
+
+        if (cleaned.length < 2) {
+            throw new AppError("Options must be valid", 400);
+        }
+
+        // remove duplicate value
+        const uniqueMap = new Map();
+        cleaned.forEach(opt => {
+            if (!uniqueMap.has(opt.value)) {
+                uniqueMap.set(opt.value, opt);
+            }
+        });
+
+        return [...uniqueMap.values()];
+    }
+
+    _validateSettingsByType(type, settings) {
+        switch (type) {
+            case "TEXT":
+            case "PARAGRAPH":
+                return null;
+
+            case "EMAIL":
+                return null;
+
+            case "DATE":
+                return settings || null;
+
+            case "NUMBER":
+                if (settings) {
+                    const { min, max } = settings;
+
+                    if (min !== undefined && typeof min !== "number") {
+                        throw new AppError("min must be number", 400);
+                    }
+
+                    if (max !== undefined && typeof max !== "number") {
+                        throw new AppError("max must be number", 400);
+                    }
+
+                    if (min !== undefined && max !== undefined && min > max) {
+                        throw new AppError("min <= max", 400);
+                    }
+                }
+                return settings;
+
+            case "RATING":
+                const min = settings?.min ?? 1;
+                const max = settings?.max ?? 5;
+
+                if (min >= max) {
+                    throw new AppError("Invalid rating range", 400);
+                }
+
+                return { min, max };
+
+            case "SINGLE_CHOICE":
+            case "MULTIPLE_CHOICE":
+            case "DROPDOWN":
+                return null;
+
+            default:
+                throw new AppError("Invalid question type", 400);
+        }
+    }
+
+    async _checkOwnership(survey, user) {
+        if (survey.created_by !== user.id && user.role !== "ADMIN") {
+            throw new AppError("Forbidden", 403);
+        }
+    }
+
+    async createQuestion(survey_id, payload, user_id) {
+        const { content, type, required, order_index, settings, options } = payload;
+
+        this._validateQuestionInput({ content, type });
+
         const survey = await this.Survey.findByPk(survey_id);
         if (!survey) throw new AppError("Survey not found", 404);
 
-        const t = await this.Question.sequelize.transaction();
+        const user = await this.User.findByPk(user_id);
+        if (!user) throw new AppError("User not found", 404);
+
+        await this._checkOwnership(survey, user);
+
+        const cleanedOptions = this._validateOptions(type, options);
+        const validatedSettings = this._validateSettingsByType(type, settings);
+
+        const t = await models.sequelize.transaction();
 
         try {
-            // create question
-            const question = await this.Question.create(
-                {
-                    survey_id,
-                    content: content.trim(),
-                    type,
-                    required,
-                    order_index
-                },
-                { transaction: t }
-            );
+            const question = await this.Question.create({
+                survey_id,
+                content: content.trim(),
+                type,
+                required,
+                order_index,
+                settings: validatedSettings
+            }, { transaction: t });
 
             let createdOptions = [];
 
-            // handle options
-            if (type !== "TEXT") {
-                if (!Array.isArray(options) || options.length === 0) {
-                    throw new AppError("Options are required", 400);
-                }
-
-                // clean + unique
-                const cleaned = options
-                    .map(o => o?.trim())
-                    .filter(Boolean);
-
-                const unique = [...new Set(cleaned)];
-
-                if (unique.length === 0) {
-                    throw new AppError("Options cannot be empty", 400);
-                }
-
-                // bulk insert
-                createdOptions = await this.QuestionOption.bulkCreate(
-                    unique.map(content => ({
-                        question_id: question.id,
-                        content
+            if (cleanedOptions.length > 0) {
+                createdOptions = await this.Option.bulkCreate(
+                    cleanedOptions.map(opt => ({
+                        ...opt,
+                        question_id: question.id
                     })),
                     { transaction: t }
                 );
@@ -104,17 +166,97 @@ class QuestionService {
         }
     }
 
-    // Get all questions of survey
-    async getQuestionsBySurvey(survey_id) {
-        if (!survey_id) throw new AppError("Survey id is required", 400);
+    // update question (content, type, required, order_index, settings, options)
+    async updateQuestion(question_id, payload, user_id) {
+        const { content, type, required, order_index, settings, options } = payload;
 
+        const question = await this.Question.findByPk(question_id, {
+            include: { model: this.Survey }
+        });
+
+        if (!question) throw new AppError("Question not found", 404);
+
+        const user = await this.User.findByPk(user_id);
+        if (!user) throw new AppError("User not found", 404);
+
+        await this._checkOwnership(question.Survey, user);
+
+        const t = await models.sequelize.transaction();
+
+        try {
+            if (content !== undefined) question.content = content.trim();
+            if (type !== undefined) question.type = type;
+            if (required !== undefined) question.required = required;
+            if (order_index !== undefined) question.order_index = order_index;
+            if (settings !== undefined) question.settings = settings;
+
+            await question.save({ transaction: t });
+
+            // handle options if type changed OR options provided
+            if (type || options) {
+                const cleanedOptions = this._validateOptions(
+                    type || question.type,
+                    options
+                );
+
+                await this.Option.destroy({
+                    where: { question_id: question.id },
+                    transaction: t
+                });
+
+                if (cleanedOptions.length > 0) {
+                    await this.Option.bulkCreate(
+                        cleanedOptions.map(opt => ({
+                            ...opt,
+                            question_id: question.id
+                        })),
+                        { transaction: t }
+                    );
+                }
+            }
+
+            await t.commit();
+
+            return {
+                message: "Updated question successfully",
+                question
+            };
+
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
+    }
+
+    // delete question
+    async deleteQuestion(question_id, user_id) {
+        const question = await this.Question.findByPk(question_id, {
+            include: { model: this.Survey }
+        });
+
+        if (!question) throw new AppError("Question not found", 404);
+
+        const user = await this.User.findByPk(user_id);
+        if (!user) throw new AppError("User not found", 404);
+
+        await this._checkOwnership(question.Survey, user);
+
+        await question.destroy();
+
+        return {
+            message: "Deleted question successfully"
+        };
+    }
+
+    // get questions by survey
+    async getQuestionsBySurvey(survey_id) {
         const questions = await this.Question.findAll({
             where: { survey_id },
             include: [
                 {
-                    model: this.QuestionOption,
+                    model: this.Option,
                     as: "options",
-                    attributes: ["id", "content"]
+                    attributes: ["id", "label", "value", "order_index", "is_other"]
                 }
             ],
             order: [["order_index", "ASC"]]
@@ -127,49 +269,16 @@ class QuestionService {
         };
     }
 
-    // Update question
-    async updateQuestion(question_id, payload) {
-        const { content, type, required, order_index } = payload;
 
-        const question = await this.Question.findByPk(question_id);
-        if (!question) throw new AppError("Question not found", 404);
+    // reorder questions
+    async reorderQuestions(survey_id, questions, user_id) {
+        const survey = await this.Survey.findByPk(survey_id);
+        if (!survey) throw new AppError("Survey not found", 404);
 
-        if (content !== undefined) question.content = content;
-        if (type !== undefined) question.type = type;
-        if (required !== undefined) question.required = required;
-        if (order_index !== undefined) question.order_index = order_index;
-
-        if (type === "TEXT") {
-            await models.QuestionOption.destroy({
-                where: { question_id: question.id }
-            });
-        }
-
-        await question.save();
-
-        return {
-            message: "Updated question successfully",
-            question
-        };
-    }
-
-    // Delete
-    async deleteQuestion(question_id) {
-        const question = await this.Question.findByPk(question_id);
-        if (!question) throw new AppError("Question not found", 404);
-
-        await question.destroy();
-
-        return {
-            message: "Deleted question successfully"
-        };
-    }
-
-    // drag and drop question
-    async reorderQuestions(survey_id, questions) {
-        if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!Array.isArray(questions))
-            throw new AppError("Questions must be array", 400);
+        const user = await this.User.findByPk(user_id);
+        if (!user) throw new AppError("User not found", 404);
+        
+        await this._checkOwnership(survey, user);
 
         const t = await models.sequelize.transaction();
 
@@ -188,64 +297,94 @@ class QuestionService {
 
             await t.commit();
 
-            return {
-                message: "Reordered questions successfully"
-            };
+            return { message: "Reordered successfully" };
+
         } catch (err) {
             await t.rollback();
             throw err;
         }
     }
 
+    async bulkCreateQuestions(survey_id, questionsPayload, user_id) {
+        if (!Array.isArray(questionsPayload) || questionsPayload.length === 0) {
+            throw new AppError("Questions payload must be a non-empty array", 400);
+        }
 
-    async bulkUpdateQuestions(survey_id, questions) {
-        if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!Array.isArray(questions))
-            throw new AppError("Questions must be array", 400);
+        // 1. check survey + ownership
+        const survey = await this.Survey.findByPk(survey_id);
+        if (!survey) throw new AppError("Survey not found", 404);
 
-        const t = await models.sequelize.transaction();
+        const user = await this.User.findByPk(user_id);
+        if (!user) throw new AppError("User not found", 404);
+
+        await this._checkOwnership(survey, user);
+
+        const t = await this.sequelize.transaction();
 
         try {
-            const questionIds = questions.map(q => q.id);
+            const questionData = [];
+            const optionData = [];
 
-            const existingQuestions = await this.Question.findAll({
-                where: {
-                    id: questionIds,
-                    survey_id
-                },
-                transaction: t
-            });
+            // 2. validate + prepare data
+            questionsPayload.forEach((q, index) => {
+                const {
+                    content,
+                    type,
+                    required = true,
+                    order_index = index,
+                    settings,
+                    options
+                } = q;
 
-            if (existingQuestions.length !== questions.length) {
-                throw new AppError(
-                    "Some questions do not belong to this survey",
-                    400
-                );
-            }
+                this._validateQuestionInput({ content, type });
 
-            const questionMap = new Map(
-                existingQuestions.map(q => [q.id, q])
-            );
+                const cleanedOptions = this._validateOptions(type, options);
+                const validatedSettings = this._validateSettingsByType(type, settings);
 
-            for (const q of questions) {
-                const question = questionMap.get(q.id);
+                const tempId = crypto.randomUUID(); 
+                questionData.push({
+                    id: tempId,
+                    survey_id,
+                    content: content.trim(),
+                    type,
+                    required,
+                    order_index,
+                    settings: validatedSettings
+                });
 
-                await question.update(q, { transaction: t });
-
-                // If question type is updated to TEXT, delete all options
-                if (q.type === "TEXT") {
-                    await models.QuestionOption.destroy({
-                        where: { question_id: q.id },
-                        transaction: t
+                if (cleanedOptions.length > 0) {
+                    cleanedOptions.forEach((opt, optIndex) => {
+                        optionData.push({
+                            ...opt,
+                            order_index: opt.order_index ?? optIndex,
+                            question_id: tempId
+                        });
                     });
                 }
+            });
+
+            // 3. insert questions
+            const createdQuestions = await this.Question.bulkCreate(questionData, {
+                transaction: t,
+                returning: true
+            });
+
+            // 4. insert options
+            let createdOptions = [];
+            if (optionData.length > 0) {
+                createdOptions = await this.Option.bulkCreate(optionData, {
+                    transaction: t
+                });
             }
 
             await t.commit();
 
             return {
-                message: "Bulk update questions successfully"
+                message: "Bulk create questions successfully",
+                total: createdQuestions.length,
+                questions: createdQuestions
             };
+
         } catch (err) {
             await t.rollback();
             throw err;

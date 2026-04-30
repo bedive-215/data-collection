@@ -73,7 +73,7 @@ class QuestionController {
             const { question_id } = req.params;
 
             const result = await QuestionService.deleteQuestion(
-                question_id
+                question_id, req.user.id
             );
 
             return res.status(200).json(result);
@@ -89,7 +89,8 @@ class QuestionController {
 
             const result = await QuestionService.reorderQuestions(
                 survey_id,
-                questions
+                questions,
+                req.user.id
             );
 
             res.status(200).json(result);
@@ -98,17 +99,27 @@ class QuestionController {
         }
     }
 
-    async bulkUpdateQuestions(req, res, next) {
+    async bulkCreateQuestions(req, res, next) {
         try {
             const { survey_id } = req.params;
             const { questions } = req.body;
+            const user_id = req.user?.id;
 
-            const result = await QuestionService.bulkUpdateQuestions(
+            if (!questions || !Array.isArray(questions) || questions.length === 0) {
+                throw new AppError("Questions must be a non-empty array", 400);
+            }
+
+            const result = await QuestionService.bulkCreateQuestions(
                 survey_id,
-                questions
+                questions,
+                user_id
             );
+            
+            return res.status(201).json({
+                success: true,
+                ...result
+            });
 
-            res.status(200).json(result);
         } catch (err) {
             next(err);
         }

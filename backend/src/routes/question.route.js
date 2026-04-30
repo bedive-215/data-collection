@@ -4,6 +4,7 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 
 import { validate } from "../middlewares/validate.middleware.js";
 import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
+import { createQuestionRequest } from "../validates/createQuestion.validate.js";
 import { questionIdParams } from "../validates/questionIdParams.validate.js";
 
 const router = express.Router();
@@ -12,7 +13,7 @@ const router = express.Router();
 router.post(
     "/:survey_id",
     authMiddleware.checkRole('admin'),
-    validate(surveyIdParams),
+    validate(createQuestionRequest),
     QuestionController.createQuestions
 );
 
@@ -47,12 +48,11 @@ router.patch(
     QuestionController.reorderQuestions
 );
 
-// Bulk update questions
-router.patch(
+router.post(
     "/:survey_id/bulk",
     authMiddleware.checkRole('admin'),
     validate(surveyIdParams),
-    QuestionController.bulkUpdateQuestions
+    QuestionController.bulkCreateQuestions
 );
 
 export default router;

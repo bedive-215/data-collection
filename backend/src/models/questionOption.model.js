@@ -1,29 +1,45 @@
 import { DataTypes } from "sequelize";
 
-export default (sequelize) => {
+export default (sequelize, DataTypes) => {
     const QuestionOption = sequelize.define("QuestionOption", {
         id: {
             type: DataTypes.UUID,
             primaryKey: true,
             defaultValue: DataTypes.UUIDV4
         },
+
         question_id: {
             type: DataTypes.UUID,
-            allowNull: false,
-            references: {
-                model: "questions",
-                key: "id"
-            },
-            onDelete: "CASCADE"
+            allowNull: false
         },
-        content: {
+
+        label: {
             type: DataTypes.STRING(255),
             allowNull: false
+        },
+
+        value: {
+            type: DataTypes.STRING(255),
+            allowNull: false
+        },
+
+        order_index: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
+        },
+
+        is_other: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         }
+
     }, {
         tableName: "question_options",
         timestamps: false,
-        underscored: true
+        underscored: true,
+        indexes: [
+            { fields: ["question_id"] }
+        ]
     });
 
     return QuestionOption;
