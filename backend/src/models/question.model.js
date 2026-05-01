@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 
-export default (sequelize, DataTypes) => {
+export default (sequelize) => {
     const Question = sequelize.define("Question", {
         id: {
             type: DataTypes.UUID,
@@ -44,7 +44,7 @@ export default (sequelize, DataTypes) => {
         },
 
         settings: {
-            type: DataTypes.JSONB,
+            type: DataTypes.JSON,
             allowNull: true
         }
 

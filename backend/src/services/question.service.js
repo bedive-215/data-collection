@@ -1,6 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-
+import crypto from "crypto";
 class QuestionService {
     constructor() {
         this.Question = models.Question;
@@ -13,15 +13,32 @@ class QuestionService {
         return ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(type);
     }
 
-    _validateQuestionInput({ content, type }) {
-        if (!content || !content.trim()) {
-            throw new AppError("Content is required", 400);
-        }
+   _validateQuestionInput({ content, type }) {
 
-        if (!type) {
-            throw new AppError("Type is required", 400);
-        }
+    const validTypes = [
+        "TEXT",
+        "PARAGRAPH",
+        "EMAIL",
+        "DATE",
+        "NUMBER",
+        "RATING",
+        "SINGLE_CHOICE",
+        "MULTIPLE_CHOICE",
+        "DROPDOWN"
+    ];
+
+    if (!content || !content.trim()) {
+        throw new AppError("Content is required", 400);
     }
+
+    if (!type) {
+        throw new AppError("Type is required", 400);
+    }
+
+    if (!validTypes.includes(type)) {
+        throw new AppError("Invalid question type", 400);
+    }
+}
 
     _validateOptions(type, options) {
         if (!this._isChoiceType(type)) return [];
@@ -171,21 +188,27 @@ class QuestionService {
         const { content, type, required, order_index, settings, options } = payload;
 
         const question = await this.Question.findByPk(question_id, {
-            include: { model: this.Survey }
-        });
+    include: {
+        model: this.Survey,
+        as: "survey"
+    }
+});
 
         if (!question) throw new AppError("Question not found", 404);
 
         const user = await this.User.findByPk(user_id);
         if (!user) throw new AppError("User not found", 404);
 
-        await this._checkOwnership(question.Survey, user);
+       await this._checkOwnership(question.survey, user);
 
         const t = await models.sequelize.transaction();
 
         try {
             if (content !== undefined) question.content = content.trim();
-            if (type !== undefined) question.type = type;
+            if (type !== undefined) {
+    question.type = type;
+    question.settings = this._validateSettingsByType(type, settings);
+}
             if (required !== undefined) question.required = required;
             if (order_index !== undefined) question.order_index = order_index;
             if (settings !== undefined) question.settings = settings;
@@ -231,15 +254,18 @@ class QuestionService {
     // delete question
     async deleteQuestion(question_id, user_id) {
         const question = await this.Question.findByPk(question_id, {
-            include: { model: this.Survey }
-        });
+    include: {
+        model: this.Survey,
+        as: "survey"
+    }
+});
 
         if (!question) throw new AppError("Question not found", 404);
 
         const user = await this.User.findByPk(user_id);
         if (!user) throw new AppError("User not found", 404);
 
-        await this._checkOwnership(question.Survey, user);
+       await this._checkOwnership(question.survey, user);
 
         await question.destroy();
 
@@ -319,7 +345,7 @@ class QuestionService {
 
         await this._checkOwnership(survey, user);
 
-        const t = await this.sequelize.transaction();
+        const t = await models.sequelize.transaction();
 
         try {
             const questionData = [];

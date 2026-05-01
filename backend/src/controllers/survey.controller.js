@@ -4,27 +4,24 @@ import SurveyService from "../services/survey.service.js";
 class SurveyController {
 
     // Create survey
-    async createSurvey(req, res, next) {
-        try {
-            const userId = req.user.id;
-            const { title, description, start_at, end_at } = req.body;
+   async createSurvey(req, res, next) {
+    try {
+        const userId = req.user.id;
 
-            const result = await SurveyService.createSurvey(
-                userId,
-                title,
-                description,
-                start_at,
-                end_at
-            );
+        const result = await SurveyService.createSurvey(
+            userId,
+            req.body
+        );
 
-            return res.status(201).json({
-                message: result.message,
-                data: result.survey
-            });
-        } catch (err) {
-            next(err);
-        }
+        return res.status(201).json({
+            message: result.message,
+            data: result.survey
+        });
+
+    } catch (err) {
+        next(err);
     }
+}
 
     // Get survey by id
     async getSurveyById(req, res, next) {
