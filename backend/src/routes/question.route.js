@@ -14,7 +14,7 @@ router.post(
     "/:survey_id",
     authMiddleware.checkRole('admin'),
     validate(createQuestionRequest),
-    QuestionController.createQuestions
+    QuestionController.create
 );
 
 // Get all questions of survey

@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 
-export default (sequelize, DataTypes) => {
+export default (sequelize) => {
     const Survey = sequelize.define("Survey", {
         id: {
             type: DataTypes.UUID,
@@ -47,14 +47,14 @@ export default (sequelize, DataTypes) => {
             validate: {
                 isAfterStart(value) {
                     if (this.start_at && value && value <= this.start_at) {
-                        throw new Error("end_at must be after start_at", 400);
+                        throw new Error("end_at must be after start_at");
                     }
                 }
             }
         },
 
         settings: {
-            type: DataTypes.JSONB,
+            type: DataTypes.JSON,
             allowNull: true,
             defaultValue: {}
         }

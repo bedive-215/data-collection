@@ -56,9 +56,11 @@ class ResponseService {
             });
 
             // preload options
-            const optionIds = answers
-                .filter(a => a.option_id)
-                .map(a => a.option_id);
+            const optionIds = answers.flatMap(a => {
+                if (a.option_id) return [a.option_id];
+                if (Array.isArray(a.option_ids)) return a.option_ids;
+                return [];
+            });
 
             const options = await this.QuestionOption.findAll({
                 where: {
@@ -97,21 +99,40 @@ class ResponseService {
                 }
 
                 // TEXT
-                if (question.type === "TEXT") {
-                    if (!ans.answer_text) {
+                // TEXT TYPES
+                if (
+                    [
+                        "TEXT",
+                        "PARAGRAPH",
+                        "EMAIL",
+                        "NUMBER",
+                        "DATE",
+                        "RATING"
+                    ].includes(question.type)
+                ) {
+
+                    if (
+                        ans.answer_text === undefined ||
+                        ans.answer_text === null ||
+                        ans.answer_text === ""
+                    ) {
                         throw new AppError("Answer text required", 400);
                     }
 
                     answerRecords.push({
                         response_id: response.id,
                         question_id: question.id,
-                        answer_text: ans.answer_text,
+                        answer_text: String(ans.answer_text),
                         option_id: null
                     });
                 }
 
-                // CHOICE
-                else {
+                // CHOICE TYPES
+                // SINGLE_CHOICE + DROPDOWN
+                else if (
+                    ["SINGLE_CHOICE", "DROPDOWN"].includes(question.type)
+                ) {
+
                     if (!ans.option_id) {
                         throw new AppError("Option is required", 400);
                     }
@@ -128,6 +149,34 @@ class ResponseService {
                         option_id: option.id,
                         answer_text: null
                     });
+                }
+
+                // MULTIPLE_CHOICE
+                else if (question.type === "MULTIPLE_CHOICE") {
+
+                    if (!Array.isArray(ans.option_ids) || ans.option_ids.length === 0) {
+                        throw new AppError("Options are required", 400);
+                    }
+
+                    for (const optionId of ans.option_ids) {
+
+                        const option = optionMap[optionId];
+
+                        if (!option || option.question_id !== question.id) {
+                            throw new AppError("Invalid option", 400);
+                        }
+
+                        answerRecords.push({
+                            response_id: response.id,
+                            question_id: question.id,
+                            option_id: option.id,
+                            answer_text: null
+                        });
+                    }
+                }
+
+                else {
+                    throw new AppError("Unsupported question type", 400);
                 }
             }
 
@@ -315,23 +364,49 @@ class ResponseService {
             for (const ans of answers) {
                 const question = questionMap[ans.question_id];
 
-                if (question.type === "TEXT") {
-                    if (!ans.answer_text) {
+                // TEXT TYPES
+                if (
+                    [
+                        "TEXT",
+                        "PARAGRAPH",
+                        "EMAIL",
+                        "NUMBER",
+                        "DATE",
+                        "RATING"
+                    ].includes(question.type)
+                ) {
+
+                    if (
+                        ans.answer_text === undefined ||
+                        ans.answer_text === null ||
+                        ans.answer_text === ""
+                    ) {
                         throw new AppError("Answer text required", 400);
                     }
 
                     answerRecords.push({
                         response_id: response.id,
                         question_id: question.id,
-                        answer_text: ans.answer_text,
+                        answer_text: String(ans.answer_text),
                         option_id: null
                     });
-                } else {
+                }
+
+                // CHOICE TYPES
+                else if (
+                    [
+                        "SINGLE_CHOICE",
+                        "MULTIPLE_CHOICE",
+                        "DROPDOWN"
+                    ].includes(question.type)
+                ) {
+
                     if (!ans.option_id) {
-                        throw new AppError("Option required", 400);
+                        throw new AppError("Option is required", 400);
                     }
 
                     const option = optionMap[ans.option_id];
+
                     if (!option || option.question_id !== question.id) {
                         throw new AppError("Invalid option", 400);
                     }
@@ -342,6 +417,10 @@ class ResponseService {
                         option_id: option.id,
                         answer_text: null
                     });
+                }
+
+                else {
+                    throw new AppError("Unsupported question type", 400);
                 }
             }
 
