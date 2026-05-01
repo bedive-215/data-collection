@@ -1,6 +1,5 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import { Op } from "sequelize";
 
 class ResponseService {
     constructor() {
@@ -10,39 +9,61 @@ class ResponseService {
         this.QuestionOption = models.QuestionOption;
         this.Survey = models.Survey;
         this.sequelize = models.sequelize;
+        this.User = models.User;
     }
 
+    // ===================== MAPPER =====================
+    _mapAnswerToResponse(answers, optionMap = {}) {
+        return answers.map(a => {
+            let answerValue = null;
+
+            if (a.answer_text) {
+                answerValue = a.answer_text;
+            } else if (a.answer_number !== null && a.answer_number !== undefined) {
+                answerValue = a.answer_number;
+            } else if (a.option) {
+                answerValue = a.option.content;
+            } else if (a.selected_options) {
+                answerValue = a.selected_options.map(id => optionMap[id] || id);
+            }
+
+            return {
+                question_id: a.question.id,
+                question: a.question.content,
+                type: a.question.type,
+                answer: answerValue
+            };
+        });
+    }
+
+    async _checkOwnership(response, user) {
+        if (response.user_id !== user.id && user.role !== "ADMIN") {
+            throw new AppError("Forbidden", 403);
+        }
+    }
+
+    // ===================== SUBMIT =====================
     async submitSurvey(user_id, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!answers || answers.length === 0) {
-            throw new AppError("Answers are required", 400);
-        }
+        if (!answers?.length) throw new AppError("Answers are required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
-            // check duplicate
             const existing = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
             });
 
-            if (existing) {
-                throw new AppError("You already submitted this survey!", 400);
-            }
+            if (existing) throw new AppError("Already submitted", 400);
 
-            // validate duplicate question
             const questionIds = answers.map(a => a.question_id);
             if (new Set(questionIds).size !== questionIds.length) {
-                throw new AppError("Duplicate question in answers", 400);
+                throw new AppError("Duplicate question", 400);
             }
 
-            // get questions 
             const questions = await this.Question.findAll({
-                where: {
-                    id: questionIds,
-                    survey_id
-                },
+                where: { id: questionIds, survey_id },
                 transaction
             });
 
@@ -50,137 +71,93 @@ class ResponseService {
                 throw new AppError("Invalid questions", 400);
             }
 
-            const questionMap = {};
-            questions.forEach(q => {
-                questionMap[q.id] = q;
-            });
+            const questionMap = Object.fromEntries(
+                questions.map(q => [q.id, q])
+            );
 
             // preload options
-            const optionIds = answers.flatMap(a => {
-                if (a.option_id) return [a.option_id];
-                if (Array.isArray(a.option_ids)) return a.option_ids;
-                return [];
-            });
+            const optionIds = answers.flatMap(a =>
+                a.option_id ? [a.option_id] : a.option_ids || []
+            );
 
             const options = await this.QuestionOption.findAll({
-                where: {
-                    id: optionIds
-                },
+                where: { id: optionIds },
                 transaction
             });
 
-            const optionMap = {};
-            options.forEach(o => {
-                optionMap[o.id] = o;
-            });
+            const optionMap = Object.fromEntries(
+                options.map(o => [o.id, o])
+            );
 
-            // create response
-            let response;
-            try {
-                response = await this.Response.create({
-                    survey_id,
-                    user_id: user_id || null
-                }, { transaction });
-            } catch (err) {
-                if (err.name === "SequelizeUniqueConstraintError") {
-                    throw new AppError("You already submitted this survey!", 400);
-                }
-                throw err;
-            }
+            const response = await this.Response.create({
+                survey_id,
+                user_id,
+                submitted_at: new Date()
+            }, { transaction });
 
-            // build answers
             const answerRecords = [];
 
             for (const ans of answers) {
-                const question = questionMap[ans.question_id];
-
-                if (!question) {
-                    throw new AppError("Invalid question", 400);
-                }
+                const q = questionMap[ans.question_id];
+                if (!q) throw new AppError("Invalid question", 400);
 
                 // TEXT
-                // TEXT TYPES
-                if (
-                    [
-                        "TEXT",
-                        "PARAGRAPH",
-                        "EMAIL",
-                        "NUMBER",
-                        "DATE",
-                        "RATING"
-                    ].includes(question.type)
-                ) {
-
-                    if (
-                        ans.answer_text === undefined ||
-                        ans.answer_text === null ||
-                        ans.answer_text === ""
-                    ) {
-                        throw new AppError("Answer text required", 400);
-                    }
-
+                if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
                     answerRecords.push({
                         response_id: response.id,
-                        question_id: question.id,
-                        answer_text: String(ans.answer_text),
-                        option_id: null
+                        question_id: q.id,
+                        answer_text: ans.answer_text
                     });
                 }
 
-                // CHOICE TYPES
-                // SINGLE_CHOICE + DROPDOWN
-                else if (
-                    ["SINGLE_CHOICE", "DROPDOWN"].includes(question.type)
-                ) {
+                // NUMBER
+                else if (["NUMBER", "RATING"].includes(q.type)) {
+                    answerRecords.push({
+                        response_id: response.id,
+                        question_id: q.id,
+                        answer_number: Number(ans.answer_text)
+                    });
+                }
 
-                    if (!ans.option_id) {
-                        throw new AppError("Option is required", 400);
-                    }
-
+                // SINGLE
+                else if (["SINGLE_CHOICE", "DROPDOWN"].includes(q.type)) {
                     const option = optionMap[ans.option_id];
-
-                    if (!option || option.question_id !== question.id) {
+                    if (!option || option.question_id !== q.id) {
                         throw new AppError("Invalid option", 400);
                     }
 
                     answerRecords.push({
                         response_id: response.id,
-                        question_id: question.id,
-                        option_id: option.id,
-                        answer_text: null
+                        question_id: q.id,
+                        option_id: option.id
                     });
                 }
 
-                // MULTIPLE_CHOICE
-                else if (question.type === "MULTIPLE_CHOICE") {
-
-                    if (!Array.isArray(ans.option_ids) || ans.option_ids.length === 0) {
-                        throw new AppError("Options are required", 400);
+                // MULTIPLE
+                else if (q.type === "MULTIPLE_CHOICE") {
+                    if (!Array.isArray(ans.option_ids) || !ans.option_ids.length) {
+                        throw new AppError("Options required", 400);
                     }
 
-                    for (const optionId of ans.option_ids) {
-
-                        const option = optionMap[optionId];
-
-                        if (!option || option.question_id !== question.id) {
+                    ans.option_ids.forEach(id => {
+                        const option = optionMap[id];
+                        if (!option || option.question_id !== q.id) {
                             throw new AppError("Invalid option", 400);
                         }
+                    });
 
-                        answerRecords.push({
-                            response_id: response.id,
-                            question_id: question.id,
-                            option_id: option.id,
-                            answer_text: null
-                        });
-                    }
+                    answerRecords.push({
+                        response_id: response.id,
+                        question_id: q.id,
+                        selected_options: ans.option_ids
+                    });
                 }
 
                 else {
-                    throw new AppError("Unsupported question type", 400);
+                    throw new AppError("Unsupported type", 400);
                 }
             }
 
-            // bulk insert
             await this.Answer.bulkCreate(answerRecords, { transaction });
 
             await transaction.commit();
@@ -212,28 +189,39 @@ class ResponseService {
                         {
                             model: this.QuestionOption,
                             as: "option",
-                            attributes: ["id", "content"],
+                            attributes: ["id", "label"],
                             required: false
                         }
                     ]
                 }
             ],
             order: [
-                [{ model: this.Answer, as: "answers" }, { model: this.Question, as: "question" }, "order_index", "ASC"]
+                [{ model: this.Answer, as: "answers" },
+                 { model: this.Question, as: "question" },
+                 "order_index", "ASC"]
             ]
         });
 
+        const optionIds = responses.flatMap(r =>
+            r.answers.flatMap(a => a.selected_options || [])
+        );
+
+        const options = await this.QuestionOption.findAll({
+            where: { id: optionIds }
+        });
+
+        const optionMap = Object.fromEntries(
+            options.map(o => [o.id, o.content])
+        );
 
         const result = responses.map(r => ({
             response_id: r.id,
-            submitted_at: r.createdAt,
-            answers: r.answers.map(a => ({
-                question_id: a.question.id,
-                question: a.question.content,
-                type: a.question.type,
-                answer: a.answer_text || a.option?.content
-            }))
+            submitted_at: r.submitted_at,
+            answers: this._mapAnswerToResponse(r.answers, optionMap)
         }));
+
+        // console.log("Option Map:", optionMap);
+        // console.log("Mapped Answers:", result.flatMap(r => r.answers));
 
         return {
             message: "Get user answers successfully",
@@ -263,7 +251,7 @@ class ResponseService {
                         {
                             model: this.QuestionOption,
                             as: "option",
-                            attributes: ["id", "content"],
+                            attributes: ["id", "label"],
                             required: false
                         }
                     ]
@@ -273,47 +261,46 @@ class ResponseService {
 
         if (!response) throw new AppError("Response not found", 404);
 
+        const optionIds = response.answers.flatMap(a => a.selected_options || []);
+
+        const options = await this.QuestionOption.findAll({
+            where: { id: optionIds }
+        });
+
+        const optionMap = Object.fromEntries(
+            options.map(o => [o.id, o.content])
+        );
+
         return {
             response_id: response.id,
             survey: response.survey,
-            submitted_at: response.createdAt,
-            answers: response.answers.map(a => ({
-                question: a.question.content,
-                type: a.question.type,
-                answer: a.answer_text || a.option?.content
-            }))
+            submitted_at: response.submitted_at,
+            answers: this._mapAnswerToResponse(response.answers, optionMap)
         };
     }
 
     async deleteResponse(user_id, response_id) {
-        if (!response_id) {
-            throw new AppError("Response id is required", 400);
-        }
+        const response = await this.Response.findOne({
+            where: { id: response_id, user_id }
+        });
 
-        if (!user_id) {
-            throw new AppError("User id is required", 400);
-        }
+        if (!response) throw new AppError("Response not found", 404);
 
-        const response = await this.Response.findByPk(response_id);
+        const user = await this.User.findByPk(user_id);
 
-        if (!response) {
-            throw new AppError("Response not found", 404);
-        }
+        if (!user) throw new AppError("User not found", 404);
+
+        this._checkOwnership(response, user);
 
         await this.Response.destroy({
             where: { id: response_id }
         });
 
-        return {
-            message: "Delete response successfully"
-        };
+        return { message: "Delete response successfully" };
     }
 
     async updateResponse(user_id, survey_id, answers) {
-        if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!answers || answers.length === 0) {
-            throw new AppError("Answers are required", 400);
-        }
+        if (!answers?.length) throw new AppError("Answers required", 400);
 
         const transaction = await this.sequelize.transaction();
 
@@ -323,114 +310,24 @@ class ResponseService {
                 transaction
             });
 
-            if (!response) {
-                throw new AppError("Response not found", 404);
-            }
-            const questionIds = answers.map(a => a.question_id);
-            if (new Set(questionIds).size !== questionIds.length) {
-                throw new AppError("Duplicate question", 400);
-            }
-            const questions = await this.Question.findAll({
-                where: { id: questionIds, survey_id },
-                transaction
-            });
+            if (!response) throw new AppError("Response not found", 404);
+            
+            const user = await this.User.findByPk(user_id);
 
-            if (questions.length !== questionIds.length) {
-                throw new AppError("Invalid questions", 400);
-            }
+            if (!user) throw new AppError("User not found", 404);
 
-            const questionMap = {};
-            questions.forEach(q => (questionMap[q.id] = q));
-
-            const optionIds = answers
-                .filter(a => a.option_id)
-                .map(a => a.option_id);
-
-            const options = await this.QuestionOption.findAll({
-                where: { id: optionIds },
-                transaction
-            });
-
-            const optionMap = {};
-            options.forEach(o => (optionMap[o.id] = o));
+            this._checkOwnership(response, user);
 
             await this.Answer.destroy({
                 where: { response_id: response.id },
                 transaction
             });
 
-            const answerRecords = [];
-
-            for (const ans of answers) {
-                const question = questionMap[ans.question_id];
-
-                // TEXT TYPES
-                if (
-                    [
-                        "TEXT",
-                        "PARAGRAPH",
-                        "EMAIL",
-                        "NUMBER",
-                        "DATE",
-                        "RATING"
-                    ].includes(question.type)
-                ) {
-
-                    if (
-                        ans.answer_text === undefined ||
-                        ans.answer_text === null ||
-                        ans.answer_text === ""
-                    ) {
-                        throw new AppError("Answer text required", 400);
-                    }
-
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: question.id,
-                        answer_text: String(ans.answer_text),
-                        option_id: null
-                    });
-                }
-
-                // CHOICE TYPES
-                else if (
-                    [
-                        "SINGLE_CHOICE",
-                        "MULTIPLE_CHOICE",
-                        "DROPDOWN"
-                    ].includes(question.type)
-                ) {
-
-                    if (!ans.option_id) {
-                        throw new AppError("Option is required", 400);
-                    }
-
-                    const option = optionMap[ans.option_id];
-
-                    if (!option || option.question_id !== question.id) {
-                        throw new AppError("Invalid option", 400);
-                    }
-
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: question.id,
-                        option_id: option.id,
-                        answer_text: null
-                    });
-                }
-
-                else {
-                    throw new AppError("Unsupported question type", 400);
-                }
-            }
-
-            await this.Answer.bulkCreate(answerRecords, { transaction });
+            await this.submitSurvey(user_id, survey_id, answers);
 
             await transaction.commit();
 
-            return {
-                message: "Update response successfully"
-            };
+            return { message: "Update response successfully" };
 
         } catch (err) {
             await transaction.rollback();
@@ -439,21 +336,18 @@ class ResponseService {
     }
 
     async getAllResponsesByUserId(user_id) {
-        if (!user_id) {
-            throw new AppError("User id is required", 400);
-        }
         const responses = await this.Response.findAll({
             where: { user_id },
-            attributes: ["id", "survey_id", "user_id", "created_at"],
             include: [
                 {
                     model: this.Survey,
                     as: "survey",
-                    attributes: ["title", "description", "created_at"]
+                    attributes: ["title", "description"]
                 }
             ],
             order: [["created_at", "DESC"]]
         });
+
         return {
             message: "Get responses successfully",
             count: responses.length,

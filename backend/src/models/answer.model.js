@@ -7,6 +7,7 @@ export default (sequelize) => {
             primaryKey: true,
             defaultValue: DataTypes.UUIDV4
         },
+
         response_id: {
             type: DataTypes.UUID,
             allowNull: false,
@@ -16,6 +17,7 @@ export default (sequelize) => {
             },
             onDelete: "CASCADE"
         },
+
         question_id: {
             type: DataTypes.UUID,
             allowNull: false,
@@ -25,23 +27,43 @@ export default (sequelize) => {
             },
             onDelete: "CASCADE"
         },
+
+        // SINGLE_CHOICE
         option_id: {
             type: DataTypes.UUID,
             allowNull: true,
             references: {
                 model: "question_options",
                 key: "id"
-            },
-            onDelete: "CASCADE"
+            }
         },
+
+        // MULTIPLE_CHOICE
+        selected_options: {
+            type: DataTypes.JSON, // [option_id1, option_id2]
+            allowNull: true
+        },
+
+        // TEXT / EMAIL / PARAGRAPH
         answer_text: {
             type: DataTypes.TEXT,
             allowNull: true
+        },
+
+        // NUMBER / RATING
+        answer_number: {
+            type: DataTypes.FLOAT,
+            allowNull: true
         }
+
     }, {
         tableName: "answers",
         timestamps: false,
-        underscored: true
+        underscored: true,
+        indexes: [
+            { fields: ["response_id"] },
+            { fields: ["question_id"] }
+        ]
     });
 
     return Answer;

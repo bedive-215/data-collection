@@ -24,6 +24,10 @@ export default (sequelize) => {
                 key: "id"
             },
             onDelete: "SET NULL"
+        },
+        submitted_at: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         tableName: "responses",
