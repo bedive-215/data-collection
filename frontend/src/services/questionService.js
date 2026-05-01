@@ -2,7 +2,7 @@
 import apiClient from "@/api/apiClient";
 
 export const questionService = {
-  // 🟢 Tạo question (kèm options nếu có)
+  // 🟢 Tạo 1 question (kèm options nếu có)
   createQuestions: (surveyId, payload) =>
     apiClient.post(`/api/v1/questions/${surveyId}`, payload),
 
@@ -18,14 +18,14 @@ export const questionService = {
   deleteQuestion: (questionId) =>
     apiClient.delete(`/api/v1/questions/${questionId}`),
 
-  // 🔵 Reorder questions
-  // BE nhận: [{ id, order_index }] — phải dùng "order_index", không phải "order"
+  // 🔵 Reorder questions — payload: [{ id, order_index }]
   reorderQuestions: (surveyId, payload) =>
     apiClient.patch(`/api/v1/questions/${surveyId}/reorder`, payload),
 
-  // 🟣 Bulk update questions
-  bulkUpdateQuestions: (surveyId, payload) =>
-    apiClient.patch(`/api/v1/questions/${surveyId}/bulk`, payload),
+  // 🟣 Bulk CREATE questions — đổi PATCH → POST cho đúng BE route
+  //    payload: [{ content, type, required, order_index, settings, options }]
+  bulkCreateQuestions: (surveyId, payload) =>
+    apiClient.post(`/api/v1/questions/${surveyId}/bulk`, payload),
 };
 
 export default questionService;

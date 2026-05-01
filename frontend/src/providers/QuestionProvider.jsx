@@ -11,36 +11,103 @@ export const useQuestion = () => {
   return ctx;
 };
 
+/* ─────────────────────────────────────────────────────────────────────
+ * normalize: chuẩn hóa question từ BE response về FE format
+ *
+ * BE trả về type uppercase (khớp Joi enum):
+ *   "TEXT" | "PARAGRAPH" | "EMAIL" | "DATE" | "NUMBER" |
+ *   "RATING" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "DROPDOWN"
+ *
+ * Nếu BE (sequelize) lưu lowercase → cũng được xử lý qua BE_TO_FE_TYPE
+ * ───────────────────────────────────────────────────────────────────── */
+const BE_TO_FE_TYPE = {
+  // lowercase legacy (sequelize storage)
+  text:            "TEXT",
+  paragraph:       "PARAGRAPH",
+  email:           "EMAIL",
+  date:            "DATE",
+  number:          "NUMBER",
+  rating:          "RATING",
+  single_choice:   "SINGLE_CHOICE",
+  multiple_choice: "MULTIPLE_CHOICE",
+  dropdown:        "DROPDOWN",
+  // uppercase passthrough
+  TEXT:            "TEXT",
+  PARAGRAPH:       "PARAGRAPH",
+  EMAIL:           "EMAIL",
+  DATE:            "DATE",
+  NUMBER:          "NUMBER",
+  RATING:          "RATING",
+  SINGLE_CHOICE:   "SINGLE_CHOICE",
+  MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
+  DROPDOWN:        "DROPDOWN",
+};
+
+/**
+ * Normalize option từ BE response
+ * BE trả về options[] dạng object { id, label, value, order_index, is_other }
+ * Cũng handle legacy string[] nếu có
+ */
+const normalizeOption = (opt, index) => {
+  if (typeof opt === "string") {
+    return {
+      id:          index,
+      label:       opt,
+      value:       opt,
+      order_index: index,
+      is_other:    false,
+    };
+  }
+  return {
+    id:          opt.id,
+    label:       opt.label ?? "",
+    value:       opt.value ?? "",
+    order_index: opt.order_index ?? index,
+    is_other:    opt.is_other ?? false,
+  };
+};
+
+/**
+ * Normalize question từ BE → FE format
+ * Hỗ trợ cả hai key: "options" (mới, BE chuẩn) và "option" (legacy)
+ */
+const normalize = (q) => ({
+  id:          q.id,
+  survey_id:   q.survey_id,
+  content:     q.content,
+  type:        BE_TO_FE_TYPE[q.type] ?? "TEXT",   // map → uppercase FE enum
+  required:    q.required ?? true,
+  order_index: q.order_index ?? 0,
+  settings:    q.settings ?? null,
+  // Ưu tiên "options" (BE chuẩn), fallback "option" (legacy)
+  options:     (q.options ?? q.option ?? []).map(normalizeOption),
+});
+
 const QuestionProvider = ({ children }) => {
   const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState(null);
 
-  /* ========= NORMALIZE ========= */
-  const normalize = (q) => ({
-    id: q.id,
-    survey_id: q.survey_id,
-    content: q.content,
-    type: q.type,
-    required: q.required,
-    order_index: q.order_index,
-    options: q.options || [],
-  });
-
-  /* ========= CREATE ========= */
+  /* ── CREATE ─────────────────────────────────────────────────────
+   * payload đúng BE Joi schema:
+   *   { content, type (uppercase), required, order_index, settings,
+   *     options: [{ label, value, order_index?, is_other? }] }
+   * ─────────────────────────────────────────────────────────────── */
   const createQuestion = async (surveyId, payload) => {
     setLoading(true);
     try {
-      const res = await questionService.createQuestions(surveyId, payload);
-      const data = res.data ?? res;
+      const res  = await questionService.createQuestions(surveyId, payload);
+      const data = res.data;
 
+      // BE res: { message, question: { ...question, options: [] } }
       const created = normalize(data.question);
-      setQuestions((prev) => [...prev, created]);
+      if (!created?.id) throw new Error("BE không trả về question.id");
 
+      setQuestions((prev) => [...prev, created]);
       toast.success("Tạo câu hỏi thành công!");
       return created;
     } catch (err) {
-      const msg = err.response?.data?.message || "Tạo thất bại";
+      const msg = err.response?.data?.message || "Tạo câu hỏi thất bại";
       setError(msg);
       toast.error(msg);
       throw err;
@@ -49,19 +116,21 @@ const QuestionProvider = ({ children }) => {
     }
   };
 
-  /* ========= GET ========= */
+  /* ── GET BY SURVEY ──────────────────────────────────────────────
+   * BE res: { message, count, questions[] }
+   * questions[i].options: [{ id, label, value, order_index, is_other }]
+   * ─────────────────────────────────────────────────────────────── */
   const fetchQuestionsBySurvey = useCallback(async (surveyId) => {
     setLoading(true);
     try {
-      const res = await questionService.getQuestionsBySurvey(surveyId);
-      const data = res.data ?? res;
+      const res  = await questionService.getQuestionsBySurvey(surveyId);
+      const data = res.data;
 
       const list = (data.questions || []).map(normalize);
       setQuestions(list);
-
       return list;
     } catch (err) {
-      const msg = err.response?.data?.message || "Fetch thất bại";
+      const msg = err.response?.data?.message || "Lấy danh sách câu hỏi thất bại";
       setError(msg);
       toast.error(msg);
       throw err;
@@ -70,82 +139,98 @@ const QuestionProvider = ({ children }) => {
     }
   }, []);
 
-  /* ========= UPDATE ========= */
-  const updateQuestion = async (questionId, payload) => {
+  /* ── UPDATE ─────────────────────────────────────────────────────
+   * payload đúng BE Joi schema:
+   *   { content?, type? (uppercase), required?, settings?,
+   *     options?: [{ label, value, order_index?, is_other? }] }
+   * BE res: { message, question } — question có thể không có options
+   * → fetch lại để sync
+   * ─────────────────────────────────────────────────────────────── */
+  const updateQuestion = async (questionId, surveyId, payload) => {
+    setLoading(true);
     try {
-      const res = await questionService.updateQuestion(questionId, payload);
-      const data = res.data ?? res;
+      const res  = await questionService.updateQuestion(questionId, payload);
+      const data = res.data;
 
-      const updated = normalize(data.question);
+      // Fetch lại để đảm bảo options được sync đầy đủ
+      await fetchQuestionsBySurvey(surveyId);
 
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === questionId ? updated : q))
-      );
-
-      toast.success("Cập nhật thành công!");
-      return updated;
+      toast.success("Cập nhật câu hỏi thành công!");
+      return normalize(data.question);
     } catch (err) {
-      const msg = err.response?.data?.message || "Update thất bại";
+      const msg = err.response?.data?.message || "Cập nhật câu hỏi thất bại";
       toast.error(msg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ========= DELETE ========= */
+  /* ── DELETE ─────────────────────────────────────────────────────
+   * BE res: { message }
+   * ─────────────────────────────────────────────────────────────── */
   const deleteQuestion = async (questionId) => {
-    if (!window.confirm("Xóa câu hỏi?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) return;
 
+    setLoading(true);
     try {
       await questionService.deleteQuestion(questionId);
-
       setQuestions((prev) => prev.filter((q) => q.id !== questionId));
-
-      toast.success("Xóa thành công!");
+      toast.success("Xóa câu hỏi thành công!");
     } catch (err) {
-      const msg = err.response?.data?.message || "Delete thất bại";
+      const msg = err.response?.data?.message || "Xóa câu hỏi thất bại";
       toast.error(msg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ========= REORDER ========= */
-  // FIX: payload phải dùng key "order_index" để khớp với BE
-  // Đúng format: [{ id: 1, order_index: 0 }, { id: 2, order_index: 1 }, ...]
-  const reorderQuestions = async (surveyId, payload) => {
+  /* ── REORDER ────────────────────────────────────────────────────
+   * payload: [{ id, order_index }]
+   * BE res:  { message }
+   * ─────────────────────────────────────────────────────────────── */
+  const reorderQuestions = async (surveyId, orderedItems) => {
+    setLoading(true);
     try {
-      await questionService.reorderQuestions(surveyId, payload);
+      await questionService.reorderQuestions(surveyId, orderedItems);
 
-      // Cập nhật local state theo order_index mới
       setQuestions((prev) => {
-        const map = Object.fromEntries(
-          payload.map((i) => [i.id, i.order_index]) // ✅ dùng "order_index"
+        const indexMap = Object.fromEntries(
+          orderedItems.map((item) => [item.id, item.order_index])
         );
-        return [...prev].sort((a, b) => map[a.id] - map[b.id]);
+        return [...prev].sort((a, b) => indexMap[a.id] - indexMap[b.id]);
       });
 
-      toast.success("Sắp xếp thành công!");
+      toast.success("Sắp xếp câu hỏi thành công!");
     } catch (err) {
-      toast.error("Reorder thất bại");
+      const msg = err.response?.data?.message || "Sắp xếp thất bại";
+      toast.error(msg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ========= BULK UPDATE ========= */
-  // FIX: BE trả về { message } không có "questions"
-  // → Sau bulk update, fetch lại danh sách mới nhất từ server để đồng bộ state
-  const bulkUpdateQuestions = async (surveyId, payload) => {
+  /* ── BULK CREATE ────────────────────────────────────────────────
+   * payload: [{ content, type, required, order_index, settings,
+   *             options: [{ label, value }] }]
+   * BE res:  { message, total, questions[] }
+   * ─────────────────────────────────────────────────────────────── */
+  const bulkCreateQuestions = async (surveyId, questionsPayload) => {
+    setLoading(true);
     try {
-      await questionService.bulkUpdateQuestions(surveyId, payload);
+      await questionService.bulkCreateQuestions(surveyId, questionsPayload);
 
-      // BE không trả về questions sau bulk update
-      // → Fetch lại để đảm bảo state luôn đúng
-      const updatedList = await fetchQuestionsBySurvey(surveyId);
-
-      toast.success("Bulk update thành công!");
-      return updatedList;
+      const createdList = await fetchQuestionsBySurvey(surveyId);
+      toast.success("Tạo hàng loạt câu hỏi thành công!");
+      return createdList;
     } catch (err) {
-      toast.error("Bulk update thất bại");
+      const msg = err.response?.data?.message || "Tạo hàng loạt thất bại";
+      toast.error(msg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,12 +241,12 @@ const QuestionProvider = ({ children }) => {
         loading,
         error,
 
-        createQuestion,
-        fetchQuestionsBySurvey,
-        updateQuestion,
-        deleteQuestion,
-        reorderQuestions,
-        bulkUpdateQuestions,
+        createQuestion,         // (surveyId, payload) → question
+        fetchQuestionsBySurvey, // (surveyId) → question[]
+        updateQuestion,         // (questionId, surveyId, payload) → void
+        deleteQuestion,         // (questionId) → void
+        reorderQuestions,       // (surveyId, [{ id, order_index }]) → void
+        bulkCreateQuestions,    // (surveyId, payload[]) → question[]
 
         setQuestions,
       }}

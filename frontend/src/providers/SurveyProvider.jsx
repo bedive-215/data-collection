@@ -11,18 +11,23 @@ export const useSurvey = () => {
 };
 
 const SurveyProvider = ({ children }) => {
-  const [surveys, setSurveys]               = useState([]);
-  const [currentSurvey, setCurrentSurvey]   = useState(null);
-  const [loading, setLoading]               = useState(false);
-  const [error, setError]                   = useState(null);
+  const [surveys, setSurveys]             = useState([]);
+  const [currentSurvey, setCurrentSurvey] = useState(null);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState(null);
 
+  // Khớp với _mapSurvey + _mapSurveyDetail của BE
   const normalizeSurvey = (s) => ({
-    id:          s.id,
-    title:       s.title,
-    description: s.description,
-    created_by:  s.created_by,
-    createdAt:   s.createdAt,
-    updatedAt:   s.updatedAt,
+    id:           s.id,
+    title:        s.title,
+    description:  s.description ?? null,
+    is_published: s.is_published,
+    start_at:     s.start_at ?? null,
+    end_at:       s.end_at ?? null,
+    status:       s.status ?? null,
+    created_by:   s.created_by ?? null,
+    created_at:   s.created_at,        // snake_case — khớp BE
+    questions:    s.questions ?? [],   // chỉ có khi gọi getSurveyById
   });
 
   const handleError = (err, fallback) => {
@@ -47,11 +52,14 @@ const SurveyProvider = ({ children }) => {
   };
 
   // ── GET BY ID ──
+  // ⚠️ BE chỉ trả về nếu status = ACTIVE
+  // Dùng cho public form, không dùng cho dashboard owner
   const fetchSurveyById = useCallback(async (surveyId) => {
     setLoading(true); setError(null);
     try {
-      const res    = await surveyService.getSurveyById(surveyId);
-      const data   = res.data ?? res;
+      const res  = await surveyService.getSurveyById(surveyId);
+      const data = res.data ?? res;
+      // BE trả về _mapSurveyDetail: có status + questions
       const survey = normalizeSurvey(data.survey ?? data);
       setCurrentSurvey(survey);
       return survey;
@@ -72,67 +80,44 @@ const SurveyProvider = ({ children }) => {
     finally { setLoading(false); }
   }, []);
 
-  // ── GET ALL ──
+  // ── GET ALL (admin) ──
+  // ⚠️ Đổi tên thành getAllSurveys (có "s") cho khớp
   const fetchAllSurveys = useCallback(async (params) => {
     setLoading(true); setError(null);
     try {
-      const res  = await surveyService.getAllSurveys(params);
+      const res  = await surveyService.getAllSurveys(params); // có "s"
       const data = res.data ?? res;
       const list = (data.surveys ?? []).map(normalizeSurvey);
       setSurveys(list);
-      return list;
+      return { list, totalPages: data.totalPages, page: data.page };
     } catch (err) { handleError(err, "Không lấy được surveys"); }
     finally { setLoading(false); }
   }, []);
 
   // ── UPDATE ──
-const updateSurvey = async (surveyId, payload) => {
-  setLoading(true);
-  setError(null);
-
-  try {
-    const res = await surveyService.updateSurvey(surveyId, payload);
-
-    console.log("DATA:", res.data);
-
-    const data = res.data;
-
-    // fallback mạnh hơn
-    const surveyData =
-      data.survey ||
-      data.data ||
-      data;
-
-    // ⚠️ nếu vẫn không có id → giữ id cũ
-    const updated = normalizeSurvey({
-      ...surveyData,
-      id: surveyData.id || surveyId,
-    });
-
-    setSurveys((prev) =>
-      prev.map((s) => (s.id === surveyId ? updated : s))
-    );
-
-    if (currentSurvey?.id === surveyId) {
-      setCurrentSurvey(updated);
-    }
-
-    toast.success("Cập nhật survey thành công!");
-    return updated;
-
-  } catch (err) {
-    handleError(err, "Cập nhật survey thất bại");
-  } finally {
-    setLoading(false);
-  }
-};
+  const updateSurvey = async (surveyId, payload) => {
+    setLoading(true); setError(null);
+    try {
+      const res     = await surveyService.updateSurvey(surveyId, payload);
+      const data    = res.data ?? res;
+      const updated = normalizeSurvey({
+        ...(data.survey ?? data),
+        id: data.survey?.id ?? data.id ?? surveyId, // giữ id nếu BE không trả
+      });
+      setSurveys((prev) => prev.map((s) => (s.id === surveyId ? updated : s)));
+      if (currentSurvey?.id === surveyId) setCurrentSurvey(updated);
+      toast.success("Cập nhật survey thành công!");
+      return updated;
+    } catch (err) { handleError(err, "Cập nhật survey thất bại"); }
+    finally { setLoading(false); }
+  };
 
   // ── DELETE ──
   const deleteSurvey = async (surveyId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa survey này?")) return false;
     setLoading(true); setError(null);
     try {
-      await surveyService.deleteSurveyById(surveyId);
+      await surveyService.deleteSurveyById(surveyId); // ⚠️ tên có "ById"
       setSurveys((prev) => prev.filter((s) => s.id !== surveyId));
       if (currentSurvey?.id === surveyId) setCurrentSurvey(null);
       toast.success("Xóa survey thành công!");

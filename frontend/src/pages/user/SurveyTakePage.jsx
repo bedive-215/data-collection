@@ -7,13 +7,21 @@ import { useOption } from "@/providers/OptionProvider";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, CircleDot,
   AlignLeft, CheckSquare, Loader2, Send, Home,
+  FileText, Mail, Calendar, Hash, Star, ChevronDown,
+  GripVertical,
 } from "lucide-react";
 
 /* ── Type config ───────────────────────────────────────────────────── */
 const TYPE_CONFIG = {
-  TEXT:            { label: "Văn bản",        Icon: AlignLeft,   color: "#4f6ef7", bg: "#eef2ff", border: "#c7d2fe" },
-  SINGLE_CHOICE:   { label: "Một lựa chọn",   Icon: CircleDot,   color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" },
-  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", Icon: CheckSquare, color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+  TEXT:            { label: "Văn bản ngắn",   Icon: AlignLeft,    color: "#4f6ef7", bg: "#eef2ff", border: "#c7d2fe" },
+  PARAGRAPH:       { label: "Đoạn văn",       Icon: FileText,     color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
+  EMAIL:           { label: "Email",           Icon: Mail,         color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" },
+  DATE:            { label: "Ngày tháng",      Icon: Calendar,     color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+  NUMBER:          { label: "Số",              Icon: Hash,         color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
+  RATING:          { label: "Đánh giá",        Icon: Star,         color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
+  SINGLE_CHOICE:   { label: "Một lựa chọn",   Icon: CircleDot,    color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" },
+  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", Icon: CheckSquare,  color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+  DROPDOWN:        { label: "Danh sách thả",  Icon: ChevronDown,  color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe" },
 };
 
 /* ── ProgressBar ───────────────────────────────────────────────────── */
@@ -67,18 +75,14 @@ function SuccessScreen({ onGoHome }) {
         }}>
           <CheckCircle2 size={40} color="#16a34a" />
         </div>
-
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 10px" }}>
           Gửi thành công! 🎉
         </h2>
-
         <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 2rem", lineHeight: 1.7 }}>
           Câu trả lời của bạn đã được ghi nhận.<br />
           Cảm ơn bạn đã dành thời gian hoàn thành khảo sát này.
         </p>
-
         <div style={{ height: 1, background: "#f3f4f6", margin: "0 0 1.75rem" }} />
-
         <button
           onClick={onGoHome}
           style={{
@@ -98,7 +102,6 @@ function SuccessScreen({ onGoHome }) {
           Về trang chủ
         </button>
       </div>
-
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(24px); }
@@ -109,13 +112,167 @@ function SuccessScreen({ onGoHome }) {
   );
 }
 
+/* ── Helpers ───────────────────────────────────────────────────────── */
+function normalizeOption(opt, index = 0) {
+  const display =
+    (typeof opt.content === "string" && opt.content.trim()) ||
+    (typeof opt.label === "string" && opt.label.trim()) ||
+    (typeof opt.value === "string" && opt.value.trim()) ||
+    `Lựa chọn ${index + 1}`;
+
+  return {
+  id: opt.id || opt.option_id,
+  content: display,
+};
+}
+
+function resolveOptions(question, optionsMap) {
+  const raw = optionsMap?.[question.id];
+
+  let list;
+  if (Array.isArray(raw)) {
+    list = raw;
+  } else if (raw && Array.isArray(raw.data)) {
+    list = raw.data;
+  } else if (raw && Array.isArray(raw.options)) {
+    list = raw.options;
+  } else if (Array.isArray(question.options)) {
+    list = question.options;
+  } else {
+    list = [];
+  }
+
+  return list.map(normalizeOption).filter((o) => o.content !== "");
+}
+
+/* ── RatingInput ───────────────────────────────────────────────────── */
+function RatingInput({ settings, value, onChange }) {
+  const min = settings?.min ?? 1;
+  const max = settings?.max ?? 5;
+  const [hovered, setHovered] = useState(null);
+
+  const steps = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        {steps.map((star) => {
+          const active = hovered !== null ? star <= hovered : star <= (value ?? 0);
+          return (
+            <button
+              key={star}
+              onClick={() => onChange(star)}
+              onMouseEnter={() => setHovered(star)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                background: "none", border: "none", cursor: "pointer", padding: 2,
+                transition: "transform .12s",
+                transform: active ? "scale(1.15)" : "scale(1)",
+              }}
+            >
+              <Star
+                size={32}
+                fill={active ? "#f59e0b" : "transparent"}
+                color={active ? "#f59e0b" : "#d1d5db"}
+                strokeWidth={1.5}
+              />
+            </button>
+          );
+        })}
+      </div>
+      {value != null && (
+        <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+          Bạn chọn: <strong style={{ color: "#d97706" }}>{value} / {max}</strong>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ── DropdownInput ─────────────────────────────────────────────────── */
+function DropdownInput({ options, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.id === value);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          width: "100%", padding: "13px 16px",
+          border: `1.5px solid ${open ? "#6d28d9" : "#e5e7eb"}`,
+          borderRadius: 12, background: "#fafafa",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          fontSize: 14, color: selected ? "#111827" : "#9ca3af",
+          cursor: "pointer", fontFamily: "inherit", fontWeight: selected ? 600 : 400,
+          transition: "border-color .15s",
+        }}
+      >
+        {selected ? selected.content : "Chọn một lựa chọn..."}
+        <ChevronDown
+          size={16}
+          color="#6b7280"
+          style={{ transition: "transform .2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
+          background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 12,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.10)", overflow: "hidden",
+          animation: "fadeUp .15s ease",
+        }}>
+          {options.length === 0 && (
+            <p style={{ padding: "14px 16px", fontSize: 13, color: "#9ca3af", margin: 0 }}>Không có lựa chọn</p>
+          )}
+          {options.map((opt) => {
+            const sel = opt.id === value;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => { onChange(opt.id); setOpen(false); }}
+                style={{
+                  width: "100%", padding: "13px 16px", textAlign: "left",
+                  background: sel ? "#f5f3ff" : "transparent",
+                  border: "none", borderBottom: "1px solid #f3f4f6",
+                  fontSize: 14, color: sel ? "#6d28d9" : "#374151",
+                  fontWeight: sel ? 700 : 400, cursor: "pointer",
+                  fontFamily: "inherit", display: "flex", alignItems: "center",
+                  justifyContent: "space-between",
+                  transition: "background .1s",
+                }}
+                onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
+              >
+                {opt.content}
+                {sel && <CheckCircle2 size={15} color="#6d28d9" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── shared input style ────────────────────────────────────────────── */
+const inputStyle = {
+  width: "100%", padding: "12px 14px",
+  border: "1.5px solid #e5e7eb", borderRadius: 12,
+  fontSize: 14, color: "#111827", outline: "none",
+  fontFamily: "inherit", boxSizing: "border-box",
+  transition: "border-color .15s", background: "#fafafa",
+};
+
 /* ── QuestionCard ──────────────────────────────────────────────────── */
 function QuestionCard({ question, answer, onChange }) {
   const cfg = TYPE_CONFIG[question.type] ?? TYPE_CONFIG.TEXT;
   const { Icon, label, color, bg, border } = cfg;
 
-  // Sắp xếp options từ props (đã được merge từ OptionProvider)
-  const sorted = [...(question.options ?? [])].sort((a, b) =>
+  const sorted = [...(question.options ?? [])]
+  .filter((opt) => opt?.id)
+  .sort((a, b) =>
     (a.content ?? "").localeCompare(b.content ?? "")
   );
 
@@ -125,41 +282,160 @@ function QuestionCard({ question, answer, onChange }) {
     onChange(question.id, current);
   };
 
+  const settings = question.settings ?? {};
+
   return (
-    <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20, padding: "2rem", boxShadow: "0 2px 16px rgba(79,110,247,0.06)" }}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 20, background: bg, border: `1px solid ${border}`, fontSize: 11, fontWeight: 700, color, marginBottom: 16 }}>
+    <div style={{
+      background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20,
+      padding: "2rem", boxShadow: "0 2px 16px rgba(79,110,247,0.06)",
+    }}>
+      {/* Type badge */}
+      <span style={{
+        display: "inline-flex", alignItems: "center", gap: 5,
+        padding: "3px 10px", borderRadius: 20, background: bg,
+        border: `1px solid ${border}`, fontSize: 11, fontWeight: 700,
+        color, marginBottom: 16,
+      }}>
         <Icon size={11} />{label}
         {question.required && <span style={{ color: "#ef4444", marginLeft: 2 }}>*</span>}
       </span>
 
+      {/* Content */}
       <h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", lineHeight: 1.5, marginBottom: "1.5rem" }}>
         {question.content}
       </h2>
 
+      {/* ── TEXT ── */}
       {question.type === "TEXT" && (
-        <textarea rows={4} placeholder="Nhập câu trả lời của bạn..." value={answer ?? ""}
+        <input
+          type="text"
+          placeholder="Nhập câu trả lời ngắn..."
+          value={answer ?? ""}
           onChange={(e) => onChange(question.id, e.target.value)}
-          style={{ width: "100%", padding: "12px 14px", border: "1.5px solid #e5e7eb", borderRadius: 12, fontSize: 14, color: "#111827", resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color .15s" }}
+          style={inputStyle}
           onFocus={(e) => (e.target.style.borderColor = "#4f6ef7")}
           onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
         />
       )}
 
+      {/* ── PARAGRAPH ── */}
+      {question.type === "PARAGRAPH" && (
+        <textarea
+          rows={5}
+          placeholder="Nhập đoạn văn trả lời của bạn..."
+          value={answer ?? ""}
+          onChange={(e) => onChange(question.id, e.target.value)}
+          style={{ ...inputStyle, resize: "vertical" }}
+          onFocus={(e) => (e.target.style.borderColor = "#7c3aed")}
+          onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+        />
+      )}
+
+      {/* ── EMAIL ── */}
+      {question.type === "EMAIL" && (
+        <input
+          type="email"
+          placeholder="example@email.com"
+          value={answer ?? ""}
+          onChange={(e) => onChange(question.id, e.target.value)}
+          style={inputStyle}
+          onFocus={(e) => (e.target.style.borderColor = "#0891b2")}
+          onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+        />
+      )}
+
+      {/* ── DATE ── */}
+      {question.type === "DATE" && (
+        <div>
+          <input
+            type="date"
+            value={answer ?? ""}
+            min={settings.min_date}
+            max={settings.max_date}
+            onChange={(e) => onChange(question.id, e.target.value)}
+            style={{ ...inputStyle, width: "auto", minWidth: 200 }}
+            onFocus={(e) => (e.target.style.borderColor = "#b45309")}
+            onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+          />
+          {(settings.min_date || settings.max_date) && (
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+              {settings.min_date && `Từ: ${settings.min_date}`}
+              {settings.min_date && settings.max_date && " — "}
+              {settings.max_date && `Đến: ${settings.max_date}`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── NUMBER ── */}
+      {question.type === "NUMBER" && (
+        <div>
+          <input
+            type="number"
+            placeholder={
+              settings.min !== undefined && settings.max !== undefined
+                ? `Nhập số từ ${settings.min} đến ${settings.max}`
+                : "Nhập số..."
+            }
+            value={answer ?? ""}
+            min={settings.min}
+            max={settings.max}
+            onChange={(e) => onChange(question.id, e.target.value === "" ? "" : Number(e.target.value))}
+            style={{ ...inputStyle, width: "auto", minWidth: 200 }}
+            onFocus={(e) => (e.target.style.borderColor = "#059669")}
+            onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+          />
+          {(settings.min !== undefined || settings.max !== undefined) && (
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+              {settings.min !== undefined && `Min: ${settings.min}`}
+              {settings.min !== undefined && settings.max !== undefined && " · "}
+              {settings.max !== undefined && `Max: ${settings.max}`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── RATING ── */}
+      {question.type === "RATING" && (
+        <RatingInput
+          settings={settings}
+          value={answer}
+          onChange={(val) => onChange(question.id, val)}
+        />
+      )}
+
+      {/* ── SINGLE_CHOICE ── */}
       {question.type === "SINGLE_CHOICE" && (
         sorted.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {sorted.map((opt) => {
               const selected = answer === opt.id;
               return (
-                <button key={opt.id} onClick={() => onChange(question.id, opt.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#4f6ef7" : "#e5e7eb"}`, background: selected ? "#eef2ff" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
+                <button
+                  key={opt.id}
+                  onClick={() => onChange(question.id, opt.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 14,
+                    padding: "14px 16px", borderRadius: 12,
+                    border: `1.5px solid ${selected ? "#4f6ef7" : "#e5e7eb"}`,
+                    background: selected ? "#eef2ff" : "#fafafa",
+                    cursor: "pointer", textAlign: "left",
+                    transition: "all .15s", fontFamily: "inherit",
+                  }}
                   onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#a5b4fc"; }}
                   onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
                 >
-                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${selected ? "#4f6ef7" : "#d1d5db"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: "50%",
+                    border: `2px solid ${selected ? "#4f6ef7" : "#d1d5db"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "all .15s",
+                  }}>
                     {selected && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4f6ef7" }} />}
                   </div>
-                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#1e3a8a" : "#374151" }}>{opt.content}</span>
+                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#1e3a8a" : "#374151" }}>
+                    {opt.content}
+                  </span>
                   {selected && <CheckCircle2 size={16} color="#4f6ef7" style={{ marginLeft: "auto" }} />}
                 </button>
               );
@@ -170,6 +446,7 @@ function QuestionCard({ question, answer, onChange }) {
         )
       )}
 
+      {/* ── MULTIPLE_CHOICE ── */}
       {question.type === "MULTIPLE_CHOICE" && (
         sorted.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -177,19 +454,53 @@ function QuestionCard({ question, answer, onChange }) {
             {sorted.map((opt) => {
               const selected = answer instanceof Set && answer.has(opt.id);
               return (
-                <button key={opt.id} onClick={() => toggleMulti(opt.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${selected ? "#16a34a" : "#e5e7eb"}`, background: selected ? "#f0fdf4" : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "inherit" }}
+                <button
+                  key={opt.id}
+                  onClick={() => toggleMulti(opt.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 14,
+                    padding: "14px 16px", borderRadius: 12,
+                    border: `1.5px solid ${selected ? "#16a34a" : "#e5e7eb"}`,
+                    background: selected ? "#f0fdf4" : "#fafafa",
+                    cursor: "pointer", textAlign: "left",
+                    transition: "all .15s", fontFamily: "inherit",
+                  }}
                   onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#86efac"; }}
                   onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#e5e7eb"; }}
                 >
-                  <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${selected ? "#16a34a" : "#d1d5db"}`, background: selected ? "#16a34a" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-                    {selected && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  <div style={{
+                    width: 20, height: 20, borderRadius: 5,
+                    border: `2px solid ${selected ? "#16a34a" : "#d1d5db"}`,
+                    background: selected ? "#16a34a" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "all .15s",
+                  }}>
+                    {selected && (
+                      <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                        <path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
                   </div>
-                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#14532d" : "#374151" }}>{opt.content}</span>
+                  <span style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? "#14532d" : "#374151" }}>
+                    {opt.content}
+                  </span>
                 </button>
               );
             })}
           </div>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>Đang tải lựa chọn...</p>
+        )
+      )}
+
+      {/* ── DROPDOWN ── */}
+      {question.type === "DROPDOWN" && (
+        sorted.length > 0 ? (
+          <DropdownInput
+            options={sorted}
+            value={answer}
+            onChange={(val) => onChange(question.id, val)}
+          />
         ) : (
           <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>Đang tải lựa chọn...</p>
         )
@@ -203,28 +514,28 @@ export default function SurveyTakePage() {
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const { questions, fetchQuestionsBySurvey, loading } = useQuestion();
-  const { options, fetchOptions } = useOption(); // ← thêm OptionProvider
+  const { options, fetchOptions } = useOption();
   const { submitSurvey, submitting } = useResponse();
 
   const [answers, setAnswers] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [optionsLoading, setOptionsLoading] = useState(false); // ← loading riêng cho options
+  const [optionsLoading, setOptionsLoading] = useState(false);
 
-  /* ── Fetch questions, sau đó fetch options cho từng câu hỏi có lựa chọn ── */
+  /* ── Fetch questions → fetch options song song ── */
   useEffect(() => {
     if (!surveyId) return;
 
     fetchQuestionsBySurvey(surveyId).then(async (list) => {
-      const choiceQuestions = list.filter(
-        (q) => q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE"
-      );
+      if (!Array.isArray(list)) return;
 
+      const choiceQuestions = list.filter(
+        (q) => ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(q.type)
+      );
       if (choiceQuestions.length === 0) return;
 
       setOptionsLoading(true);
       try {
-        // Fetch tất cả options song song
         await Promise.all(choiceQuestions.map((q) => fetchOptions(q.id)));
       } finally {
         setOptionsLoading(false);
@@ -232,13 +543,12 @@ export default function SurveyTakePage() {
     });
   }, [surveyId]);
 
-  /* ── Merge options từ OptionProvider vào questions ── */
+  /* ── Merge + normalize options vào questions ── */
   const sorted = [...questions]
-    .sort((a, b) => a.order_index - b.order_index)
+    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
     .map((q) => ({
       ...q,
-      // Ưu tiên options từ OptionProvider (đã fetch riêng), fallback về q.options
-      options: options[q.id] ?? q.options ?? [],
+      options: resolveOptions(q, options),
     }));
 
   const total   = sorted.length;
@@ -250,83 +560,157 @@ export default function SurveyTakePage() {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  /* ── Validate from per type ── */
   const canProceed = () => {
     if (!current) return false;
     if (!current.required) return true;
     const ans = answers[current.id];
-    if (current.type === "TEXT")            return typeof ans === "string" && ans.trim().length > 0;
-    if (current.type === "SINGLE_CHOICE")   return !!ans;
-    if (current.type === "MULTIPLE_CHOICE") return ans instanceof Set && ans.size > 0;
-    return true;
+    const settings = current.settings ?? {};
+
+    switch (current.type) {
+      case "TEXT":
+      case "PARAGRAPH":
+        return typeof ans === "string" && ans.trim().length > 0;
+      case "EMAIL": {
+        if (typeof ans !== "string" || !ans.trim()) return false;
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ans.trim());
+      }
+      case "DATE":
+        return typeof ans === "string" && ans.length > 0;
+      case "NUMBER": {
+        if (ans === "" || ans == null) return false;
+        const n = Number(ans);
+        if (isNaN(n)) return false;
+        if (settings.min !== undefined && n < settings.min) return false;
+        if (settings.max !== undefined && n > settings.max) return false;
+        return true;
+      }
+      case "RATING":
+        return ans != null;
+      case "SINGLE_CHOICE":
+      case "DROPDOWN":
+        return !!ans;
+      case "MULTIPLE_CHOICE":
+        return ans instanceof Set && ans.size > 0;
+      default:
+        return true;
+    }
   };
 
-  /* ── Build payload & gọi API ── */
+  /* ── Inline validation message ── */
+  const getValidationHint = () => {
+    if (!current || !current.required) return null;
+    const ans = answers[current.id];
+    const settings = current.settings ?? {};
+
+    if (current.type === "EMAIL" && typeof ans === "string" && ans.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ans.trim())) {
+        return "Email không hợp lệ";
+      }
+    }
+    if (current.type === "NUMBER" && ans !== "" && ans != null) {
+      const n = Number(ans);
+      if (!isNaN(n)) {
+        if (settings.min !== undefined && n < settings.min) return `Giá trị tối thiểu là ${settings.min}`;
+        if (settings.max !== undefined && n > settings.max) return `Giá trị tối đa là ${settings.max}`;
+      }
+    }
+    return null;
+  };
+
+  /* ── Build payload ── */
   const handleSubmit = async () => {
-  if (!canProceed() || submitting) return;
+    if (!canProceed() || submitting) return;
 
-  const formattedAnswers = [];
+    const formattedAnswers = [];
 
-  sorted.forEach((q) => {
-    const val = answers[q.id];
+    sorted.forEach((q) => {
+      const val = answers[q.id];
 
-    // TEXT
-    if (q.type === "TEXT") {
-      if (val) {
-        formattedAnswers.push({
-          question_id: q.id,
-          answer_text: val,
-        });
+      if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
+        if (typeof val === "string" && val.trim()) {
+          formattedAnswers.push({ question_id: q.id, answer_text: val.trim() });
+        }
+        return;
       }
-    }
 
-    // SINGLE_CHOICE
-    if (q.type === "SINGLE_CHOICE") {
-      if (val) {
-        formattedAnswers.push({
-          question_id: q.id,
-          option_id: val,
-        });
+      if (q.type === "DATE") {
+        if (val) {
+          formattedAnswers.push({ question_id: q.id, answer_text: val });
+        }
+        return;
       }
-    }
 
-    // MULTIPLE_CHOICE ⚠️ chỉ lấy 1 option
-    if (q.type === "MULTIPLE_CHOICE") {
-      const selected = val instanceof Set ? [...val] : [];
-
-      if (selected.length > 0) {
-        formattedAnswers.push({
-          question_id: q.id,
-          option_id: selected[0], // 👈 chỉ lấy 1 cái
-        });
+      if (q.type === "NUMBER") {
+        if (val !== "" && val != null) {
+          formattedAnswers.push({ question_id: q.id, answer_text: String(val) });
+        }
+        return;
       }
-    }
-  });
 
-  console.log("payload:", formattedAnswers); // debug
+      if (q.type === "RATING") {
+        if (val != null) {
+          formattedAnswers.push({ question_id: q.id, answer_text: String(val) });
+        }
+        return;
+      }
 
-  try {
-    await submitSurvey(surveyId, { answers: formattedAnswers });
-    setSubmitted(true);
-  } catch (err) {
-    console.error(err);
+      if (q.type === "SINGLE_CHOICE" || q.type === "DROPDOWN") {
+        if (val) {
+          formattedAnswers.push({ question_id: q.id, option_id: val });
+        }
+        return;
+      }
+
+      if (q.type === "MULTIPLE_CHOICE") {
+  const selected = val instanceof Set ? [...val] : [];
+
+  if (selected.length > 0) {
+    formattedAnswers.push({
+      question_id: q.id,
+      option_ids: selected,
+    });
   }
-};
 
-  /* ── Màn hình hoàn thành ── */
+  return;
+}
+    });
+
+    console.log("payload:", formattedAnswers);
+
+    try {
+      await submitSurvey(surveyId, { answers: formattedAnswers });
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Submit error:", err);
+    }
+  };
+
   if (submitted) {
     return <SuccessScreen onGoHome={() => navigate("/user/home")} />;
   }
 
   const isPageLoading = loading || optionsLoading;
+  const validationHint = getValidationHint();
 
-  /* ── Main render ── */
   return (
-    <div style={{ minHeight: "100vh", background: "#f4f5f7", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "2.5rem 1.5rem" }}>
+    <div style={{
+      minHeight: "100vh", background: "#f4f5f7",
+      fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "2.5rem 1.5rem",
+    }}>
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "1.75rem" }}>
-          <button onClick={() => navigate(-1)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", color: "#374151", flexShrink: 0 }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 38, height: 38, borderRadius: 10,
+              border: "1px solid #e5e7eb", background: "#fff",
+              cursor: "pointer", color: "#374151", flexShrink: 0,
+            }}
+          >
             <ChevronLeft size={18} />
           </button>
           <div>
@@ -337,7 +721,11 @@ export default function SurveyTakePage() {
 
         {/* Loading */}
         {isPageLoading && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 14, color: "#9ca3af" }}>
+          <div style={{
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "5rem 0", gap: 14, color: "#9ca3af",
+          }}>
             <Loader2 size={32} color="#4f6ef7" style={{ animation: "spin 1s linear infinite" }} />
             <p style={{ fontSize: 14, margin: 0 }}>
               {loading ? "Đang tải câu hỏi..." : "Đang tải lựa chọn..."}
@@ -347,7 +735,10 @@ export default function SurveyTakePage() {
 
         {/* Empty */}
         {!isPageLoading && total === 0 && (
-          <div style={{ background: "#fff", borderRadius: 20, padding: "3rem", textAlign: "center", color: "#9ca3af", border: "1px solid #e5e7eb" }}>
+          <div style={{
+            background: "#fff", borderRadius: 20, padding: "3rem",
+            textAlign: "center", color: "#9ca3af", border: "1px solid #e5e7eb",
+          }}>
             <p style={{ fontSize: 15, margin: 0 }}>Khảo sát này chưa có câu hỏi nào.</p>
           </div>
         )}
@@ -364,18 +755,27 @@ export default function SurveyTakePage() {
               onChange={handleChange}
             />
 
+            {/* Required warning */}
             {current.required && !canProceed() && (
               <p style={{ fontSize: 12, color: "#ef4444", marginTop: 10, display: "flex", alignItems: "center", gap: 5 }}>
-                * Câu hỏi này bắt buộc phải trả lời
+                {validationHint ?? "* Câu hỏi này bắt buộc phải trả lời"}
               </p>
             )}
 
+            {/* Nav buttons */}
             <div style={{ display: "flex", gap: 12, marginTop: "1.5rem" }}>
               {!isFirst && (
                 <button
                   onClick={() => setCurrentIndex((i) => i - 1)}
                   disabled={submitting}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "#374151", cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "13px 20px", background: "#fff",
+                    border: "1.5px solid #e5e7eb", borderRadius: 12,
+                    fontSize: 14, fontWeight: 600, color: "#374151",
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                  }}
                 >
                   <ChevronLeft size={16} />Quay lại
                 </button>
@@ -385,7 +785,15 @@ export default function SurveyTakePage() {
                 <button
                   onClick={() => { if (canProceed()) setCurrentIndex((i) => i + 1); }}
                   disabled={!canProceed()}
-                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "13px 20px", background: canProceed() ? "#4f6ef7" : "#e5e7eb", color: canProceed() ? "#fff" : "#9ca3af", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: canProceed() ? "pointer" : "not-allowed", transition: "all .15s", fontFamily: "inherit" }}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: 8, padding: "13px 20px",
+                    background: canProceed() ? "#4f6ef7" : "#e5e7eb",
+                    color: canProceed() ? "#fff" : "#9ca3af",
+                    border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
+                    cursor: canProceed() ? "pointer" : "not-allowed",
+                    transition: "all .15s", fontFamily: "inherit",
+                  }}
                 >
                   Câu tiếp theo<ChevronRight size={16} />
                 </button>
@@ -393,7 +801,15 @@ export default function SurveyTakePage() {
                 <button
                   onClick={handleSubmit}
                   disabled={!canProceed() || submitting}
-                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "13px 20px", background: canProceed() && !submitting ? "#16a34a" : "#e5e7eb", color: canProceed() && !submitting ? "#fff" : "#9ca3af", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: canProceed() && !submitting ? "pointer" : "not-allowed", transition: "all .15s", fontFamily: "inherit" }}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: 8, padding: "13px 20px",
+                    background: canProceed() && !submitting ? "#16a34a" : "#e5e7eb",
+                    color: canProceed() && !submitting ? "#fff" : "#9ca3af",
+                    border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
+                    cursor: canProceed() && !submitting ? "pointer" : "not-allowed",
+                    transition: "all .15s", fontFamily: "inherit",
+                  }}
                 >
                   {submitting
                     ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />Đang gửi...</>
@@ -405,7 +821,14 @@ export default function SurveyTakePage() {
           </>
         )}
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
