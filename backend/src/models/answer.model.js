@@ -54,8 +54,12 @@ export default (sequelize) => {
         answer_number: {
             type: DataTypes.FLOAT,
             allowNull: true
+        },
+        // DATE
+        answer_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
-
     }, {
         tableName: "answers",
         timestamps: false,

@@ -15,5 +15,6 @@ route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyByI
 route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.deleteSurveyById);
 route.get('/', SurveyController.getAllSurvey);
 route.put('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.updateSurvey);
+route.put('/:survey_id/close', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.closeSurvey);
 
 export default route;

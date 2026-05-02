@@ -15,22 +15,42 @@ class ResponseService {
     // ===================== MAPPER =====================
     _mapAnswerToResponse(answers, optionMap = {}) {
         return answers.map(a => {
+            const type = a.question.type;
             let answerValue = null;
 
-            if (a.answer_text) {
+            // TEXT / PARAGRAPH / EMAIL
+            if (["TEXT", "PARAGRAPH", "EMAIL"].includes(type)) {
                 answerValue = a.answer_text;
-            } else if (a.answer_number !== null && a.answer_number !== undefined) {
+            }
+
+            // NUMBER / RATING
+            else if (["NUMBER", "RATING"].includes(type)) {
                 answerValue = a.answer_number;
-            } else if (a.option) {
-                answerValue = a.option.content;
-            } else if (a.selected_options) {
-                answerValue = a.selected_options.map(id => optionMap[id] || id);
+            }
+
+            // SINGLE_CHOICE / DROPDOWN
+            else if (["SINGLE_CHOICE", "DROPDOWN"].includes(type)) {
+                answerValue = a.option_id
+                    ? optionMap[a.option_id] || a.option?.label || a.option_id
+                    : null;
+            }
+
+            // MULTIPLE_CHOICE
+            else if (type === "MULTIPLE_CHOICE") {
+                answerValue = (a.selected_options || [])
+                    .map(id => optionMap[id] || id)
+                    .filter(Boolean);
+            }
+
+            // DATE
+            else if (type === "DATE") {
+                answerValue = a.answer_date ? new Date(a.answer_date).toISOString().split("T")[0] : null;
             }
 
             return {
                 question_id: a.question.id,
                 question: a.question.content,
-                type: a.question.type,
+                type,
                 answer: answerValue
             };
         });
@@ -42,7 +62,6 @@ class ResponseService {
         }
     }
 
-    // ===================== SUBMIT =====================
     async submitSurvey(user_id, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
@@ -58,6 +77,7 @@ class ResponseService {
             if (existing) throw new AppError("Already submitted", 400);
 
             const questionIds = answers.map(a => a.question_id);
+
             if (new Set(questionIds).size !== questionIds.length) {
                 throw new AppError("Duplicate question", 400);
             }
@@ -99,6 +119,7 @@ class ResponseService {
 
             for (const ans of answers) {
                 const q = questionMap[ans.question_id];
+                // console.log("Processing answer for question:", q?.type, q?.content);
                 if (!q) throw new AppError("Invalid question", 400);
 
                 // TEXT
@@ -112,10 +133,16 @@ class ResponseService {
 
                 // NUMBER
                 else if (["NUMBER", "RATING"].includes(q.type)) {
+                    const value = ans.answer_number ?? ans.answer_text;
+
+                    if (value === undefined || value === null || isNaN(value)) {
+                        throw new AppError("Invalid number answer", 400);
+                    }
+
                     answerRecords.push({
                         response_id: response.id,
                         question_id: q.id,
-                        answer_number: Number(ans.answer_text)
+                        answer_number: Number(value)
                     });
                 }
 
@@ -153,6 +180,18 @@ class ResponseService {
                     });
                 }
 
+                // DATE
+                else if (q.type === "DATE") {
+                    const dateValue = new Date(ans.answer_text);
+                    if (isNaN(dateValue.getTime())) {
+                        throw new AppError("Invalid date answer", 400);
+                    }
+                    answerRecords.push({
+                        response_id: response.id,
+                        question_id: q.id,
+                        answer_date: dateValue
+                    });
+                }
                 else {
                     throw new AppError("Unsupported type", 400);
                 }
@@ -197,21 +236,28 @@ class ResponseService {
             ],
             order: [
                 [{ model: this.Answer, as: "answers" },
-                 { model: this.Question, as: "question" },
-                 "order_index", "ASC"]
+                { model: this.Question, as: "question" },
+                    "order_index", "ASC"]
             ]
         });
 
+        // console.log("Responses:", JSON.stringify(responses, null, 2));
+
         const optionIds = responses.flatMap(r =>
-            r.answers.flatMap(a => a.selected_options || [])
+            r.answers.flatMap(a => [
+                ...(a.selected_options || []),
+                ...(a.option_id ? [a.option_id] : [])
+            ])
         );
 
-        const options = await this.QuestionOption.findAll({
-            where: { id: optionIds }
-        });
+        const options = optionIds.length
+            ? await this.QuestionOption.findAll({
+                where: { id: optionIds }
+            })
+            : [];
 
         const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.content])
+            options.map(o => [o.id, o.label])
         );
 
         const result = responses.map(r => ({
@@ -219,9 +265,6 @@ class ResponseService {
             submitted_at: r.submitted_at,
             answers: this._mapAnswerToResponse(r.answers, optionMap)
         }));
-
-        // console.log("Option Map:", optionMap);
-        // console.log("Mapped Answers:", result.flatMap(r => r.answers));
 
         return {
             message: "Get user answers successfully",
@@ -268,7 +311,7 @@ class ResponseService {
         });
 
         const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.content])
+            options.map(o => [o.id, o.label])
         );
 
         return {
@@ -311,7 +354,7 @@ class ResponseService {
             });
 
             if (!response) throw new AppError("Response not found", 404);
-            
+
             const user = await this.User.findByPk(user_id);
 
             if (!user) throw new AppError("User not found", 404);

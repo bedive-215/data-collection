@@ -11,15 +11,15 @@ import { useResponse } from "@/providers/ResponseProvider";
 
 // ── Tabs config ───────────────────────────────────────────────────
 const TABS = [
-  { key: "all",     label: "Tất cả"        },
-  { key: "pending", label: "Chưa làm"      },
-  { key: "done",    label: "Đã hoàn thành" },
+  { key: "all", label: "Tất cả" },
+  { key: "pending", label: "Chưa làm" },
+  { key: "done", label: "Đã hoàn thành" },
 ];
 
 const TYPE_META = {
-  SINGLE_CHOICE:   { label: "Một lựa chọn",   color: "#1d4ed8", bg: "#eff6ff",  border: "#bfdbfe", accent: "#2563eb" },
-  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", color: "#6d28d9", bg: "#f5f3ff",  border: "#ddd6fe", accent: "#7c3aed" },
-  TEXT:            { label: "Văn bản",          color: "#0e7490", bg: "#ecfeff",  border: "#a5f3fc", accent: "#0891b2" },
+  SINGLE_CHOICE: { label: "Một lựa chọn", color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe", accent: "#2563eb" },
+  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe", accent: "#7c3aed" },
+  TEXT: { label: "Văn bản", color: "#0e7490", bg: "#ecfeff", border: "#a5f3fc", accent: "#0891b2" },
 };
 function typeMeta(type) {
   return TYPE_META[type] ?? { label: type, color: "#6b7280", bg: "#f3f4f6", border: "#e5e7eb", accent: "#9ca3af" };
@@ -46,7 +46,7 @@ function MultipleChoiceIcon() {
 }
 function TypeIcon({ type }) {
   if (type === "MULTIPLE_CHOICE") return <MultipleChoiceIcon />;
-  if (type === "TEXT")            return <FileText size={17} strokeWidth={1.5} color="#9ca3af" />;
+  if (type === "TEXT") return <FileText size={17} strokeWidth={1.5} color="#9ca3af" />;
   return <SingleChoiceIcon />;
 }
 
@@ -56,9 +56,9 @@ function TypeIcon({ type }) {
 function SubmissionModal({ surveyId, surveyTitle, onClose }) {
   const { getMySubmission } = useResponse();
 
-  const [data, setData]       = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -76,7 +76,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
     })();
   }, [surveyId]);
 
-  const allAnswers  = data?.data?.flatMap((r) => r.answers) ?? [];
+  const allAnswers = data?.data?.flatMap((r) => r.answers) ?? [];
   const totalAnswers = allAnswers.length;
 
   return (
@@ -205,13 +205,18 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
           {!loading && !error && allAnswers.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {allAnswers.map((item, qIdx) => {
-                const isText     = item.type === "TEXT";
+                const isText = item.type === "TEXT";
                 const isMultiple = item.type === "MULTIPLE_CHOICE";
-                const meta       = typeMeta(item.type);
+                const meta = typeMeta(item.type);
 
                 const selectedSet = isMultiple
-                  ? new Set(item.answer?.split(",").map((a) => a.trim()).filter(Boolean))
-                  : new Set([item.answer]);
+                  ? new Set(
+                    Array.isArray(item.answer)
+                      ? item.answer
+                      : (item.answer || "").split(",").map((a) => a.trim()).filter(Boolean)
+                  )
+                  : new Set(item.answer ? [item.answer] : []);
+
                 const options = item.options ?? [];
 
                 return (
@@ -274,16 +279,17 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {options.length > 0 ? (
                             options.map((opt, oIdx) => {
-                              const optLabel   = typeof opt === "string" ? opt : (opt.content ?? opt.label ?? opt.value ?? "");
+                              const optLabel = typeof opt === "string" ? opt : (opt.content ?? opt.label ?? opt.value ?? "");
                               const isSelected = selectedSet.has(optLabel) || selectedSet.has(String(opt.id ?? ""));
                               return (
                                 <OptionRow key={oIdx} label={optLabel} isSelected={isSelected} isMultiple={isMultiple} />
                               );
                             })
                           ) : isMultiple ? (
-                            item.answer?.split(",").map((a, ai) => (
-                              <OptionRow key={ai} label={a.trim()} isSelected={true} isMultiple={true} />
-                            ))
+                            (Array.isArray(item.answer) ? item.answer : [])
+                              .map((a, ai) => (
+                                <OptionRow key={ai} label={a} isSelected={true} isMultiple={true} />
+                              ))
                           ) : (
                             <OptionRow label={item.answer} isSelected={true} isMultiple={false} />
                           )}
@@ -524,16 +530,16 @@ export default function SurveysPage() {
   const navigate = useNavigate();
   const { getAllMyResponses } = useResponse();
 
-  const [surveys, setSurveys]             = useState([]);
+  const [surveys, setSurveys] = useState([]);
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState(null);
-  const [modalSurvey, setModalSurvey]     = useState(null);
-  const [activeTab, setActiveTab]         = useState("all");
-  const [search, setSearch]               = useState("");
-  const [sortBy, setSortBy]               = useState("newest");
-  const [viewMode, setViewMode]           = useState("grid");
-  const [showFilter, setShowFilter]       = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalSurvey, setModalSurvey] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState("grid");
+  const [showFilter, setShowFilter] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -554,24 +560,24 @@ export default function SurveysPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleStart          = (id) => navigate(`/user/survey/${id}`);
+  const handleStart = (id) => navigate(`/user/survey/${id}`);
   const handleViewSubmission = (id, title) => setModalSurvey({ id, title });
 
-  const totalCount   = surveys.length;
+  const totalCount = surveys.length;
   const pendingCount = surveys.filter((s) => !doneSurveyIds.has(s.id)).length;
-  const doneCount    = surveys.filter((s) =>  doneSurveyIds.has(s.id)).length;
+  const doneCount = surveys.filter((s) => doneSurveyIds.has(s.id)).length;
 
   const displayed = useMemo(() => {
     let list = [...surveys];
     if (activeTab === "pending") list = list.filter((s) => !doneSurveyIds.has(s.id));
-    if (activeTab === "done")    list = list.filter((s) =>  doneSurveyIds.has(s.id));
+    if (activeTab === "done") list = list.filter((s) => doneSurveyIds.has(s.id));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((s) => s.title?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q));
     }
     if (sortBy === "newest") list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     if (sortBy === "oldest") list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    if (sortBy === "name")   list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
+    if (sortBy === "name") list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
     return list;
   }, [surveys, doneSurveyIds, activeTab, search, sortBy]);
 
@@ -706,11 +712,11 @@ export default function SurveysPage() {
       {!loading && !error && displayed.length > 0 && (
         viewMode === "grid"
           ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {displayed.map((s) => <SurveyCard key={s.id} id={s.id} title={s.title} desc={s.description} createdAt={s.createdAt} done={doneSurveyIds.has(s.id)} onStart={handleStart} onViewSubmission={handleViewSubmission} />)}
-            </div>
+            {displayed.map((s) => <SurveyCard key={s.id} id={s.id} title={s.title} desc={s.description} createdAt={s.createdAt} done={doneSurveyIds.has(s.id)} onStart={handleStart} onViewSubmission={handleViewSubmission} />)}
+          </div>
           : <div className="flex flex-col gap-3">
-              {displayed.map((s) => <SurveyRow key={s.id} id={s.id} title={s.title} desc={s.description} createdAt={s.createdAt} done={doneSurveyIds.has(s.id)} onStart={handleStart} onViewSubmission={handleViewSubmission} />)}
-            </div>
+            {displayed.map((s) => <SurveyRow key={s.id} id={s.id} title={s.title} desc={s.description} createdAt={s.createdAt} done={doneSurveyIds.has(s.id)} onStart={handleStart} onViewSubmission={handleViewSubmission} />)}
+          </div>
       )}
     </main>
   );

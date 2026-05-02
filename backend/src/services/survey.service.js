@@ -256,6 +256,26 @@ class SurveyService {
         };
     }
 
+    // close survey (set end_at to now)
+    async closeSurvey(survey_id, user_id) {
+        const survey = await this.Survey.findByPk(survey_id);
+        if (!survey) {
+            throw new AppError("Survey not found!", 404);
+        }
+        const user = await this.User.findByPk(user_id);
+        if (!user) {
+            throw new AppError("User not found!", 404);
+        }
+        this._ensureOwnership(survey, user);
+
+        survey.end_at = new Date();
+        await survey.save();
+        return {
+            message: "Closed survey successfully",
+            survey: this._mapSurvey(survey)
+        };
+    }
+
     // mapping functions
     _mapSurvey(survey) {
         return {

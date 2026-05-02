@@ -75,7 +75,7 @@ class AdminStatsService {
         };
     }
 
-    // ✅ Đã fix: thêm const total =
+    // total users who have answered at least 1 survey
     async getTotalUsersAnsweredSurvey() {
         const total = await this.Response.count({
             where: {

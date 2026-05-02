@@ -130,6 +130,24 @@ class SurveyController {
         }
     }
 
+    // close survey
+    async closeSurvey(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const userId = req.user.id;
+            const result = await SurveyService.closeSurvey(
+                survey_id,
+                userId
+            );
+            return res.status(200).json({
+                message: result.message,
+                data: result.survey
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }
 
 export default new SurveyController();
