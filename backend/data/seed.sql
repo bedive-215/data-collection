@@ -1,127 +1,168 @@
--- ============================================
+-- ============================================================
+-- INSERT ONLY — không DROP, không CREATE
+-- Database: data_collection
+-- ============================================================
+
+USE `data_collection`;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ============================================================
 -- 1. USERS
--- ============================================
-INSERT INTO users (id, full_name, email, password_hash, phone_number, role, date_of_birth, email_verified, refresh_token, refresh_token_expires_at, verification_code, verification_code_expires_at, last_verification_code_sent_at, password_reset_code, password_reset_code_expires_at, created_at, updated_at) VALUES
+-- ============================================================
 
-('a1b2c3d4-0001-4000-8000-000000000001', 'Nguyen Van Admin', 'admin@survey.com', '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000001', 'admin', '1990-01-15', true, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
+INSERT IGNORE INTO `users`
+  (`id`, `full_name`, `email`, `password_hash`, `phone_number`, `role`, `date_of_birth`, `email_verified`, `refresh_token`, `refresh_token_expires_at`, `verification_code`, `verification_code_expires_at`, `last_verification_code_sent_at`, `password_reset_code`, `password_reset_code_expires_at`, `created_at`, `updated_at`)
+VALUES
+('a1b2c3d4-0001-4000-8000-000000000001', 'Nguyen Van Admin',  'admin@survey.com',       '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000001', 'admin', '1990-01-15', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
+('a1b2c3d4-0002-4000-8000-000000000002', 'Tran Thi Bich',     'bich.tran@gmail.com',    '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000002', 'user',  '1995-03-22', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
+('a1b2c3d4-0003-4000-8000-000000000003', 'Le Minh Khoa',      'khoa.le@gmail.com',      '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000003', 'user',  '1998-07-10', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
+('a1b2c3d4-0004-4000-8000-000000000004', 'Pham Thi Lan',      'lan.pham@gmail.com',     '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000004', 'user',  '2000-11-05', 0, NULL, NULL, '123456', NOW(), NOW(), NULL, NULL, NOW(), NOW()),
+('a1b2c3d4-0005-4000-8000-000000000005', 'Hoang Duc Manh',    'manh.hoang@gmail.com',   '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000005', 'user',  '1993-05-30', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW());
 
-('a1b2c3d4-0002-4000-8000-000000000002', 'Tran Thi Bich', 'bich.tran@gmail.com', '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000002', 'user', '1995-03-22', true, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
-
-('a1b2c3d4-0003-4000-8000-000000000003', 'Le Minh Khoa', 'khoa.le@gmail.com', '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000003', 'user', '1998-07-10', true, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW()),
-
-('a1b2c3d4-0004-4000-8000-000000000004', 'Pham Thi Lan', 'lan.pham@gmail.com', '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000004', 'user', '2000-11-05', false, NULL, NULL, '123456', NOW(), NOW(), NULL, NULL, NOW(), NOW()),
-
-('a1b2c3d4-0005-4000-8000-000000000005', 'Hoang Duc Manh', 'manh.hoang@gmail.com', '$2b$12$S2GluH2UTDgpo0GbjpkVSuy69VWaHGt5Q2ZlQ7Geeyg3irff9u2bO', '0901000005', 'user', '1993-05-30', true, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), NOW());
-
-
--- ============================================
+-- ============================================================
 -- 2. SURVEYS
--- ============================================
-INSERT INTO surveys (id, title, description, created_by, created_at, updated_at) VALUES
+-- Thêm: is_published, start_at, end_at, settings, deleted_at
+-- ============================================================
 
-('b1b2c3d4-0001-4000-8000-000000000001', 'Khảo sát mức độ hài lòng dịch vụ', 'Khảo sát đánh giá chất lượng dịch vụ khách hàng năm 2025', 'a1b2c3d4-0001-4000-8000-000000000001', NOW(), NOW()),
+INSERT IGNORE INTO `surveys`
+  (`id`, `title`, `description`, `created_by`, `is_published`, `start_at`, `end_at`, `settings`, `created_at`, `updated_at`, `deleted_at`)
+VALUES
+(
+  'b1b2c3d4-0001-4000-8000-000000000001',
+  'Khảo sát mức độ hài lòng dịch vụ',
+  'Khảo sát đánh giá chất lượng dịch vụ khách hàng năm 2025',
+  'a1b2c3d4-0001-4000-8000-000000000001',
+  1,
+  '2025-01-01 00:00:00',
+  '2025-12-31 23:59:59',
+  '{"allow_multiple_responses": false, "show_progress_bar": true, "shuffle_questions": false}',
+  NOW(), NOW(), NULL
+),
+(
+  'b1b2c3d4-0002-4000-8000-000000000002',
+  'Khảo sát nhu cầu học trực tuyến',
+  'Thu thập thông tin về nhu cầu và thói quen học online của người dùng',
+  'a1b2c3d4-0001-4000-8000-000000000001',
+  1,
+  '2025-02-01 00:00:00',
+  '2025-08-31 23:59:59',
+  '{"allow_multiple_responses": false, "show_progress_bar": true, "shuffle_questions": false}',
+  NOW(), NOW(), NULL
+),
+(
+  'b1b2c3d4-0003-4000-8000-000000000003',
+  'Khảo sát sức khỏe tâm thần',
+  'Đánh giá tình trạng sức khỏe tinh thần của nhân viên',
+  'a1b2c3d4-0002-4000-8000-000000000002',
+  1,
+  '2025-03-01 00:00:00',
+  '2025-09-30 23:59:59',
+  '{"allow_multiple_responses": true, "show_progress_bar": true, "shuffle_questions": false}',
+  NOW(), NOW(), NULL
+);
 
-('b1b2c3d4-0002-4000-8000-000000000002', 'Khảo sát nhu cầu học trực tuyến', 'Thu thập thông tin về nhu cầu và thói quen học online của người dùng', 'a1b2c3d4-0001-4000-8000-000000000001', NOW(), NOW()),
-
-('b1b2c3d4-0003-4000-8000-000000000003', 'Khảo sát sức khỏe tâm thần', 'Đánh giá tình trạng sức khỏe tinh thần của nhân viên', 'a1b2c3d4-0002-4000-8000-000000000002', NOW(), NOW());
-
-
--- ============================================
+-- ============================================================
 -- 3. QUESTIONS
--- ============================================
-INSERT INTO questions (id, survey_id, content, type, required, order_index, created_at, updated_at) VALUES
+-- Thêm: settings
+-- ============================================================
 
+INSERT IGNORE INTO `questions`
+  (`id`, `survey_id`, `content`, `type`, `required`, `order_index`, `settings`, `created_at`, `updated_at`)
+VALUES
 -- Survey 1: Hài lòng dịch vụ
-('c1000001-0001-4000-8000-000000000001', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn đánh giá chất lượng dịch vụ của chúng tôi như thế nào?', 'SINGLE_CHOICE', true, 1, NOW(), NOW()),
-('c1000001-0002-4000-8000-000000000002', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn hài lòng với những khía cạnh nào? (Có thể chọn nhiều)', 'MULTIPLE_CHOICE', true, 2, NOW(), NOW()),
-('c1000001-0003-4000-8000-000000000003', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn có góp ý gì để chúng tôi cải thiện không?', 'TEXT', false, 3, NOW(), NOW()),
+('c1000001-0001-4000-8000-000000000001', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn đánh giá chất lượng dịch vụ của chúng tôi như thế nào?', 'SINGLE_CHOICE',   1, 0, '{}', NOW(), NOW()),
+('c1000001-0002-4000-8000-000000000002', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn hài lòng với những khía cạnh nào? (Có thể chọn nhiều)',  'MULTIPLE_CHOICE', 1, 1, '{"max_selections": 5}', NOW(), NOW()),
+('c1000001-0003-4000-8000-000000000003', 'b1b2c3d4-0001-4000-8000-000000000001', 'Bạn có góp ý gì để chúng tôi cải thiện không?',             'TEXT',            0, 2, '{"placeholder": "Nhập góp ý của bạn..."}', NOW(), NOW()),
 
 -- Survey 2: Học trực tuyến
-('c2000001-0001-4000-8000-000000000001', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn đã từng học trực tuyến chưa?', 'SINGLE_CHOICE', true, 1, NOW(), NOW()),
-('c2000001-0002-4000-8000-000000000002', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn thường học trực tuyến trên nền tảng nào?', 'MULTIPLE_CHOICE', true, 2, NOW(), NOW()),
-('c2000001-0003-4000-8000-000000000003', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn sẵn sàng chi bao nhiêu cho một khóa học online?', 'SINGLE_CHOICE', true, 3, NOW(), NOW()),
-('c2000001-0004-4000-8000-000000000004', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn gặp khó khăn gì khi học online?', 'TEXT', false, 4, NOW(), NOW()),
+('c2000001-0001-4000-8000-000000000001', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn đã từng học trực tuyến chưa?',                          'SINGLE_CHOICE',   1, 0, '{}', NOW(), NOW()),
+('c2000001-0002-4000-8000-000000000002', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn thường học trực tuyến trên nền tảng nào?',               'MULTIPLE_CHOICE', 1, 1, '{"max_selections": 3}', NOW(), NOW()),
+('c2000001-0003-4000-8000-000000000003', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn sẵn sàng chi bao nhiêu cho một khóa học online?',        'SINGLE_CHOICE',   1, 2, '{}', NOW(), NOW()),
+('c2000001-0004-4000-8000-000000000004', 'b1b2c3d4-0002-4000-8000-000000000002', 'Bạn gặp khó khăn gì khi học online?',                        'PARAGRAPH',       0, 3, '{"placeholder": "Chia sẻ khó khăn của bạn..."}', NOW(), NOW()),
 
 -- Survey 3: Sức khỏe tâm thần
-('c3000001-0001-4000-8000-000000000001', 'b1b2c3d4-0003-4000-8000-000000000003', 'Mức độ căng thẳng của bạn trong tuần qua?', 'SINGLE_CHOICE', true, 1, NOW(), NOW()),
-('c3000001-0002-4000-8000-000000000002', 'b1b2c3d4-0003-4000-8000-000000000003', 'Điều gì gây ra căng thẳng cho bạn?', 'MULTIPLE_CHOICE', true, 2, NOW(), NOW()),
-('c3000001-0003-4000-8000-000000000003', 'b1b2c3d4-0003-4000-8000-000000000003', 'Bạn chia sẻ thêm về tình trạng hiện tại của mình không?', 'TEXT', false, 3, NOW(), NOW());
+('c3000001-0001-4000-8000-000000000001', 'b1b2c3d4-0003-4000-8000-000000000003', 'Mức độ căng thẳng của bạn trong tuần qua?',                  'SINGLE_CHOICE',   1, 0, '{}', NOW(), NOW()),
+('c3000001-0002-4000-8000-000000000002', 'b1b2c3d4-0003-4000-8000-000000000003', 'Điều gì gây ra căng thẳng cho bạn?',                         'MULTIPLE_CHOICE', 1, 1, '{"max_selections": 5}', NOW(), NOW()),
+('c3000001-0003-4000-8000-000000000003', 'b1b2c3d4-0003-4000-8000-000000000003', 'Bạn chia sẻ thêm về tình trạng hiện tại của mình không?',    'PARAGRAPH',       0, 2, '{"placeholder": "Chia sẻ cảm nhận của bạn..."}', NOW(), NOW());
 
-
--- ============================================
+-- ============================================================
 -- 4. QUESTION OPTIONS
--- ============================================
-INSERT INTO question_options (id, question_id, content) VALUES
+-- Thêm: label, value, order_index, is_other
+-- (label = hiển thị, value = key lưu DB)
+-- ============================================================
 
+INSERT IGNORE INTO `question_options`
+  (`id`, `question_id`, `label`, `value`, `order_index`, `is_other`)
+VALUES
 -- Q1/S1: Đánh giá dịch vụ (SINGLE_CHOICE)
-('d1010001-0001-4000-8000-000000000001', 'c1000001-0001-4000-8000-000000000001', 'Rất hài lòng'),
-('d1010001-0002-4000-8000-000000000002', 'c1000001-0001-4000-8000-000000000001', 'Hài lòng'),
-('d1010001-0003-4000-8000-000000000003', 'c1000001-0001-4000-8000-000000000001', 'Bình thường'),
-('d1010001-0004-4000-8000-000000000004', 'c1000001-0001-4000-8000-000000000001', 'Không hài lòng'),
-('d1010001-0005-4000-8000-000000000005', 'c1000001-0001-4000-8000-000000000001', 'Rất không hài lòng'),
+('d1010001-0001-4000-8000-000000000001', 'c1000001-0001-4000-8000-000000000001', 'Rất hài lòng',       'very_satisfied',    0, 0),
+('d1010001-0002-4000-8000-000000000002', 'c1000001-0001-4000-8000-000000000001', 'Hài lòng',           'satisfied',         1, 0),
+('d1010001-0003-4000-8000-000000000003', 'c1000001-0001-4000-8000-000000000001', 'Bình thường',        'neutral',           2, 0),
+('d1010001-0004-4000-8000-000000000004', 'c1000001-0001-4000-8000-000000000001', 'Không hài lòng',     'dissatisfied',      3, 0),
+('d1010001-0005-4000-8000-000000000005', 'c1000001-0001-4000-8000-000000000001', 'Rất không hài lòng', 'very_dissatisfied', 4, 0),
 
 -- Q2/S1: Khía cạnh hài lòng (MULTIPLE_CHOICE)
-('d1020001-0001-4000-8000-000000000001', 'c1000001-0002-4000-8000-000000000002', 'Thái độ nhân viên'),
-('d1020001-0002-4000-8000-000000000002', 'c1000001-0002-4000-8000-000000000002', 'Tốc độ xử lý'),
-('d1020001-0003-4000-8000-000000000003', 'c1000001-0002-4000-8000-000000000002', 'Giá cả hợp lý'),
-('d1020001-0004-4000-8000-000000000004', 'c1000001-0002-4000-8000-000000000002', 'Chất lượng sản phẩm'),
-('d1020001-0005-4000-8000-000000000005', 'c1000001-0002-4000-8000-000000000002', 'Hỗ trợ sau bán hàng'),
+('d1020001-0001-4000-8000-000000000001', 'c1000001-0002-4000-8000-000000000002', 'Thái độ nhân viên',    'staff_attitude',    0, 0),
+('d1020001-0002-4000-8000-000000000002', 'c1000001-0002-4000-8000-000000000002', 'Tốc độ xử lý',        'processing_speed',  1, 0),
+('d1020001-0003-4000-8000-000000000003', 'c1000001-0002-4000-8000-000000000002', 'Giá cả hợp lý',       'pricing',           2, 0),
+('d1020001-0004-4000-8000-000000000004', 'c1000001-0002-4000-8000-000000000002', 'Chất lượng sản phẩm', 'product_quality',   3, 0),
+('d1020001-0005-4000-8000-000000000005', 'c1000001-0002-4000-8000-000000000002', 'Hỗ trợ sau bán hàng', 'after_sales',       4, 0),
 
 -- Q1/S2: Đã học online chưa (SINGLE_CHOICE)
-('d2010001-0001-4000-8000-000000000001', 'c2000001-0001-4000-8000-000000000001', 'Đã học nhiều lần'),
-('d2010001-0002-4000-8000-000000000002', 'c2000001-0001-4000-8000-000000000001', 'Đã học một vài lần'),
-('d2010001-0003-4000-8000-000000000003', 'c2000001-0001-4000-8000-000000000001', 'Chưa học nhưng có quan tâm'),
-('d2010001-0004-4000-8000-000000000004', 'c2000001-0001-4000-8000-000000000001', 'Chưa học và không quan tâm'),
+('d2010001-0001-4000-8000-000000000001', 'c2000001-0001-4000-8000-000000000001', 'Đã học nhiều lần',            'learned_many',      0, 0),
+('d2010001-0002-4000-8000-000000000002', 'c2000001-0001-4000-8000-000000000001', 'Đã học một vài lần',          'learned_few',       1, 0),
+('d2010001-0003-4000-8000-000000000003', 'c2000001-0001-4000-8000-000000000001', 'Chưa học nhưng có quan tâm',  'interested',        2, 0),
+('d2010001-0004-4000-8000-000000000004', 'c2000001-0001-4000-8000-000000000001', 'Chưa học và không quan tâm',  'not_interested',    3, 0),
 
 -- Q2/S2: Nền tảng học (MULTIPLE_CHOICE)
-('d2020001-0001-4000-8000-000000000001', 'c2000001-0002-4000-8000-000000000002', 'Udemy'),
-('d2020001-0002-4000-8000-000000000002', 'c2000001-0002-4000-8000-000000000002', 'Coursera'),
-('d2020001-0003-4000-8000-000000000003', 'c2000001-0002-4000-8000-000000000002', 'YouTube'),
-('d2020001-0004-4000-8000-000000000004', 'c2000001-0002-4000-8000-000000000002', 'Kyna / Edumall'),
-('d2020001-0005-4000-8000-000000000005', 'c2000001-0002-4000-8000-000000000002', 'Khác'),
+('d2020001-0001-4000-8000-000000000001', 'c2000001-0002-4000-8000-000000000002', 'Udemy',        'udemy',   0, 0),
+('d2020001-0002-4000-8000-000000000002', 'c2000001-0002-4000-8000-000000000002', 'Coursera',     'coursera',1, 0),
+('d2020001-0003-4000-8000-000000000003', 'c2000001-0002-4000-8000-000000000002', 'YouTube',      'youtube', 2, 0),
+('d2020001-0004-4000-8000-000000000004', 'c2000001-0002-4000-8000-000000000002', 'Kyna / Edumall','kyna',   3, 0),
+('d2020001-0005-4000-8000-000000000005', 'c2000001-0002-4000-8000-000000000002', 'Khác',         'other',   4, 1),
 
 -- Q3/S2: Mức sẵn sàng chi (SINGLE_CHOICE)
-('d2030001-0001-4000-8000-000000000001', 'c2000001-0003-4000-8000-000000000003', 'Dưới 200.000đ'),
-('d2030001-0002-4000-8000-000000000002', 'c2000001-0003-4000-8000-000000000003', '200.000đ - 500.000đ'),
-('d2030001-0003-4000-8000-000000000003', 'c2000001-0003-4000-8000-000000000003', '500.000đ - 1.000.000đ'),
-('d2030001-0004-4000-8000-000000000004', 'c2000001-0003-4000-8000-000000000003', 'Trên 1.000.000đ'),
+('d2030001-0001-4000-8000-000000000001', 'c2000001-0003-4000-8000-000000000003', 'Dưới 200.000đ',           'under_200k',    0, 0),
+('d2030001-0002-4000-8000-000000000002', 'c2000001-0003-4000-8000-000000000003', '200.000đ – 500.000đ',     '200k_500k',     1, 0),
+('d2030001-0003-4000-8000-000000000003', 'c2000001-0003-4000-8000-000000000003', '500.000đ – 1.000.000đ',   '500k_1m',       2, 0),
+('d2030001-0004-4000-8000-000000000004', 'c2000001-0003-4000-8000-000000000003', 'Trên 1.000.000đ',         'over_1m',       3, 0),
 
 -- Q1/S3: Mức căng thẳng (SINGLE_CHOICE)
-('d3010001-0001-4000-8000-000000000001', 'c3000001-0001-4000-8000-000000000001', 'Không căng thẳng'),
-('d3010001-0002-4000-8000-000000000002', 'c3000001-0001-4000-8000-000000000001', 'Hơi căng thẳng'),
-('d3010001-0003-4000-8000-000000000003', 'c3000001-0001-4000-8000-000000000001', 'Căng thẳng vừa'),
-('d3010001-0004-4000-8000-000000000004', 'c3000001-0001-4000-8000-000000000001', 'Rất căng thẳng'),
+('d3010001-0001-4000-8000-000000000001', 'c3000001-0001-4000-8000-000000000001', 'Không căng thẳng', 'none',     0, 0),
+('d3010001-0002-4000-8000-000000000002', 'c3000001-0001-4000-8000-000000000001', 'Hơi căng thẳng',  'mild',     1, 0),
+('d3010001-0003-4000-8000-000000000003', 'c3000001-0001-4000-8000-000000000001', 'Căng thẳng vừa',  'moderate', 2, 0),
+('d3010001-0004-4000-8000-000000000004', 'c3000001-0001-4000-8000-000000000001', 'Rất căng thẳng',  'high',     3, 0),
 
 -- Q2/S3: Nguyên nhân căng thẳng (MULTIPLE_CHOICE)
-('d3020001-0001-4000-8000-000000000001', 'c3000001-0002-4000-8000-000000000002', 'Áp lực công việc'),
-('d3020001-0002-4000-8000-000000000002', 'c3000001-0002-4000-8000-000000000002', 'Vấn đề tài chính'),
-('d3020001-0003-4000-8000-000000000003', 'c3000001-0002-4000-8000-000000000002', 'Quan hệ gia đình'),
-('d3020001-0004-4000-8000-000000000004', 'c3000001-0002-4000-8000-000000000002', 'Sức khỏe'),
-('d3020001-0005-4000-8000-000000000005', 'c3000001-0002-4000-8000-000000000002', 'Khác');
+('d3020001-0001-4000-8000-000000000001', 'c3000001-0002-4000-8000-000000000002', 'Áp lực công việc',   'work_pressure', 0, 0),
+('d3020001-0002-4000-8000-000000000002', 'c3000001-0002-4000-8000-000000000002', 'Vấn đề tài chính',   'financial',     1, 0),
+('d3020001-0003-4000-8000-000000000003', 'c3000001-0002-4000-8000-000000000002', 'Quan hệ gia đình',   'family',        2, 0),
+('d3020001-0004-4000-8000-000000000004', 'c3000001-0002-4000-8000-000000000002', 'Sức khỏe',           'health',        3, 0),
+('d3020001-0005-4000-8000-000000000005', 'c3000001-0002-4000-8000-000000000002', 'Khác',               'other',         4, 1);
 
-
--- ============================================
+-- ============================================================
 -- 5. RESPONSES
--- ============================================
-INSERT INTO responses (id, survey_id, user_id, created_at, updated_at) VALUES
+-- user_id NULL cho phép (anonymous) — cần allowNull: true trong model
+-- ============================================================
 
--- User 2 làm Survey 1
+INSERT IGNORE INTO `responses`
+  (`id`, `survey_id`, `user_id`, `created_at`, `updated_at`)
+VALUES
 ('e1000001-0001-4000-8000-000000000001', 'b1b2c3d4-0001-4000-8000-000000000001', 'a1b2c3d4-0002-4000-8000-000000000002', NOW(), NOW()),
--- User 3 làm Survey 1
 ('e1000001-0002-4000-8000-000000000002', 'b1b2c3d4-0001-4000-8000-000000000001', 'a1b2c3d4-0003-4000-8000-000000000003', NOW(), NOW()),
--- User 2 làm Survey 2
 ('e2000001-0001-4000-8000-000000000003', 'b1b2c3d4-0002-4000-8000-000000000002', 'a1b2c3d4-0002-4000-8000-000000000002', NOW(), NOW()),
--- User 5 làm Survey 3
 ('e3000001-0001-4000-8000-000000000004', 'b1b2c3d4-0003-4000-8000-000000000003', 'a1b2c3d4-0005-4000-8000-000000000005', NOW(), NOW()),
--- Anonymous làm Survey 1
-('e1000001-0003-4000-8000-000000000005', 'b1b2c3d4-0001-4000-8000-000000000001', NULL, NOW(), NOW());
+('e1000001-0003-4000-8000-000000000005', 'b1b2c3d4-0001-4000-8000-000000000001', NULL,                                    NOW(), NOW());
 
-
--- ============================================
+-- ============================================================
 -- 6. ANSWERS
--- ============================================
-INSERT INTO answers (id, response_id, question_id, option_id, answer_text) VALUES
+-- option_id NULL cho câu TEXT/PARAGRAPH, answer_text NULL cho câu choice
+-- ============================================================
 
+INSERT IGNORE INTO `answers`
+  (`id`, `response_id`, `question_id`, `option_id`, `answer_text`)
+VALUES
 -- Response 1 (User 2, Survey 1)
 ('f0000001-0001-4000-8000-000000000001', 'e1000001-0001-4000-8000-000000000001', 'c1000001-0001-4000-8000-000000000001', 'd1010001-0002-4000-8000-000000000002', NULL),
 ('f0000001-0002-4000-8000-000000000002', 'e1000001-0001-4000-8000-000000000001', 'c1000001-0002-4000-8000-000000000002', 'd1020001-0001-4000-8000-000000000001', NULL),
@@ -149,3 +190,16 @@ INSERT INTO answers (id, response_id, question_id, option_id, answer_text) VALUE
 ('f0000005-0001-4000-8000-000000000016', 'e1000001-0003-4000-8000-000000000005', 'c1000001-0001-4000-8000-000000000001', 'd1010001-0003-4000-8000-000000000003', NULL),
 ('f0000005-0002-4000-8000-000000000017', 'e1000001-0003-4000-8000-000000000005', 'c1000001-0002-4000-8000-000000000002', 'd1020001-0005-4000-8000-000000000005', NULL),
 ('f0000005-0003-4000-8000-000000000018', 'e1000001-0003-4000-8000-000000000005', 'c1000001-0003-4000-8000-000000000003', NULL, 'Cần cải thiện giao diện website');
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- Chạy: mysql -u root -p data_collection < insert_data_v2.sql
+-- Summary:
+--   users            : 5 rows
+--   surveys          : 3 rows
+--   questions        : 10 rows
+--   question_options : 28 rows
+--   responses        : 5 rows
+--   answers          : 18 rows
+-- ============================================================
