@@ -123,4 +123,57 @@ const sendPasswordResetEmail = async (to, code, expireTime, fullName) => {
     });
 };
 
-export { sendEmail, sendVerificationEmail, reSendVerificationEmail, sendPasswordResetEmail };
+const sendInviteEmail = async ({
+    to,
+    surveyTitle,
+    surveyLink,
+    senderName,
+    senderEmail,
+}) => {
+    await sendEmail({
+        to,
+        subject: `You're invited to participate in a survey`,
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          
+          <h2 style="color: #333;">Survey Invitation</h2>
+          
+          <p>Hello,</p>
+          
+          <p>
+            You have been invited by 
+            <strong>${senderName}</strong> 
+            (${senderEmail})
+            to participate in a survey.
+          </p>
+
+          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 14px; color: #666;">Survey Title:</p>
+            <h3 style="margin: 5px 0; color: #222;">${surveyTitle}</h3>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${surveyLink}" 
+               style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               Take Survey
+            </a>
+          </div>
+
+          <p style="color: #666;">
+            Click the button above to start the survey. Your responses are valuable!
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
+
+          <p style="font-size: 12px; color: #999;">
+            This email was sent via Data Collection System on behalf of ${senderName}.
+          </p>
+
+        </div>
+        `,
+    }).catch((error) => {
+        console.error('Error sending invite email:', error);
+    });
+};
+
+export { sendEmail, sendVerificationEmail, reSendVerificationEmail, sendPasswordResetEmail, sendInviteEmail };

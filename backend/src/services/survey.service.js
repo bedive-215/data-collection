@@ -20,24 +20,67 @@ class SurveyService {
         };
     }
 
+    async _checkSurveyAccess(user, survey, access_token) {
+        // OWNER → editor luôn
+        if (this._checkOwnerOrAdmin(user, survey)) {
+            return "editor";
+        }
+
+        // PUBLIC
+        if (survey.access_type === "PUBLIC") {
+            return "viewer";
+        }
+
+        // LINK
+        if (survey.access_type === "LINK") {
+            if (!access_token || access_token !== survey.access_token) {
+                throw new AppError("Invalid or missing access token", 403);
+            }
+            return "viewer";
+        }
+
+        // PRIVATE
+        if (survey.access_type === "PRIVATE") {
+            if (!user) {
+                throw new AppError("Unauthorized", 401);
+            }
+
+            const participant = await this.SurveyParticipant.findOne({
+                where: {
+                    survey_id: survey.id,
+                    [Op.or]: [
+                        { user_id: user.id },
+                        { email: user.email }
+                    ]
+                }
+            });
+
+            if (!participant) {
+                throw new AppError("You are not allowed to access this survey", 403);
+            }
+
+            return participant.role;
+        }
+
+        throw new AppError("Invalid survey access type", 400);
+    }
+
+    _checkOwnerOrAdmin(user, survey) {
+        if (!user) return false;
+        if (survey.created_by === user.id) {
+            return true;
+        }
+        if (user.role === "admin") {
+            return true;
+        }
+        return false;
+    }
+
     _getSurveyStatus(survey) {
         const now = new Date();
-
-        if (!survey.is_published) return "DRAFT";
         if (survey.start_at && now < survey.start_at) return "SCHEDULED";
         if (survey.end_at && now > survey.end_at) return "EXPIRED";
-
         return "ACTIVE";
-    }
-
-    _canModifySurvey(survey, user) {
-        return survey.created_by === user.id || user.role === "ADMIN";
-    }
-
-    _ensureOwnership(survey, user) {
-        if (!this._canModifySurvey(survey, user)) {
-            throw new AppError("Forbidden", 403);
-        }
     }
 
     _validateTitle(title) {
@@ -47,8 +90,8 @@ class SurveyService {
     }
 
     // Create new survey
-    async createSurvey(userId, payload) {
-        const { title, description, start_at, end_at } = payload;
+    async createSurvey(user, payload) {
+        const { title, description, start_at, end_at, access_type } = payload;
 
         this._validateTitle(title);
 
@@ -59,19 +102,21 @@ class SurveyService {
         const survey = await this.Survey.create({
             title: title.trim(),
             description: description?.trim() || null,
-            created_by: userId,
+            created_by: user.id,
             start_at: start_at || null,
-            end_at: end_at || null
+            end_at: end_at || null,
+            access_type: access_type || "PRIVATE",
+            access_token: access_token || null
         });
 
         return {
             message: "Created survey successfully",
-            survey: this._mapSurvey(survey)
+            survey: this._mapSurvey(survey),
         };
     }
 
     // get survey by id (with questions & options)
-    async getSurveyById(survey_id) {
+    async getSurveyById(user, survey_id, access_token = null) {
         if (!survey_id) {
             throw new AppError("Survey id is required!", 400);
         }
@@ -84,7 +129,10 @@ class SurveyService {
                 "is_published",
                 "start_at",
                 "end_at",
-                "created_at"
+                "created_at",
+                "access_type",
+                "access_token",
+                "created_by"
             ],
             include: [
                 {
@@ -114,25 +162,29 @@ class SurveyService {
             throw new AppError("Survey not found!", 404);
         }
 
+        let role = await this._checkSurveyAccess(user, survey, access_token);
+
         const status = this._getSurveyStatus(survey);
-        if (status !== "ACTIVE") {
+
+        if (status !== "ACTIVE" && survey.created_by !== user?.id) {
             throw new AppError(`Survey is ${status}`, 403);
         }
 
         return {
             message: "Get survey successfully!",
-            survey: this._mapSurveyDetail(survey, status)
+            survey: this._mapSurveyDetail(survey, status),
+            role
         };
     }
 
-    // get surveys by user id
-    async getSurveyByUserId(user_id) {
-        if (!user_id) {
-            throw new AppError("User id is required!", 400);
-        }
+    // get surveys by user id 
+    async getMySurveys(user, page = 1, limit = 10) {
+
+        const { offset, limit: safeLimit, page: safePage } =
+            this._sanitizePagination(page, limit);
 
         const surveys = await this.Survey.findAll({
-            where: { created_by: user_id },
+            where: { created_by: user.id },
             attributes: [
                 "id",
                 "title",
@@ -141,6 +193,38 @@ class SurveyService {
                 "end_at",
                 "created_at"
             ],
+            offset,
+            limit: safeLimit,
+            order: [["created_at", "DESC"]]
+        });
+
+        return {
+            message: "Get surveys successfully!",
+            count: surveys.length,
+            surveys: surveys.map(s => ({
+                ...this._mapSurvey(s),
+                status: this._getSurveyStatus(s)
+            }))
+        };
+    }
+
+    // get surveys by user id (for admin)
+    async getSurveyByUserId(user, page = 1, limit = 10) {
+        const { offset, limit: safeLimit, page: safePage } =
+            this._sanitizePagination(page, limit);
+
+        const surveys = await this.Survey.findAll({
+            where: { created_by: user.id },
+            attributes: [
+                "id",
+                "title",
+                "is_published",
+                "start_at",
+                "end_at",
+                "created_at"
+            ],
+            offset,
+            limit: safeLimit,
             order: [["created_at", "DESC"]]
         });
 
@@ -183,23 +267,34 @@ class SurveyService {
         };
     }
 
-    // update survey
-    async updateSurvey(survey_id, user_id, payload) {
-        const { title, description, start_at, end_at, is_published } = payload;
+    async getSurveyPublic() {
+        const surveys = await this.Survey.findAll({
+            where: { access_type: "PUBLIC" }
+        });
 
-        const survey = await this.Survey.findByPk(survey_id);
+        return {
+            message: "Get public surveys successfully!",
+            count: surveys.length,
+            surveys: surveys.map(s => ({
+                ...this._mapSurvey(s),
+                status: this._getSurveyStatus(s)
+            }))
+        };
+    }
+
+    async updateSurvey(user, surveyId, payload) {
+        const survey = await this.Survey.findByPk(surveyId);
 
         if (!survey) {
-            throw new AppError("Survey not found!", 404);
+            throw new AppError("Survey not found", 404);
         }
 
-        const user = await this.User.findByPk(user_id);
-
-        if (!user) {
-            throw new AppError("User not found!", 404);
+        const role = this._checkSurveyAccess(user, survey);
+        if (role !== "editor") {
+            throw new AppError("You do not have permission to edit this survey", 403);
         }
 
-        this._ensureOwnership(survey, user);
+        const { title, description, start_at, end_at } = payload;
 
         if (title !== undefined) {
             this._validateTitle(title);
@@ -233,46 +328,207 @@ class SurveyService {
         };
     }
 
-    // delete survey
-    async deleteSurvey(survey_id, user_id) {
-        const survey = await this.Survey.findByPk(survey_id);
+    async deleteSurveyById(surveyId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
 
         if (!survey) {
-            throw new AppError("Survey not found!", 404);
+            throw new AppError("Survey not found", 404);
         }
 
-        const user = await this.User.findByPk(user_id);
-
-        if (!user) {
-            throw new AppError("User not found!", 404);
+        if (!this._checkOwner(user, survey)) {
+            throw new AppError("You do not have permission to delete this survey", 403);
         }
 
-        this._ensureOwnership(survey, user);
-
-        await survey.destroy();
+        survey.destroy();
 
         return {
             message: "Deleted survey successfully"
         };
     }
 
-    // close survey (set end_at to now)
-    async closeSurvey(survey_id, user_id) {
-        const survey = await this.Survey.findByPk(survey_id);
+    async closeSurvey(surveyId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
         if (!survey) {
-            throw new AppError("Survey not found!", 404);
+            throw new AppError("Survey not found", 404);
         }
-        const user = await this.User.findByPk(user_id);
-        if (!user) {
-            throw new AppError("User not found!", 404);
+
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission to close this survey", 403);
         }
-        this._ensureOwnership(survey, user);
 
         survey.end_at = new Date();
         await survey.save();
+
         return {
             message: "Closed survey successfully",
             survey: this._mapSurvey(survey)
+        };
+    }
+
+    async publicSurvey(surveyId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission to publish this survey", 403);
+        }
+
+        if (survey.access_type === "PUBLIC") {
+            throw new AppError("Survey is already public", 400);
+        }
+
+        survey.access_type = "PUBLIC";
+        survey.access_token = null;
+        await survey.save();
+
+        return {
+            message: "Published survey successfully",
+            survey: this._mapSurvey(survey)
+        };
+    }
+
+    async shareLink(surveyId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        // chỉ owner hoặc admin mới được lấy link
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission to share this survey", 403);
+        }
+
+        // nếu chưa phải LINK → chuyển sang LINK
+        if (survey.access_type !== "LINK") {
+            survey.access_type = "LINK";
+        }
+
+        // nếu chưa có token → generate
+        if (!survey.access_token) {
+            survey.access_token = this._generateAccessToken();
+        }
+
+        await survey.save();
+
+        return {
+            message: "Share link generated successfully",
+            url: `${process.env.BASE_URL}/surveys/${survey.id}?access_token=${survey.access_token}`
+        };
+    }
+
+    async inviteSurvey(surveyId, user, payload) {
+        const { email, role = "viewer" } = payload;
+
+        const survey = await this.Survey.findByPk(surveyId);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        // chỉ owner/admin được mời
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission to invite", 403);
+        }
+
+        // chỉ dùng cho PRIVATE
+        if (survey.access_type !== "PRIVATE") {
+            throw new AppError("Invite only works for PRIVATE survey", 400);
+        }
+
+        // check tồn tại user (optional)
+        const existingUser = await this.User.findOne({ where: { email } });
+
+        // check đã tồn tại participant chưa
+        const existingParticipant = await this.SurveyParticipant.findOne({
+            where: {
+                survey_id: survey.id,
+                email: email
+            }
+        });
+
+        if (existingParticipant) {
+            throw new AppError("User already invited", 400);
+        }
+
+        const participant = await this.SurveyParticipant.create({
+            survey_id: survey.id,
+            user_id: existingUser?.id || null,
+            email: email,
+            role: role
+        });
+
+        return {
+            message: "User invited successfully",
+            participant
+        };
+    }
+
+    async bulkInvite(surveyId, user, payload) {
+        const { emails = [], role = "viewer" } = payload;
+
+        if (!Array.isArray(emails) || emails.length === 0) {
+            throw new AppError("Emails must be a non-empty array", 400);
+        }
+
+        const survey = await this.Survey.findByPk(surveyId);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission", 403);
+        }
+
+        if (survey.access_type !== "PRIVATE") {
+            throw new AppError("Bulk invite only works for PRIVATE survey", 400);
+        }
+
+        // validate role
+        const VALID_ROLES = ["viewer", "editor"];
+        if (!VALID_ROLES.includes(role)) {
+            throw new AppError("Invalid role", 400);
+        }
+
+        // tìm user đã tồn tại
+        const users = await this.User.findAll({
+            where: { email: emails }
+        });
+
+        const userMap = Object.fromEntries(users.map(u => [u.email, u]));
+
+        // tìm participant đã tồn tại
+        const existingParticipants = await this.SurveyParticipant.findAll({
+            where: {
+                survey_id: survey.id,
+                email: emails
+            }
+        });
+
+        const existingEmails = new Set(existingParticipants.map(p => p.email));
+
+        // lọc email hợp lệ để insert
+        const toCreate = emails
+            .filter(email => !existingEmails.has(email))
+            .map(email => ({
+                survey_id: survey.id,
+                email,
+                user_id: userMap[email]?.id || null,
+                role
+            }));
+
+        // bulk insert
+        const created = await this.SurveyParticipant.bulkCreate(toCreate);
+
+        return {
+            message: "Bulk invite processed",
+            total: emails.length,
+            created: created.length,
+            skipped: existingEmails.size
         };
     }
 
@@ -281,7 +537,6 @@ class SurveyService {
         return {
             id: survey.id,
             title: survey.title,
-            is_published: survey.is_published,
             start_at: survey.start_at,
             end_at: survey.end_at,
             created_at: survey.created_at

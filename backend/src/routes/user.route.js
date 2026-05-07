@@ -13,8 +13,8 @@ const route = Router();
 route.get('/me', UserController.getUserInfo);
 route.patch('/me', validate(updateUserProfileRequest), UserController.updateUserProfile);
 route.patch('/me/avatar', upload.single('avatar'), UserController.updateUserAvatar);
-route.get('/:id', validate(userIdParams), UserController.getUserById);
+route.get('/:id', authMiddleware.checkRole("admin"), validate(userIdParams), UserController.getUserById);
 route.get('/', authMiddleware.checkRole("admin"), UserController.getListOfUser);
-route.delete('/:id', validate(userIdParams), authMiddleware.checkRole("admin"), UserController.deleteUser);
+route.delete('/:id', authMiddleware.checkRole("admin"), validate(userIdParams), UserController.deleteUser);
 
 export default route;

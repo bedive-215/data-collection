@@ -31,11 +31,6 @@ export default (sequelize) => {
             allowNull: false
         },
 
-        is_published: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
-
         start_at: {
             type: DataTypes.DATE,
             allowNull: true
@@ -57,6 +52,15 @@ export default (sequelize) => {
             type: DataTypes.JSON,
             allowNull: true,
             defaultValue: {}
+        },
+        access_type: {
+            type: DataTypes.ENUM('PUBLIC', 'LINK', 'PRIVATE'),
+            defaultValue: 'PRIVATE'
+        },
+        access_token: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            unique: true
         }
 
     }, {
@@ -67,7 +71,6 @@ export default (sequelize) => {
         indexes: [
             { fields: ["created_by"] },
             { fields: ["created_at"] },
-            { fields: ["is_published"] },
             { fields: ["start_at"] },
             { fields: ["end_at"] }
         ]
