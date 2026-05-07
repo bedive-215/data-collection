@@ -8,20 +8,19 @@ import {
   ChevronLeft, ChevronRight, CheckCircle2, CircleDot,
   AlignLeft, CheckSquare, Loader2, Send, Home,
   FileText, Mail, Calendar, Hash, Star, ChevronDown,
-  GripVertical,
 } from "lucide-react";
 
 /* ── Type config ───────────────────────────────────────────────────── */
 const TYPE_CONFIG = {
-  TEXT:            { label: "Văn bản ngắn",   Icon: AlignLeft,    color: "#4f6ef7", bg: "#eef2ff", border: "#c7d2fe" },
-  PARAGRAPH:       { label: "Đoạn văn",       Icon: FileText,     color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
-  EMAIL:           { label: "Email",           Icon: Mail,         color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" },
-  DATE:            { label: "Ngày tháng",      Icon: Calendar,     color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  NUMBER:          { label: "Số",              Icon: Hash,         color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
-  RATING:          { label: "Đánh giá",        Icon: Star,         color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
-  SINGLE_CHOICE:   { label: "Một lựa chọn",   Icon: CircleDot,    color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" },
-  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", Icon: CheckSquare,  color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
-  DROPDOWN:        { label: "Danh sách thả",  Icon: ChevronDown,  color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe" },
+  TEXT:            { label: "Văn bản ngắn",   Icon: AlignLeft,   color: "#4f6ef7", bg: "#eef2ff", border: "#c7d2fe" },
+  PARAGRAPH:       { label: "Đoạn văn",       Icon: FileText,    color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
+  EMAIL:           { label: "Email",           Icon: Mail,        color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" },
+  DATE:            { label: "Ngày tháng",      Icon: Calendar,    color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+  NUMBER:          { label: "Số",              Icon: Hash,        color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
+  RATING:          { label: "Đánh giá",        Icon: Star,        color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
+  SINGLE_CHOICE:   { label: "Một lựa chọn",   Icon: CircleDot,   color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" },
+  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", Icon: CheckSquare, color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+  DROPDOWN:        { label: "Danh sách thả",  Icon: ChevronDown, color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe" },
 };
 
 /* ── ProgressBar ───────────────────────────────────────────────────── */
@@ -112,20 +111,34 @@ function SuccessScreen({ onGoHome }) {
   );
 }
 
-/* ── Helpers ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────
+ * normalizeOption
+ *
+ * BE (QuestionOption model) trả về: { id, label, value, order_index, ... }
+ * FE cũ dùng opt.content — không tồn tại trên BE → hiển thị rỗng.
+ * Fix: ưu tiên label → value → fallback index.
+ * ───────────────────────────────────────────────────────────────────── */
 function normalizeOption(opt, index = 0) {
   const display =
+    (typeof opt.label   === "string" && opt.label.trim())   ||
     (typeof opt.content === "string" && opt.content.trim()) ||
-    (typeof opt.label === "string" && opt.label.trim()) ||
-    (typeof opt.value === "string" && opt.value.trim()) ||
+    (typeof opt.value   === "string" && opt.value.trim())   ||
     `Lựa chọn ${index + 1}`;
 
   return {
-  id: opt.id || opt.option_id,
-  content: display,
-};
+    id:          opt.id || opt.option_id,
+    content:     display,
+    order_index: opt.order_index ?? index,
+  };
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+ * resolveOptions
+ *
+ * Ưu tiên optionsMap (đã fetch riêng qua OptionProvider) → fallback
+ * về question.options nếu BE trả kèm trong GET questions.
+ * Sort theo order_index (đúng thứ tự BE tạo).
+ * ───────────────────────────────────────────────────────────────────── */
 function resolveOptions(question, optionsMap) {
   const raw = optionsMap?.[question.id];
 
@@ -142,7 +155,10 @@ function resolveOptions(question, optionsMap) {
     list = [];
   }
 
-  return list.map(normalizeOption).filter((o) => o.content !== "");
+  return list
+    .map(normalizeOption)
+    .filter((o) => o.content !== "")
+    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)); // giữ thứ tự BE
 }
 
 /* ── RatingInput ───────────────────────────────────────────────────── */
@@ -150,7 +166,6 @@ function RatingInput({ settings, value, onChange }) {
   const min = settings?.min ?? 1;
   const max = settings?.max ?? 5;
   const [hovered, setHovered] = useState(null);
-
   const steps = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
   return (
@@ -239,8 +254,7 @@ function DropdownInput({ options, value, onChange }) {
                   fontSize: 14, color: sel ? "#6d28d9" : "#374151",
                   fontWeight: sel ? 700 : 400, cursor: "pointer",
                   fontFamily: "inherit", display: "flex", alignItems: "center",
-                  justifyContent: "space-between",
-                  transition: "background .1s",
+                  justifyContent: "space-between", transition: "background .1s",
                 }}
                 onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "#f9fafb"; }}
                 onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
@@ -270,11 +284,8 @@ function QuestionCard({ question, answer, onChange }) {
   const cfg = TYPE_CONFIG[question.type] ?? TYPE_CONFIG.TEXT;
   const { Icon, label, color, bg, border } = cfg;
 
-  const sorted = [...(question.options ?? [])]
-  .filter((opt) => opt?.id)
-  .sort((a, b) =>
-    (a.content ?? "").localeCompare(b.content ?? "")
-  );
+  /* options đã được resolve + sort theo order_index từ resolveOptions */
+  const opts = question.options ?? [];
 
   const toggleMulti = (optId) => {
     const current = answer instanceof Set ? new Set(answer) : new Set();
@@ -406,9 +417,9 @@ function QuestionCard({ question, answer, onChange }) {
 
       {/* ── SINGLE_CHOICE ── */}
       {question.type === "SINGLE_CHOICE" && (
-        sorted.length > 0 ? (
+        opts.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {sorted.map((opt) => {
+            {opts.map((opt) => {
               const selected = answer === opt.id;
               return (
                 <button
@@ -448,10 +459,10 @@ function QuestionCard({ question, answer, onChange }) {
 
       {/* ── MULTIPLE_CHOICE ── */}
       {question.type === "MULTIPLE_CHOICE" && (
-        sorted.length > 0 ? (
+        opts.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 4px" }}>Có thể chọn nhiều đáp án</p>
-            {sorted.map((opt) => {
+            {opts.map((opt) => {
               const selected = answer instanceof Set && answer.has(opt.id);
               return (
                 <button
@@ -495,9 +506,9 @@ function QuestionCard({ question, answer, onChange }) {
 
       {/* ── DROPDOWN ── */}
       {question.type === "DROPDOWN" && (
-        sorted.length > 0 ? (
+        opts.length > 0 ? (
           <DropdownInput
-            options={sorted}
+            options={opts}
             value={answer}
             onChange={(val) => onChange(question.id, val)}
           />
@@ -543,7 +554,7 @@ export default function SurveyTakePage() {
     });
   }, [surveyId]);
 
-  /* ── Merge + normalize options vào questions ── */
+  /* ── Merge + normalize options vào questions, sort theo order_index ── */
   const sorted = [...questions]
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
     .map((q) => ({
@@ -560,7 +571,7 @@ export default function SurveyTakePage() {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  /* ── Validate from per type ── */
+  /* ── Validate per type ── */
   const canProceed = () => {
     if (!current) return false;
     if (!current.required) return true;
@@ -604,9 +615,7 @@ export default function SurveyTakePage() {
     const settings = current.settings ?? {};
 
     if (current.type === "EMAIL" && typeof ans === "string" && ans.trim()) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ans.trim())) {
-        return "Email không hợp lệ";
-      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ans.trim())) return "Email không hợp lệ";
     }
     if (current.type === "NUMBER" && ans !== "" && ans != null) {
       const n = Number(ans);
@@ -618,71 +627,116 @@ export default function SurveyTakePage() {
     return null;
   };
 
-  /* ── Build payload ── */
-  const handleSubmit = async () => {
-    if (!canProceed() || submitting) return;
-
+  /* ─────────────────────────────────────────────────────────────────
+   * buildPayload
+   *
+   * Map đúng với BE ResponseService.submitSurvey():
+   *
+   *   TEXT / PARAGRAPH / EMAIL / DATE
+   *     → { question_id, answer_text }
+   *
+   *   NUMBER / RATING
+   *     → { question_id, answer_number: Number }
+   *     BE: `const value = ans.answer_number ?? ans.answer_text`
+   *     Dùng answer_number để rõ ràng, tránh phụ thuộc vào fallback.
+   *
+   *   SINGLE_CHOICE / DROPDOWN
+   *     → { question_id, option_id }
+   *
+   *   MULTIPLE_CHOICE
+   *     → { question_id, option_ids: string[] }
+   *     BE: `if (!Array.isArray(ans.option_ids) || !ans.option_ids.length)`
+   * ───────────────────────────────────────────────────────────────── */
+  const buildPayload = () => {
     const formattedAnswers = [];
 
     sorted.forEach((q) => {
       const val = answers[q.id];
 
+      /* TEXT / PARAGRAPH / EMAIL */
       if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
         if (typeof val === "string" && val.trim()) {
-          formattedAnswers.push({ question_id: q.id, answer_text: val.trim() });
+          formattedAnswers.push({
+            question_id: q.id,
+            answer_text: val.trim(),
+          });
         }
         return;
       }
 
+      /* DATE — BE: new Date(ans.answer_text) */
       if (q.type === "DATE") {
         if (val) {
-          formattedAnswers.push({ question_id: q.id, answer_text: val });
+          formattedAnswers.push({
+            question_id: q.id,
+            answer_text: val, // "YYYY-MM-DD" string, BE parse với new Date()
+          });
         }
         return;
       }
 
+      /* NUMBER — BE branch: answer_number ?? answer_text, Number(value) */
       if (q.type === "NUMBER") {
-        if (val !== "" && val != null) {
-          formattedAnswers.push({ question_id: q.id, answer_text: String(val) });
+        if (val !== "" && val != null && !isNaN(Number(val))) {
+          formattedAnswers.push({
+            question_id:   q.id,
+            answer_number: Number(val), // gửi đúng field BE expect
+          });
         }
         return;
       }
 
+      /* RATING — cùng branch với NUMBER trong BE */
       if (q.type === "RATING") {
         if (val != null) {
-          formattedAnswers.push({ question_id: q.id, answer_text: String(val) });
+          formattedAnswers.push({
+            question_id:   q.id,
+            answer_number: Number(val), // BE: answer_number ?? answer_text → Number(value)
+          });
         }
         return;
       }
 
+      /* SINGLE_CHOICE / DROPDOWN — BE: option_id (uuid) */
       if (q.type === "SINGLE_CHOICE" || q.type === "DROPDOWN") {
         if (val) {
-          formattedAnswers.push({ question_id: q.id, option_id: val });
+          formattedAnswers.push({
+            question_id: q.id,
+            option_id:   val,
+          });
         }
         return;
       }
 
+      /* MULTIPLE_CHOICE — BE: option_ids (string[]) */
       if (q.type === "MULTIPLE_CHOICE") {
-  const selected = val instanceof Set ? [...val] : [];
-
-  if (selected.length > 0) {
-    formattedAnswers.push({
-      question_id: q.id,
-      option_ids: selected,
-    });
-  }
-
-  return;
-}
+        const selected = val instanceof Set ? [...val] : [];
+        if (selected.length > 0) {
+          formattedAnswers.push({
+            question_id: q.id,
+            option_ids:  selected,
+          });
+        }
+        return;
+      }
     });
 
-    console.log("payload:", formattedAnswers);
+    return formattedAnswers;
+  };
+
+  /* ── Submit ── */
+  const handleSubmit = async () => {
+    if (!canProceed() || submitting) return;
+
+    const formattedAnswers = buildPayload();
+
+    console.log("[SurveyTakePage] payload →", formattedAnswers);
 
     try {
       await submitSurvey(surveyId, { answers: formattedAnswers });
       setSubmitted(true);
     } catch (err) {
-      console.error("Submit error:", err);
+      console.error("[SurveyTakePage] submit error:", err);
     }
   };
 
@@ -690,7 +744,7 @@ export default function SurveyTakePage() {
     return <SuccessScreen onGoHome={() => navigate("/user/home")} />;
   }
 
-  const isPageLoading = loading || optionsLoading;
+  const isPageLoading  = loading || optionsLoading;
   const validationHint = getValidationHint();
 
   return (
@@ -773,8 +827,7 @@ export default function SurveyTakePage() {
                     padding: "13px 20px", background: "#fff",
                     border: "1.5px solid #e5e7eb", borderRadius: 12,
                     fontSize: 14, fontWeight: 600, color: "#374151",
-                    cursor: submitting ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
+                    cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit",
                   }}
                 >
                   <ChevronLeft size={16} />Quay lại
