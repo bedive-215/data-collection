@@ -1,4 +1,4 @@
-// src/services/responseService.js
+// src/services/responseService.js  (React Native)
 import apiClient from "../api/apiClient";
 
 export const responseService = {

@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ⚠️ React Native KHÔNG có import.meta.env
 // 👉 Dùng env thủ công hoặc react-native-config
-const BASE_URL = "https://impeditive-incredible-jordy.ngrok-free.dev"; 
+const BASE_URL = "https://unrestfully-nonforbearing-carlie.ngrok-free.dev"; 
 // Android Emulator: 10.0.2.2 = localhost
 // Device thật: dùng IP máy tính (VD: 192.168.1.10)
 
