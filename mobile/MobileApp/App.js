@@ -7,11 +7,13 @@ import { AuthProvider }     from "./src/providers/AuthProvider";
 import ResponseProvider     from "./src/providers/Responseprovider";
 import SurveyProvider       from "./src/providers/Surveyprovider";
 import QuestionProvider     from "./src/providers/Questionprovider";
+import OptionProvider from "./src/providers/OptionProvider";
 import UserProvider  from "./src/providers/UserProvider"; 
 export default function App() {
   return (
     <AuthProvider>
       <UserProvider>
+        <OptionProvider>
       <ResponseProvider>
         <SurveyProvider>
           <QuestionProvider>
@@ -22,6 +24,7 @@ export default function App() {
           </QuestionProvider>
         </SurveyProvider>
       </ResponseProvider>
+      </OptionProvider>
       </UserProvider>
     </AuthProvider>
   );
