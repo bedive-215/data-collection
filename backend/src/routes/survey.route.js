@@ -9,12 +9,19 @@ import { Router } from "express";
 
 const route = Router();
 
-route.post('/', authMiddleware.checkRole('admin'), validate(createSurveyRequest), SurveyController.createSurvey);
+route.post('/', validate(createSurveyRequest), SurveyController.createSurvey);
+route.get('/me', SurveyController.getMySurveys);
 route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), SurveyController.getSurveyByUserId);
+route.get('/',authMiddleware.checkRole('admin'), SurveyController.getAllSurvey);
+
 route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyById);
-route.delete('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.deleteSurveyById);
-route.get('/', SurveyController.getAllSurvey);
-route.put('/:survey_id', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.updateSurvey);
-route.put('/:survey_id/close', authMiddleware.checkRole('admin'), validate(surveyIdParams), SurveyController.closeSurvey);
+route.get('/public', SurveyController.getSurveyPublic);
+route.put('/:survey_id', validate(surveyIdParams), SurveyController.updateSurvey);
+route.delete('/:survey_id', validate(surveyIdParams), SurveyController.deleteSurvey);
+route.patch('/:survey_id/close', validate(surveyIdParams), SurveyController.closeSurvey);
+route.patch('/:survey_id/publish', validate(surveyIdParams), SurveyController.publicSurvey);
+route.patch('/:survey_id/share', validate(surveyIdParams), SurveyController.shareLink);
+route.post('/:survey_id/invite', validate(surveyIdParams), SurveyController.inviteSurvey);
+
 
 export default route;

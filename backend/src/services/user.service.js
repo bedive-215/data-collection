@@ -1,4 +1,5 @@
 import models from "../models/index.js";
+import { Op } from "sequelize";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { uploadBufferToCloudinary } from '../utils/uploadImage.js'
 
