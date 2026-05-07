@@ -7,7 +7,9 @@ import {
   Pencil, Check, GripVertical, PlusCircle, Image,
   Type, AlignLeft, ChevronDown, List, CheckSquare,
   ToggleLeft, Star, Grid, FileUp, Calendar, Clock,
-  FileText, Video, Minus, Copy,
+  FileText, Video, Minus, Copy, Bold, Italic, Underline,
+  Link, AlignLeft as AlignLeftIcon, AlignCenter, AlignRight,
+  ImagePlus,
 } from "lucide-react";
 
 /* ── Design tokens ────────────────────────────────────────────────── */
@@ -33,18 +35,8 @@ const C = {
 
 /* ─────────────────────────────────────────────────────────────────────
  * TYPE MAPPING
- *
- * BE validator (createQuestionRequest) nhận ĐÚNG uppercase enum:
- *   "TEXT" | "PARAGRAPH" | "EMAIL" | "DATE" | "NUMBER" |
- *   "RATING" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "DROPDOWN"
- *
- * → KHÔNG cần map FE→BE nữa, giữ nguyên uppercase khi gửi API.
- * → Provider normalize cũng không cần map BE→FE nếu BE trả về đúng.
- *
- * Nếu BE GET trả về lowercase (legacy), dùng BE_TO_FE_TYPE để normalize.
  * ───────────────────────────────────────────────────────────────────── */
 const BE_TO_FE_TYPE = {
-  // Legacy: nếu BE GET vẫn trả về lowercase (sequelize enum storage)
   text:            "TEXT",
   paragraph:       "PARAGRAPH",
   email:           "EMAIL",
@@ -54,7 +46,6 @@ const BE_TO_FE_TYPE = {
   single_choice:   "SINGLE_CHOICE",
   multiple_choice: "MULTIPLE_CHOICE",
   dropdown:        "DROPDOWN",
-  // Uppercase passthrough (nếu BE đã trả đúng)
   TEXT:            "TEXT",
   PARAGRAPH:       "PARAGRAPH",
   EMAIL:           "EMAIL",
@@ -67,7 +58,6 @@ const BE_TO_FE_TYPE = {
 };
 
 const toFEType = (beType) => BE_TO_FE_TYPE[beType] ?? "TEXT";
-// toBEType: giữ nguyên vì BE validator nhận uppercase
 const toBEType = (feType) => feType;
 
 /* ── Question type definitions (UI only) ──────────────────────────── */
@@ -86,10 +76,7 @@ const Q_TYPES = [
   { value:"FILE_UPLOAD",     label:"Tải tệp lên",        icon:<FileUp size={15}/> },
 ];
 
-// Types that need label/value option pairs (BE supports these with options[])
 const CHOICE_TYPES = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"];
-
-// Types that have settings
 const SETTINGS_TYPES = ["NUMBER", "RATING", "DATE"];
 
 /* ── Shared helpers ───────────────────────────────────────────────── */
@@ -116,13 +103,8 @@ function iconBtn(color, borderColor, bg) {
 }
 
 /* ── Default option row factory ───────────────────────────────────── */
-// Mỗi row có label + value để map trực tiếp sang BE options[]
-const newOptionRow = () => ({ label: "", value: "", order_index: 0, is_other: false });
+const newOptionRow = () => ({ label: "", value: "", order_index: 0, is_other: false, image: null });
 
-/**
- * Chuyển option rows thành BE options[] format
- * BE schema: { label: string, value: string, order_index?: number, is_other?: boolean }
- */
 const buildBEOptions = (optionRows) =>
   optionRows
     .filter(r => r.label.trim() && r.value.trim())
@@ -131,6 +113,7 @@ const buildBEOptions = (optionRows) =>
       value:       r.value.trim(),
       order_index: i,
       is_other:    r.is_other ?? false,
+      // image is UI-only, not sent to BE
     }));
 
 /* ── Toggle ───────────────────────────────────────────────────────── */
@@ -214,6 +197,348 @@ function QuestionTypeDropdown({ value, onChange }) {
   );
 }
 
+/* ── ImageUploadButton — UI only, không gửi BE ────────────────────── */
+function ImageUploadButton({ image, onImageChange, size = "sm" }) {
+  const fileRef = useRef(null);
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    onImageChange({ file, url, name: file.name });
+    e.target.value = "";
+  };
+
+  if (image) {
+    return (
+      <div style={{
+        position:"relative", display:"inline-flex", borderRadius:8,
+        overflow:"hidden", border:`1px solid ${C.border}`,
+        width: size === "sm" ? 44 : 80,
+        height: size === "sm" ? 44 : 60,
+        flexShrink:0,
+      }}>
+        <img src={image.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        <button
+          type="button"
+          onClick={() => onImageChange(null)}
+          style={{
+            position:"absolute",top:2,right:2,
+            width:16,height:16,borderRadius:"50%",
+            background:"rgba(0,0,0,0.75)",border:"none",
+            color:"#fff",cursor:"pointer",fontSize:10,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            lineHeight:1,
+          }}
+        >×</button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        title="Thêm ảnh"
+        style={{
+          display:"flex", alignItems:"center", justifyContent:"center",
+          width: size === "sm" ? 28 : 32,
+          height: size === "sm" ? 28 : 32,
+          borderRadius:7, border:`1px solid ${C.border}`,
+          background:"transparent", color:C.textSub,
+          cursor:"pointer", flexShrink:0,
+          transition:"all .12s",
+        }}
+        onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.primary;}}
+        onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;e.currentTarget.style.borderColor=C.border;}}
+      >
+        <ImagePlus size={size === "sm" ? 13 : 15}/>
+      </button>
+    </>
+  );
+}
+
+/* ── RichTextEditor ────────────────────────────────────────────────── */
+function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 80, hasError = false }) {
+  const editorRef = useRef(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(!value);
+  const imageInputRef = useRef(null);
+
+  // Sync initial value once
+  useEffect(() => {
+    if (editorRef.current && !editorRef.current.innerHTML && value) {
+      editorRef.current.innerHTML = value;
+      setIsEmpty(false);
+    }
+  }, []);
+
+  const exec = (cmd, val = null) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val);
+    handleInput();
+  };
+
+  const handleInput = () => {
+    const el = editorRef.current;
+    if (!el) return;
+    const text = el.innerText ?? "";
+    const html = el.innerHTML ?? "";
+    setIsEmpty(!text.trim());
+    onChange(html);
+  };
+
+  const insertImageInEditor = (file) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = `<img src="${url}" alt="" style="max-width:100%;max-height:200px;border-radius:6px;margin:4px 0;display:block;"/>`;
+    editorRef.current?.focus();
+    document.execCommand("insertHTML", false, img);
+    handleInput();
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        insertImageInEditor(file);
+        return;
+      }
+    }
+    // plain text paste
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+  };
+
+  const toolbarBtn = (cmd, children, title, val = null) => (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={(e) => { e.preventDefault(); exec(cmd, val); }}
+      style={{
+        display:"flex", alignItems:"center", justifyContent:"center",
+        width:26, height:26, borderRadius:5,
+        border:"none", background:"transparent",
+        color:C.textSub, cursor:"pointer",
+        transition:"all .1s",
+      }}
+      onMouseEnter={e=>{e.currentTarget.style.background=C.surfaceHigh;e.currentTarget.style.color=C.text;}}
+      onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div style={{
+      border:`1.5px solid ${hasError ? C.error : isFocused ? C.primary : C.border}`,
+      borderRadius:10, overflow:"hidden",
+      transition:"border-color .15s",
+      background:C.bg,
+    }}>
+      {/* Toolbar */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:2, padding:"6px 10px",
+        borderBottom:`1px solid ${C.border}`, background:C.surfaceHigh,
+        flexWrap:"wrap",
+      }}>
+        {toolbarBtn("bold",    <Bold size={13}/>,      "In đậm")}
+        {toolbarBtn("italic",  <Italic size={13}/>,    "In nghiêng")}
+        {toolbarBtn("underline",<Underline size={13}/>,"Gạch chân")}
+
+        <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
+
+        {toolbarBtn("justifyLeft",   <AlignLeftIcon size={13}/>,  "Căn trái")}
+        {toolbarBtn("justifyCenter", <AlignCenter size={13}/>,    "Căn giữa")}
+        {toolbarBtn("justifyRight",  <AlignRight size={13}/>,     "Căn phải")}
+
+        <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
+
+        {toolbarBtn("insertUnorderedList", <span style={{fontSize:12,fontWeight:700}}>•—</span>, "Danh sách")}
+        {toolbarBtn("insertOrderedList",   <span style={{fontSize:12,fontWeight:700}}>1.</span>,  "Danh sách số")}
+
+        <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
+
+        {/* Heading select */}
+        <select
+          onChange={e => { exec("formatBlock", e.target.value); e.target.value = "p"; }}
+          defaultValue="p"
+          style={{
+            background:C.bg, border:`1px solid ${C.border}`, borderRadius:5,
+            color:C.textSub, fontSize:11, padding:"2px 4px",
+            cursor:"pointer", fontFamily:C.font, outline:"none",
+          }}
+        >
+          <option value="p">Đoạn văn</option>
+          <option value="h1">Tiêu đề 1</option>
+          <option value="h2">Tiêu đề 2</option>
+          <option value="h3">Tiêu đề 3</option>
+        </select>
+
+        <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
+
+        {/* Image insert */}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          style={{display:"none"}}
+          onChange={e => { const f = e.target.files?.[0]; if(f) insertImageInEditor(f); e.target.value=""; }}
+        />
+        <button
+          type="button"
+          title="Chèn ảnh"
+          onMouseDown={(e) => { e.preventDefault(); imageInputRef.current?.click(); }}
+          style={{
+            display:"flex", alignItems:"center", justifyContent:"center",
+            width:26, height:26, borderRadius:5,
+            border:"none", background:"transparent",
+            color:C.textSub, cursor:"pointer",
+            transition:"all .1s",
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
+        >
+          <ImagePlus size={13}/>
+        </button>
+
+        <div style={{marginLeft:"auto",fontSize:10,color:C.textDim}}>
+          Ctrl+B · I · U
+        </div>
+      </div>
+
+      {/* Editable area */}
+      <div style={{position:"relative"}}>
+        {isEmpty && (
+          <div style={{
+            position:"absolute", top:0, left:0, right:0,
+            padding:"10px 14px", fontSize:14, color:C.textDim,
+            pointerEvents:"none", userSelect:"none",
+          }}>
+            {placeholder}
+          </div>
+        )}
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onPaste={handlePaste}
+          style={{
+            minHeight,
+            padding:"10px 14px",
+            color:C.text,
+            fontSize:14,
+            fontFamily:C.font,
+            outline:"none",
+            lineHeight:1.6,
+            wordBreak:"break-word",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── QuestionImageUploadArea — UI only ────────────────────────────── */
+function QuestionImageUploadArea({ image, onImageChange }) {
+  const fileRef = useRef(null);
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    onImageChange({ file, url, name: file.name });
+    e.target.value = "";
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(file);
+    onImageChange({ file, url, name: file.name });
+  };
+
+  if (image) {
+    return (
+      <div style={{position:"relative",borderRadius:10,overflow:"hidden",border:`1px solid ${C.border}`,maxWidth:300}}>
+        <img src={image.url} alt={image.name} style={{width:"100%",maxHeight:180,objectFit:"cover",display:"block"}}/>
+        <div style={{
+          position:"absolute",top:0,left:0,right:0,bottom:0,
+          background:"rgba(0,0,0,0)",transition:"background .15s",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+        }}
+          onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.5)"}
+          onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0)"}
+        >
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            style={{
+              padding:"5px 10px",background:"rgba(0,0,0,0.7)",
+              border:"none",borderRadius:6,color:"#fff",
+              fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,
+              opacity:0,transition:"opacity .15s",
+            }}
+            onMouseEnter={e=>e.currentTarget.style.opacity="1"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="0"}
+          >Thay ảnh</button>
+          <button
+            type="button"
+            onClick={() => onImageChange(null)}
+            style={{
+              padding:"5px 10px",background:"rgba(180,30,30,0.8)",
+              border:"none",borderRadius:6,color:"#fff",
+              fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,
+              opacity:0,transition:"opacity .15s",
+            }}
+            onMouseEnter={e=>e.currentTarget.style.opacity="1"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="0"}
+          >Xóa ảnh</button>
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+        <div style={{padding:"5px 10px",fontSize:11,color:C.textDim,background:C.surfaceHigh}}>
+          {image.name}
+          <span style={{marginLeft:6,color:C.primary,fontSize:10}}>UI only · chưa gửi server</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDragOver={e=>e.preventDefault()}
+        onDrop={handleDrop}
+        style={{
+          border:`1.5px dashed ${C.border}`,
+          borderRadius:10,padding:"14px 20px",
+          textAlign:"center",cursor:"pointer",
+          color:C.textDim,fontSize:12,
+          transition:"all .15s",background:"transparent",
+          display:"flex",alignItems:"center",gap:10,
+        }}
+        onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
+        onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textDim;}}
+      >
+        <ImagePlus size={16}/>
+        <span>Thêm ảnh cho câu hỏi · <span style={{color:C.textDim,fontSize:11}}>UI only</span></span>
+      </div>
+    </>
+  );
+}
+
 /* ── OptionRow — for existing saved options (label/value schema) ───── */
 function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   const [editing,  setEditing]  = useState(false);
@@ -221,6 +546,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   const [value,    setValue]    = useState(opt.value ?? "");
   const [saving,   setSaving]   = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [optImage, setOptImage] = useState(null); // UI only
 
   const startEdit = () => { setLabel(opt.label ?? ""); setValue(opt.value ?? ""); setEditing(true); };
 
@@ -241,6 +567,15 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
     try { await onDelete(opt.id, questionId); } finally { setDeleting(false); }
   };
 
+  const fileRef = useRef(null);
+  const handleOptImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setOptImage({ file, url, name: file.name });
+    e.target.value = "";
+  };
+
   const Marker = () => {
     if (qType === "MULTIPLE_CHOICE") return (
       <div style={{width:16,height:16,borderRadius:3,border:`1.5px solid ${C.textDim}`,flexShrink:0}}/>
@@ -254,68 +589,99 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   };
 
   return (
-    <div style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:`1px solid ${C.border}`}}>
-      <GripVertical size={13} color={C.textDim} style={{flexShrink:0,cursor:"grab"}}/>
-      <Marker/>
+    <div style={{
+      display:"flex",flexDirection:"column",gap:6,
+      padding:"7px 0",borderBottom:`1px solid ${C.border}`,
+    }}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <GripVertical size={13} color={C.textDim} style={{flexShrink:0,cursor:"grab"}}/>
+        <Marker/>
 
-      {editing ? (
-        <div style={{display:"flex",gap:8,flex:1}}>
-          <input
-            autoFocus
-            value={label}
-            onChange={e=>setLabel(e.target.value)}
-            placeholder="Label (hiển thị)"
-            onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
-            style={{...inp(false),flex:1,padding:"5px 10px",fontSize:13}}
-          />
-          <input
-            value={value}
-            onChange={e=>setValue(e.target.value)}
-            placeholder="Value (lưu DB)"
-            onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
-            style={{...inp(false),flex:1,padding:"5px 10px",fontSize:13,color:C.textSub}}
-          />
+        {editing ? (
+          <div style={{display:"flex",gap:8,flex:1}}>
+            <input
+              autoFocus value={label}
+              onChange={e=>setLabel(e.target.value)}
+              placeholder="Label (hiển thị)"
+              onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
+              style={{...inp(false),flex:1,padding:"5px 10px",fontSize:13}}
+            />
+            <input
+              value={value}
+              onChange={e=>setValue(e.target.value)}
+              placeholder="Value (lưu DB)"
+              onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
+              style={{...inp(false),flex:1,padding:"5px 10px",fontSize:13,color:C.textSub}}
+            />
+          </div>
+        ) : (
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}>
+            {optImage && (
+              <img src={optImage.url} alt="" style={{width:32,height:32,objectFit:"cover",borderRadius:5,border:`1px solid ${C.border}`}}/>
+            )}
+            <span style={{fontSize:13,color:C.text}}>{opt.label}</span>
+            <span style={{fontSize:11,color:C.textDim,background:C.surfaceHigh,padding:"1px 7px",borderRadius:4,border:`1px solid ${C.border}`}}>
+              {opt.value}
+            </span>
+          </div>
+        )}
+
+        <div style={{display:"flex",gap:4}}>
+          {/* Image upload for option — UI only */}
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleOptImageFile} style={{display:"none"}}/>
+          <button
+            type="button"
+            title="Thêm ảnh lựa chọn (UI only)"
+            onClick={()=>fileRef.current?.click()}
+            style={iconBtn(optImage?C.primary:C.textSub)}
+            onMouseEnter={e=>e.currentTarget.style.background=C.primaryDim}
+            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+          >
+            <ImagePlus size={11}/>
+          </button>
+
+          {editing ? (
+            <>
+              <button onClick={saveEdit} disabled={saving} style={iconBtn("#22c55e","#14532d")}
+                onMouseEnter={e=>e.currentTarget.style.background="#0a1a0a"}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                {saving?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<Check size={11}/>}
+              </button>
+              <button onClick={()=>setEditing(false)} style={iconBtn(C.textSub)}
+                onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHigh}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <X size={11}/>
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={startEdit} style={iconBtn(C.primary)} title="Sửa"
+                onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHigh}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <Pencil size={11}/>
+              </button>
+              <button onClick={handleDel} disabled={deleting} style={iconBtn(C.error,C.errorBorder)} title="Xóa"
+                onMouseEnter={e=>e.currentTarget.style.background=C.errorBg}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                {deleting?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<X size={11}/>}
+              </button>
+            </>
+          )}
         </div>
-      ) : (
-        <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:13,color:C.text}}>{opt.label}</span>
-          <span style={{fontSize:11,color:C.textDim,background:C.surfaceHigh,padding:"1px 7px",borderRadius:4,border:`1px solid ${C.border}`}}>
-            {opt.value}
-          </span>
+      </div>
+
+      {/* Show option image preview if uploaded */}
+      {optImage && !editing && (
+        <div style={{paddingLeft:56,display:"flex",alignItems:"center",gap:8}}>
+          <img src={optImage.url} alt="" style={{maxWidth:120,maxHeight:80,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}/>
+          <button
+            type="button"
+            onClick={()=>setOptImage(null)}
+            style={{fontSize:10,color:C.error,background:"none",border:"none",cursor:"pointer",fontFamily:C.font}}
+          >× Xóa ảnh</button>
+          <span style={{fontSize:10,color:C.textDim}}>UI only</span>
         </div>
       )}
-
-      <div style={{display:"flex",gap:4}}>
-        {editing ? (
-          <>
-            <button onClick={saveEdit} disabled={saving}
-              style={iconBtn("#22c55e","#14532d")}
-              onMouseEnter={e=>e.currentTarget.style.background="#0a1a0a"}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              {saving?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<Check size={11}/>}
-            </button>
-            <button onClick={()=>setEditing(false)} style={iconBtn(C.textSub)}
-              onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHigh}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              <X size={11}/>
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={startEdit} style={iconBtn(C.primary)} title="Sửa"
-              onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHigh}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              <Pencil size={11}/>
-            </button>
-            <button onClick={handleDel} disabled={deleting}
-              style={iconBtn(C.error,C.errorBorder)} title="Xóa"
-              onMouseEnter={e=>e.currentTarget.style.background=C.errorBg}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              {deleting?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<X size={11}/>}
-            </button>
-          </>
-        )}
-      </div>
     </div>
   );
 }
@@ -339,7 +705,6 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
     setTimeout(() => labelRefs.current[Math.max(0, i - 1)]?.focus(), 30);
   };
 
-  // Tự động sinh value từ label (snake_case)
   const handleLabelChange = (i, labelVal) => {
     const autoValue = labelVal
       .trim()
@@ -354,6 +719,12 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
   const updateRow = (i, field, val) => {
     onChange(optionRows.map((row, idx) =>
       idx === i ? { ...row, [field]: val } : row
+    ));
+  };
+
+  const handleOptImage = (i, imageObj) => {
+    onChange(optionRows.map((row, idx) =>
+      idx === i ? { ...row, image: imageObj } : row
     ));
   };
 
@@ -385,65 +756,81 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
         <span style={{flex:1,fontSize:10,color:C.textDim,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>
           Value (lưu DB)
         </span>
-        <div style={{width:26}}/>
+        <div style={{width:58}}/>
       </div>
 
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {optionRows.map((row, i) => (
-          <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-            <GripVertical size={12} color={C.textDim} style={{flexShrink:0}}/>
-            <Marker index={i}/>
+          <div key={i} style={{display:"flex",flexDirection:"column",gap:4}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <GripVertical size={12} color={C.textDim} style={{flexShrink:0}}/>
+              <Marker index={i}/>
 
-            <input
-              ref={el => labelRefs.current[i] = el}
-              value={row.label}
-              placeholder={`Label ${i + 1}`}
-              onChange={e => handleLabelChange(i, e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") { e.preventDefault(); addRow(i); }
-                if (e.key === "Backspace" && !row.label && !row.value && optionRows.length > 1) {
-                  e.preventDefault(); removeRow(i);
-                }
-              }}
-              style={{
-                flex:1, padding:"6px 10px",
-                background:C.surfaceHigh, border:`1px solid ${C.border}`,
-                borderRadius:7, color:C.text, fontSize:13,
-                fontFamily:C.font, outline:"none",
-              }}
-              onFocus={e => e.target.style.borderColor = C.primary}
-              onBlur={e => e.target.style.borderColor = C.border}
-            />
+              <input
+                ref={el => labelRefs.current[i] = el}
+                value={row.label}
+                placeholder={`Label ${i + 1}`}
+                onChange={e => handleLabelChange(i, e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") { e.preventDefault(); addRow(i); }
+                  if (e.key === "Backspace" && !row.label && !row.value && optionRows.length > 1) {
+                    e.preventDefault(); removeRow(i);
+                  }
+                }}
+                style={{
+                  flex:1, padding:"6px 10px",
+                  background:C.surfaceHigh, border:`1px solid ${C.border}`,
+                  borderRadius:7, color:C.text, fontSize:13,
+                  fontFamily:C.font, outline:"none",
+                }}
+                onFocus={e => e.target.style.borderColor = C.primary}
+                onBlur={e => e.target.style.borderColor = C.border}
+              />
 
-            {/* Value — editable, auto-filled từ label nhưng cho phép override */}
-            <input
-              value={row.value}
-              placeholder={`value_${i + 1}`}
-              onChange={e => updateRow(i, "value", e.target.value)}
-              style={{
-                flex:1, padding:"6px 10px",
-                background:C.bg, border:`1px solid ${C.border}`,
-                borderRadius:7, color:C.textSub, fontSize:12,
-                fontFamily:"monospace", outline:"none",
-              }}
-              onFocus={e => e.target.style.borderColor = C.primary}
-              onBlur={e => e.target.style.borderColor = C.border}
-            />
+              <input
+                value={row.value}
+                placeholder={`value_${i + 1}`}
+                onChange={e => updateRow(i, "value", e.target.value)}
+                style={{
+                  flex:1, padding:"6px 10px",
+                  background:C.bg, border:`1px solid ${C.border}`,
+                  borderRadius:7, color:C.textSub, fontSize:12,
+                  fontFamily:"monospace", outline:"none",
+                }}
+                onFocus={e => e.target.style.borderColor = C.primary}
+                onBlur={e => e.target.style.borderColor = C.border}
+              />
 
-            <button
-              type="button"
-              onClick={() => removeRow(i)}
-              disabled={optionRows.length <= 1}
-              style={{
-                width:22, height:22, borderRadius:6, border:"none",
-                background:"transparent",
-                cursor: optionRows.length <= 1 ? "not-allowed" : "pointer",
-                color: C.textDim, display:"flex", alignItems:"center",
-                justifyContent:"center", flexShrink:0,
-              }}
-              onMouseEnter={e => { if (optionRows.length > 1) { e.currentTarget.style.color=C.error; e.currentTarget.style.background=C.errorBg; }}}
-              onMouseLeave={e => { e.currentTarget.style.color=C.textDim; e.currentTarget.style.background="transparent"; }}
-            >×</button>
+              {/* Image for option row — UI only */}
+              <ImageUploadButton image={row.image} onImageChange={img => handleOptImage(i, img)} size="sm"/>
+
+              <button
+                type="button"
+                onClick={() => removeRow(i)}
+                disabled={optionRows.length <= 1}
+                style={{
+                  width:22, height:22, borderRadius:6, border:"none",
+                  background:"transparent",
+                  cursor: optionRows.length <= 1 ? "not-allowed" : "pointer",
+                  color: C.textDim, display:"flex", alignItems:"center",
+                  justifyContent:"center", flexShrink:0,
+                }}
+                onMouseEnter={e => { if (optionRows.length > 1) { e.currentTarget.style.color=C.error; e.currentTarget.style.background=C.errorBg; }}}
+                onMouseLeave={e => { e.currentTarget.style.color=C.textDim; e.currentTarget.style.background="transparent"; }}
+              >×</button>
+            </div>
+
+            {/* Option image preview */}
+            {row.image && (
+              <div style={{paddingLeft:52,display:"flex",alignItems:"center",gap:8}}>
+                <img
+                  src={row.image.url}
+                  alt=""
+                  style={{maxWidth:100,maxHeight:64,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}
+                />
+                <span style={{fontSize:10,color:C.textDim}}>UI only · chưa gửi server</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -471,6 +858,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
               background:C.surfaceHigh, border:`1px solid ${C.border}`,
               fontSize:12, color:C.textSub, fontWeight:500,
             }}>
+              {o.image && <img src={o.image.url} alt="" style={{width:14,height:14,objectFit:"cover",borderRadius:3}}/>}
               <span style={{width:5,height:5,borderRadius:"50%",background:C.primary,flexShrink:0}}/>
               {o.label}
               {o.value && <span style={{color:C.textDim,fontSize:10}}>({o.value})</span>}
@@ -640,18 +1028,18 @@ function QuestionBody({ q, type }) {
 
 /* ── QuestionCard ─────────────────────────────────────────────────── */
 function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDelete, onDuplicate, deletingId }) {
-  const [content,    setContent]    = useState(q.content);
-  const [type,       setType]       = useState(toFEType(q.type));
-  const [required,   setRequired]   = useState(q.required ?? true);
+  const [contentHtml, setContentHtml] = useState(q.content);
+  const [type,        setType]        = useState(toFEType(q.type));
+  const [required,    setRequired]    = useState(q.required ?? true);
+  const [qImage,      setQImage]      = useState(null); // UI only
 
-  // Normalize existing options → optionRows format
   const existingOptions = q.options ?? q.option ?? [];
   const [optionRows, setOptionRows] = useState(
     existingOptions.length > 0
       ? existingOptions.map(o =>
           typeof o === "string"
-            ? { label: o, value: o, order_index: 0, is_other: false }
-            : { label: o.label ?? "", value: o.value ?? "", order_index: o.order_index ?? 0, is_other: o.is_other ?? false }
+            ? { label: o, value: o, order_index: 0, is_other: false, image: null }
+            : { label: o.label ?? "", value: o.value ?? "", order_index: o.order_index ?? 0, is_other: o.is_other ?? false, image: null }
         )
       : [newOptionRow()]
   );
@@ -663,6 +1051,13 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   const hasSettings = SETTINGS_TYPES.includes(type);
   const isDeleting  = deletingId === q.id;
 
+  // Extract plain text from HTML for content field sent to BE
+  const getPlainText = (html) => {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.innerText ?? "";
+  };
+
   const handleTypeChange = (newType) => {
     setType(newType);
     if (CHOICE_TYPES.includes(newType) && !CHOICE_TYPES.includes(type)) {
@@ -672,30 +1067,23 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
     if (newType === "RATING") setSettings({ min: 1, max: 5 });
   };
 
-  /* ── Save existing question ── */
   const handleSave = async () => {
-    if (!content.trim()) return;
+    const plainContent = getPlainText(contentHtml).trim();
+    if (!plainContent) return;
 
-    // Validate options nếu là choice type
     if (isChoice) {
       const validOpts = buildBEOptions(optionRows);
       if (validOpts.length < 2) return;
     }
 
     setSaving(true);
-
-    // Payload khớp đúng BE schema: type uppercase, options là object[]
     const payload = {
-      content:  content.trim(),
-      type:     toBEType(type),         // uppercase, đúng BE enum
+      content:  plainContent,
+      type:     toBEType(type),
       required,
       settings: hasSettings ? settings : undefined,
     };
-
-    // options: [{ label, value, order_index, is_other }] — đúng BE Joi schema
-    if (isChoice) {
-      payload.options = buildBEOptions(optionRows);
-    }
+    if (isChoice) payload.options = buildBEOptions(optionRows);
 
     try { await onSave(q.id, q.survey_id, payload); }
     finally { setSaving(false); }
@@ -752,24 +1140,25 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         <GripVertical size={16} color={C.textDim} style={{cursor:"grab"}}/>
       </div>
 
+      {/* Content editor + type dropdown */}
       <div style={{display:"flex",alignItems:"flex-start",gap:12,padding:"16px 20px 0"}}>
         <div style={{flex:1}}>
-          <input
-            value={content}
-            onChange={e=>setContent(e.target.value)}
+          <span style={{...lbl,marginBottom:6}}>Nội dung câu hỏi</span>
+          <RichTextEditor
+            value={contentHtml}
+            onChange={setContentHtml}
             placeholder="Câu hỏi không có tiêu đề"
-            style={{
-              width:"100%", background:C.surfaceHigh,
-              border:"none", borderBottom:`2px solid ${C.primary}`,
-              padding:"10px 12px", fontSize:15, fontWeight:600,
-              color:C.text, fontFamily:C.font, outline:"none",
-              borderRadius:"8px 8px 0 0",
-            }}
+            minHeight={56}
           />
         </div>
-        <div style={{marginTop:2}}>
+        <div style={{marginTop:22,minWidth:200}}>
           <QuestionTypeDropdown value={type} onChange={handleTypeChange}/>
         </div>
+      </div>
+
+      {/* Question image — UI only */}
+      <div style={{padding:"10px 20px 0",paddingLeft:36}}>
+        <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
       </div>
 
       <div style={{padding:"12px 20px 4px",paddingLeft:36,display:"flex",flexDirection:"column",gap:16}}>
@@ -806,16 +1195,16 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         <Toggle checked={required} onChange={setRequired}/>
         <div style={{width:1,height:24,background:C.border,margin:"0 8px"}}/>
 
-        <button onClick={handleSave} disabled={saving||!content.trim()} style={{
+        <button onClick={handleSave} disabled={saving} style={{
           display:"flex", alignItems:"center", gap:6,
           padding:"7px 16px",
-          background:saving||!content.trim()?C.surfaceHigh:C.primaryGrad,
-          color:saving||!content.trim()?C.textSub:"#fff",
-          border:saving||!content.trim()?`1px solid ${C.border}`:"none",
+          background:saving?C.surfaceHigh:C.primaryGrad,
+          color:saving?C.textSub:"#fff",
+          border:saving?`1px solid ${C.border}`:"none",
           borderRadius:9, fontSize:12, fontWeight:700,
-          cursor:saving||!content.trim()?"not-allowed":"pointer",
+          cursor:saving?"not-allowed":"pointer",
           fontFamily:C.font,
-          boxShadow:saving||!content.trim()?"none":"0 2px 10px rgba(79,110,247,0.3)",
+          boxShadow:saving?"none":"0 2px 10px rgba(79,110,247,0.3)",
         }}>
           {saving&&<Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/>}
           Lưu
@@ -881,13 +1270,14 @@ export default function QuestionPage() {
   const [showForm,    setShowForm]    = useState(false);
 
   // ── New question form state ──────────────────────────────────────
-  const [content,     setContent]     = useState("");
-  const [type,        setType]        = useState("TEXT");      // FE uppercase enum
+  const [contentHtml, setContentHtml] = useState("");
+  const [type,        setType]        = useState("TEXT");
   const [required,    setRequired]    = useState(true);
   const [optionRows,  setOptionRows]  = useState([newOptionRow()]);
   const [settings,    setSettings]    = useState(null);
   const [formError,   setFormError]   = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [qImage,      setQImage]      = useState(null); // UI only
   // ────────────────────────────────────────────────────────────────
 
   const [deletingId,  setDeletingId]  = useState(null);
@@ -902,12 +1292,13 @@ export default function QuestionPage() {
   }, [questions]);
 
   const resetForm = () => {
-    setContent("");
+    setContentHtml("");
     setType("TEXT");
     setRequired(true);
     setOptionRows([newOptionRow()]);
     setSettings(null);
     setFormError("");
+    setQImage(null);
   };
 
   const handleFormTypeChange = (v) => {
@@ -918,24 +1309,18 @@ export default function QuestionPage() {
     if (v === "RATING") setSettings({ min: 1, max: 5 });
   };
 
-  /* ────────────────────────────────────────────────────────────────
-   * handleAdd — Submit new question
-   *
-   * BE Joi schema (createQuestionRequest):
-   *   body.content : string, required
-   *   body.type    : "TEXT"|"PARAGRAPH"|"EMAIL"|"DATE"|"NUMBER"|
-   *                  "RATING"|"SINGLE_CHOICE"|"MULTIPLE_CHOICE"|"DROPDOWN"
-   *   body.required: boolean, optional
-   *   body.order_index: number, optional
-   *   body.settings: object, optional
-   *   body.options : [{ label, value, order_index?, is_other? }]  ← object[]!
-   *
-   * params.survey_id : uuid
-   * ──────────────────────────────────────────────────────────────── */
+  // Extract plain text from HTML
+  const getPlainText = (html) => {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.innerText ?? "";
+  };
+
   const handleAdd = async (e) => {
     e.preventDefault();
 
-    if (!content.trim()) {
+    const plainContent = getPlainText(contentHtml).trim();
+    if (!plainContent) {
       setFormError("Nội dung câu hỏi không được để trống.");
       return;
     }
@@ -943,7 +1328,6 @@ export default function QuestionPage() {
     const isChoice    = CHOICE_TYPES.includes(type);
     const hasSettings = SETTINGS_TYPES.includes(type);
 
-    // Validate options cho choice types
     if (isChoice) {
       const valid = buildBEOptions(optionRows);
       if (valid.length < 2) {
@@ -952,7 +1336,6 @@ export default function QuestionPage() {
       }
     }
 
-    // Validate settings NUMBER
     if (type === "NUMBER" && settings?.min !== undefined && settings?.max !== undefined) {
       if (settings.min > settings.max) {
         setFormError("Min phải nhỏ hơn hoặc bằng Max.");
@@ -962,22 +1345,18 @@ export default function QuestionPage() {
 
     setFormError("");
 
-    /* ── Build payload đúng BE Joi schema ── */
     const payload = {
-      content:     content.trim(),
-      type:        toBEType(type),         // uppercase, khớp BE enum
+      content:     plainContent,   // gửi plain text cho BE
+      type:        toBEType(type),
       required,
-      order_index: questions.length,        // 0-based append
+      order_index: questions.length,
       settings:    hasSettings ? settings : undefined,
     };
 
-    // options: object[] với đầy đủ label + value (+ order_index, is_other)
-    // Key là "options" (số nhiều) đúng với BE Joi schema
     if (isChoice) {
       payload.options = buildBEOptions(optionRows);
     }
 
-    // Đóng form trước khi await để UX mượt hơn
     setShowForm(false);
     resetForm();
 
@@ -987,7 +1366,7 @@ export default function QuestionPage() {
       await fetchQuestionsBySurvey(surveyId);
       if (created?.id) pendingIdRef.current = created.id;
     } catch {
-      // toast đã được xử lý trong QuestionProvider
+      // toast handled in provider
     } finally {
       setFormLoading(false);
     }
@@ -1001,16 +1380,13 @@ export default function QuestionPage() {
 
   const handleDuplicate = useCallback(async (q) => {
     const opts = q.options ?? q.option ?? [];
-
     const payload = {
       content:     q.content + " (bản sao)",
-      type:        toBEType(toFEType(q.type)),  // đảm bảo uppercase
+      type:        toBEType(toFEType(q.type)),
       required:    q.required,
       order_index: questions.length,
       settings:    q.settings ?? undefined,
     };
-
-    // Duplicate options nếu là choice type
     const feType = toFEType(q.type);
     if (CHOICE_TYPES.includes(feType) && opts.length > 0) {
       payload.options = opts
@@ -1022,7 +1398,6 @@ export default function QuestionPage() {
         }))
         .filter(o => o.label && o.value);
     }
-
     try {
       const created = await createQuestion(surveyId, payload);
       await fetchQuestionsBySurvey(surveyId);
@@ -1031,17 +1406,11 @@ export default function QuestionPage() {
   }, [questions, surveyId, createQuestion, fetchQuestionsBySurvey]);
 
   const handleUpdate = useCallback(async (id, sid, payload) => {
-    // Đảm bảo type luôn là uppercase khi gửi BE
     const mappedPayload = {
       ...payload,
       type: payload.type ? toBEType(toFEType(payload.type)) : undefined,
     };
-
-    // Xóa key "option" cũ nếu có (legacy), chỉ giữ "options" object[]
     delete mappedPayload.option;
-
-    // options phải là object[] — nếu provider đã build đúng thì không cần làm gì thêm
-    // nhưng nếu vẫn là string[] thì normalize lại
     if (Array.isArray(mappedPayload.options)) {
       mappedPayload.options = mappedPayload.options
         .map((o, i) =>
@@ -1051,7 +1420,6 @@ export default function QuestionPage() {
         )
         .filter(o => o.label && o.value);
     }
-
     await updateQuestion(id, sid, mappedPayload);
     setActiveId(null);
   }, [updateQuestion]);
@@ -1160,19 +1528,16 @@ export default function QuestionPage() {
               <form onSubmit={handleAdd}>
                 <div style={{display:"flex",flexDirection:"column",gap:14}}>
 
-                  {/* Content + Type row */}
+                  {/* Content (rich editor) + Type row */}
                   <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
                     <div style={{flex:1}}>
                       <span style={lbl}>Nội dung câu hỏi *</span>
-                      <textarea
-                        placeholder="Nhập nội dung câu hỏi..." value={content} autoFocus rows={2}
-                        onChange={e=>{setContent(e.target.value);setFormError("");}}
-                        style={{
-                          width:"100%",boxSizing:"border-box",padding:"10px 14px",
-                          border:`1.5px solid ${formError&&!content.trim()?C.error:C.border}`,
-                          borderRadius:10,fontSize:14,color:C.text,background:C.bg,
-                          outline:"none",resize:"vertical",fontFamily:C.font,
-                        }}
+                      <RichTextEditor
+                        value={contentHtml}
+                        onChange={(html) => { setContentHtml(html); setFormError(""); }}
+                        placeholder="Nhập nội dung câu hỏi..."
+                        minHeight={72}
+                        hasError={!!formError && !getPlainText(contentHtml).trim()}
                       />
                     </div>
                     <div style={{paddingTop:24,minWidth:200}}>
@@ -1180,6 +1545,9 @@ export default function QuestionPage() {
                       <QuestionTypeDropdown value={type} onChange={handleFormTypeChange}/>
                     </div>
                   </div>
+
+                  {/* Question image — UI only */}
+                  <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
 
                   {/* Required toggle */}
                   <Toggle checked={required} onChange={setRequired}/>
@@ -1198,7 +1566,7 @@ export default function QuestionPage() {
                     <SettingsEditor type={type} settings={settings} onChange={setSettings}/>
                   )}
 
-                  {/* Debug hint — xem payload sẽ gửi gì */}
+                  {/* Debug hint */}
                   <div style={{fontSize:11,color:C.textDim,fontFamily:"monospace",lineHeight:1.6}}>
                     <span>BE type: <span style={{color:C.primary}}>{toBEType(type)}</span></span>
                     {isChoice && (

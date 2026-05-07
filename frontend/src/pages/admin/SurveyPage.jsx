@@ -1,5 +1,5 @@
 // ─── SurveyPage.jsx ─── Google Forms style, dark theme ───────────
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import surveyService from "@/services/surveyService";
 import { useSurvey } from "@/providers/SurveyProvider";
 import { useAdminStats } from "@/providers/AdminStatsProvider";
@@ -8,6 +8,7 @@ import {
   Plus, Trash2, FileText, ClipboardList,
   Loader2, AlertCircle, X, Pencil, Check,
   Users, MoreVertical, Copy, Search, Calendar,
+  Image as ImageIcon,
 } from "lucide-react";
 
 /* ─── Token ──────────────────────────────────────────────────────── */
@@ -81,6 +82,246 @@ const dateInp = {
   colorScheme: "dark",
 };
 
+/* ─── RichEditor ─────────────────────────────────────────────────── */
+function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu...", hasError = false }) {
+  const editorRef = useRef(null);
+  const [focused, setFocused] = useState(false);
+  const [activeFormats, setActiveFormats] = useState({});
+
+  const exec = (cmd, val = null) => {
+    document.execCommand(cmd, false, val);
+    editorRef.current?.focus();
+    updateActive();
+  };
+
+  const updateActive = () => {
+    setActiveFormats({
+      bold:                 document.queryCommandState("bold"),
+      italic:               document.queryCommandState("italic"),
+      underline:            document.queryCommandState("underline"),
+      insertUnorderedList:  document.queryCommandState("insertUnorderedList"),
+      insertOrderedList:    document.queryCommandState("insertOrderedList"),
+    });
+  };
+
+  const handleInput = () => {
+    onChange?.(editorRef.current?.innerHTML || "");
+    updateActive();
+  };
+
+  const tbBtn = (cmd, val, label, title) => {
+    const active = activeFormats[cmd];
+    return (
+      <button
+        key={`${cmd}-${val}`}
+        type="button"
+        title={title}
+        onMouseDown={e => { e.preventDefault(); exec(cmd, val); }}
+        style={{
+          width: 28, height: 28, border: "none", borderRadius: 6,
+          background: active ? "rgba(108,126,247,0.18)" : "transparent",
+          cursor: "pointer", color: active ? C.primary : C.textSub,
+          fontFamily: C.font, fontSize: 12, fontWeight: 700,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background .12s, color .12s",
+          flexShrink: 0,
+        }}
+        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(108,126,247,0.10)"; e.currentTarget.style.color = C.primary; } }}
+        onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textSub; } }}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  const sep = () => (
+    <div style={{ width: 1, height: 18, background: C.border, margin: "0 3px", flexShrink: 0 }} />
+  );
+
+  return (
+    <div style={{
+      border: `1.5px solid ${hasError ? C.error : focused ? C.primary : C.border}`,
+      borderRadius: 10, overflow: "hidden", background: C.bg,
+      transition: "border-color .15s",
+    }}>
+      {/* Toolbar */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 1,
+        padding: "5px 8px", background: C.surface,
+        borderBottom: `1px solid ${C.border}`, flexWrap: "wrap",
+      }}>
+        {tbBtn("bold",               null, <b style={{ fontSize: 13 }}>B</b>,  "Bold")}
+        {tbBtn("italic",             null, <i style={{ fontSize: 13 }}>I</i>,  "Italic")}
+        {tbBtn("underline",          null, <u style={{ fontSize: 13 }}>U</u>,  "Underline")}
+        {sep()}
+        {tbBtn("formatBlock", "h1",  <span style={{ fontSize: 11 }}>H1</span>, "Heading 1")}
+        {tbBtn("formatBlock", "h2",  <span style={{ fontSize: 11 }}>H2</span>, "Heading 2")}
+        {tbBtn("formatBlock", "p",   <span style={{ fontSize: 13 }}>¶</span>,  "Paragraph")}
+        {sep()}
+        {tbBtn("insertUnorderedList", null, <span style={{ fontSize: 13, letterSpacing: -1 }}>•≡</span>, "Bullet list")}
+        {tbBtn("insertOrderedList",   null, <span style={{ fontSize: 11, letterSpacing: -1 }}>1≡</span>, "Numbered list")}
+        {sep()}
+        {tbBtn("justifyLeft",   null, <span style={{ fontSize: 13 }}>⬅</span>, "Align left")}
+        {tbBtn("justifyCenter", null, <span style={{ fontSize: 12 }}>☰</span>, "Center")}
+        {sep()}
+        {tbBtn("removeFormat", null, <X size={12} />, "Clear formatting")}
+      </div>
+
+      {/* Content area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onKeyUp={updateActive}
+        onMouseUp={updateActive}
+        style={{
+          minHeight: 64, padding: "10px 14px",
+          outline: "none", fontSize: 14, color: C.text,
+          lineHeight: 1.6, fontFamily: C.font,
+          // placeholder via CSS
+        }}
+        data-placeholder={placeholder}
+      />
+
+      <style>{`
+        [contenteditable][data-placeholder]:empty::before {
+          content: attr(data-placeholder);
+          color: ${C.textDim};
+          pointer-events: none;
+        }
+        [contenteditable] b, [contenteditable] strong { font-weight: 700; }
+        [contenteditable] i, [contenteditable] em { font-style: italic; }
+        [contenteditable] u { text-decoration: underline; }
+        [contenteditable] h1 { font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
+        [contenteditable] h2 { font-size: 16px; font-weight: 700; margin: 4px 0 2px; }
+        [contenteditable] ul, [contenteditable] ol { padding-left: 20px; }
+        [contenteditable] li { margin: 2px 0; }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─── ImagePicker (UI only, no upload) ──────────────────────────── */
+function ImagePicker({ images, onChange }) {
+  const fileRef = useRef(null);
+
+  const handleFiles = (e) => {
+    Array.from(e.target.files).forEach(file => {
+      if (!file.type.startsWith("image/")) return;
+      const url = URL.createObjectURL(file);
+      onChange(prev => [...prev, { id: crypto.randomUUID(), url, file }]);
+    });
+    e.target.value = "";
+  };
+
+  const remove = (id) => {
+    onChange(prev => {
+      const img = prev.find(i => i.id === id);
+      if (img) URL.revokeObjectURL(img.url);
+      return prev.filter(i => i.id !== id);
+    });
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 80 }}>
+      <input
+        ref={fileRef} type="file" accept="image/*" multiple
+        style={{ display: "none" }} onChange={handleFiles}
+      />
+
+      {/* Main cover or add button */}
+      {images.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          style={{
+            width: 80, height: 80, borderRadius: 10,
+            border: `1.5px dashed ${C.border}`,
+            background: "transparent", cursor: "pointer",
+            color: C.textDim, display: "flex",
+            flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 5,
+            fontSize: 10, fontFamily: C.font,
+            transition: "border-color .15s, color .15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.color = C.primary; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}
+        >
+          <ImageIcon size={18} />
+          Ảnh
+        </button>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Cover image (first) */}
+          <div style={{ position: "relative", width: 80, height: 80, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}` }}>
+            <img src={images[0].url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <button
+              type="button"
+              onClick={() => remove(images[0].id)}
+              style={{
+                position: "absolute", top: 3, right: 3, width: 18, height: 18,
+                background: "rgba(0,0,0,0.75)", borderRadius: "50%",
+                border: "none", cursor: "pointer", color: "#fff", fontSize: 10,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <X size={10} />
+            </button>
+            {images.length > 1 && (
+              <div style={{
+                position: "absolute", bottom: 3, right: 3,
+                background: "rgba(0,0,0,0.65)", borderRadius: 5,
+                fontSize: 10, color: "#fff", padding: "1px 5px", fontWeight: 700,
+              }}>
+                +{images.length - 1}
+              </div>
+            )}
+          </div>
+          {/* Extra thumbs */}
+          {images.slice(1).map(img => (
+            <div key={img.id} style={{ position: "relative", width: 80, height: 52, borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}` }}>
+              <img src={img.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <button
+                type="button"
+                onClick={() => remove(img.id)}
+                style={{
+                  position: "absolute", top: 3, right: 3, width: 16, height: 16,
+                  background: "rgba(0,0,0,0.75)", borderRadius: "50%",
+                  border: "none", cursor: "pointer", color: "#fff", fontSize: 9,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <X size={9} />
+              </button>
+            </div>
+          ))}
+          {/* Add more */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            style={{
+              width: 80, height: 28, borderRadius: 7,
+              border: `1px dashed ${C.border}`,
+              background: "transparent", cursor: "pointer",
+              color: C.textDim, display: "flex",
+              alignItems: "center", justifyContent: "center", gap: 4,
+              fontSize: 10, fontFamily: C.font,
+              transition: "border-color .15s, color .15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.color = C.primary; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}
+          >
+            <Plus size={10} /> Thêm
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── ParticipantBadge ───────────────────────────────────────────── */
 function ParticipantBadge({ surveyId }) {
   const { answeredBySurvey, fetchUsersAnsweredBySurvey } = useAdminStats();
@@ -128,11 +369,6 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
   const titleRef = useRef(null);
 
   const thumb = C.thumbColors[index % C.thumbColors.length];
-
-  const formatDate = (iso) =>
-    iso ? new Date(iso).toLocaleDateString("vi-VN", {
-      day: "2-digit", month: "2-digit", year: "numeric"
-    }) : "";
 
   // Close menu on outside click
   useEffect(() => {
@@ -214,7 +450,7 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
           <div style={{ height: 4,  borderRadius: 3, background: "rgba(255,255,255,0.06)", width: "75%" }} />
         </div>
 
-        {/* Status badge over thumbnail */}
+        {/* Status badge */}
         {s.status && (
           <div style={{ position: "absolute", top: 8, left: 8 }}>
             <StatusBadge status={s.status} />
@@ -278,7 +514,6 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
       >
         {editing ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {/* Title */}
             <input
               ref={titleRef}
               value={title}
@@ -287,7 +522,6 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
               style={{ ...inp(!title.trim()), fontSize: 13, padding: "7px 10px" }}
               onKeyDown={e => { if (e.key === "Escape") cancel(); }}
             />
-            {/* Description */}
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -295,29 +529,14 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
               rows={2}
               style={{ ...textareaStyle, fontSize: 13, padding: "7px 10px" }}
             />
-            {/* start_at / end_at */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               <div>
-                <label style={{ fontSize: 11, color: C.textSub, display: "block", marginBottom: 3 }}>
-                  Bắt đầu
-                </label>
-                <input
-                  type="datetime-local"
-                  value={startAt}
-                  onChange={e => { setStartAt(e.target.value); setDateError(""); }}
-                  style={dateInp}
-                />
+                <label style={{ fontSize: 11, color: C.textSub, display: "block", marginBottom: 3 }}>Bắt đầu</label>
+                <input type="datetime-local" value={startAt} onChange={e => { setStartAt(e.target.value); setDateError(""); }} style={dateInp} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: C.textSub, display: "block", marginBottom: 3 }}>
-                  Kết thúc
-                </label>
-                <input
-                  type="datetime-local"
-                  value={endAt}
-                  onChange={e => { setEndAt(e.target.value); setDateError(""); }}
-                  style={dateInp}
-                />
+                <label style={{ fontSize: 11, color: C.textSub, display: "block", marginBottom: 3 }}>Kết thúc</label>
+                <input type="datetime-local" value={endAt} onChange={e => { setEndAt(e.target.value); setDateError(""); }} style={dateInp} />
               </div>
             </div>
             {dateError && (
@@ -325,7 +544,6 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
                 <AlertCircle size={11} /> {dateError}
               </div>
             )}
-            {/* Actions */}
             <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
               <button onClick={cancel}
                 style={{ padding: "5px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 12, color: C.textSub, cursor: "pointer", fontFamily: C.font }}>
@@ -348,7 +566,6 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
               {s.title}
             </div>
 
-            {/* Dates */}
             {(s.start_at || s.end_at) && (
               <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textSub, marginTop: 2 }}>
                 <Calendar size={10} />
@@ -363,9 +580,7 @@ function SurveyCard({ s, index, onDelete, onUpdate, onOpen, deletingId, updating
             )}
 
             <div style={{ fontSize: 12, color: C.textDim, marginTop: 1 }}>
-              {s.created_at
-                ? new Date(s.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
-                : ""}
+              {s.created_at ? new Date(s.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}
             </div>
           </>
         )}
@@ -393,11 +608,12 @@ export default function SurveyPage() {
   const [fetchError,  setFetchError]  = useState(null);
   const [fetching,    setFetching]    = useState(false);
 
-  // form fields — khớp với payload BE
-  const [title,       setTitle]       = useState("");
+  // form fields
+  const [titleHtml,   setTitleHtml]   = useState("");   // innerHTML từ RichEditor
   const [description, setDescription] = useState("");
-  const [startAt,     setStartAt]     = useState("");  // datetime-local string
-  const [endAt,       setEndAt]       = useState("");  // datetime-local string
+  const [startAt,     setStartAt]     = useState("");
+  const [endAt,       setEndAt]       = useState("");
+  const [images,      setImages]      = useState([]);   // [{ id, url, file }] — UI only
 
   const [formError,   setFormError]   = useState("");
   const [dateError,   setDateError]   = useState("");
@@ -407,11 +623,13 @@ export default function SurveyPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [search,      setSearch]      = useState("");
 
-  /**
-   * Khớp với _mapSurvey + _mapSurveyDetail:
-   *   id, title, description, is_published,
-   *   start_at, end_at, status, created_at
-   */
+  // helper: lấy plain text từ html để gửi backend
+  const htmlToText = (html) => {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.innerText || div.textContent || "";
+  };
+
   const normalize = (s) => ({
     id:           s.id,
     title:        s.title,
@@ -420,13 +638,13 @@ export default function SurveyPage() {
     start_at:     s.start_at ?? null,
     end_at:       s.end_at   ?? null,
     status:       s.status   ?? null,
-    created_at:   s.created_at ?? null,   // snake_case từ BE
+    created_at:   s.created_at ?? null,
   });
 
   const fetchAll = async () => {
     setFetchError(null); setFetching(true);
     try {
-      const res  = await surveyService.getAllSurveys();  // có "s"
+      const res  = await surveyService.getAllSurveys();
       const data = res.data ?? res;
       setSurveys((data.surveys || []).map(normalize));
     } catch { setFetchError("Không thể tải danh sách khảo sát."); }
@@ -436,20 +654,24 @@ export default function SurveyPage() {
   useEffect(() => { fetchAll(); }, []);
 
   const resetForm = () => {
-    setTitle(""); setDescription(""); setStartAt(""); setEndAt("");
+    setTitleHtml(""); setDescription(""); setStartAt(""); setEndAt("");
     setFormError(""); setDateError("");
+    // revoke blob URLs
+    images.forEach(img => URL.revokeObjectURL(img.url));
+    setImages([]);
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!title.trim()) { setFormError("Tiêu đề không được để trống."); return; }
+    const plainTitle = htmlToText(titleHtml).trim();
+    if (!plainTitle) { setFormError("Tiêu đề không được để trống."); return; }
     if (startAt && endAt && new Date(endAt) <= new Date(startAt)) {
       setDateError("end_at phải sau start_at"); return;
     }
 
-    // ── payload đúng với BE ──
+    // Gửi plain text title lên backend (images chưa gửi)
     const payload = {
-      title:       title.trim(),
+      title:       plainTitle,
       description: description.trim() || null,
       start_at:    startAt ? new Date(startAt).toISOString() : null,
       end_at:      endAt   ? new Date(endAt).toISOString()   : null,
@@ -463,7 +685,7 @@ export default function SurveyPage() {
       await fetchAll();
     } catch {
       setShowForm(true);
-      setTitle(snapPayload.title);
+      setTitleHtml(snapPayload.title);
       setDescription(snapPayload.description || "");
       setStartAt(snapPayload.start_at ? snapPayload.start_at.slice(0, 16) : "");
       setEndAt(snapPayload.end_at   ? snapPayload.end_at.slice(0, 16)   : "");
@@ -473,7 +695,6 @@ export default function SurveyPage() {
   const handleUpdate = async (id, payload) => {
     setUpdatingId(id);
     try {
-      // updateSurvey trong provider trả về object đã normalize
       const updated = await updateSurvey(id, payload);
       if (!updated?.id) { await fetchAll(); return; }
       setSurveys(prev => prev.map(s => s.id === id ? normalize(updated) : s));
@@ -572,13 +793,26 @@ export default function SurveyPage() {
             </h2>
             <form onSubmit={handleCreate}>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Title */}
-                <input
-                  placeholder="Tiêu đề biểu mẫu *"
-                  value={title} autoFocus
-                  onChange={e => { setTitle(e.target.value); setFormError(""); }}
-                  style={inp(!!formError)}
-                />
+
+                {/* ── Title row: editor + image picker side-by-side ── */}
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  {/* Rich editor — chiếm toàn bộ phần còn lại */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <RichEditor
+                      onChange={(html) => { setTitleHtml(html); setFormError(""); }}
+                      placeholder="Tiêu đề biểu mẫu *"
+                      hasError={!!formError}
+                    />
+                    {formError && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.error, marginTop: 5 }}>
+                        <AlertCircle size={12} /> {formError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Image picker — cột bên phải, ngoài ô editor */}
+                  <ImagePicker images={images} onChange={setImages} />
+                </div>
 
                 {/* Description */}
                 <textarea
@@ -589,7 +823,7 @@ export default function SurveyPage() {
                   style={textareaStyle}
                 />
 
-                {/* start_at / end_at — khớp với payload BE */}
+                {/* start_at / end_at */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 12, color: C.textSub, display: "block", marginBottom: 5 }}>
@@ -615,12 +849,7 @@ export default function SurveyPage() {
                   </div>
                 </div>
 
-                {/* Errors */}
-                {formError && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.error }}>
-                    <AlertCircle size={14} /> {formError}
-                  </div>
-                )}
+                {/* Date error */}
                 {dateError && (
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.error }}>
                     <AlertCircle size={14} /> {dateError}
