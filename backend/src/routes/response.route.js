@@ -39,6 +39,7 @@ router.delete(
     ResponseController.delete
 );
 
+// get response answer
 router.get(
     "/:response_id/answers",
     validate(responseIdParams),

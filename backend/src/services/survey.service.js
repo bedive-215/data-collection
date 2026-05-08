@@ -2,6 +2,7 @@ import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { Op } from "sequelize";
 import { sendInviteEmail } from "../utils/sendMail.js";
+import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
 
 class SurveyService {
     constructor() {
@@ -25,7 +26,7 @@ class SurveyService {
 
     async _checkSurveyAccess(user, survey, access_token) {
         // OWNER → editor luôn
-        if (this._checkOwnerOrAdmin(user, survey)) {
+        if (_checkOwnerOrAdmin(user, survey)) {
             return "editor";
         }
 
@@ -68,17 +69,6 @@ class SurveyService {
         throw new AppError("Invalid survey access type", 400);
     }
 
-    _checkOwnerOrAdmin(user, survey) {
-        if (!user) return false;
-        if (survey.created_by === user.id) {
-            return true;
-        }
-        if (user.role === "admin") {
-            return true;
-        }
-        return false;
-    }
-
     _getSurveyStatus(survey) {
         const now = new Date();
         if (survey.start_at && now < survey.start_at) return "SCHEDULED";
@@ -106,7 +96,7 @@ class SurveyService {
 
     // Create new survey
     async createSurvey(user, payload) {
-        const { title, description, start_at, end_at, access_type } = payload;
+        const { title, description, start_at, end_at, access_type, access_token } = payload;
 
         this._validateTitle(title);
 
@@ -342,7 +332,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to delete this survey", 403);
         }
 
@@ -379,7 +369,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to publish this survey", 403);
         }
 
@@ -405,7 +395,7 @@ class SurveyService {
         }
 
         // chỉ owner hoặc admin mới được lấy link
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to share this survey", 403);
         }
 
@@ -441,7 +431,7 @@ class SurveyService {
         }
 
         // chỉ owner/admin được mời
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to invite", 403);
         }
 
@@ -500,7 +490,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission", 403);
         }
 
@@ -576,7 +566,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission", 403);
         }
 
@@ -628,7 +618,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwnerOrAdmin(user, survey)) {
+        if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission", 403);
         }
 

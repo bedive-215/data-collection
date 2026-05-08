@@ -12,7 +12,6 @@ const router = express.Router();
 // Create question
 router.post(
     "/:survey_id",
-    authMiddleware.checkRole('admin'),
     validate(createQuestionRequest),
     QuestionController.create
 );
@@ -27,7 +26,6 @@ router.get(
 // Delete question
 router.delete(
     "/:question_id",
-    authMiddleware.checkRole('admin'),
     validate(questionIdParams),
     QuestionController.deleteQuestion
 );
@@ -35,7 +33,6 @@ router.delete(
 // Update question
 router.patch(
     "/:question_id",
-    authMiddleware.checkRole('admin'),
     validate(questionIdParams),
     QuestionController.updateQuestion
 );
@@ -43,14 +40,12 @@ router.patch(
 // Reorder questions
 router.patch(
     "/:survey_id/reorder",
-    authMiddleware.checkRole('admin'),
     validate(surveyIdParams),
     QuestionController.reorderQuestions
 );
 
 router.post(
     "/:survey_id/bulk",
-    authMiddleware.checkRole('admin'),
     validate(surveyIdParams),
     QuestionController.bulkCreateQuestions
 );
