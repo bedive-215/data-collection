@@ -1,6 +1,11 @@
+
 // src/AppRouter.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 // Layouts
 import AdminLayout from "@/layouts/AdminLayout";
@@ -26,31 +31,100 @@ import Profile from "@/pages/user/Profile";
 import SurveyTakePage from "@/pages/user/SurveyTakePage";
 import SurveysPage from "@/pages/user/SurveysPage";
 
+// USER SURVEY
+import MySurveysPage from "@/pages/user/MySurveysPage";
+import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
+
 // Errors
 import NotFound from "@/pages/error/NotFound";
 import Forbidden from "@/pages/error/Forbidden";
 
 // Constants
 import { ROUTERS } from "@/utils/constants";
-
+import SurveysLayout from "@/layouts/SurveysLayout";
 const routeConfig = [
-  // PUBLIC (auth)
-  { path: ROUTERS.PUBLIC.LOGIN,           element: Login,          layout: AuthLayout },
-  { path: ROUTERS.PUBLIC.REGISTER,        element: Register,       layout: AuthLayout },
-  { path: ROUTERS.PUBLIC.FORGOT_PASSWORD, element: ForgotPassword, layout: AuthLayout },
+  // PUBLIC
+  {
+    path: ROUTERS.PUBLIC.LOGIN,
+    element: Login,
+    layout: AuthLayout,
+  },
+  {
+    path: ROUTERS.PUBLIC.REGISTER,
+    element: Register,
+    layout: AuthLayout,
+  },
+  {
+    path:
+      ROUTERS.PUBLIC.FORGOT_PASSWORD,
+    element: ForgotPassword,
+    layout: AuthLayout,
+  },
 
   // USER
-  { path: ROUTERS.USER.HOME,        element: Home,          layout: HomeLayout },
-  { path: ROUTERS.USER.DASHBOARD,   element: DashboardSuser, layout: UserLayout },
-  { path: ROUTERS.USER.PROFILE,     element: Profile,       layout: HomeLayout },
-  { path: ROUTERS.USER.SURVEY_TAKE, element: SurveyTakePage, layout: HomeLayout },
-  { path: ROUTERS.USER.SURVEYS,     element: SurveysPage,   layout: HomeLayout },
+  {
+    path: ROUTERS.USER.HOME,
+    element: Home,
+    layout: HomeLayout,
+  },
+  {
+    path: ROUTERS.USER.DASHBOARD,
+    element: DashboardSuser,
+    layout: UserLayout,
+  },
+  {
+    path: ROUTERS.USER.PROFILE,
+    element: Profile,
+    layout: HomeLayout,
+  },
+  {
+    path:
+      ROUTERS.USER.SURVEY_TAKE,
+    element: SurveyTakePage,
+    layout: HomeLayout,
+  },
+ {
+  path: ROUTERS.USER.SURVEYS,
+  element: SurveysLayout,
+  layout: HomeLayout,
+},
+{
+  path: ROUTERS.USER.MY_SURVEYS,
+  element: SurveysLayout,
+  layout: HomeLayout,
+},
+
+  {
+    path:
+      ROUTERS.USER.MY_SURVEY_DETAIL,
+    element: MySurveyQuestionPage,
+    layout: HomeLayout,
+  },
 
   // ADMIN
-  { path: ROUTERS.ADMIN.DASHBOARD,     element: DashboardAdmin, layout: AdminLayout },
-  { path: ROUTERS.ADMIN.USERS,         element: AdminUsers,     layout: AdminLayout },
-  { path: ROUTERS.ADMIN.SURVEYS,       element: SurveyPage,     layout: AdminLayout },
-  { path: ROUTERS.ADMIN.SURVEY_DETAIL, element: QuestionPage,   layout: AdminLayout },
+  {
+    path:
+      ROUTERS.ADMIN.DASHBOARD,
+    element: DashboardAdmin,
+    layout: AdminLayout,
+  },
+  {
+    path: ROUTERS.ADMIN.USERS,
+    element: AdminUsers,
+    layout: AdminLayout,
+  },
+  {
+    path:
+      ROUTERS.ADMIN.SURVEYS,
+    element: SurveyPage,
+    layout: AdminLayout,
+  },
+  {
+    path:
+      ROUTERS.ADMIN.SURVEY_DETAIL,
+    element: QuestionPage,
+    layout: AdminLayout,
+  },
 ];
 
 const AppRouter = () => {
@@ -67,14 +141,39 @@ const AppRouter = () => {
             )
           : Page;
 
-        return <Route key={route.path} path={route.path} element={<Wrapped />} />;
+        return (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<Wrapped />}
+          />
+        );
       })}
 
       {/* Default redirect */}
-      <Route path="/" element={<Navigate to={ROUTERS.PUBLIC.LOGIN} replace />} />
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={ROUTERS.PUBLIC.LOGIN}
+            replace
+          />
+        }
+      />
 
-      {/* 404 fallback */}
-      <Route path="*" element={<NotFound />} />
+      {/* Forbidden */}
+      <Route
+        path={
+          ROUTERS.PRIVATE.FORBIDDEN
+        }
+        element={<Forbidden />}
+      />
+
+      {/* 404 */}
+      <Route
+        path="*"
+        element={<NotFound />}
+      />
     </Routes>
   );
 };
