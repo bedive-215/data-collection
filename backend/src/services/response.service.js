@@ -12,7 +12,6 @@ class ResponseService {
         this.User = models.User;
     }
 
-    // ===================== MAPPER =====================
     _mapAnswerToResponse(answers, optionMap = {}) {
         return answers.map(a => {
             const type = a.question.type;

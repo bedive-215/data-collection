@@ -182,9 +182,9 @@ class SurveyController {
     async inviteSurvey(req, res, next) {
         try {
             const { survey_id } = req.params;
-            const { email } = req.body;
+            const payload = req.body;
             const user = req.user;
-            const result = await SurveyService.inviteSurvey(survey_id, email, user);
+            const result = await SurveyService.inviteSurvey(survey_id, user, payload);
             return res.status(200).json({
                 message: result.message
             });

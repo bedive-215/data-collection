@@ -9,6 +9,7 @@ class SurveyService {
         this.Question = models.Question;
         this.QuestionOption = models.QuestionOption;
         this.User = models.User;
+        this.SurveyParticipant = models.SurveyParticipant
     }
 
     _sanitizePagination(page, limit) {
@@ -89,6 +90,18 @@ class SurveyService {
         if (!title || !title.trim()) {
             throw new AppError("Title is required!", 400);
         }
+    }
+
+    _generateAccessToken() {
+        return (
+            Math.random()
+                .toString(36)
+                .substring(2, 15)
+            +
+            Math.random()
+                .toString(36)
+                .substring(2, 15)
+        );
     }
 
     // Create new survey
@@ -318,10 +331,6 @@ class SurveyService {
             survey.end_at = end_at;
         }
 
-        if (is_published !== undefined) {
-            survey.is_published = is_published;
-        }
-
         await survey.save();
 
         return {
@@ -337,7 +346,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!this._checkOwner(user, survey)) {
+        if (!this._checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to delete this survey", 403);
         }
 

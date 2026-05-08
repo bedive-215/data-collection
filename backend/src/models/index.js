@@ -6,6 +6,7 @@ import QuestionModel from "./question.model.js";
 import QuestionOptionModel from "./questionOption.model.js";
 import ResponseModel from "./response.model.js";
 import AnswerModel from "./answer.model.js";
+import SurveyParticipantModel from "./surveyParticipant.model.js";
 
 
 const User = UserModel(sequelize);
@@ -15,6 +16,7 @@ const Question = QuestionModel(sequelize);
 const QuestionOption = QuestionOptionModel(sequelize);
 const Response = ResponseModel(sequelize);
 const Answer = AnswerModel(sequelize);
+const SurveyParticipant = SurveyParticipantModel(sequelize);
 
 // Define associations
 User.hasMany(UserOAuth, { foreignKey: "user_id", as: "oauth_providers", onDelete: "CASCADE" });
@@ -49,6 +51,16 @@ Answer.belongsTo(Question, { foreignKey: "question_id", as: "question" });
 QuestionOption.hasMany(Answer, { foreignKey: "option_id", as: "answers" });
 Answer.belongsTo(QuestionOption, { foreignKey: "option_id", as: "option" });
 
+// Survey Participant
+Survey.hasMany(SurveyParticipant, { foreignKey: "survey_id", as: "participants", onDelete: "CASCADE" });
+
+SurveyParticipant.belongsTo(Survey, { foreignKey: "survey_id", as: "survey" });
+
+// User -> Participants
+User.hasMany(SurveyParticipant, {foreignKey: "user_id", as: "survey_participations", onDelete: "CASCADE"});
+
+SurveyParticipant.belongsTo(User, { foreignKey: "user_id", as: "user"});
+
 const models = {
     sequelize,
     User,
@@ -58,6 +70,7 @@ const models = {
     QuestionOption,
     Response,
     Answer,
+    SurveyParticipant,
     sequelize
 };
 
