@@ -141,7 +141,6 @@ class SurveyService {
                 "id",
                 "title",
                 "description",
-                "is_published",
                 "start_at",
                 "end_at",
                 "created_at",
@@ -203,7 +202,6 @@ class SurveyService {
             attributes: [
                 "id",
                 "title",
-                "is_published",
                 "start_at",
                 "end_at",
                 "created_at"
@@ -233,7 +231,6 @@ class SurveyService {
             attributes: [
                 "id",
                 "title",
-                "is_published",
                 "start_at",
                 "end_at",
                 "created_at"
@@ -262,7 +259,6 @@ class SurveyService {
             attributes: [
                 "id",
                 "title",
-                "is_published",
                 "created_at"
             ],
             offset,
@@ -433,6 +429,10 @@ class SurveyService {
 
     async inviteSurvey(surveyId, user, payload) {
         const { email, role = "viewer" } = payload;
+        console.log(email)
+        if (!email) {
+            throw new AppError("Email required", 403);
+        }
 
         const survey = await this.Survey.findByPk(surveyId);
 
@@ -473,7 +473,13 @@ class SurveyService {
         });
 
         // send email invite
-        await sendInviteEmail(email, survey.title, `${process.env.BASE_URL}/surveys/${survey.id}`, user.name, user.email);
+        await sendInviteEmail({
+            to: email,
+            surveyTitle: survey.title,
+            surveyLink: `${process.env.BASE_URL}/surveys/${survey.id}`,
+            senderName: user.name,
+            senderEmail: user.email,
+        });
 
         return {
             message: "User invited successfully",
@@ -581,7 +587,7 @@ class SurveyService {
                 {
                     model: this.User,
                     as: "user",
-                    attributes: ["id", "name", "email"]
+                    attributes: ["id", "full_name", "email"]
                 }
             ]
         });

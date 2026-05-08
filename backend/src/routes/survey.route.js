@@ -5,18 +5,20 @@ import { validate } from "../middlewares/validate.middleware.js";
 import { createSurveyRequest } from "../validates/createSurvey.validate.js";
 import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { userIdParams } from "../validates/userIdParams.validate.js";
-import { pidParams } from "../validates/pidParams.validate.js";
+import { deleteParticipantParams } from "../validates/deleteParticipantParams.validate.js";
 import { Router } from "express";
 
 const route = Router();
 
 route.post('/', validate(createSurveyRequest), SurveyController.createSurvey);
 route.get('/me', SurveyController.getMySurveys);
+route.get('/public', SurveyController.getSurveyPublic);
+route.get('/invited', SurveyController.getInvitedSurveys);
+
 route.get('/users/:id', authMiddleware.checkRole('admin'), validate(userIdParams), SurveyController.getSurveyByUserId);
 route.get('/',authMiddleware.checkRole('admin'), SurveyController.getAllSurvey);
 
 route.get('/:survey_id', validate(surveyIdParams), SurveyController.getSurveyById);
-route.get('/public', SurveyController.getSurveyPublic);
 route.put('/:survey_id', validate(surveyIdParams), SurveyController.updateSurvey);
 route.delete('/:survey_id', validate(surveyIdParams), SurveyController.deleteSurvey);
 route.patch('/:survey_id/close', validate(surveyIdParams), SurveyController.closeSurvey);
@@ -24,8 +26,8 @@ route.patch('/:survey_id/publish', validate(surveyIdParams), SurveyController.pu
 route.patch('/:survey_id/share', validate(surveyIdParams), SurveyController.shareLink);
 route.post('/:survey_id/invite', validate(surveyIdParams), SurveyController.inviteSurvey);
 route.post('/:survey_id/invite/bulk', validate(surveyIdParams), SurveyController.bulkInviteSurvey);
+
 route.get('/:survey_id/participants', validate(surveyIdParams), SurveyController.getParticipants);
-route.delete('/:survey_id/participants/:pid', validate(surveyIdParams), validate(pidParams), SurveyController.deleteParticipant);
-route.get('/invited', SurveyController.getInvitedSurveys);
+route.delete('/:survey_id/participants/:pid', validate(deleteParticipantParams), SurveyController.deleteParticipant);
 
 export default route;

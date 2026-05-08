@@ -26,6 +26,7 @@ export default (sequelize) => {
     },
     {
         tableName: "survey_participants",
+        underscored: true,
         indexes: [
             {
                 unique: true,
