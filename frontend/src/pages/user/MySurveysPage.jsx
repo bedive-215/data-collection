@@ -1,10 +1,11 @@
 // ─── MySurveysPage.jsx ─────────────────────────────────────────────
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Plus, X, FileText, Calendar, Loader2, Inbox, Search,
   MoreVertical, Trash2, Pencil, Check, Share2, Mail,
   Lock, Globe, Copy, ExternalLink, Power, PowerOff,
   Users, ChevronRight, Link as LinkIcon, Send,
+  UserPlus, UserMinus, ChevronDown, RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
@@ -13,29 +14,29 @@ import { useSurvey } from "@/providers/SurveyProvider";
    COLORS
 ──────────────────────────────────────────────────────────────── */
 const C = {
-  bg:          "#f5f7fb",
-  surface:     "#ffffff",
-  surfaceHigh: "#f8fafc",
-  border:      "#dbe2ea",
-  borderHover: "#c7d2fe",
-  primary:     "#4f6ef7",
-  primaryGrad: "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
-  primaryDim:  "rgba(79,110,247,0.08)",
+  bg:           "#f5f7fb",
+  surface:      "#ffffff",
+  surfaceHigh:  "#f8fafc",
+  border:       "#dbe2ea",
+  borderHover:  "#c7d2fe",
+  primary:      "#4f6ef7",
+  primaryGrad:  "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
+  primaryDim:   "rgba(79,110,247,0.08)",
   primaryBorder:"#c7d2fe",
-  text:        "#111827",
-  textSub:     "#64748b",
-  textDim:     "#94a3b8",
-  error:       "#ef4444",
-  errorBg:     "#fef2f2",
-  errorBorder: "#fecaca",
-  success:     "#22c55e",
-  successBg:   "#f0fdf4",
+  text:         "#111827",
+  textSub:      "#64748b",
+  textDim:      "#94a3b8",
+  error:        "#ef4444",
+  errorBg:      "#fef2f2",
+  errorBorder:  "#fecaca",
+  success:      "#22c55e",
+  successBg:    "#f0fdf4",
   successBorder:"#bbf7d0",
-  warning:     "#f59e0b",
-  warningBg:   "#fffbeb",
+  warning:      "#f59e0b",
+  warningBg:    "#fffbeb",
   warningBorder:"#fde68a",
-  font:        "'Inter', sans-serif",
-  thumbColors: [
+  font:         "'Inter', sans-serif",
+  thumbColors:  [
     "linear-gradient(135deg,#dbeafe,#c7d2fe)",
     "linear-gradient(135deg,#dcfce7,#bbf7d0)",
     "linear-gradient(135deg,#fee2e2,#fecaca)",
@@ -101,7 +102,6 @@ function Modal({ open, onClose, title, children, width = 480 }) {
           overflow:"hidden",
         }}
       >
-        {/* Header */}
         <div style={{
           display:"flex", alignItems:"center", justifyContent:"space-between",
           padding:"16px 20px",
@@ -117,7 +117,6 @@ function Modal({ open, onClose, title, children, width = 480 }) {
             <X size={15}/>
           </button>
         </div>
-        {/* Body */}
         <div style={{padding:"20px"}}>
           {children}
         </div>
@@ -130,18 +129,16 @@ function Modal({ open, onClose, title, children, width = 480 }) {
    SHARE LINK MODAL
 ──────────────────────────────────────────────────────────────── */
 function ShareLinkModal({ open, onClose, survey, onShare }) {
-  const [loading,   setLoading]   = useState(false);
-  const [shareUrl,  setShareUrl]  = useState(null);
-  const [copied,    setCopied]    = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [shareUrl, setShareUrl] = useState(null);
+  const [copied,   setCopied]   = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
     try {
       const url = await onShare(survey.id);
       if (url) setShareUrl(url);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleCopy = () => {
@@ -151,7 +148,6 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Reset on close
   useEffect(() => {
     if (!open) { setShareUrl(null); setCopied(false); }
   }, [open]);
@@ -251,10 +247,10 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   INVITE MODAL
+   INVITE MODAL (single)
 ──────────────────────────────────────────────────────────────── */
 function InviteModal({ open, onClose, survey, onInvite }) {
-  const [emails, setEmails]   = useState("");
+  const [emails,  setEmails]  = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
@@ -264,37 +260,16 @@ function InviteModal({ open, onClose, survey, onInvite }) {
   }, [open]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const list = emails
-    .split(/[\n,;]+/)
-    .map(e => e.trim())
-    .filter(Boolean);
-
-  if (list.length === 0) {
-    setError("Vui lòng nhập ít nhất 1 email.");
-    return;
-  }
-
-  setLoading(true);
-  setError("");
-
-  try {
-    // gửi từng email
-    await Promise.all(
-      list.map(email =>
-        onInvite(survey.id, { email, role: "viewer" })
-      )
-    );
-
-    setSuccess(true);
-    setEmails("");
-  } catch (err) {
-    setError("Mời không thành công, vui lòng thử lại.");
-  } finally {
-    setLoading(false);
-  }
-};
+    e.preventDefault();
+    const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+    if (list.length === 0) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError("");
+    try {
+      await Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })));
+      setSuccess(true); setEmails("");
+    } catch { setError("Mời không thành công, vui lòng thử lại."); }
+    finally { setLoading(false); }
+  };
 
   return (
     <Modal open={open} onClose={onClose} title="Mời người tham gia">
@@ -362,13 +337,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
             )}
 
             <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-              <button type="button" onClick={onClose} style={{
-                padding:"9px 16px", borderRadius:10,
-                border:`1px solid ${C.border}`, background:"transparent",
-                color:C.textSub, fontSize:13, fontWeight:600, cursor:"pointer",
-              }}>
-                Đóng
-              </button>
+              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
               <button type="submit" disabled={loading} style={{
                 display:"flex", alignItems:"center", gap:6,
                 padding:"9px 18px", borderRadius:10,
@@ -392,6 +361,514 @@ function InviteModal({ open, onClose, survey, onInvite }) {
 }
 
 /* ────────────────────────────────────────────────────────────────
+   BULK INVITE MODAL
+──────────────────────────────────────────────────────────────── */
+function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
+  const [emails,   setEmails]   = useState("");
+  const [role,     setRole]     = useState("viewer");
+  const [loading,  setLoading]  = useState(false);
+  const [success,  setSuccess]  = useState(null);
+  const [error,    setError]    = useState("");
+
+  useEffect(() => {
+    if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("viewer"); }
+  }, [open]);
+
+  const parseEmails = () =>
+    emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const list = parseEmails();
+    if (list.length === 0) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await onBulkInvite(survey.id, { emails: list, role });
+      setSuccess({
+        sent:   res?.sent   ?? list.length,
+        failed: res?.failed ?? 0,
+      });
+      setEmails("");
+    } catch { setError("Bulk invite thất bại, vui lòng thử lại."); }
+    finally { setLoading(false); }
+  };
+
+  const emailCount = parseEmails().length;
+
+  return (
+    <Modal open={open} onClose={onClose} title="Mời hàng loạt" width={520}>
+      <div style={{display:"flex", flexDirection:"column", gap:16}}>
+
+        <div style={{
+          display:"flex", alignItems:"center", gap:12,
+          padding:"12px 14px",
+          background:"linear-gradient(135deg,rgba(79,110,247,0.06),rgba(108,126,247,0.06))",
+          borderRadius:10, border:`1px solid ${C.primaryBorder}`,
+        }}>
+          <div style={{
+            width:38, height:38, borderRadius:10,
+            background:C.primaryDim,
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+          }}>
+            <UserPlus size={18} color={C.primary}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13, fontWeight:600, color:C.text}}>{survey?.title}</div>
+            <div style={{fontSize:12, color:C.textSub, marginTop:2}}>
+              Nhập nhiều email cùng lúc để mời hàng loạt
+            </div>
+          </div>
+          {emailCount > 0 && (
+            <div style={{
+              padding:"4px 10px", borderRadius:999,
+              background:C.primaryDim, color:C.primary,
+              fontSize:12, fontWeight:700, flexShrink:0,
+            }}>
+              {emailCount} email
+            </div>
+          )}
+        </div>
+
+        {success && (
+          <div style={{
+            padding:"12px 14px", borderRadius:10,
+            background:C.successBg, border:`1px solid ${C.successBorder}`,
+          }}>
+            <div style={{display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:600, color:C.success}}>
+              <Check size={14}/> Đã gửi lời mời hàng loạt!
+            </div>
+            <div style={{display:"flex", gap:16, marginTop:8}}>
+              <div style={{fontSize:12, color:C.textSub}}>
+                ✅ Thành công: <strong style={{color:C.success}}>{success.sent}</strong>
+              </div>
+              {success.failed > 0 && (
+                <div style={{fontSize:12, color:C.textSub}}>
+                  ❌ Thất bại: <strong style={{color:C.error}}>{success.failed}</strong>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{display:"flex", flexDirection:"column", gap:12}}>
+
+            <div>
+              <label style={{
+                display:"block", fontSize:12, fontWeight:600,
+                color:C.textSub, textTransform:"uppercase",
+                letterSpacing:"0.04em", marginBottom:6,
+              }}>
+                Vai trò
+              </label>
+              <div style={{display:"flex", gap:8}}>
+                {[
+                  { value:"viewer",      label:"👁️ Viewer",      desc:"Chỉ xem" },
+                  { value:"respondent",  label:"✏️ Respondent",  desc:"Trả lời survey" },
+                  { value:"editor",      label:"🛠️ Editor",      desc:"Chỉnh sửa" },
+                ].map(r => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setRole(r.value)}
+                    style={{
+                      flex:1, padding:"8px 10px", borderRadius:10,
+                      border:`1.5px solid ${role === r.value ? C.primary : C.border}`,
+                      background: role === r.value ? C.primaryDim : "#fff",
+                      cursor:"pointer", textAlign:"center",
+                      transition:"all .15s",
+                    }}
+                  >
+                    <div style={{fontSize:12, fontWeight:700, color: role === r.value ? C.primary : C.text}}>
+                      {r.label}
+                    </div>
+                    <div style={{fontSize:11, color:C.textDim, marginTop:2}}>{r.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label style={{
+                display:"block", fontSize:12, fontWeight:600,
+                color:C.textSub, textTransform:"uppercase",
+                letterSpacing:"0.04em", marginBottom:6,
+              }}>
+                Danh sách email
+              </label>
+              <textarea
+                rows={6}
+                value={emails}
+                onChange={e => { setEmails(e.target.value); setError(""); }}
+                placeholder={"user1@email.com\nuser2@email.com, user3@email.com\nuser4@email.com;user5@email.com\n\n(phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng)"}
+                style={{
+                  width:"100%", boxSizing:"border-box",
+                  padding:"10px 14px",
+                  background:"#fff", border:`1.5px solid ${error ? C.error : C.border}`,
+                  borderRadius:10, color:C.text, fontSize:13,
+                  fontFamily:C.font, outline:"none", resize:"vertical",
+                  lineHeight:1.7,
+                }}
+                onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = "0 0 0 3px rgba(79,110,247,0.1)"; }}
+                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = "none"; }}
+              />
+            </div>
+
+            {error && (
+              <div style={{
+                display:"flex", alignItems:"center", gap:6,
+                padding:"8px 12px", borderRadius:8,
+                background:C.errorBg, border:`1px solid ${C.errorBorder}`,
+                fontSize:13, color:C.error,
+              }}>
+                <X size={13}/> {error}
+              </div>
+            )}
+
+            <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
+              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
+              <button type="submit" disabled={loading || emailCount === 0} style={{
+                display:"flex", alignItems:"center", gap:6,
+                padding:"9px 18px", borderRadius:10,
+                border:"none",
+                background: (loading || emailCount === 0) ? C.surfaceHigh : C.primaryGrad,
+                color: (loading || emailCount === 0) ? C.textSub : "#fff",
+                fontSize:13, fontWeight:700,
+                cursor: (loading || emailCount === 0) ? "not-allowed" : "pointer",
+                boxShadow: (loading || emailCount === 0) ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
+              }}>
+                {loading
+                  ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
+                  : <><UserPlus size={13}/> Mời {emailCount > 0 ? `${emailCount} người` : "hàng loạt"}</>
+                }
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
+   PARTICIPANTS MODAL
+   API response: { count: number, participants: [{ participant_id, id, email, role }] }
+──────────────────────────────────────────────────────────────── */
+function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
+  const [participants, setParticipants] = useState([]);
+  const [count,        setCount]        = useState(0);
+  const [loading,      setLoading]      = useState(false);
+  const [deleting,     setDeleting]     = useState(null);
+  const [search,       setSearch]       = useState("");
+  const [confirmPid,   setConfirmPid]   = useState(null);
+  const [error,        setError]        = useState("");
+
+  const load = useCallback(async () => {
+  if (!survey?.id) return;
+  setLoading(true);
+  setError("");
+  try {
+    const res = await onGetParticipants(survey.id, {});
+    // Provider giờ trả về { count, participants }
+    const list = res?.participants ?? [];
+    const total = res?.count ?? list.length;
+    setParticipants(list);
+    setCount(total);
+  } catch {
+    setError("Không thể tải danh sách người tham gia.");
+  } finally {
+    setLoading(false);
+  }
+}, [survey?.id, onGetParticipants]);
+
+  useEffect(() => {
+  if (open) {
+    load();
+    setSearch("");
+    setConfirmPid(null);
+    setError("");
+  } else {
+    setParticipants([]);
+    setCount(0);
+  }
+}, [open, load]); // ← thay survey?.id bằng load (vì load đã dep vào survey?.id)
+
+  const handleDelete = async (participantId) => {
+    setDeleting(participantId);
+    try {
+      // Dùng participant_id để xoá
+      await onDeleteParticipant(survey.id, participantId);
+      setParticipants(prev => prev.filter(p => p.participant_id !== participantId));
+      setCount(prev => Math.max(0, prev - 1));
+      setConfirmPid(null);
+    } catch {
+      // giữ nguyên nếu lỗi
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const filtered = participants.filter(p => {
+    const q = search.toLowerCase();
+    return (
+      p.email?.toLowerCase().includes(q) ||
+      p.name?.toLowerCase().includes(q) ||
+      p.role?.toLowerCase().includes(q)
+    );
+  });
+
+  const getInitials = (name, email) => {
+    if (name) return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    return (email || "?")[0].toUpperCase();
+  };
+
+  const AVATAR_COLORS = [
+    { bg:"#dbeafe", color:"#1d4ed8" },
+    { bg:"#dcfce7", color:"#15803d" },
+    { bg:"#fce7f3", color:"#be185d" },
+    { bg:"#fef3c7", color:"#92400e" },
+    { bg:"#ede9fe", color:"#6d28d9" },
+  ];
+
+  const ROLE_STYLE = {
+    viewer:     { color:"#1d4ed8", bg:"#eff6ff", border:"#bfdbfe" },
+    respondent: { color:"#059669", bg:"#ecfdf5", border:"#a7f3d0" },
+    editor:     { color:"#7c3aed", bg:"#f5f3ff", border:"#ddd6fe" },
+  };
+
+  const getRoleStyle = (role) =>
+    ROLE_STYLE[role?.toLowerCase()] ?? { color:C.primary, bg:C.primaryDim, border:C.primaryBorder };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Quản lý người tham gia" width={560}>
+      <div style={{display:"flex", flexDirection:"column", gap:14}}>
+
+        {/* Stats row */}
+        <div style={{display:"flex", gap:10}}>
+          <div style={{
+            flex:1, padding:"12px 14px", borderRadius:12,
+            background:C.surfaceHigh, border:`1px solid ${C.border}`,
+            display:"flex", alignItems:"center", gap:10,
+          }}>
+            <div style={{
+              width:36, height:36, borderRadius:9,
+              background:C.primaryDim,
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>
+              <Users size={16} color={C.primary}/>
+            </div>
+            <div>
+              <div style={{fontSize:22, fontWeight:800, color:C.text, lineHeight:1}}>{count}</div>
+              <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Tổng participants</div>
+            </div>
+          </div>
+          <button
+            onClick={load}
+            disabled={loading}
+            style={{
+              padding:"0 14px", borderRadius:12,
+              border:`1px solid ${C.border}`, background:"#fff",
+              cursor: loading ? "not-allowed" : "pointer",
+              display:"flex", alignItems:"center", gap:6,
+              fontSize:12, fontWeight:600, color:C.textSub,
+              flexShrink:0,
+            }}
+          >
+            <RefreshCw size={14} style={loading ? {animation:"spin 1s linear infinite"} : {}}/>
+            Tải lại
+          </button>
+        </div>
+
+        {/* Error */}
+        {error && !loading && (
+          <div style={{
+            display:"flex", alignItems:"center", justifyContent:"space-between",
+            padding:"10px 14px", borderRadius:10,
+            background:C.errorBg, border:`1px solid ${C.errorBorder}`,
+          }}>
+            <span style={{fontSize:13, color:C.error}}>{error}</span>
+            <button onClick={load} style={{
+              padding:"4px 10px", borderRadius:6, fontSize:12, fontWeight:700,
+              border:`1px solid ${C.errorBorder}`, background:"#fff",
+              color:C.error, cursor:"pointer",
+            }}>Thử lại</button>
+          </div>
+        )}
+
+        {/* Search */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:8,
+          padding:"8px 12px",
+          background:"#fff", border:`1px solid ${C.border}`,
+          borderRadius:10,
+        }}>
+          <Search size={14} color={C.textDim}/>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Tìm theo tên, email hoặc vai trò..."
+            style={{flex:1, border:"none", outline:"none", fontSize:13, fontFamily:C.font, color:C.text, background:"transparent"}}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
+              <X size={13}/>
+            </button>
+          )}
+        </div>
+
+        {/* List */}
+        <div style={{
+          border:`1px solid ${C.border}`, borderRadius:12,
+          overflow:"hidden", maxHeight:360, overflowY:"auto",
+        }}>
+          {loading ? (
+            <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 20px", gap:12}}>
+              <Loader2 size={28} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
+              <span style={{fontSize:13, color:C.textSub, fontFamily:C.font}}>Đang tải danh sách...</span>
+            </div>
+          ) : filtered.length === 0 && !error ? (
+            <div style={{textAlign:"center", padding:"40px 20px", color:C.textSub}}>
+              <Users size={32} color={C.textDim} style={{marginBottom:10}}/>
+              <div style={{fontSize:13, fontWeight:600, color:C.text}}>
+                {search ? `Không tìm thấy "${search}"` : "Chưa có người tham gia"}
+              </div>
+              {!search && (
+                <div style={{fontSize:12, color:C.textDim, marginTop:4}}>
+                  Dùng "Mời hàng loạt" để thêm người tham gia
+                </div>
+              )}
+            </div>
+          ) : (
+            filtered.map((p, i) => {
+              const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
+              // participant_id dùng để xoá; id là user id
+              const deleteKey    = p.participant_id ?? p.id;
+              const isConfirming = confirmPid === deleteKey;
+              const isDeleting   = deleting === deleteKey;
+              const roleStyle    = getRoleStyle(p.role);
+
+              return (
+                <div
+                  key={p.participant_id ?? p.id ?? i}
+                  style={{
+                    display:"flex", alignItems:"center", gap:12,
+                    padding:"11px 14px",
+                    borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none",
+                    background: isConfirming ? C.errorBg : "#fff",
+                    transition:"background .15s",
+                  }}
+                >
+                  {/* Avatar */}
+                  <div style={{
+                    width:36, height:36, borderRadius:"50%",
+                    background:av.bg, color:av.color,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:12, fontWeight:700, flexShrink:0,
+                    letterSpacing:"0.02em",
+                  }}>
+                    {getInitials(p.name, p.email)}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                      {p.name || p.email}
+                    </div>
+                    {p.name && (
+                      <div style={{fontSize:12, color:C.textSub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                        {p.email}
+                      </div>
+                    )}
+                    {!p.name && (
+                      <div style={{fontSize:11, color:C.textDim}}>
+                        ID: {p.id ? p.id.slice(0, 8) + "…" : "—"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Role badge */}
+                  {p.role && (
+                    <span style={{
+                      fontSize:11, fontWeight:700, padding:"3px 9px",
+                      borderRadius:999, flexShrink:0,
+                      color:roleStyle.color,
+                      background:roleStyle.bg,
+                      border:`1px solid ${roleStyle.border}`,
+                    }}>
+                      {p.role}
+                    </span>
+                  )}
+
+                  {/* Delete actions */}
+                  {isConfirming ? (
+                    <div style={{display:"flex", gap:6, flexShrink:0}}>
+                      <button
+                        onClick={() => setConfirmPid(null)}
+                        style={{
+                          padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:600,
+                          border:`1px solid ${C.border}`, background:"#fff",
+                          color:C.textSub, cursor:"pointer",
+                        }}
+                      >
+                        Huỷ
+                      </button>
+                      <button
+                        onClick={() => handleDelete(deleteKey)}
+                        disabled={isDeleting}
+                        style={{
+                          display:"flex", alignItems:"center", gap:5,
+                          padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:700,
+                          border:"none",
+                          background: isDeleting ? C.surfaceHigh : C.error,
+                          color: isDeleting ? C.textSub : "#fff",
+                          cursor: isDeleting ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {isDeleting
+                          ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>
+                          : <Trash2 size={11}/>
+                        }
+                        Xoá
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmPid(deleteKey)}
+                      title="Xoá khỏi danh sách"
+                      style={{
+                        width:30, height:30, borderRadius:8, flexShrink:0,
+                        border:`1px solid ${C.border}`, background:"transparent",
+                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                        color:C.textDim, transition:"all .15s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = C.errorBorder; e.currentTarget.style.color = C.error; e.currentTarget.style.background = C.errorBg; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <UserMinus size={13}/>
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        {!loading && !error && filtered.length > 0 && search && (
+          <div style={{fontSize:12, color:C.textSub, textAlign:"center"}}>
+            Hiển thị {filtered.length} / {participants.length} người
+          </div>
+        )}
+
+        <div style={{display:"flex", justifyContent:"flex-end"}}>
+          <button onClick={onClose} style={cancelBtn}>Đóng</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
    PUBLISH CONFIRM MODAL
 ──────────────────────────────────────────────────────────────── */
 function PublishModal({ open, onClose, survey, onPublish }) {
@@ -403,9 +880,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
     try {
       await onPublish(survey.id, { is_published: !isPublished });
       onClose();
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
@@ -417,30 +892,19 @@ function PublishModal({ open, onClose, survey, onPublish }) {
           border:`1px solid ${isPublished ? C.warningBorder : C.primaryBorder}`,
           textAlign:"center",
         }}>
-          <div style={{fontSize:32, marginBottom:8}}>
-            {isPublished ? "🔒" : "🌐"}
-          </div>
+          <div style={{fontSize:32, marginBottom:8}}>{isPublished ? "🔒" : "🌐"}</div>
           <div style={{fontSize:14, fontWeight:600, color:C.text}}>
             {isPublished
               ? "Khảo sát sẽ bị ẩn và không còn nhận được câu trả lời mới."
               : "Khảo sát sẽ được công khai và có thể nhận câu trả lời."}
           </div>
         </div>
-
         <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-          <button onClick={onClose} style={{
-            padding:"9px 16px", borderRadius:10,
-            border:`1px solid ${C.border}`, background:"transparent",
-            color:C.textSub, fontSize:13, fontWeight:600, cursor:"pointer",
-          }}>
-            Huỷ
-          </button>
+          <button onClick={onClose} style={cancelBtn}>Huỷ</button>
           <button onClick={handleConfirm} disabled={loading} style={{
             display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10,
-            border:"none",
-            background: loading ? C.surfaceHigh
-              : isPublished ? C.warning : C.primaryGrad,
+            padding:"9px 18px", borderRadius:10, border:"none",
+            background: loading ? C.surfaceHigh : isPublished ? C.warning : C.primaryGrad,
             color: loading ? C.textSub : "#fff",
             fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
           }}>
@@ -466,9 +930,7 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
     try {
       await onCloseSurvey(survey.id);
       onClose();
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
@@ -487,19 +949,11 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
             Hành động này không thể hoàn tác.
           </div>
         </div>
-
         <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-          <button onClick={onClose} style={{
-            padding:"9px 16px", borderRadius:10,
-            border:`1px solid ${C.border}`, background:"transparent",
-            color:C.textSub, fontSize:13, fontWeight:600, cursor:"pointer",
-          }}>
-            Huỷ
-          </button>
+          <button onClick={onClose} style={cancelBtn}>Huỷ</button>
           <button onClick={handleConfirm} disabled={loading} style={{
             display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10,
-            border:"none",
+            padding:"9px 18px", borderRadius:10, border:"none",
             background: loading ? C.surfaceHigh : C.error,
             color: loading ? C.textSub : "#fff",
             fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
@@ -518,25 +972,30 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
 /* ────────────────────────────────────────────────────────────────
    CARD
 ──────────────────────────────────────────────────────────────── */
-function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPublish, onCloseSurvey }) {
-  const navigate   = useNavigate();
-  const thumb      = C.thumbColors[index % C.thumbColors.length];
-  const menuRef    = useRef(null);
+function SurveyCard({
+  survey, index,
+  onDelete, onUpdate, onShare, onInvite, onPublish, onCloseSurvey,
+  onBulkInvite, onGetParticipants, onDeleteParticipant,
+}) {
+  const navigate = useNavigate();
+  const thumb    = C.thumbColors[index % C.thumbColors.length];
+  const menuRef  = useRef(null);
 
-  const [menuOpen,        setMenuOpen]        = useState(false);
-  const [editing,         setEditing]         = useState(false);
-  const [title,           setTitle]           = useState(survey.title);
-  const [description,     setDescription]     = useState(survey.description || "");
-  const [startAt,         setStartAt]         = useState(survey.start_at ? survey.start_at.slice(0,16) : "");
-  const [endAt,           setEndAt]           = useState(survey.end_at   ? survey.end_at.slice(0,16)   : "");
-  const [saving,          setSaving]          = useState(false);
-  const [deleting,        setDeleting]        = useState(false);
+  const [menuOpen,    setMenuOpen]    = useState(false);
+  const [editing,     setEditing]     = useState(false);
+  const [title,       setTitle]       = useState(survey.title);
+  const [description, setDescription] = useState(survey.description || "");
+  const [startAt,     setStartAt]     = useState(survey.start_at ? survey.start_at.slice(0,16) : "");
+  const [endAt,       setEndAt]       = useState(survey.end_at   ? survey.end_at.slice(0,16)   : "");
+  const [saving,      setSaving]      = useState(false);
+  const [deleting,    setDeleting]    = useState(false);
 
-  // Modal states
-  const [shareOpen,   setShareOpen]   = useState(false);
-  const [inviteOpen,  setInviteOpen]  = useState(false);
-  const [publishOpen, setPublishOpen] = useState(false);
-  const [closeOpen,   setCloseOpen]   = useState(false);
+  const [shareOpen,        setShareOpen]        = useState(false);
+  const [inviteOpen,       setInviteOpen]       = useState(false);
+  const [bulkInviteOpen,   setBulkInviteOpen]   = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [publishOpen,      setPublishOpen]      = useState(false);
+  const [closeOpen,        setCloseOpen]        = useState(false);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -576,9 +1035,20 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
       action: () => { setShareOpen(true); setMenuOpen(false); },
     },
     {
-      icon: <Users size={14}/>,
+      icon: <Mail size={14}/>,
       label: "Mời người dùng",
       action: () => { setInviteOpen(true); setMenuOpen(false); },
+    },
+    {
+      icon: <UserPlus size={14}/>,
+      label: "Mời hàng loạt",
+      action: () => { setBulkInviteOpen(true); setMenuOpen(false); },
+      color: C.primary,
+    },
+    {
+      icon: <Users size={14}/>,
+      label: "Xem participants",
+      action: () => { setParticipantsOpen(true); setMenuOpen(false); },
     },
     {
       icon: isPublished ? <Lock size={14}/> : <Globe size={14}/>,
@@ -644,27 +1114,28 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
               style={{position:"absolute", bottom:10, left:10, display:"flex", gap:6}}
               onClick={e => e.stopPropagation()}
             >
-              <button
-                onClick={() => setShareOpen(true)}
-                title="Chia sẻ"
-                style={quickBtn}
+              <button onClick={() => setShareOpen(true)} title="Chia sẻ" style={quickBtn}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}
-              >
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
                 <Share2 size={13}/>
               </button>
-              <button
-                onClick={() => setInviteOpen(true)}
-                title="Mời người dùng"
-                style={quickBtn}
+              <button onClick={() => setInviteOpen(true)} title="Mời người dùng" style={quickBtn}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}
-              >
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
                 <Mail size={13}/>
               </button>
+              <button onClick={() => setBulkInviteOpen(true)} title="Mời hàng loạt" style={quickBtn}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
+                <UserPlus size={13}/>
+              </button>
+              <button onClick={() => setParticipantsOpen(true)} title="Xem participants" style={quickBtn}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
+                <Users size={13}/>
+              </button>
               <button
-                onClick={() => setPublishOpen(true)}
-                title={isPublished ? "Ẩn survey" : "Publish"}
+                onClick={() => setPublishOpen(true)} title={isPublished ? "Ẩn survey" : "Publish"}
                 style={{
                   ...quickBtn,
                   background: isPublished ? "rgba(245,158,11,0.85)" : "rgba(255,255,255,0.85)",
@@ -674,18 +1145,13 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
                 onMouseLeave={e => {
                   e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.85)" : "rgba(255,255,255,0.85)";
                   e.currentTarget.style.color = isPublished ? "#fff" : C.textSub;
-                }}
-              >
+                }}>
                 {isPublished ? <Lock size={13}/> : <Globe size={13}/>}
               </button>
               {!isClosed && (
-                <button
-                  onClick={() => setCloseOpen(true)}
-                  title="Đóng survey"
-                  style={quickBtn}
+                <button onClick={() => setCloseOpen(true)} title="Đóng survey" style={quickBtn}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(107,114,128,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}
-                >
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
                   <PowerOff size={13}/>
                 </button>
               )}
@@ -693,11 +1159,7 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
           )}
 
           {/* MENU */}
-          <div
-            ref={menuRef}
-            style={{position:"absolute", top:10, right:10}}
-            onClick={e => e.stopPropagation()}
-          >
+          <div ref={menuRef} style={{position:"absolute", top:10, right:10}} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               style={{
@@ -711,7 +1173,7 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
 
             {menuOpen && (
               <div style={{
-                position:"absolute", top:40, right:0, width:188,
+                position:"absolute", top:40, right:0, width:196,
                 background:C.surface, border:`1px solid ${C.border}`,
                 borderRadius:14, overflow:"hidden",
                 boxShadow:"0 10px 30px rgba(0,0,0,.1)", zIndex:20,
@@ -774,20 +1236,32 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
                 {/* Quick chip actions */}
                 <div style={{display:"flex", gap:5}} onClick={e => e.stopPropagation()}>
                   <button
-                    onClick={() => setShareOpen(true)}
-                    style={chipBtn}
+                    onClick={() => setShareOpen(true)} style={chipBtn}
+                    title="Link chia sẻ"
                     onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}
-                  >
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
                     <LinkIcon size={11}/>
                   </button>
                   <button
-                    onClick={() => setInviteOpen(true)}
-                    style={chipBtn}
+                    onClick={() => setInviteOpen(true)} style={chipBtn}
+                    title="Mời email"
                     onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}
-                  >
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
                     <Mail size={11}/>
+                  </button>
+                  <button
+                    onClick={() => setBulkInviteOpen(true)} style={chipBtn}
+                    title="Mời hàng loạt"
+                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                    <UserPlus size={11}/>
+                  </button>
+                  <button
+                    onClick={() => setParticipantsOpen(true)} style={chipBtn}
+                    title="Participants"
+                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                    <Users size={11}/>
                   </button>
                 </div>
               </div>
@@ -798,28 +1272,30 @@ function SurveyCard({ survey, index, onDelete, onUpdate, onShare, onInvite, onPu
 
       {/* Modals */}
       <ShareLinkModal
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
-        survey={survey}
-        onShare={onShare}
+        open={shareOpen} onClose={() => setShareOpen(false)}
+        survey={survey} onShare={onShare}
       />
       <InviteModal
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
+        open={inviteOpen} onClose={() => setInviteOpen(false)}
+        survey={survey} onInvite={onInvite}
+      />
+      <BulkInviteModal
+        open={bulkInviteOpen} onClose={() => setBulkInviteOpen(false)}
+        survey={survey} onBulkInvite={onBulkInvite}
+      />
+      <ParticipantsModal
+        open={participantsOpen} onClose={() => setParticipantsOpen(false)}
         survey={survey}
-        onInvite={onInvite}
+        onGetParticipants={onGetParticipants}
+        onDeleteParticipant={onDeleteParticipant}
       />
       <PublishModal
-        open={publishOpen}
-        onClose={() => setPublishOpen(false)}
-        survey={survey}
-        onPublish={onPublish}
+        open={publishOpen} onClose={() => setPublishOpen(false)}
+        survey={survey} onPublish={onPublish}
       />
       <CloseModal
-        open={closeOpen}
-        onClose={() => setCloseOpen(false)}
-        survey={survey}
-        onCloseSurvey={onCloseSurvey}
+        open={closeOpen} onClose={() => setCloseOpen(false)}
+        survey={survey} onCloseSurvey={onCloseSurvey}
       />
     </>
   );
@@ -874,6 +1350,9 @@ export default function MySurveysPage() {
     updateSurvey, deleteSurvey,
     closeSurvey, publishSurvey,
     shareLink, inviteSurvey,
+    bulkInviteSurvey,
+    getParticipants,
+    deleteParticipant,
   } = useSurvey();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -939,10 +1418,7 @@ export default function MySurveysPage() {
             style={{flex:1, border:"none", outline:"none", background:"transparent", fontSize:14, fontFamily:C.font, color:C.text}}
           />
           {search && (
-            <button onClick={() => setSearch("")} style={{
-              background:"none", border:"none", cursor:"pointer",
-              color:C.textDim, display:"flex", padding:0,
-            }}>
+            <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
               <X size={14}/>
             </button>
           )}
@@ -1074,6 +1550,9 @@ export default function MySurveysPage() {
                   onInvite={inviteSurvey}
                   onPublish={publishSurvey}
                   onCloseSurvey={closeSurvey}
+                  onBulkInvite={bulkInviteSurvey}
+                  onGetParticipants={getParticipants}
+                  onDeleteParticipant={deleteParticipant}
                 />
               ))}
             </div>

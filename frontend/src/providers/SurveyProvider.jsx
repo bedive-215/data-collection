@@ -47,49 +47,33 @@ const normalizeSurvey = (survey = {}) => ({
 });
 
 const SurveyProvider = ({ children }) => {
-  // ─────────────────────────────
-  // STATE — tách riêng my vs public
-  // ─────────────────────────────
-  const [mySurveys, setMySurveys] = useState([]);       // ← surveys của user
-  const [publicSurveys, setPublicSurveys] = useState([]); // ← surveys công khai
-
-  // "surveys" vẫn giữ để các trang cũ (SurveysPage, MySurveysPage) không bị break
+  const [mySurveys, setMySurveys] = useState([]);
+  const [publicSurveys, setPublicSurveys] = useState([]);
   const [surveys, setSurveys] = useState([]);
-
   const [currentSurvey, setCurrentSurvey] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ─────────────────────────────
-  // HELPERS
-  // ─────────────────────────────
   const startLoading = () => { setLoading(true); setError(null); };
-  const stopLoading  = () => { setLoading(false); };
+  const stopLoading  = () => setLoading(false);
+  const clearError   = () => setError(null);
 
-  const handleError = (err, fallbackMessage) => {
+  const handleError = (err, fallback) => {
     console.error(err);
-    const message = err?.response?.data?.message || err?.message || fallbackMessage;
+    const message = err?.response?.data?.message || err?.message || fallback;
     setError(message);
     toast.error(message);
     throw err;
   };
 
-  const clearError = () => setError(null);
-
-  // ─────────────────────────────
-  // CREATE SURVEY
-  // ─────────────────────────────
   const createSurvey = useCallback(async (payload) => {
     try {
       startLoading();
       const res = await surveyService.createSurvey(payload);
       const data = res?.data ?? res;
       const survey = normalizeSurvey(data?.survey ?? data);
-
-      // thêm vào cả mySurveys lẫn surveys (backward compat)
-      setMySurveys((prev) => [survey, ...prev]);
-      setSurveys((prev) => [survey, ...prev]);
-
+      setMySurveys((p) => [survey, ...p]);
+      setSurveys((p) => [survey, ...p]);
       toast.success("Tạo khảo sát thành công");
       return survey;
     } catch (err) {
@@ -99,22 +83,15 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
-  // ─────────────────────────────
-  // MY SURVEYS
-  // ─────────────────────────────
   const fetchMySurveys = useCallback(async (page = 1, limit = 10) => {
     try {
       startLoading();
       const res = await surveyService.getMySurveys({ page, limit });
       const data = res?.data ?? res;
-
       const list = (data?.data || data?.surveys || []).map(normalizeSurvey);
-
-      // ← set vào mySurveys riêng, KHÔNG ghi đè publicSurveys
       setMySurveys(list);
-      setSurveys(list); // backward compat cho MySurveysPage
-
-      return { list, count: data?.count ?? list.length };
+      setSurveys(list);
+      return list;
     } catch (err) {
       handleError(err, "Không lấy được khảo sát của bạn");
     } finally {
@@ -122,41 +99,31 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
-  // ─────────────────────────────
-  // PUBLIC SURVEYS
-  // ─────────────────────────────
   const fetchPublicSurveys = useCallback(async (params = {}) => {
     try {
       startLoading();
       const res = await surveyService.getPublicSurveys(params);
       const data = res?.data ?? res;
-
-      const list = (data?.surveys || data?.data || []).map(normalizeSurvey);
-
-      // ← set vào publicSurveys riêng, KHÔNG ghi đè mySurveys
+      const list = (data?.data || data?.surveys || []).map(normalizeSurvey);
       setPublicSurveys(list);
-
-      return { list, count: data?.count ?? list.length };
+      return list;
     } catch (err) {
-      handleError(err, "Không thể tải khảo sát công khai");
+      handleError(err, "Không tải được khảo sát công khai");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // SURVEY DETAIL
-  // ─────────────────────────────
-  const fetchSurveyById = useCallback(async (surveyId, accessToken = null) => {
+  const fetchSurveyById = useCallback(async (id, token = null) => {
     try {
       startLoading();
-      const res = accessToken
-        ? await surveyService.getSurveyByAccessToken(surveyId, accessToken)
-        : await surveyService.getSurveyById(surveyId);
+      const res = token
+        ? await surveyService.getSurveyByAccessToken(id, token)
+        : await surveyService.getSurveyById(id);
       const data = res?.data ?? res;
       const survey = normalizeSurvey(data?.survey ?? data);
       setCurrentSurvey(survey);
-      return { survey, role: data?.role || "viewer" };
+      return survey;
     } catch (err) {
       handleError(err, "Không tìm thấy khảo sát");
     } finally {
@@ -164,106 +131,49 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
-  // ─────────────────────────────
-  // SURVEYS BY USER ID
-  // ─────────────────────────────
-  const fetchSurveyByUserId = useCallback(async (userId, page = 1, limit = 10) => {
+  const updateSurvey = useCallback(async (id, payload) => {
     try {
       startLoading();
-      const res = await surveyService.getSurveyByUserId(userId, { page, limit });
-      const data = res?.data ?? res;
-      const list = (data?.surveys || []).map(normalizeSurvey);
-      setSurveys(list);
-      return { list, count: data?.count ?? list.length };
-    } catch (err) {
-      handleError(err, "Không lấy được khảo sát");
-    } finally {
-      stopLoading();
-    }
-  }, []);
-
-  // ─────────────────────────────
-  // ALL SURVEYS (admin)
-  // ─────────────────────────────
-  const fetchAllSurveys = useCallback(async (page = 1, limit = 10) => {
-    try {
-      startLoading();
-      const res = await surveyService.getAllSurveys({ page, limit });
-      const data = res?.data ?? res;
-      const list = (data?.surveys || []).map(normalizeSurvey);
-      setSurveys(list);
-      return { list, count: data?.count ?? list.length, page: data?.page || 1, totalPages: data?.totalPages || 1 };
-    } catch (err) {
-      handleError(err, "Không thể tải danh sách khảo sát");
-    } finally {
-      stopLoading();
-    }
-  }, []);
-
-  // ─────────────────────────────
-  // UPDATE SURVEY
-  // ─────────────────────────────
-  const updateSurvey = useCallback(async (surveyId, payload) => {
-    try {
-      startLoading();
-      const res = await surveyService.updateSurvey(surveyId, payload);
+      const res = await surveyService.updateSurvey(id, payload);
       const data = res?.data ?? res;
       const updated = normalizeSurvey(data?.survey ?? data);
-
-      const updater = (prev) => prev.map((s) => s.id === surveyId ? updated : s);
-      setMySurveys(updater);
-      setSurveys(updater);
-      setCurrentSurvey((prev) => prev?.id === surveyId ? updated : prev);
-
-      toast.success("Cập nhật khảo sát thành công");
+      const update = (prev) => prev.map((s) => (s.id === id ? updated : s));
+      setMySurveys(update);
+      setSurveys(update);
+      toast.success("Cập nhật thành công");
       return updated;
     } catch (err) {
-      handleError(err, "Cập nhật khảo sát thất bại");
+      handleError(err, "Cập nhật thất bại");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // DELETE SURVEY
-  // ─────────────────────────────
-  const deleteSurvey = useCallback(async (surveyId) => {
+  const deleteSurvey = useCallback(async (id) => {
     try {
-      const confirmed = window.confirm("Bạn có chắc muốn xóa khảo sát này?");
-      if (!confirmed) return false;
-
       startLoading();
-      await surveyService.deleteSurveyById(surveyId);
-
-      const remover = (prev) => prev.filter((s) => s.id !== surveyId);
-      setMySurveys(remover);
-      setSurveys(remover);
-      setCurrentSurvey((prev) => prev?.id === surveyId ? null : prev);
-
-      toast.success("Xóa khảo sát thành công");
+      await surveyService.deleteSurveyById(id);
+      const remove = (prev) => prev.filter((s) => s.id !== id);
+      setMySurveys(remove);
+      setSurveys(remove);
+      toast.success("Xóa thành công");
       return true;
     } catch (err) {
-      handleError(err, "Xóa khảo sát thất bại");
+      handleError(err, "Xóa thất bại");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // CLOSE SURVEY
-  // ─────────────────────────────
-  const closeSurvey = useCallback(async (surveyId) => {
+  const closeSurvey = useCallback(async (id) => {
     try {
       startLoading();
-      const res = await surveyService.closeSurvey(surveyId);
+      const res = await surveyService.closeSurvey(id);
       const data = res?.data ?? res;
       const updated = normalizeSurvey(data?.survey ?? data);
-
-      const updater = (prev) => prev.map((s) => s.id === surveyId ? updated : s);
-      setMySurveys(updater);
-      setSurveys(updater);
-
-      toast.success("Đóng khảo sát thành công");
+      const update = (prev) => prev.map((s) => (s.id === id ? updated : s));
+      setSurveys(update);
+      setMySurveys(update);
       return updated;
     } catch (err) {
       handleError(err, "Không thể đóng khảo sát");
@@ -272,92 +182,118 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
-  // ─────────────────────────────
-  // PUBLISH SURVEY
-  // ─────────────────────────────
-  const publishSurvey = useCallback(async (surveyId, payload = { is_published: true }) => {
+  const publishSurvey = useCallback(async (id, payload) => {
     try {
       startLoading();
-      const res = await surveyService.publishSurvey(surveyId, payload);
+      const res = await surveyService.publishSurvey(id, payload);
       const data = res?.data ?? res;
       const updated = normalizeSurvey(data?.survey ?? data);
-
-      const updater = (prev) => prev.map((s) => s.id === surveyId ? updated : s);
-      setMySurveys(updater);
-      setSurveys(updater);
-
-      toast.success("Publish survey thành công");
+      const update = (prev) => prev.map((s) => (s.id === id ? updated : s));
+      setSurveys(update);
+      setMySurveys(update);
       return updated;
     } catch (err) {
-      handleError(err, "Không thể publish survey");
+      handleError(err, "Publish thất bại");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // SHARE LINK
-  // ─────────────────────────────
-  const shareLink = useCallback(async (surveyId) => {
+  const shareLink = useCallback(async (id) => {
     try {
       startLoading();
-      const res = await surveyService.shareSurveyLink(surveyId);
+      const res = await surveyService.shareSurveyLink(id);
       const data = res?.data ?? res;
-      toast.success("Tạo link chia sẻ thành công");
-      return data?.url || null;
+      toast.success("Tạo link thành công");
+      return data?.url;
     } catch (err) {
-      handleError(err, "Không thể tạo link chia sẻ");
+      handleError(err, "Share thất bại");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // INVITE USER
-  // ─────────────────────────────
-  const inviteSurvey = useCallback(async (surveyId, payload) => {
+  const inviteSurvey = useCallback(async (id, payload) => {
     try {
       startLoading();
-      const res = await surveyService.inviteSurvey(surveyId, payload);
-      const data = res?.data ?? res;
-      toast.success("Mời người dùng thành công");
-      return data;
+      const res = await surveyService.inviteSurvey(id, payload);
+      toast.success("Mời thành công");
+      return res?.data ?? res;
     } catch (err) {
-      handleError(err, "Không thể mời người dùng");
+      handleError(err, "Invite thất bại");
     } finally {
       stopLoading();
     }
   }, []);
 
-  // ─────────────────────────────
-  // CONTEXT VALUE
-  // ─────────────────────────────
+  const bulkInviteSurvey = useCallback(async (id, payload) => {
+    try {
+      startLoading();
+      const res = await surveyService.bulkInviteSurvey(id, payload);
+      toast.success("Mời hàng loạt thành công");
+      return res?.data ?? res;
+    } catch (err) {
+      handleError(err, "Bulk invite thất bại");
+    } finally {
+      stopLoading();
+    }
+  }, []);
+
+  // ─── QUAN TRỌNG: KHÔNG dùng startLoading/stopLoading ở đây ───
+  // Lý do: gọi setLoading sẽ khiến toàn bộ context re-render,
+  // làm mới object getParticipants → trigger useEffect trong modal → infinite loop
+  const getParticipants = useCallback(async (id, params = {}) => {
+    try {
+      const res = await surveyService.getParticipants(id, params);
+      const data = res?.data ?? res;
+      return {
+        count:        data?.count        ?? 0,
+        participants: data?.participants ?? data?.data ?? [],
+      };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }, []);
+
+  // ─── QUAN TRỌNG: KHÔNG dùng startLoading/stopLoading ở đây ───
+  const deleteParticipant = useCallback(async (id, pid) => {
+    try {
+      await surveyService.deleteParticipant(id, pid);
+      toast.success("Xóa participant thành công");
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }, []);
+
+  // ─── QUAN TRỌNG: thêm ĐẦY ĐỦ tất cả callbacks vào deps ───
+  // Nếu thiếu, useMemo sẽ tạo ra object mới mỗi lần loading thay đổi
+  // → các component con nhận prop mới → re-render không cần thiết
   const value = useMemo(
     () => ({
-      // ← expose cả 3: surveys (backward compat), mySurveys, publicSurveys
       surveys,
       mySurveys,
       publicSurveys,
       currentSurvey,
       loading,
       error,
-
-      setSurveys,
-      setCurrentSurvey,
-      clearError,
-
       createSurvey,
+      fetchMySurveys,
       fetchPublicSurveys,
       fetchSurveyById,
-      fetchMySurveys,
-      fetchSurveyByUserId,
-      fetchAllSurveys,
       updateSurvey,
       deleteSurvey,
       closeSurvey,
       publishSurvey,
       shareLink,
       inviteSurvey,
+      bulkInviteSurvey,
+      getParticipants,
+      deleteParticipant,
+      setCurrentSurvey,
+      clearError,
     }),
     [
       surveys,
@@ -366,6 +302,19 @@ const SurveyProvider = ({ children }) => {
       currentSurvey,
       loading,
       error,
+      createSurvey,
+      fetchMySurveys,
+      fetchPublicSurveys,
+      fetchSurveyById,
+      updateSurvey,
+      deleteSurvey,
+      closeSurvey,
+      publishSurvey,
+      shareLink,
+      inviteSurvey,
+      bulkInviteSurvey,
+      getParticipants,
+      deleteParticipant,
     ]
   );
 

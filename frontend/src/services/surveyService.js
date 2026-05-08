@@ -3,65 +3,96 @@ import apiClient from "../api/apiClient";
 const BASE_URL = "/api/v1/survey";
 
 const surveyService = {
+
+  // ─────────────────────────────
   // CREATE
+  // ─────────────────────────────
   createSurvey: (payload) =>
     apiClient.post(BASE_URL, payload),
 
-  // GET MY SURVEYS
+  // ─────────────────────────────
+  // MY SURVEYS
+  // ─────────────────────────────
   getMySurveys: (params) =>
     apiClient.get(`${BASE_URL}/me`, { params }),
 
-  // GET SURVEYS BY USER ID (ADMIN)
+  // ─────────────────────────────
+  // ADMIN - BY USER ID
+  // ─────────────────────────────
   getSurveyByUserId: (userId, params) =>
     apiClient.get(`${BASE_URL}/users/${userId}`, { params }),
 
-  // GET ALL SURVEYS (ADMIN)
+  // ─────────────────────────────
+  // ADMIN - ALL
+  // ─────────────────────────────
   getAllSurveys: (params) =>
     apiClient.get(BASE_URL, { params }),
 
-  // GET PUBLIC SURVEYS
+  // ─────────────────────────────
+  // PUBLIC
+  // ─────────────────────────────
   getPublicSurveys: (params) =>
     apiClient.get(`${BASE_URL}/public`, { params }),
 
-  // GET SURVEY DETAIL
+  // ─────────────────────────────
+  // DETAIL (UUID FIX IMPORTANT)
+  // ─────────────────────────────
   getSurveyById: (surveyId) =>
     apiClient.get(`${BASE_URL}/${surveyId}`),
 
-  // GET SURVEY DETAIL WITH ACCESS TOKEN
   getSurveyByAccessToken: (surveyId, accessToken) =>
-    apiClient.get(
-      `${BASE_URL}/${surveyId}?access_token=${accessToken}`
-    ),
+    apiClient.get(`${BASE_URL}/${surveyId}`, {
+      params: { access_token: accessToken },
+    }),
 
-  // UPDATE SURVEY
+  // ─────────────────────────────
+  // UPDATE
+  // ─────────────────────────────
   updateSurvey: (surveyId, payload) =>
     apiClient.put(`${BASE_URL}/${surveyId}`, payload),
 
-  // DELETE SURVEY
+  // ─────────────────────────────
+  // DELETE
+  // ─────────────────────────────
   deleteSurveyById: (surveyId) =>
     apiClient.delete(`${BASE_URL}/${surveyId}`),
 
-  // CLOSE SURVEY
+  // ─────────────────────────────
+  // STATUS CONTROL
+  // ─────────────────────────────
   closeSurvey: (surveyId) =>
     apiClient.patch(`${BASE_URL}/${surveyId}/close`),
 
-  // PUBLISH / UNPUBLISH SURVEY
-  publishSurvey: (surveyId, payload) =>
-    apiClient.patch(
-      `${BASE_URL}/${surveyId}/publish`,
-      payload
-    ),
+  publishSurvey: (surveyId, payload = {}) =>
+    apiClient.patch(`${BASE_URL}/${surveyId}/publish`, payload),
 
-  // CREATE SHARE LINK
+  // ─────────────────────────────
+  // SHARE LINK
+  // ─────────────────────────────
   shareSurveyLink: (surveyId) =>
     apiClient.patch(`${BASE_URL}/${surveyId}/share`),
 
-  // INVITE USER
+  // ─────────────────────────────
+  // INVITE SINGLE
+  // ─────────────────────────────
   inviteSurvey: (surveyId, payload) =>
-    apiClient.post(
-      `${BASE_URL}/${surveyId}/invite`,
-      payload
-    ),
+    apiClient.post(`${BASE_URL}/${surveyId}/invite`, payload),
+
+  // ─────────────────────────────
+  // INVITE BULK
+  // ─────────────────────────────
+  bulkInviteSurvey: (surveyId, payload) =>
+    apiClient.post(`${BASE_URL}/${surveyId}/invite/bulk`, payload),
+
+  // ─────────────────────────────
+  // PARTICIPANTS
+  // ─────────────────────────────
+  getParticipants: (surveyId, params = {}) =>
+    apiClient.get(`${BASE_URL}/${surveyId}/participants`, { params }),
+
+  deleteParticipant: (surveyId, pid) =>
+    apiClient.delete(`${BASE_URL}/${surveyId}/participants/${pid}`),
+
 };
 
 export default surveyService;
