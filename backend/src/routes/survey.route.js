@@ -5,6 +5,7 @@ import { validate } from "../middlewares/validate.middleware.js";
 import { createSurveyRequest } from "../validates/createSurvey.validate.js";
 import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { userIdParams } from "../validates/userIdParams.validate.js";
+import { pidParams } from "../validates/pidParams.validate.js";
 import { Router } from "express";
 
 const route = Router();
@@ -22,6 +23,8 @@ route.patch('/:survey_id/close', validate(surveyIdParams), SurveyController.clos
 route.patch('/:survey_id/publish', validate(surveyIdParams), SurveyController.publicSurvey);
 route.patch('/:survey_id/share', validate(surveyIdParams), SurveyController.shareLink);
 route.post('/:survey_id/invite', validate(surveyIdParams), SurveyController.inviteSurvey);
-
+route.post('/:survey_id/invite/bulk', validate(surveyIdParams), SurveyController.bulkInviteSurvey);
+route.get('/:survey_id/participants', validate(surveyIdParams), SurveyController.getParticipants);
+route.delete('/:survey_id/participants/:pid', validate(surveyIdParams), validate(pidParams), SurveyController.deleteParticipant);
 
 export default route;

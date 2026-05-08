@@ -192,6 +192,51 @@ class SurveyController {
             next(err);
         }
     }
+
+    async bulkInviteSurvey(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const payload = req.body; 
+            const user = req.user;
+            const result = await SurveyService.bulkInvite(survey_id, user, payload);
+            return res.status(200).json({
+                message: result.message,
+                invited: result.invited,
+                failed: result.failed
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getParticipants(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const user = req.user;
+            const result = await SurveyService.getParticipants(survey_id, user);
+            return res.status(200).json({
+                message: result.message,
+                count: result.count,
+                participants: result.participants
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async deleteParticipant(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const { pid } = req.params;
+            const user = req.user;
+            const result = await SurveyService.deleteParticipant(survey_id, pid, user);
+            return res.status(200).json({
+                message: result.message
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 export default new SurveyController();

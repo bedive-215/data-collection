@@ -1,5 +1,7 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import { Op } from "sequelize";
+import { sendInviteEmail } from "../utils/sendMail.js";
 
 class SurveyService {
     constructor() {
@@ -461,6 +463,9 @@ class SurveyService {
             role: role
         });
 
+        // send email invite
+        await sendInviteEmail(email, survey.title, `${process.env.BASE_URL}/surveys/${survey.id}`, user.name, user.email);
+
         return {
             message: "User invited successfully",
             participant
@@ -524,11 +529,109 @@ class SurveyService {
         // bulk insert
         const created = await this.SurveyParticipant.bulkCreate(toCreate);
 
+        // gửi email mời
+        const emailPromises = toCreate.map(p =>
+            sendInviteEmail(
+                p.email,
+                survey.title,
+                `${process.env.BASE_URL}/surveys/${survey.id}`,
+                user.name,
+                user.email
+            )
+        );
+
+        const results = await Promise.allSettled(emailPromises);
+
+        const success = results.filter(r => r.status === "fulfilled").length;
+        const failed = results.filter(r => r.status === "rejected").length;
+
         return {
             message: "Bulk invite processed",
             total: emails.length,
             created: created.length,
-            skipped: existingEmails.size
+            skipped: existingEmails.size,
+            success,
+            failed
+        };
+    }
+
+    async getParticipants(surveyId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission", 403);
+        }
+
+        const { rows, count } = await this.SurveyParticipant.findAndCountAll({
+            where: { survey_id: survey.id },
+            attributes: ["id", "email", "role", "created_at"],
+            include: [
+                {
+                    model: this.User,
+                    as: "user",
+                    attributes: ["id", "name", "email"]
+                }
+            ]
+        });
+
+        const participants = rows.map(p => {
+            if (p.user && p.email === p.user.email) {
+                return {
+                    participant_id: p.id,
+                    id: p.user.id,
+                    name: p.user.name,
+                    email: p.user.email,
+                    role: p.role,
+                    created_at: p.created_at
+                };
+            }
+
+            return {
+                participant_id: p.id,
+                id: null,
+                name: null,
+                email: p.email,
+                role: p.role,
+                created_at: p.created_at
+            };
+        });
+
+        return {
+            participants,
+            count
+        };
+    }
+
+    // delete participant
+    async deleteParticipant(surveyId, participantId, user) {
+        const survey = await this.Survey.findByPk(surveyId);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        if (!this._checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission", 403);
+        }
+
+        const participant = await this.SurveyParticipant.findOne({
+            where: {
+                id: participantId,
+                survey_id: survey.id
+            }
+        });
+
+        if (!participant) {
+            throw new AppError("Participant not found", 404);
+        }
+
+        await participant.destroy();
+
+        return {
+            message: "Participant removed successfully"
         };
     }
 
