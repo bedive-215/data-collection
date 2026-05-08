@@ -4,21 +4,21 @@ import SurveyService from "../services/survey.service.js";
 class SurveyController {
 
     // Create survey
-   async createSurvey(req, res, next) {
-    try {
-        const user = req.user;
+    async createSurvey(req, res, next) {
+        try {
+            const user = req.user;
 
-        const result = await SurveyService.createSurvey(user, req.body);
+            const result = await SurveyService.createSurvey(user, req.body);
 
-        return res.status(201).json({
-            message: result.message,
-            data: result.survey
-        });
+            return res.status(201).json({
+                message: result.message,
+                data: result.survey
+            });
 
-    } catch (err) {
-        next(err);
+        } catch (err) {
+            next(err);
+        }
     }
-}
 
     // Get survey by id
     async getSurveyById(req, res, next) {
@@ -196,7 +196,7 @@ class SurveyController {
     async bulkInviteSurvey(req, res, next) {
         try {
             const { survey_id } = req.params;
-            const payload = req.body; 
+            const payload = req.body;
             const user = req.user;
             const result = await SurveyService.bulkInvite(survey_id, user, payload);
             return res.status(200).json({
@@ -233,6 +233,25 @@ class SurveyController {
             return res.status(200).json({
                 message: result.message
             });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getInvitedSurveys(req, res, next) {
+        try {
+            const user = req.user;
+
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+
+            const result = await SurveyService.getInvitedSurveys(user, { page, limit });
+
+            return res.status(200).json({
+                message: "Get invited surveys successfully",
+                data: result
+            });
+
         } catch (err) {
             next(err);
         }

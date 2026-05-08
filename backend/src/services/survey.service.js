@@ -644,6 +644,62 @@ class SurveyService {
         };
     }
 
+    async getInvitedSurveys(user, { page = 1, limit = 10 }) {
+        const offset = (page - 1) * limit;
+
+        const { rows, count } = await this.SurveyParticipant.findAndCountAll({
+            where: {
+                [this.Op.or]: [
+                    { user_id: user.id },
+                    { email: user.email }
+                ]
+            },
+            include: [
+                {
+                    model: this.Survey,
+                    as: "survey",
+                    where: {
+                        access_type: "PRIVATE"
+                    },
+                    attributes: [
+                        "id",
+                        "title",
+                        "description",
+                        "created_at",
+                        "created_by",
+                        "start_at",
+                        "end_at"
+                    ]
+                }
+            ],
+            limit,
+            offset,
+            order: [["created_at", "DESC"]]
+        });
+
+        const surveys = rows.map(row => {
+            const s = row.survey;
+            return {
+                id: s.id,
+                title: s.title,
+                description: s.description,
+                createdAt: s.created_at,
+                createdBy: s.created_by,
+                startAt: s.start_at,
+                endAt: s.end_at,
+                invitedAt: row.created_at
+            };
+        });
+
+
+        return {
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit),
+            data: surveys
+        };
+    }
+
     // mapping functions
     _mapSurvey(survey) {
         return {

@@ -26,5 +26,6 @@ route.post('/:survey_id/invite', validate(surveyIdParams), SurveyController.invi
 route.post('/:survey_id/invite/bulk', validate(surveyIdParams), SurveyController.bulkInviteSurvey);
 route.get('/:survey_id/participants', validate(surveyIdParams), SurveyController.getParticipants);
 route.delete('/:survey_id/participants/:pid', validate(surveyIdParams), validate(pidParams), SurveyController.deleteParticipant);
+route.get('/invited', SurveyController.getInvitedSurveys);
 
 export default route;
