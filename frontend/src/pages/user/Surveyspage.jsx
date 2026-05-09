@@ -29,197 +29,345 @@ const TABS = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// Type meta
+// Type config
 // ─────────────────────────────────────────────────────────────
-const TYPE_META = {
+const TYPE_CONFIG = {
   SINGLE_CHOICE: {
     label: "Một lựa chọn",
-    color: "#1d4ed8",
-    bg: "#eff6ff",
-    border: "#bfdbfe",
-    accent: "#2563eb",
+    barColor: "#2563eb",
+    badgeBg: "#eff6ff",
+    badgeBorder: "#bfdbfe",
+    badgeColor: "#1d4ed8",
   },
   MULTIPLE_CHOICE: {
     label: "Nhiều lựa chọn",
-    color: "#6d28d9",
-    bg: "#f5f3ff",
-    border: "#ddd6fe",
-    accent: "#7c3aed",
+    barColor: "#7c3aed",
+    badgeBg: "#f5f3ff",
+    badgeBorder: "#ddd6fe",
+    badgeColor: "#6d28d9",
   },
   TEXT: {
     label: "Văn bản",
-    color: "#0e7490",
-    bg: "#ecfeff",
-    border: "#a5f3fc",
-    accent: "#0891b2",
+    barColor: "#0891b2",
+    badgeBg: "#ecfeff",
+    badgeBorder: "#a5f3fc",
+    badgeColor: "#0e7490",
   },
 };
 
-function typeMeta(type) {
+function getTypeCfg(type) {
   return (
-    TYPE_META[type] ?? {
+    TYPE_CONFIG[type] ?? {
       label: type,
-      color: "#6b7280",
-      bg: "#f3f4f6",
-      border: "#e5e7eb",
-      accent: "#9ca3af",
+      barColor: "#888",
+      badgeBg: "#f3f4f6",
+      badgeBorder: "#e5e7eb",
+      badgeColor: "#6b7280",
     }
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Icons
+// Helpers
 // ─────────────────────────────────────────────────────────────
-function SingleChoiceIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#9ca3af"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="3" fill="#9ca3af" stroke="none" />
-    </svg>
+
+/**
+ * Chuẩn hoá answer thành Set<string>
+ * Xử lý: null, string, "a,b,c", [], ["a","b"]
+ */
+function getAnswerSet(answer) {
+  if (answer === null || answer === undefined) return new Set();
+  if (Array.isArray(answer)) {
+    return new Set(answer.map((s) => String(s).trim()).filter(Boolean));
+  }
+  return new Set(
+    String(answer)
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
   );
 }
 
-function MultipleChoiceIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#9ca3af"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
+// ─────────────────────────────────────────────────────────────
+// AnswerBlock
+// ─────────────────────────────────────────────────────────────
+function AnswerBlock({ item }) {
+  const isText = item.type === "TEXT";
+  const isMultiple = item.type === "MULTIPLE_CHOICE";
+  const answerSet = getAnswerSet(item.answer);
+  const hasAnswer = answerSet.size > 0;
 
-function TypeIcon({ type }) {
-  if (type === "MULTIPLE_CHOICE") return <MultipleChoiceIcon />;
-
-  if (type === "TEXT") {
-    return (
-      <FileText
-        size={17}
-        strokeWidth={1.5}
-        color="#9ca3af"
-      />
+  // ── TEXT ──
+  if (isText) {
+    return item.answer?.trim() ? (
+      <div
+        style={{
+          background: "#f8faff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 10,
+          padding: "12px 14px",
+          fontSize: 13,
+          color: "#374151",
+          lineHeight: 1.6,
+        }}
+      >
+        {item.answer}
+      </div>
+    ) : (
+      <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>
+        Không có câu trả lời
+      </p>
     );
   }
 
-  return <SingleChoiceIcon />;
+  // ── SINGLE / MULTIPLE có options từ backend ──
+  const options = item.options ?? [];
+
+  if (options.length > 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {!hasAnswer && (
+          <p
+            style={{
+              fontSize: 13,
+              color: "#9ca3af",
+              fontStyle: "italic",
+              marginBottom: 4,
+            }}
+          >
+            Chưa chọn lựa chọn nào
+          </p>
+        )}
+        {options.map((opt, i) => {
+          const label =
+            typeof opt === "string"
+              ? opt
+              : opt.label ?? opt.value ?? opt.content ?? "";
+          const isSelected =
+            answerSet.has(label) || answerSet.has(String(opt.id ?? ""));
+
+          return (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "9px 12px",
+                borderRadius: 10,
+                border: `1px solid ${isSelected ? "#bfdbfe" : "#e5e7eb"}`,
+                background: isSelected ? "rgba(239,246,255,0.8)" : "#fafafa",
+              }}
+            >
+              {isMultiple ? (
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    border: `2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`,
+                    background: isSelected ? "#2563eb" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSelected && (
+                    <svg width="10" height="8" viewBox="0 0 11 8" fill="none">
+                      <path
+                        d="M1 4L4 7L10 1"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    border: `2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSelected && (
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "#2563eb",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: isSelected ? 600 : 400,
+                  color: isSelected ? "#1e40af" : "#6b7280",
+                }}
+              >
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── SINGLE / MULTIPLE không có options (backend chỉ trả answer string/array) ──
+  // → Hiển thị trực tiếp answer dạng highlighted chip
+  if (hasAnswer) {
+    const labels = [...answerSet];
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {labels.map((label, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "9px 12px",
+              borderRadius: 10,
+              border: "1.5px solid #bfdbfe",
+              background: "rgba(239,246,255,0.8)",
+            }}
+          >
+            {isMultiple ? (
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 5,
+                  border: "2px solid #2563eb",
+                  background: "#2563eb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="10" height="8" viewBox="0 0 11 8" fill="none">
+                  <path
+                    d="M1 4L4 7L10 1"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  border: "2px solid #2563eb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "#2563eb",
+                  }}
+                />
+              </div>
+            )}
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#1e40af" }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>
+      Không có câu trả lời
+    </p>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
-// OptionRow
+// QuestionCard
 // ─────────────────────────────────────────────────────────────
-function OptionRow({
-  label,
-  isSelected,
-  isMultiple,
-}) {
+function QuestionCard({ item, index }) {
+  const cfg = getTypeCfg(item.type);
+
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "10px 14px",
-        borderRadius: 10,
-        border: `1px solid ${
-          isSelected ? "#bfdbfe" : "#e5e7eb"
-        }`,
-        background: isSelected
-          ? "rgba(239,246,255,0.7)"
-          : "#fafafa",
+        background: "#fff",
+        borderRadius: 18,
+        border: "1px solid #e5e7eb",
+        borderTop: `3px solid ${cfg.barColor}`,
+        overflow: "hidden",
       }}
     >
-      {isMultiple ? (
+      <div style={{ padding: "16px 18px" }}>
+        {/* meta row */}
         <div
           style={{
-            width: 18,
-            height: 18,
-            borderRadius: 5,
-            border: `2px solid ${
-              isSelected ? "#2563eb" : "#d1d5db"
-            }`,
-            background: isSelected
-              ? "#2563eb"
-              : "transparent",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            justifyContent: "space-between",
+            marginBottom: 10,
           }}
         >
-          {isSelected && (
-            <svg
-              width="10"
-              height="8"
-              viewBox="0 0 11 8"
-              fill="none"
-            >
-              <path
-                d="M1 4L4 7L10 1"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+          <span style={{ fontSize: 12, color: "#9ca3af" }}>
+            Câu {index + 1}
+          </span>
+          <span
+            style={{
+              background: cfg.badgeBg,
+              border: `1px solid ${cfg.badgeBorder}`,
+              color: cfg.badgeColor,
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "3px 10px",
+              borderRadius: 999,
+            }}
+          >
+            {cfg.label}
+          </span>
         </div>
-      ) : (
-        <div
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: "50%",
-            border: `2px solid ${
-              isSelected ? "#2563eb" : "#d1d5db"
-            }`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          {isSelected && (
-            <div
-              style={{
-                width: 9,
-                height: 9,
-                borderRadius: "50%",
-                background: "#2563eb",
-              }}
-            />
-          )}
-        </div>
-      )}
 
-      <span
-        style={{
-          fontSize: 13,
-          fontWeight: isSelected ? 600 : 400,
-          color: isSelected ? "#1e40af" : "#6b7280",
-        }}
-      >
-        {label}
-      </span>
+        {/* question text */}
+        <h3
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#111827",
+            marginBottom: 12,
+            lineHeight: 1.5,
+          }}
+        >
+          {item.question}
+        </h3>
+
+        {/* answer */}
+        <AnswerBlock item={item} />
+      </div>
     </div>
   );
 }
@@ -227,16 +375,11 @@ function OptionRow({
 // ─────────────────────────────────────────────────────────────
 // SubmissionModal
 // ─────────────────────────────────────────────────────────────
-function SubmissionModal({
-  surveyId,
-  surveyTitle,
-  onClose,
-}) {
+function SubmissionModal({ surveyId, surveyTitle, onClose }) {
   const { getMySubmission } = useResponse();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [answers, setAnswers] = useState([]);
 
   useEffect(() => {
@@ -247,18 +390,18 @@ function SubmissionModal({
 
         const res = await getMySubmission(surveyId);
 
+        // Backend trả: { data: [{ response_id, answers: [...] }] }
+        // Hoặc trực tiếp array responses
         const raw = res?.data ?? res ?? [];
 
-        const normalized = raw.flatMap(
-          (r) => r.answers ?? []
-        );
+        const allAnswers = Array.isArray(raw)
+          ? raw.flatMap((r) => r.answers ?? [])
+          : raw.answers ?? [];
 
-        setAnswers(normalized);
+        setAnswers(allAnswers);
       } catch (err) {
         console.error(err);
-        setError(
-          "Không thể tải câu trả lời."
-        );
+        setError("Không thể tải câu trả lời.");
       } finally {
         setLoading(false);
       }
@@ -269,10 +412,7 @@ function SubmissionModal({
 
   return (
     <div
-      onClick={(e) =>
-        e.target === e.currentTarget &&
-        onClose()
-      }
+      onClick={(e) => e.target === e.currentTarget && onClose()}
       style={{
         position: "fixed",
         inset: 0,
@@ -301,7 +441,7 @@ function SubmissionModal({
         {/* Header */}
         <div
           style={{
-            padding: "16px 20px",
+            padding: "14px 20px",
             background: "#fff",
             borderBottom: "1px solid #e5e7eb",
             display: "flex",
@@ -317,239 +457,70 @@ function SubmissionModal({
             Đóng
           </button>
 
-          <div className="text-sm font-bold text-gray-700">
-            InsightFlow
-          </div>
+          <div className="text-sm font-bold text-gray-700">InsightFlow</div>
 
           <div style={{ width: 60 }} />
         </div>
 
         {/* Body */}
-        <div
-          style={{
-            padding: 24,
-            overflowY: "auto",
-            flex: 1,
-          }}
-        >
-          <div className="text-center mb-7">
+        <div style={{ padding: 24, overflowY: "auto", flex: 1 }}>
+          {/* Hero */}
+          <div className="text-center mb-6">
             <div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-              style={{
-                background: "#dcfce7",
-                border: "1px solid #86efac",
-              }}
+              style={{ background: "#dcfce7", border: "1px solid #86efac" }}
             >
-              <CheckCircle2
-                size={14}
-                color="#16a34a"
-              />
-
+              <CheckCircle2 size={14} color="#16a34a" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#15803d]">
                 Đã hoàn thành
               </span>
             </div>
 
-            <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
+            <h2 className="text-xl font-extrabold text-gray-900 mb-1">
               {surveyTitle}
             </h2>
 
             {!loading && (
-              <p className="text-sm text-gray-400">
-                {answers.length} câu trả lời
-              </p>
+              <p className="text-sm text-gray-400">{answers.length} câu hỏi</p>
             )}
           </div>
 
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-16 text-[#4f6ef7] gap-3">
-              <Loader2
-                size={20}
-                className="animate-spin"
-              />
-              <span className="font-semibold text-sm">
-                Đang tải...
-              </span>
+              <Loader2 size={20} className="animate-spin" />
+              <span className="font-semibold text-sm">Đang tải...</span>
             </div>
           )}
 
           {/* Error */}
           {!loading && error && (
             <div className="flex flex-col items-center py-16 gap-3 text-gray-400">
-              <span className="text-4xl">
-                ⚠️
-              </span>
+              <span className="text-4xl">⚠️</span>
               <p>{error}</p>
             </div>
           )}
 
           {/* Empty */}
-          {!loading &&
-            !error &&
-            answers.length === 0 && (
-              <div className="flex flex-col items-center py-16 gap-3 text-gray-400">
-                <Inbox size={42} />
-                <p>Không có câu trả lời.</p>
-              </div>
-            )}
+          {!loading && !error && answers.length === 0 && (
+            <div className="flex flex-col items-center py-16 gap-3 text-gray-400">
+              <Inbox size={42} />
+              <p>Không có câu trả lời.</p>
+            </div>
+          )}
 
           {/* Answers */}
-          {!loading &&
-            !error &&
-            answers.length > 0 && (
-              <div className="flex flex-col gap-4">
-                {answers.map((item, idx) => {
-                  const meta = typeMeta(
-                    item.type
-                  );
-
-                  const isText =
-                    item.type === "TEXT";
-
-                  const isMultiple =
-                    item.type ===
-                    "MULTIPLE_CHOICE";
-
-                  const selectedSet =
-                    isMultiple
-                      ? new Set(
-                          Array.isArray(
-                            item.answer
-                          )
-                            ? item.answer
-                            : String(
-                                item.answer ?? ""
-                              )
-                                .split(",")
-                                .map((s) =>
-                                  s.trim()
-                                )
-                        )
-                      : new Set([
-                          String(
-                            item.answer ?? ""
-                          ),
-                        ]);
-
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        background: "#fff",
-                        borderRadius: 18,
-                        border:
-                          "1px solid #e5e7eb",
-                        borderTop: `3px solid ${meta.accent}`,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div className="p-5">
-                        {/* top */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div
-                            style={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: 12,
-                              border:
-                                "1px solid #d1d5db",
-                              background:
-                                "#f9fafb",
-                            }}
-                            className="flex items-center justify-center"
-                          >
-                            <TypeIcon
-                              type={item.type}
-                            />
-                          </div>
-
-                          <span
-                            style={{
-                              background:
-                                meta.bg,
-                              border: `1px solid ${meta.border}`,
-                              color:
-                                meta.color,
-                            }}
-                            className="px-3 py-1 rounded-full text-[11px] font-bold"
-                          >
-                            {meta.label}
-                          </span>
-                        </div>
-
-                        <h3 className="text-sm font-bold text-gray-800 mb-4 leading-relaxed">
-                          {idx + 1}.{" "}
-                          {item.question}
-                        </h3>
-
-                        {/* text */}
-                        {isText && (
-                          <div
-                            style={{
-                              background:
-                                "#f8faff",
-                              border:
-                                "1px solid #e5e7eb",
-                            }}
-                            className="rounded-xl p-4 text-sm text-gray-700 leading-relaxed"
-                          >
-                            {item.answer ||
-                              "Không có dữ liệu"}
-                          </div>
-                        )}
-
-                        {/* choices */}
-                        {!isText && (
-                          <div className="flex flex-col gap-2">
-                            {(item.options ??
-                              []).map(
-                              (
-                                opt,
-                                optIdx
-                              ) => {
-                                const label =
-                                  opt?.label ??
-                                  opt?.value ??
-                                  opt?.content ??
-                                  "";
-
-                                const isSelected =
-                                  selectedSet.has(
-                                    label
-                                  ) ||
-                                  selectedSet.has(
-                                    String(
-                                      opt.id
-                                    )
-                                  );
-
-                                return (
-                                  <OptionRow
-                                    key={
-                                      optIdx
-                                    }
-                                    label={
-                                      label
-                                    }
-                                    isSelected={
-                                      isSelected
-                                    }
-                                    isMultiple={
-                                      isMultiple
-                                    }
-                                  />
-                                );
-                              }
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          {!loading && !error && answers.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {answers.map((item, idx) => (
+                <QuestionCard
+                  key={item.question_id ?? idx}
+                  item={item}
+                  index={idx}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -559,39 +530,20 @@ function SubmissionModal({
 // ─────────────────────────────────────────────────────────────
 // Survey Card
 // ─────────────────────────────────────────────────────────────
-function SurveyCard({
-  survey,
-  done,
-  onStart,
-  onViewSubmission,
-}) {
+function SurveyCard({ survey, done, onStart, onViewSubmission }) {
   const createdDate = survey?.created_at
-    ? new Date(
-        survey.created_at
-      ).toLocaleDateString("vi-VN")
+    ? new Date(survey.created_at).toLocaleDateString("vi-VN")
     : "";
 
   return (
     <div
-      onClick={() =>
-        done &&
-        onViewSubmission(
-          survey.id,
-          survey.title
-        )
-      }
+      onClick={() => done && onViewSubmission(survey.id, survey.title)}
       className={`group rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-        done
-          ? "bg-white hover:bg-[#f0fdf4]"
-          : "bg-white hover:bg-[#f0f4ff]"
+        done ? "bg-white hover:bg-[#f0fdf4]" : "bg-white hover:bg-[#f0f4ff]"
       }`}
       style={{
-        borderColor: done
-          ? "#bbf7d0"
-          : "#e8ecf5",
-        cursor: done
-          ? "pointer"
-          : "default",
+        borderColor: done ? "#bbf7d0" : "#e8ecf5",
+        cursor: done ? "pointer" : "default",
       }}
     >
       {/* top */}
@@ -604,15 +556,9 @@ function SurveyCard({
           }`}
         >
           {done ? (
-            <CheckCircle2
-              size={22}
-              strokeWidth={1.6}
-            />
+            <CheckCircle2 size={22} strokeWidth={1.6} />
           ) : (
-            <FileText
-              size={22}
-              strokeWidth={1.6}
-            />
+            <FileText size={22} strokeWidth={1.6} />
           )}
         </div>
 
@@ -692,170 +638,84 @@ function CardSkeleton() {
 export default function SurveysPage() {
   const navigate = useNavigate();
 
-  const {
-    surveys,
-    loading,
-    error,
-    fetchPublicSurveys,
-  } = useSurvey();
+  const { surveys, loading, error, fetchPublicSurveys } = useSurvey();
+  const { getAllMyResponses } = useResponse();
 
-  const { getAllMyResponses } =
-    useResponse();
-
-  const [doneSurveyIds, setDoneSurveyIds] =
-    useState(new Set());
-
-  const [modalSurvey, setModalSurvey] =
-    useState(null);
-
-  const [activeTab, setActiveTab] =
-    useState("all");
-
+  const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
+  const [modalSurvey, setModalSurvey] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState("grid");
+  const [showFilter, setShowFilter] = useState(false);
 
-  const [sortBy, setSortBy] =
-    useState("newest");
-
-  const [viewMode, setViewMode] =
-    useState("grid");
-
-  const [showFilter, setShowFilter] =
-    useState(false);
-
-  // ─────────────────────────────────────────
-  // Fetch data
-  // ─────────────────────────────────────────
+  // ─── Fetch data ───────────────────────────────────────────
   const fetchData = useCallback(async () => {
     try {
       await fetchPublicSurveys();
 
-      const responseRes =
-        await getAllMyResponses().catch(
-          () => null
-        );
-
-      const responseList =
-        responseRes?.data ?? [];
+      const responseRes = await getAllMyResponses().catch(() => null);
+      const responseList = responseRes?.data ?? [];
 
       const ids = new Set(
-        responseList.map(
-          (r) =>
-            r.survey_id ??
-            r.surveyId
-        )
+        responseList.map((r) => r.survey_id ?? r.surveyId)
       );
 
       setDoneSurveyIds(ids);
     } catch (err) {
       console.error(err);
     }
-  }, [
-    fetchPublicSurveys,
-    getAllMyResponses,
-  ]);
+  }, [fetchPublicSurveys, getAllMyResponses]);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  // ─────────────────────────────────────────
-  // Counts
-  // ─────────────────────────────────────────
+  // ─── Counts ───────────────────────────────────────────────
   const totalCount = surveys.length;
+  const doneCount = surveys.filter((s) => doneSurveyIds.has(s.id)).length;
+  const pendingCount = surveys.filter((s) => !doneSurveyIds.has(s.id)).length;
 
-  const doneCount = surveys.filter((s) =>
-    doneSurveyIds.has(s.id)
-  ).length;
-
-  const pendingCount = surveys.filter(
-    (s) => !doneSurveyIds.has(s.id)
-  ).length;
-
-  // ─────────────────────────────────────────
-  // Displayed list
-  // ─────────────────────────────────────────
+  // ─── Displayed list ───────────────────────────────────────
   const displayed = useMemo(() => {
     let list = [...surveys];
 
     if (activeTab === "pending") {
-      list = list.filter(
-        (s) =>
-          !doneSurveyIds.has(s.id)
-      );
+      list = list.filter((s) => !doneSurveyIds.has(s.id));
     }
-
     if (activeTab === "done") {
-      list = list.filter((s) =>
-        doneSurveyIds.has(s.id)
-      );
+      list = list.filter((s) => doneSurveyIds.has(s.id));
     }
 
     if (search.trim()) {
       const q = search.toLowerCase();
-
       list = list.filter(
         (s) =>
-          s.title
-            ?.toLowerCase()
-            .includes(q) ||
-          s.description
-            ?.toLowerCase()
-            .includes(q)
+          s.title?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
       );
     }
 
     if (sortBy === "newest") {
-      list.sort(
-        (a, b) =>
-          new Date(
-            b.created_at
-          ) -
-          new Date(a.created_at)
-      );
+      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
-
     if (sortBy === "oldest") {
-      list.sort(
-        (a, b) =>
-          new Date(
-            a.created_at
-          ) -
-          new Date(b.created_at)
-      );
+      list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     }
-
     if (sortBy === "name") {
-      list.sort((a, b) =>
-        (a.title ?? "").localeCompare(
-          b.title ?? ""
-        )
-      );
+      list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
     }
 
     return list;
-  }, [
-    surveys,
-    doneSurveyIds,
-    activeTab,
-    search,
-    sortBy,
-  ]);
+  }, [surveys, doneSurveyIds, activeTab, search, sortBy]);
 
-  // ─────────────────────────────────────────
-  // Handlers
-  // ─────────────────────────────────────────
+  // ─── Handlers ─────────────────────────────────────────────
   const handleStart = (surveyId) => {
     navigate(`/user/survey/${surveyId}`);
   };
 
-  const handleViewSubmission = (
-    surveyId,
-    title
-  ) => {
-    setModalSurvey({
-      id: surveyId,
-      title,
-    });
+  const handleViewSubmission = (surveyId, title) => {
+    setModalSurvey({ id: surveyId, title });
   };
 
   return (
@@ -863,8 +723,7 @@ export default function SurveysPage() {
       className="min-h-screen max-w-7xl mx-auto px-6 md:px-8 py-10"
       style={{
         backgroundColor: "#f4f5f7",
-        fontFamily:
-          "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
       {/* Modal */}
@@ -872,9 +731,7 @@ export default function SurveysPage() {
         <SubmissionModal
           surveyId={modalSurvey.id}
           surveyTitle={modalSurvey.title}
-          onClose={() =>
-            setModalSurvey(null)
-          }
+          onClose={() => setModalSurvey(null)}
         />
       )}
 
@@ -885,7 +742,6 @@ export default function SurveysPage() {
             <h1 className="text-3xl font-extrabold text-gray-900 mb-1">
               Khảo sát
             </h1>
-
             <p className="text-sm text-gray-400">
               {loading
                 ? "Đang tải..."
@@ -906,9 +762,7 @@ export default function SurveysPage() {
       {/* Tabs */}
       <div
         className="flex items-center gap-1 mb-6 bg-white rounded-2xl p-1.5 w-fit"
-        style={{
-          border: "1px solid #e8ecf5",
-        }}
+        style={{ border: "1px solid #e8ecf5" }}
       >
         {TABS.map((tab) => {
           const count =
@@ -917,16 +771,12 @@ export default function SurveysPage() {
               : tab.key === "pending"
               ? pendingCount
               : doneCount;
-
-          const isActive =
-            activeTab === tab.key;
+          const isActive = activeTab === tab.key;
 
           return (
             <button
               key={tab.key}
-              onClick={() =>
-                setActiveTab(tab.key)
-              }
+              onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 isActive
                   ? "text-white shadow-sm"
@@ -934,15 +784,11 @@ export default function SurveysPage() {
               }`}
               style={
                 isActive
-                  ? {
-                      background:
-                        "linear-gradient(135deg,#6a8fff,#4f6ef7)",
-                    }
+                  ? { background: "linear-gradient(135deg,#6a8fff,#4f6ef7)" }
                   : {}
               }
             >
               {tab.label}
-
               {!loading && (
                 <span
                   className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
@@ -967,24 +813,16 @@ export default function SurveysPage() {
             size={15}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
-
           <input
             value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm kiếm khảo sát..."
             className="w-full pl-9 pr-9 py-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-[#4f6ef7]/20"
-            style={{
-              border: "1px solid #e8ecf5",
-            }}
+            style={{ border: "1px solid #e8ecf5" }}
           />
-
           {search && (
             <button
-              onClick={() =>
-                setSearch("")
-              }
+              onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={14} />
@@ -992,22 +830,16 @@ export default function SurveysPage() {
           )}
         </div>
 
-        {/* Filter */}
+        {/* Filter toggle */}
         <button
-          onClick={() =>
-            setShowFilter((v) => !v)
-          }
+          onClick={() => setShowFilter((v) => !v)}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold ${
             showFilter
               ? "bg-[#eef2ff] text-[#4f6ef7]"
               : "bg-white text-gray-500 hover:bg-gray-50"
           }`}
           style={{
-            border: `1px solid ${
-              showFilter
-                ? "#4f6ef7"
-                : "#e8ecf5"
-            }`,
+            border: `1px solid ${showFilter ? "#4f6ef7" : "#e8ecf5"}`,
           }}
         >
           <SlidersHorizontal size={15} />
@@ -1016,17 +848,13 @@ export default function SurveysPage() {
 
         <div className="flex-1" />
 
-        {/* View */}
+        {/* View mode */}
         <div
           className="flex items-center bg-white rounded-xl overflow-hidden"
-          style={{
-            border: "1px solid #e8ecf5",
-          }}
+          style={{ border: "1px solid #e8ecf5" }}
         >
           <button
-            onClick={() =>
-              setViewMode("grid")
-            }
+            onClick={() => setViewMode("grid")}
             className={`px-3 py-2.5 ${
               viewMode === "grid"
                 ? "bg-[#eef2ff] text-[#4f6ef7]"
@@ -1035,19 +863,9 @@ export default function SurveysPage() {
           >
             <LayoutGrid size={16} />
           </button>
-
-          <div
-            style={{
-              width: 1,
-              background: "#e8ecf5",
-              height: 20,
-            }}
-          />
-
+          <div style={{ width: 1, background: "#e8ecf5", height: 20 }} />
           <button
-            onClick={() =>
-              setViewMode("list")
-            }
+            onClick={() => setViewMode("list")}
             className={`px-3 py-2.5 ${
               viewMode === "list"
                 ? "bg-[#eef2ff] text-[#4f6ef7]"
@@ -1063,51 +881,29 @@ export default function SurveysPage() {
       {showFilter && (
         <div
           className="bg-white rounded-2xl p-5 mb-6 flex flex-wrap gap-6 items-end"
-          style={{
-            border: "1px solid #e8ecf5",
-          }}
+          style={{ border: "1px solid #e8ecf5" }}
         >
           <div>
             <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Sắp xếp theo
             </p>
-
             <div className="flex gap-2">
               {[
-                {
-                  key: "newest",
-                  label: "Mới nhất",
-                },
-                {
-                  key: "oldest",
-                  label: "Cũ nhất",
-                },
-                {
-                  key: "name",
-                  label: "Tên A-Z",
-                },
+                { key: "newest", label: "Mới nhất" },
+                { key: "oldest", label: "Cũ nhất" },
+                { key: "name", label: "Tên A-Z" },
               ].map((item) => (
                 <button
                   key={item.key}
-                  onClick={() =>
-                    setSortBy(item.key)
-                  }
+                  onClick={() => setSortBy(item.key)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold"
                   style={{
                     border:
                       sortBy === item.key
                         ? "1px solid #4f6ef7"
                         : "1px solid #e8ecf5",
-
-                    background:
-                      sortBy === item.key
-                        ? "#eef2ff"
-                        : "#fff",
-
-                    color:
-                      sortBy === item.key
-                        ? "#4f6ef7"
-                        : "#6b7280",
+                    background: sortBy === item.key ? "#eef2ff" : "#fff",
+                    color: sortBy === item.key ? "#4f6ef7" : "#6b7280",
                   }}
                 >
                   {item.label}
@@ -1124,16 +920,14 @@ export default function SurveysPage() {
               setShowFilter(false);
             }}
             className="ml-auto px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-            style={{
-              border: "1px solid #e8ecf5",
-            }}
+            style={{ border: "1px solid #e8ecf5" }}
           >
             Reset
           </button>
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading skeletons */}
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array(6)
@@ -1147,12 +941,8 @@ export default function SurveysPage() {
       {/* Error */}
       {!loading && error && (
         <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-4">
-          <span className="text-5xl">
-            ⚠️
-          </span>
-
+          <span className="text-5xl">⚠️</span>
           <p>{error}</p>
-
           <button
             onClick={fetchData}
             className="text-[#4f6ef7] font-semibold hover:underline"
@@ -1163,55 +953,42 @@ export default function SurveysPage() {
       )}
 
       {/* Empty */}
-      {!loading &&
-        !error &&
-        displayed.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-300 gap-4">
-            <Inbox
-              size={52}
-              strokeWidth={1.2}
-            />
-
-            <div className="text-center">
-              <p className="text-base font-semibold text-gray-500">
-                Không có khảo sát nào
-              </p>
-
-              <p className="text-sm text-gray-400 mt-1">
-                {search
-                  ? `Không tìm thấy kết quả cho "${search}"`
-                  : "Chưa có dữ liệu"}
-              </p>
-            </div>
+      {!loading && !error && displayed.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-gray-300 gap-4">
+          <Inbox size={52} strokeWidth={1.2} />
+          <div className="text-center">
+            <p className="text-base font-semibold text-gray-500">
+              Không có khảo sát nào
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              {search
+                ? `Không tìm thấy kết quả cho "${search}"`
+                : "Chưa có dữ liệu"}
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
       {/* Content */}
-      {!loading &&
-        !error &&
-        displayed.length > 0 && (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-                : "flex flex-col gap-3"
-            }
-          >
-            {displayed.map((survey) => (
-              <SurveyCard
-                key={survey.id}
-                survey={survey}
-                done={doneSurveyIds.has(
-                  survey.id
-                )}
-                onStart={handleStart}
-                onViewSubmission={
-                  handleViewSubmission
-                }
-              />
-            ))}
-          </div>
-        )}
+      {!loading && !error && displayed.length > 0 && (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+              : "flex flex-col gap-3"
+          }
+        >
+          {displayed.map((survey) => (
+            <SurveyCard
+              key={survey.id}
+              survey={survey}
+              done={doneSurveyIds.has(survey.id)}
+              onStart={handleStart}
+              onViewSubmission={handleViewSubmission}
+            />
+          ))}
+        </div>
+      )}
     </main>
   );
 }

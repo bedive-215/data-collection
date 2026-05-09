@@ -411,7 +411,6 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
 
 /* ════════════════════════════════════════════════════════════════
    ParticipantsModal
-   API response: { count: number, participants: [{ participant_id, id, email, role }] }
 ════════════════════════════════════════════════════════════════ */
 function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
   const [participants, setParticipants] = useState([]);
@@ -423,39 +422,37 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   const [error,        setError]        = useState("");
 
   const load = useCallback(async () => {
-  if (!survey?.id) return;
-  setLoading(true);
-  setError("");
-  try {
-    const res = await onGetParticipants(survey.id, {});
-    // Provider giờ trả về { count, participants }
-    const list = res?.participants ?? [];
-    const total = res?.count ?? list.length;
-    setParticipants(list);
-    setCount(total);
-  } catch {
-    setError("Không thể tải danh sách người tham gia.");
-  } finally {
-    setLoading(false);
-  }
-}, [survey?.id, onGetParticipants]);
-
- useEffect(() => {
-  if (open) {
-    load();
-    setSearch("");
-    setConfirmPid(null);
+    if (!survey?.id) return;
+    setLoading(true);
     setError("");
-  } else {
-    setParticipants([]);
-    setCount(0);
-  }
-}, [open, load]); // ← thay survey?.id bằng load (vì load đã dep vào survey?.id)
+    try {
+      const res = await onGetParticipants(survey.id, {});
+      const list = res?.participants ?? [];
+      const total = res?.count ?? list.length;
+      setParticipants(list);
+      setCount(total);
+    } catch {
+      setError("Không thể tải danh sách người tham gia.");
+    } finally {
+      setLoading(false);
+    }
+  }, [survey?.id, onGetParticipants]);
+
+  useEffect(() => {
+    if (open) {
+      load();
+      setSearch("");
+      setConfirmPid(null);
+      setError("");
+    } else {
+      setParticipants([]);
+      setCount(0);
+    }
+  }, [open, load]);
 
   const handleDelete = async (participantId) => {
     setDeleting(participantId);
     try {
-      // participant_id là id dùng để xoá
       await onDeleteParticipant(survey.id, participantId);
       setParticipants(prev => prev.filter(p => p.participant_id !== participantId));
       setCount(prev => Math.max(0, prev - 1));
@@ -500,8 +497,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   return (
     <Modal open={open} onClose={onClose} title="Quản lý người tham gia" width={540}>
       <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-
-        {/* Stats + Reload */}
         <div style={{ display:"flex", gap:10, alignItems:"stretch" }}>
           <div style={{ flex:1, display:"flex", alignItems:"center", gap:10, padding:"11px 14px", borderRadius:11, background:C.primaryLight, border:`1px solid ${C.primaryBorder}` }}>
             <div style={{ width:34, height:34, borderRadius:9, background:"rgba(67,97,238,0.12)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -522,7 +517,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           </button>
         </div>
 
-        {/* Error state */}
         {error && !loading && (
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:C.errorBg, border:`1px solid ${C.errorBorder}` }}>
             <span style={{ fontSize:12, color:C.error, fontFamily:C.font }}>{error}</span>
@@ -530,7 +524,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           </div>
         )}
 
-        {/* Search */}
         <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:"#fff", border:`1px solid ${C.border}`, borderRadius:9 }}>
           <Search size={13} color={C.textDim}/>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên, email hoặc vai trò..."
@@ -542,7 +535,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           )}
         </div>
 
-        {/* List */}
         <div style={{ border:`1px solid ${C.border}`, borderRadius:11, overflow:"hidden", maxHeight:340, overflowY:"auto" }}>
           {loading ? (
             <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 20px", gap:12 }}>
@@ -564,8 +556,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           ) : (
             filtered.map((p, i) => {
               const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
-              // participant_id dùng để xoá, id là user id
-              const deleteKey   = p.participant_id ?? p.id;
+              const deleteKey    = p.participant_id ?? p.id;
               const isConfirming = confirmPid === deleteKey;
               const isDeleting   = deleting === deleteKey;
               const roleStyle    = getRoleStyle(p.role);
@@ -577,81 +568,37 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                   background: isConfirming ? C.errorBg : "#fff",
                   transition:"background .15s",
                 }}>
-                  {/* Avatar */}
-                  <div style={{
-                    width:34, height:34, borderRadius:"50%",
-                    background:av.bg, color:av.color,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:11, fontWeight:700, flexShrink:0, letterSpacing:"0.03em",
-                  }}>
+                  <div style={{ width:34, height:34, borderRadius:"50%", background:av.bg, color:av.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, flexShrink:0, letterSpacing:"0.03em" }}>
                     {getInitials(p.name, p.email)}
                   </div>
-
-                  {/* Info */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:12, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:C.font }}>
                       {p.name || p.email}
                     </div>
                     {p.name && (
-                      <div style={{ fontSize:11, color:C.textSub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:C.font }}>
-                        {p.email}
-                      </div>
+                      <div style={{ fontSize:11, color:C.textSub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:C.font }}>{p.email}</div>
                     )}
                     {!p.name && (
-                      <div style={{ fontSize:10, color:C.textDim, fontFamily:C.font }}>
-                        ID: {p.id ? p.id.slice(0, 8) + "..." : "—"}
-                      </div>
+                      <div style={{ fontSize:10, color:C.textDim, fontFamily:C.font }}>ID: {p.id ? p.id.slice(0, 8) + "..." : "—"}</div>
                     )}
                   </div>
-
-                  {/* Role badge */}
                   {p.role && (
-                    <span style={{
-                      fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:999,
-                      flexShrink:0, color:roleStyle.color, background:roleStyle.bg,
-                      border:`1px solid ${roleStyle.border}`, fontFamily:C.font,
-                    }}>
+                    <span style={{ fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:999, flexShrink:0, color:roleStyle.color, background:roleStyle.bg, border:`1px solid ${roleStyle.border}`, fontFamily:C.font }}>
                       {p.role}
                     </span>
                   )}
-
-                  {/* Delete confirm / button */}
                   {isConfirming ? (
                     <div style={{ display:"flex", gap:5, flexShrink:0 }}>
-                      <button onClick={() => setConfirmPid(null)} style={{
-                        padding:"4px 9px", borderRadius:6, fontSize:11, fontWeight:600,
-                        border:`1px solid ${C.border}`, background:"#fff",
-                        color:C.textSub, cursor:"pointer", fontFamily:C.font,
-                      }}>
-                        Huỷ
-                      </button>
-                      <button onClick={() => handleDelete(deleteKey)} disabled={isDeleting} style={{
-                        display:"flex", alignItems:"center", gap:4,
-                        padding:"4px 9px", borderRadius:6, fontSize:11, fontWeight:700,
-                        border:"none",
-                        background: isDeleting ? C.surfaceHigh : C.error,
-                        color: isDeleting ? C.textSub : "#fff",
-                        cursor: isDeleting ? "not-allowed" : "pointer", fontFamily:C.font,
-                      }}>
-                        {isDeleting ? <Loader2 size={10} style={{ animation:"spin 1s linear infinite" }}/> : <Trash2 size={10}/>}
-                        Xoá
+                      <button onClick={() => setConfirmPid(null)} style={{ padding:"4px 9px", borderRadius:6, fontSize:11, fontWeight:600, border:`1px solid ${C.border}`, background:"#fff", color:C.textSub, cursor:"pointer", fontFamily:C.font }}>Huỷ</button>
+                      <button onClick={() => handleDelete(deleteKey)} disabled={isDeleting} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 9px", borderRadius:6, fontSize:11, fontWeight:700, border:"none", background:isDeleting ? C.surfaceHigh : C.error, color:isDeleting ? C.textSub : "#fff", cursor:isDeleting ? "not-allowed" : "pointer", fontFamily:C.font }}>
+                        {isDeleting ? <Loader2 size={10} style={{ animation:"spin 1s linear infinite" }}/> : <Trash2 size={10}/>} Xoá
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setConfirmPid(deleteKey)}
-                      title="Xoá khỏi danh sách"
-                      style={{
-                        width:28, height:28, borderRadius:7, flexShrink:0,
-                        border:`1px solid ${C.border}`, background:"transparent",
-                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                        color:C.textDim, transition:"all .15s",
-                      }}
+                    <button onClick={() => setConfirmPid(deleteKey)} title="Xoá khỏi danh sách" style={{ width:28, height:28, borderRadius:7, flexShrink:0, border:`1px solid ${C.border}`, background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.textDim, transition:"all .15s" }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = C.errorBorder; e.currentTarget.style.color = C.error; e.currentTarget.style.background = C.errorBg; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; e.currentTarget.style.background = "transparent"; }}
-                    >
-                      <UserMinus size={12}/>
-                    </button>
+                    ><UserMinus size={12}/></button>
                   )}
                 </div>
               );
@@ -659,7 +606,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           )}
         </div>
 
-        {/* Footer count */}
         {!loading && !error && filtered.length > 0 && search && (
           <div style={{ fontSize:11, color:C.textSub, textAlign:"center", fontFamily:C.font }}>
             Hiển thị {filtered.length} / {participants.length} người
@@ -732,12 +678,264 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MY SURVEYS: MySurveyCard
+   Shared styles
 ════════════════════════════════════════════════════════════════ */
 const inputStyle    = { width:"100%", border:`1px solid ${C.border}`, borderRadius:9, padding:"8px 11px", outline:"none", fontSize:12, color:C.text, fontFamily:C.font, background:"#fff", boxSizing:"border-box" };
 const textareaStyle = { ...inputStyle, resize:"none" };
 const sharedCancelBtn = { padding:"9px 16px", borderRadius:9, border:`1px solid ${C.border}`, background:"transparent", color:C.textSub, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:C.font };
 
+/* ════════════════════════════════════════════════════════════════
+   SubmissionModal — FIXED
+   Handles backend shape: { data: [{ response_id, answers: [...] }] }
+   Each answer: { question_id, question, type, answer, options? }
+   - TEXT         → show answer string directly
+   - SINGLE/MULTI with options[] → render options, highlight selected
+   - SINGLE/MULTI WITHOUT options (backend omits them) → show answer as highlighted chip
+════════════════════════════════════════════════════════════════ */
+
+const TYPE_CONFIG = {
+  SINGLE_CHOICE:   { label:"Một lựa chọn",   barColor:"#2563eb", badgeBg:"#eff6ff", badgeBorder:"#bfdbfe", badgeColor:"#1d4ed8" },
+  MULTIPLE_CHOICE: { label:"Nhiều lựa chọn", barColor:"#7c3aed", badgeBg:"#f5f3ff", badgeBorder:"#ddd6fe", badgeColor:"#6d28d9" },
+  TEXT:            { label:"Văn bản",         barColor:"#0891b2", badgeBg:"#ecfeff", badgeBorder:"#a5f3fc", badgeColor:"#0e7490" },
+};
+
+function getTypeCfg(type) {
+  return TYPE_CONFIG[type] ?? { label:type, barColor:"#888", badgeBg:"#f3f4f6", badgeBorder:"#e5e7eb", badgeColor:"#6b7280" };
+}
+
+/** Normalise any answer shape → Set<string> */
+function getAnswerSet(answer) {
+  if (answer === null || answer === undefined) return new Set();
+  if (Array.isArray(answer)) return new Set(answer.map(s => String(s).trim()).filter(Boolean));
+  return new Set(String(answer).split(",").map(s => s.trim()).filter(Boolean));
+}
+
+function AnswerBlock({ item }) {
+  const isText     = item.type === "TEXT";
+  const isMultiple = item.type === "MULTIPLE_CHOICE";
+  const answerSet  = getAnswerSet(item.answer);
+  const hasAnswer  = answerSet.size > 0;
+
+  /* ── TEXT ── */
+  if (isText) {
+    return item.answer?.trim()
+      ? <div style={{ background:"#f8faff", border:"1px solid #e5e7eb", borderRadius:10, padding:"11px 13px", fontSize:12, color:"#374151", fontFamily:C.font, lineHeight:1.6 }}>{item.answer}</div>
+      : <p style={{ fontSize:12, color:C.textDim, fontStyle:"italic", fontFamily:C.font, margin:0 }}>Không có câu trả lời</p>;
+  }
+
+  /* ── CHOICE with options array from backend ── */
+  const options = item.options ?? [];
+
+  if (options.length > 0) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {!hasAnswer && <p style={{ fontSize:12, color:C.textDim, fontStyle:"italic", fontFamily:C.font, margin:"0 0 4px" }}>Chưa chọn lựa chọn nào</p>}
+        {options.map((opt, i) => {
+          const label = typeof opt === "string" ? opt : (opt.label ?? opt.value ?? opt.content ?? "");
+          const isSelected = answerSet.has(label) || answerSet.has(String(opt.id ?? ""));
+          return (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 11px", borderRadius:9, border:`1px solid ${isSelected ? "#bfdbfe" : "#e5e7eb"}`, background:isSelected ? "rgba(239,246,255,0.85)" : "#fafafa" }}>
+              {isMultiple ? (
+                <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`, background:isSelected ? "#2563eb" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {isSelected && <svg width="9" height="7" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+              ) : (
+                <div style={{ width:16, height:16, borderRadius:"50%", border:`2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {isSelected && <div style={{ width:8, height:8, borderRadius:"50%", background:"#2563eb" }}/>}
+                </div>
+              )}
+              <span style={{ fontSize:12, fontWeight:isSelected ? 600 : 400, color:isSelected ? "#1e40af" : "#6b7280", fontFamily:C.font }}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ── CHOICE without options — backend only returned the answer string/array ── */
+  if (hasAnswer) {
+    const labels = [...answerSet];
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {labels.map((label, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 11px", borderRadius:9, border:"1.5px solid #bfdbfe", background:"rgba(239,246,255,0.85)" }}>
+            {isMultiple ? (
+              <div style={{ width:16, height:16, borderRadius:4, border:"2px solid #2563eb", background:"#2563eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <svg width="9" height="7" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+            ) : (
+              <div style={{ width:16, height:16, borderRadius:"50%", border:"2px solid #2563eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:"#2563eb" }}/>
+              </div>
+            )}
+            <span style={{ fontSize:12, fontWeight:600, color:"#1e40af", fontFamily:C.font }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return <p style={{ fontSize:12, color:C.textDim, fontStyle:"italic", fontFamily:C.font, margin:0 }}>Không có câu trả lời</p>;
+}
+
+function QuestionCard({ item, index }) {
+  const cfg = getTypeCfg(item.type);
+  return (
+    <div style={{ background:"#fff", borderRadius:14, border:"1px solid rgba(0,0,0,0.07)", borderTop:`3px solid ${cfg.barColor}`, overflow:"hidden" }}>
+      <div style={{ padding:16 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+          <span style={{ fontSize:11, color:C.textSub, fontFamily:C.font }}>Câu {index + 1}</span>
+          <span style={{ background:cfg.badgeBg, border:`1px solid ${cfg.badgeBorder}`, color:cfg.badgeColor, padding:"2px 9px", borderRadius:999, fontSize:10, fontWeight:700, fontFamily:C.font }}>{cfg.label}</span>
+        </div>
+        <h3 style={{ fontSize:13, fontWeight:700, color:C.text, margin:"0 0 12px", lineHeight:1.5, fontFamily:C.font }}>{item.question}</h3>
+        <AnswerBlock item={item}/>
+      </div>
+    </div>
+  );
+}
+
+function SubmissionModal({ surveyId, surveyTitle, onClose }) {
+  const { getMySubmission } = useResponse();
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+  const [answers, setAnswers] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSub = async () => {
+      try {
+        setLoading(true); setError(null);
+        const res = await getMySubmission(surveyId);
+        if (cancelled) return;
+        // Backend: { data: [{ response_id, answers: [...] }] }  OR  array directly
+        const raw = res?.data ?? res ?? [];
+        const allAnswers = Array.isArray(raw)
+          ? raw.flatMap(r => r.answers ?? [])
+          : (raw.answers ?? []);
+        setAnswers(allAnswers);
+      } catch { if (!cancelled) setError("Không thể tải câu trả lời."); }
+      finally   { if (!cancelled) setLoading(false); }
+    };
+    fetchSub();
+    return () => { cancelled = true; };
+  }, [surveyId]);
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position:"fixed", inset:0, zIndex:100, background:"rgba(0,0,0,0.4)", backdropFilter:"blur(8px)", display:"flex", justifyContent:"center", alignItems:"center", padding:16 }}>
+      <div style={{ width:"100%", maxWidth:600, maxHeight:"90vh", overflow:"hidden", background:"#f7f8fc", borderRadius:20, border:"1px solid rgba(0,0,0,0.08)", display:"flex", flexDirection:"column", boxShadow:"0 32px 80px rgba(0,0,0,.2)" }}>
+        {/* Header */}
+        <div style={{ padding:"14px 18px", background:"#fff", borderBottom:"1px solid rgba(0,0,0,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <button onClick={onClose} style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, color:C.textSub, background:"none", border:"none", cursor:"pointer", fontFamily:C.font }}>
+            <ArrowLeft size={14}/> Đóng
+          </button>
+          <div style={{ fontSize:12, fontWeight:700, color:C.textSub, fontFamily:C.font }}>InsightFlow</div>
+          <div style={{ width:50 }}/>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding:"20px", overflowY:"auto", flex:1 }}>
+          {/* Hero */}
+          <div style={{ textAlign:"center", marginBottom:24 }}>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"5px 12px", borderRadius:999, background:"#dcfce7", border:"1px solid #86efac", marginBottom:10 }}>
+              <CheckCircle2 size={11} color="#16a34a"/>
+              <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#15803d", fontFamily:C.font }}>Đã hoàn thành</span>
+            </div>
+            <h2 style={{ fontSize:18, fontWeight:800, color:C.text, margin:"0 0 4px", fontFamily:C.font }}>{surveyTitle}</h2>
+            {!loading && <p style={{ fontSize:12, color:C.textSub, margin:0, fontFamily:C.font }}>{answers.length} câu hỏi</p>}
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 0", gap:8, color:C.primary }}>
+              <Loader2 size={18} style={{ animation:"spin 1s linear infinite" }}/>
+              <span style={{ fontSize:13, fontFamily:C.font }}>Đang tải...</span>
+            </div>
+          )}
+
+          {/* Error */}
+          {!loading && error && (
+            <div style={{ textAlign:"center", padding:"48px 0", color:C.textSub, fontFamily:C.font }}>{error}</div>
+          )}
+
+          {/* Empty */}
+          {!loading && !error && answers.length === 0 && (
+            <div style={{ textAlign:"center", padding:"48px 0" }}>
+              <Inbox size={36} color={C.textDim} style={{ marginBottom:8 }}/>
+              <div style={{ fontSize:13, color:C.textSub, fontFamily:C.font }}>Không có câu trả lời.</div>
+            </div>
+          )}
+
+          {/* Answers */}
+          {!loading && !error && answers.length > 0 && (
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              {answers.map((item, idx) => (
+                <QuestionCard key={item.question_id ?? idx} item={item} index={idx}/>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PUBLIC SURVEYS: PublicSurveyCard
+════════════════════════════════════════════════════════════════ */
+function PublicSurveyCard({ survey, done, onStart, onViewSubmission }) {
+  const createdDate = survey?.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : "";
+  return (
+    <div
+      onClick={() => done && onViewSubmission(survey.id, survey.title)}
+      style={{ background:"#fff", border:`1px solid ${done ? "rgba(16,185,129,0.2)" : C.border}`, borderRadius:14, padding:18, transition:"all .2s cubic-bezier(0.23,1,0.32,1)", cursor:done ? "pointer" : "default", position:"relative", overflow:"hidden" }}
+      onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow=done ? "0 10px 32px rgba(16,185,129,.1)" : "0 10px 32px rgba(67,97,238,.08)"; e.currentTarget.style.borderColor=done ? "rgba(16,185,129,0.3)" : "rgba(67,97,238,0.2)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; e.currentTarget.style.borderColor=done ? "rgba(16,185,129,0.2)" : C.border; }}
+    >
+      {done && <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:"linear-gradient(to right, #10b981, #34d399)" }}/>}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+        <div style={{ width:38, height:38, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", background:done ? "#ecfdf5" : "#eef0fd" }}>
+          {done ? <CheckCircle2 size={19} color="#10b981" strokeWidth={1.6}/> : <FileText size={19} color={C.primary} strokeWidth={1.6}/>}
+        </div>
+        <span style={{ padding:"3px 9px", borderRadius:999, fontSize:10, fontWeight:700, letterSpacing:"0.03em", background:done ? "#dcfce7" : C.surfaceHigh, color:done ? "#059669" : C.textDim, border:`1px solid ${done ? "#a7f3d0" : C.border}`, fontFamily:C.font }}>
+          {done ? "Đã hoàn thành" : "Survey"}
+        </span>
+      </div>
+      <h3 style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:6, lineHeight:1.5, fontFamily:C.font, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{survey.title}</h3>
+      <p style={{ fontSize:12, color:C.textSub, marginBottom:14, lineHeight:1.6, fontFamily:C.font, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{survey.description}</p>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, color:C.textDim, fontFamily:C.font }}>
+          <Clock size={11}/><span>{createdDate}</span>
+        </div>
+        {done
+          ? <span style={{ padding:"5px 12px", borderRadius:8, fontSize:11, fontWeight:700, background:"#dcfce7", color:"#059669", border:"1px solid #a7f3d0", fontFamily:C.font }}>Xem kết quả →</span>
+          : <button onClick={e => { e.stopPropagation(); onStart(survey.id); }} style={{ padding:"5px 12px", borderRadius:8, fontSize:11, fontWeight:700, color:"#fff", background:C.primary, border:"none", cursor:"pointer", fontFamily:C.font, transition:"opacity .15s" }} onMouseEnter={e => e.currentTarget.style.opacity=".85"} onMouseLeave={e => e.currentTarget.style.opacity="1"}>Bắt đầu →</button>
+        }
+      </div>
+    </div>
+  );
+}
+
+function PublicCardSkeleton() {
+  return (
+    <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:18, animation:"pulse 1.5s ease-in-out infinite" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
+        <div style={{ width:38, height:38, borderRadius:11, background:"#f3f4f6" }}/>
+        <div style={{ width:70, height:20, borderRadius:999, background:"#f3f4f6" }}/>
+      </div>
+      <div style={{ height:12, background:"#f3f4f6", borderRadius:6, width:"70%", marginBottom:7 }}/>
+      <div style={{ height:11, background:"#f3f4f6", borderRadius:5, width:"100%", marginBottom:4 }}/>
+      <div style={{ height:11, background:"#f3f4f6", borderRadius:5, width:"60%", marginBottom:16 }}/>
+      <div style={{ display:"flex", justifyContent:"space-between" }}>
+        <div style={{ width:50, height:11, background:"#f3f4f6", borderRadius:5 }}/>
+        <div style={{ width:80, height:28, background:"#f3f4f6", borderRadius:8 }}/>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MY SURVEY: MySurveyCard
+════════════════════════════════════════════════════════════════ */
 function MySurveyCard({
   survey, index,
   onDelete, onUpdate, onShare, onInvite, onPublish, onCloseSurvey,
@@ -892,168 +1090,9 @@ function MySurveyCard({
       <InviteModal     open={inviteOpen}  onClose={() => setInviteOpen(false)}  survey={survey} onInvite={onInvite}/>
       <PublishModal    open={publishOpen} onClose={() => setPublishOpen(false)} survey={survey} onPublish={onPublish}/>
       <CloseModal      open={closeOpen}   onClose={() => setCloseOpen(false)}   survey={survey} onCloseSurvey={onCloseSurvey}/>
-      <BulkInviteModal
-        open={bulkInviteOpen} onClose={() => setBulkInviteOpen(false)}
-        survey={survey} onBulkInvite={onBulkInvite}
-      />
-      <ParticipantsModal
-        open={participantsOpen} onClose={() => setParticipantsOpen(false)}
-        survey={survey} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant}
-      />
+      <BulkInviteModal open={bulkInviteOpen} onClose={() => setBulkInviteOpen(false)} survey={survey} onBulkInvite={onBulkInvite}/>
+      <ParticipantsModal open={participantsOpen} onClose={() => setParticipantsOpen(false)} survey={survey} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant}/>
     </>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
-   PUBLIC SURVEYS
-════════════════════════════════════════════════════════════════ */
-const TYPE_META = {
-  SINGLE_CHOICE:   { label:"Một lựa chọn",   color:"#1d4ed8", bg:"#eff6ff", border:"#bfdbfe", accent:"#2563eb" },
-  MULTIPLE_CHOICE: { label:"Nhiều lựa chọn", color:"#6d28d9", bg:"#f5f3ff", border:"#ddd6fe", accent:"#7c3aed" },
-  TEXT:            { label:"Văn bản",         color:"#0e7490", bg:"#ecfeff", border:"#a5f3fc", accent:"#0891b2" },
-};
-function typeMeta(type) { return TYPE_META[type] ?? { label:type, color:"#6b7280", bg:"#f3f4f6", border:"#e5e7eb", accent:"#9ca3af" }; }
-
-function OptionRow({ label, isSelected, isMultiple }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", borderRadius:9, border:`1px solid ${isSelected ? "#bfdbfe" : "#e5e7eb"}`, background:isSelected ? "#eff6ff" : "#fafafa" }}>
-      {isMultiple ? (
-        <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`, background:isSelected ? "#2563eb" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-          {isSelected && <svg width="9" height="7" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-        </div>
-      ) : (
-        <div style={{ width:16, height:16, borderRadius:"50%", border:`2px solid ${isSelected ? "#2563eb" : "#d1d5db"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-          {isSelected && <div style={{ width:8, height:8, borderRadius:"50%", background:"#2563eb" }}/>}
-        </div>
-      )}
-      <span style={{ fontSize:12, fontWeight:isSelected ? 600 : 400, color:isSelected ? "#1e40af" : "#6b7280", fontFamily:C.font }}>{label}</span>
-    </div>
-  );
-}
-
-function SubmissionModal({ surveyId, surveyTitle, onClose }) {
-  const { getMySubmission } = useResponse();
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
-  const [answers, setAnswers] = useState([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSub = async () => {
-      try {
-        setLoading(true); setError(null);
-        const res = await getMySubmission(surveyId);
-        if (cancelled) return;
-        const raw = res?.data ?? res ?? [];
-        setAnswers(raw.flatMap(r => r.answers ?? []));
-      } catch { if (!cancelled) setError("Không thể tải câu trả lời."); }
-      finally { if (!cancelled) setLoading(false); }
-    };
-    fetchSub();
-    return () => { cancelled = true; };
-  }, [surveyId]);
-
-  return (
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position:"fixed", inset:0, zIndex:100, background:"rgba(0,0,0,0.4)", backdropFilter:"blur(8px)", display:"flex", justifyContent:"center", alignItems:"center", padding:16 }}>
-      <div style={{ width:"100%", maxWidth:600, maxHeight:"90vh", overflow:"hidden", background:"#f7f8fc", borderRadius:20, border:"1px solid rgba(0,0,0,0.08)", display:"flex", flexDirection:"column", boxShadow:"0 32px 80px rgba(0,0,0,.2)" }}>
-        <div style={{ padding:"14px 18px", background:"#fff", borderBottom:"1px solid rgba(0,0,0,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <button onClick={onClose} style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, color:C.textSub, background:"none", border:"none", cursor:"pointer", fontFamily:C.font }}><ArrowLeft size={14}/> Đóng</button>
-          <div style={{ fontSize:12, fontWeight:700, color:C.textSub, fontFamily:C.font }}>InsightFlow</div>
-          <div style={{ width:50 }}/>
-        </div>
-        <div style={{ padding:"20px 20px", overflowY:"auto", flex:1 }}>
-          <div style={{ textAlign:"center", marginBottom:24 }}>
-            <div style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"5px 12px", borderRadius:999, background:"#dcfce7", border:"1px solid #86efac", marginBottom:10 }}>
-              <CheckCircle2 size={11} color="#16a34a"/>
-              <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#15803d", fontFamily:C.font }}>Đã hoàn thành</span>
-            </div>
-            <h2 style={{ fontSize:18, fontWeight:800, color:C.text, margin:"0 0 4px", fontFamily:C.font }}>{surveyTitle}</h2>
-            {!loading && <p style={{ fontSize:12, color:C.textSub, margin:0, fontFamily:C.font }}>{answers.length} câu trả lời</p>}
-          </div>
-          {loading && <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 0", gap:8, color:C.primary }}><Loader2 size={18} style={{ animation:"spin 1s linear infinite" }}/><span style={{ fontSize:13, fontFamily:C.font }}>Đang tải...</span></div>}
-          {!loading && error && <div style={{ textAlign:"center", padding:"48px 0", color:C.textSub, fontFamily:C.font }}>{error}</div>}
-          {!loading && !error && answers.length === 0 && <div style={{ textAlign:"center", padding:"48px 0", color:C.textSub, fontFamily:C.font }}>Không có câu trả lời.</div>}
-          {!loading && !error && answers.length > 0 && (
-            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              {answers.map((item, idx) => {
-                const meta = typeMeta(item.type);
-                const isText = item.type === "TEXT";
-                const isMultiple = item.type === "MULTIPLE_CHOICE";
-                const selectedSet = isMultiple
-                  ? new Set(Array.isArray(item.answer) ? item.answer : String(item.answer ?? "").split(",").map(s => s.trim()))
-                  : new Set([String(item.answer ?? "")]);
-                return (
-                  <div key={idx} style={{ background:"#fff", borderRadius:14, border:"1px solid rgba(0,0,0,0.07)", borderTop:`3px solid ${meta.accent}`, overflow:"hidden" }}>
-                    <div style={{ padding:16 }}>
-                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                        <span style={{ fontSize:11, fontWeight:700, color:C.textSub, fontFamily:C.font }}>{idx + 1}. {item.question}</span>
-                        <span style={{ background:meta.bg, border:`1px solid ${meta.border}`, color:meta.color, padding:"3px 10px", borderRadius:999, fontSize:10, fontWeight:700, fontFamily:C.font }}>{meta.label}</span>
-                      </div>
-                      {isText && <div style={{ background:"#f8faff", border:"1px solid #e5e7eb", borderRadius:10, padding:12, fontSize:12, color:"#374151", fontFamily:C.font }}>{item.answer || "Không có dữ liệu"}</div>}
-                      {!isText && <div style={{ display:"flex", flexDirection:"column", gap:6 }}>{(item.options ?? []).map((opt, oi) => { const label = opt?.label ?? opt?.value ?? opt?.content ?? ""; const isSel = selectedSet.has(label) || selectedSet.has(String(opt.id)); return <OptionRow key={oi} label={label} isSelected={isSel} isMultiple={isMultiple}/>; })}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
-   PUBLIC SURVEYS: PublicSurveyCard
-════════════════════════════════════════════════════════════════ */
-function PublicSurveyCard({ survey, done, onStart, onViewSubmission }) {
-  const createdDate = survey?.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : "";
-  return (
-    <div
-      onClick={() => done && onViewSubmission(survey.id, survey.title)}
-      style={{ background:"#fff", border:`1px solid ${done ? "rgba(16,185,129,0.2)" : C.border}`, borderRadius:14, padding:18, transition:"all .2s cubic-bezier(0.23,1,0.32,1)", cursor:done ? "pointer" : "default", position:"relative", overflow:"hidden" }}
-      onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow=done ? "0 10px 32px rgba(16,185,129,.1)" : "0 10px 32px rgba(67,97,238,.08)"; e.currentTarget.style.borderColor=done ? "rgba(16,185,129,0.3)" : "rgba(67,97,238,0.2)"; }}
-      onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; e.currentTarget.style.borderColor=done ? "rgba(16,185,129,0.2)" : C.border; }}
-    >
-      {done && <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:"linear-gradient(to right, #10b981, #34d399)" }}/>}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
-        <div style={{ width:38, height:38, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", background:done ? "#ecfdf5" : "#eef0fd" }}>
-          {done ? <CheckCircle2 size={19} color="#10b981" strokeWidth={1.6}/> : <FileText size={19} color={C.primary} strokeWidth={1.6}/>}
-        </div>
-        <span style={{ padding:"3px 9px", borderRadius:999, fontSize:10, fontWeight:700, letterSpacing:"0.03em", background:done ? "#dcfce7" : C.surfaceHigh, color:done ? "#059669" : C.textDim, border:`1px solid ${done ? "#a7f3d0" : C.border}`, fontFamily:C.font }}>
-          {done ? "Đã hoàn thành" : "Survey"}
-        </span>
-      </div>
-      <h3 style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:6, lineHeight:1.5, fontFamily:C.font, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{survey.title}</h3>
-      <p style={{ fontSize:12, color:C.textSub, marginBottom:14, lineHeight:1.6, fontFamily:C.font, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{survey.description}</p>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, color:C.textDim, fontFamily:C.font }}>
-          <Clock size={11}/><span>{createdDate}</span>
-        </div>
-        {done
-          ? <span style={{ padding:"5px 12px", borderRadius:8, fontSize:11, fontWeight:700, background:"#dcfce7", color:"#059669", border:"1px solid #a7f3d0", fontFamily:C.font }}>Xem kết quả →</span>
-          : <button onClick={e => { e.stopPropagation(); onStart(survey.id); }} style={{ padding:"5px 12px", borderRadius:8, fontSize:11, fontWeight:700, color:"#fff", background:C.primary, border:"none", cursor:"pointer", fontFamily:C.font, transition:"opacity .15s" }} onMouseEnter={e => e.currentTarget.style.opacity=".85"} onMouseLeave={e => e.currentTarget.style.opacity="1"}>Bắt đầu →</button>
-        }
-      </div>
-    </div>
-  );
-}
-
-function PublicCardSkeleton() {
-  return (
-    <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:18, animation:"pulse 1.5s ease-in-out infinite" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
-        <div style={{ width:38, height:38, borderRadius:11, background:"#f3f4f6" }}/>
-        <div style={{ width:70, height:20, borderRadius:999, background:"#f3f4f6" }}/>
-      </div>
-      <div style={{ height:12, background:"#f3f4f6", borderRadius:6, width:"70%", marginBottom:7 }}/>
-      <div style={{ height:11, background:"#f3f4f6", borderRadius:5, width:"100%", marginBottom:4 }}/>
-      <div style={{ height:11, background:"#f3f4f6", borderRadius:5, width:"60%", marginBottom:16 }}/>
-      <div style={{ display:"flex", justifyContent:"space-between" }}>
-        <div style={{ width:50, height:11, background:"#f3f4f6", borderRadius:5 }}/>
-        <div style={{ width:80, height:28, background:"#f3f4f6", borderRadius:8 }}/>
-      </div>
-    </div>
   );
 }
 
@@ -1168,7 +1207,7 @@ export default function SurveysLayout() {
     finally { setSubmitting(false); }
   };
 
-  const myFiltered   = mySurveys.filter(s => s.title?.toLowerCase().includes(mySearch.toLowerCase()));
+  const myFiltered    = mySurveys.filter(s => s.title?.toLowerCase().includes(mySearch.toLowerCase()));
   const publicSurveys = providerPublicSurveys;
 
   const displayed = useMemo(() => {
