@@ -1,6 +1,7 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
+import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
 
 class ResponseService {
     constructor() {
@@ -385,6 +386,60 @@ class ResponseService {
                 response_id: response.id,
                 survey_id,
                 submitted_at: response.submitted_at,
+                answers: mappedAnswers
+            }
+        };
+    }
+
+    async getAllAnswerByResponseId(user, response_id) {
+        if (!response_id) {
+            throw new AppError("Response id is required", 400);
+        }
+
+        const response = await this.Response.findByPk(response_id);
+
+        if (!response) {
+            throw new AppError("Response not found", 404);
+        }
+
+        if (response.user_id !== user.id && user.role !== "ADMIN") {
+            throw new AppError("Forbidden", 403);
+        }
+
+        const answers = await this.Answer.findAll({
+            where: { response_id },
+            include: [
+                {
+                    model: this.Question,
+                    as: "question",
+                    attributes: ["id", "content", "type"]
+                },
+                {
+                    model: this.QuestionOption,
+                    as: "option",
+                    attributes: ["id", "label"]
+                }
+            ]
+        });
+
+        const optionIds = answers.flatMap(a =>
+            a.option_id ? [a.option_id] : a.selected_options || []
+        );
+
+        const options = await this.QuestionOption.findAll({
+            where: { id: optionIds }
+        });
+
+        const optionMap = Object.fromEntries(
+            options.map(o => [o.id, o.label])
+        );
+
+        const mappedAnswers = this._mapAnswerToResponse(answers, optionMap);
+
+        return {
+            message: "Get answers successfully",
+            data: {
+                response_id,
                 answers: mappedAnswers
             }
         };
