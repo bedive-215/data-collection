@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
 
 class ResponseService {
     constructor() {
@@ -59,24 +60,17 @@ class ResponseService {
         }
     }
 
-    async _checkSubmitPermission(user_id, survey_id, transaction) {
+    async _checkSubmitPermission(user, survey_id, transaction) {
+
         const survey = await this.Survey.findByPk(survey_id, { transaction });
 
         if (!survey) throw new AppError("Survey not found", 404);
 
         // public survey thì ai cũng submit được
-        if (survey.is_public) return;
 
-        const participant = await this.SurveyParticipant.findOne({
-            where: { user_id, survey_id },
-            transaction
-        });
+        const role = await _checkSurveyAccess(user, survey);
 
-        if (!participant) {
-            throw new AppError("You are not allowed to access this survey", 403);
-        }
-
-        if (!["respondent", "editor"].includes(participant.role)) {
+        if (!["respondent", "editor"].includes(role)) {
             throw new AppError("You are not allowed to submit", 403);
         }
     }
@@ -163,15 +157,15 @@ class ResponseService {
         return records;
     }
 
-    async submitSurvey(user_id, survey_id, answers) {
+    async submitSurvey(user, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
-            await this._checkSubmitPermission(user_id, survey_id, transaction);
-
+            await this._checkSubmitPermission(user, survey_id, transaction);
+            const user_id = user.id;
             const existing = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
@@ -239,14 +233,14 @@ class ResponseService {
         }
     }
 
-    async updateResponse(user_id, survey_id, answers) {
+    async updateResponse(user, survey_id, answers) {
         if (!answers?.length) throw new AppError("Answers required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
-            await this._checkSubmitPermission(user_id, survey_id, transaction);
-
+            await this._checkSubmitPermission(user, survey_id, transaction);
+            const user_id = user.id;
             const response = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
@@ -324,6 +318,75 @@ class ResponseService {
             message: "Get responses successfully",
             count: responses.length,
             data: responses
+        };
+    }
+
+    async getSurveySubmitByUserId(user, survey_id) {
+        if (!survey_id) {
+            throw new AppError("Survey id is required", 400);
+        }
+
+        const survey = await this.Survey.findByPk(survey_id);
+
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        const role = await _checkSurveyAccess(user, survey);
+
+        if (!["respondent", "editor", "owner"].includes(role)) {
+            throw new AppError("Forbidden", 403);
+        }
+
+        const response = await this.Response.findOne({
+            where: {
+                user_id: user.id,
+                survey_id
+            }
+        });
+
+        if (!response) {
+            throw new AppError("Response not found", 404);
+        }
+
+        const answers = await this.Answer.findAll({
+            where: { response_id: response.id },
+            include: [
+                {
+                    model: this.Question,
+                    as: "question",
+                    attributes: ["id", "content", "type"]
+                },
+                {
+                    model: this.QuestionOption,
+                    as: "option",
+                    attributes: ["id", "label"]
+                }
+            ]
+        });
+
+        const optionIds = answers.flatMap(a =>
+            a.option_id ? [a.option_id] : a.selected_options || []
+        );
+
+        const options = await this.QuestionOption.findAll({
+            where: { id: optionIds }
+        });
+
+        const optionMap = Object.fromEntries(
+            options.map(o => [o.id, o.label])
+        );
+
+        const mappedAnswers = this._mapAnswerToResponse(answers, optionMap);
+
+        return {
+            message: "Get survey response successfully",
+            data: {
+                response_id: response.id,
+                survey_id,
+                submitted_at: response.submitted_at,
+                answers: mappedAnswers
+            }
         };
     }
 }

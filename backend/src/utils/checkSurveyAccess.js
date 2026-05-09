@@ -12,7 +12,7 @@ const _checkSurveyAccess = async (user, survey, access_token) => {
 
     // PUBLIC
     if (survey.access_type === "PUBLIC") {
-        return "viewer";
+        return "respondent";
     }
 
     // LINK
@@ -20,7 +20,7 @@ const _checkSurveyAccess = async (user, survey, access_token) => {
         if (!access_token || access_token !== survey.access_token) {
             throw new AppError("Invalid or missing access token", 403);
         }
-        return "viewer";
+        return "respondent";
     }
 
     // PRIVATE

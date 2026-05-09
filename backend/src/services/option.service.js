@@ -10,7 +10,6 @@ class QuestionOptionService {
         this.SurveyParticipant = models.SurveyParticipant;
     }
 
-    // 🔥 LẤY ROLE TỪ SURVEY
     async _getRole(user, question, access_token) {
         const survey = await this.Survey.findByPk(question.survey_id);
 
@@ -19,14 +18,9 @@ class QuestionOptionService {
         return await _checkSurveyAccess(
             user,
             survey,
-            access_token,
-            this.SurveyParticipant
         );
     }
 
-    // ===============================
-    // ➕ CREATE
-    // ===============================
     async createOption(question_id, content, user, access_token) {
         if (!question_id) throw new AppError("Question id is required", 400);
         if (!content) throw new AppError("Content is required", 400);
@@ -36,7 +30,6 @@ class QuestionOptionService {
 
         const role = await this._getRole(user, question, access_token);
 
-        // 🔥 CHẶN VIEWER
         if (role !== "editor") {
             throw new AppError("Forbidden", 403);
         }
@@ -56,9 +49,6 @@ class QuestionOptionService {
         };
     }
 
-    // ===============================
-    // ✏️ UPDATE
-    // ===============================
     async updateOption(option_id, content, user) {
         const option = await this.QuestionOption.findByPk(option_id);
         if (!option) throw new AppError("Option not found", 404);
@@ -80,9 +70,6 @@ class QuestionOptionService {
         };
     }
 
-    // ===============================
-    // 🗑 DELETE
-    // ===============================
     async deleteOption(option_id, user) {
         const option = await this.QuestionOption.findByPk(option_id);
         if (!option) throw new AppError("Option not found", 404);
@@ -102,17 +89,13 @@ class QuestionOptionService {
         };
     }
 
-    // ===============================
-    // 👀 READ
-    // ===============================
     async getOptionsByQuestion(question_id, user, access_token) {
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
 
         const role = await this._getRole(user, question, access_token);
 
-        // 🔥 viewer + editor đều đọc được
-        if (!["viewer", "editor"].includes(role)) {
+        if (!["viewer", "editor", "respondent"].includes(role)) {
             throw new AppError("Forbidden", 403);
         }
 
@@ -127,9 +110,6 @@ class QuestionOptionService {
         };
     }
 
-    // ===============================
-    // 🚀 BULK CREATE
-    // ===============================
     async bulkCreateOptions(question_id, options, user, access_token) {
         if (!question_id) {
             throw new AppError("Question id is required", 400);

@@ -657,6 +657,8 @@ class SurveyService {
         };
     }
 
+    // get survey invited
+
     // mapping functions
     _mapSurvey(survey) {
         return {

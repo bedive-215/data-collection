@@ -4,16 +4,12 @@ class ResponseController {
     // submit
     async submit(req, res, next) {
         try {
-            if (!req.user?.id) {
-                return res.status(401).json({ message: "Unauthorized" });
-            }
-
             if (!Array.isArray(req.body.answers)) {
                 return res.status(400).json({ message: "Invalid answers format" });
             }
-
+            const user = req.user;
             const result = await ResponseService.submitSurvey(
-                req.user.id,
+                user,
                 req.params.survey_id,
                 req.body.answers
             );
@@ -42,7 +38,7 @@ class ResponseController {
     async update(req, res, next) {
         try {
             const result = await ResponseService.updateResponse(
-                req.user.id,
+                req.user,
                 req.params.survey_id,
                 req.body.answers
             );
@@ -57,7 +53,7 @@ class ResponseController {
     async delete(req, res, next) {
         try {
             const result = await ResponseService.deleteResponse(
-                req.user.id,
+                req.user,
                 req.params.response_id,
             );
             
@@ -71,7 +67,7 @@ class ResponseController {
     async getMyResponse(req, res, next) {
         try {
             const result = await ResponseService.getSurveySubmitByUserId(
-                req.user.id,
+                req.user,
                 req.params.survey_id
             );
             res.json(result);
