@@ -1,19 +1,45 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
 
 class QuestionOptionService {
     constructor() {
         this.Question = models.Question;
         this.QuestionOption = models.QuestionOption;
+        this.Survey = models.Survey;
+        this.SurveyParticipant = models.SurveyParticipant;
     }
 
-    // Add option
-    async createOption(question_id, content) {
+    // 🔥 LẤY ROLE TỪ SURVEY
+    async _getRole(user, question, access_token) {
+        const survey = await this.Survey.findByPk(question.survey_id);
+
+        if (!survey) throw new AppError("Survey not found", 404);
+
+        return await _checkSurveyAccess(
+            user,
+            survey,
+            access_token,
+            this.SurveyParticipant
+        );
+    }
+
+    // ===============================
+    // ➕ CREATE
+    // ===============================
+    async createOption(question_id, content, user, access_token) {
         if (!question_id) throw new AppError("Question id is required", 400);
         if (!content) throw new AppError("Content is required", 400);
 
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
+
+        const role = await this._getRole(user, question, access_token);
+
+        // 🔥 CHẶN VIEWER
+        if (role !== "editor") {
+            throw new AppError("Forbidden", 403);
+        }
 
         if (question.type === "TEXT") {
             throw new AppError("TEXT question cannot have options", 400);
@@ -30,11 +56,20 @@ class QuestionOptionService {
         };
     }
 
-    // Update option
-    async updateOption(option_id, content) {
+    // ===============================
+    // ✏️ UPDATE
+    // ===============================
+    async updateOption(option_id, content, user) {
         const option = await this.QuestionOption.findByPk(option_id);
-
         if (!option) throw new AppError("Option not found", 404);
+
+        const question = await this.Question.findByPk(option.question_id);
+
+        const role = await this._getRole(user, question);
+
+        if (role !== "editor") {
+            throw new AppError("Forbidden", 403);
+        }
 
         option.content = content;
         await option.save();
@@ -45,11 +80,20 @@ class QuestionOptionService {
         };
     }
 
-    // Delete option
-    async deleteOption(option_id) {
+    // ===============================
+    // 🗑 DELETE
+    // ===============================
+    async deleteOption(option_id, user) {
         const option = await this.QuestionOption.findByPk(option_id);
-
         if (!option) throw new AppError("Option not found", 404);
+
+        const question = await this.Question.findByPk(option.question_id);
+
+        const role = await this._getRole(user, question);
+
+        if (role !== "editor") {
+            throw new AppError("Forbidden", 403);
+        }
 
         await option.destroy();
 
@@ -58,8 +102,20 @@ class QuestionOptionService {
         };
     }
 
-    // Get options by question
-    async getOptionsByQuestion(question_id) {
+    // ===============================
+    // 👀 READ
+    // ===============================
+    async getOptionsByQuestion(question_id, user, access_token) {
+        const question = await this.Question.findByPk(question_id);
+        if (!question) throw new AppError("Question not found", 404);
+
+        const role = await this._getRole(user, question, access_token);
+
+        // 🔥 viewer + editor đều đọc được
+        if (!["viewer", "editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
+        }
+
         const options = await this.QuestionOption.findAll({
             where: { question_id }
         });
@@ -71,8 +127,10 @@ class QuestionOptionService {
         };
     }
 
-    // Bulk update options
-    async bulkCreateOptions(question_id, options) {
+    // ===============================
+    // 🚀 BULK CREATE
+    // ===============================
+    async bulkCreateOptions(question_id, options, user, access_token) {
         if (!question_id) {
             throw new AppError("Question id is required", 400);
         }
@@ -84,23 +142,22 @@ class QuestionOptionService {
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
 
+        const role = await this._getRole(user, question, access_token);
+
+        if (role !== "editor") {
+            throw new AppError("Forbidden", 403);
+        }
+
         if (question.type === "TEXT") {
             throw new AppError("TEXT question cannot have options", 400);
         }
 
-        // Clean + validate
         const cleanedOptions = options
             .map(opt => opt?.trim())
             .filter(opt => opt);
 
-        if (cleanedOptions.length === 0) {
-            throw new AppError("Options cannot be empty", 400);
-        }
-
-        // Remove duplicate trong request
         const uniqueOptions = [...new Set(cleanedOptions)];
 
-        // Check duplicate trong DB
         const existing = await this.QuestionOption.findAll({
             where: {
                 question_id,
@@ -118,7 +175,6 @@ class QuestionOptionService {
             throw new AppError("All options already exist", 400);
         }
 
-        // Bulk create
         const createdOptions = await this.QuestionOption.bulkCreate(
             finalOptions.map(content => ({
                 question_id,
@@ -134,4 +190,4 @@ class QuestionOptionService {
     }
 }
 
-export default new QuestionOptionService();
+export default new QuestionOptionService;

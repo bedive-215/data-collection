@@ -8,6 +8,7 @@ class ResponseService {
         this.Question = models.Question;
         this.QuestionOption = models.QuestionOption;
         this.Survey = models.Survey;
+        this.SurveyParticipant = models.SurveyParticipant;
         this.sequelize = models.sequelize;
         this.User = models.User;
     }
@@ -17,33 +18,30 @@ class ResponseService {
             const type = a.question.type;
             let answerValue = null;
 
-            // TEXT / PARAGRAPH / EMAIL
             if (["TEXT", "PARAGRAPH", "EMAIL"].includes(type)) {
                 answerValue = a.answer_text;
             }
 
-            // NUMBER / RATING
             else if (["NUMBER", "RATING"].includes(type)) {
                 answerValue = a.answer_number;
             }
 
-            // SINGLE_CHOICE / DROPDOWN
             else if (["SINGLE_CHOICE", "DROPDOWN"].includes(type)) {
                 answerValue = a.option_id
                     ? optionMap[a.option_id] || a.option?.label || a.option_id
                     : null;
             }
 
-            // MULTIPLE_CHOICE
             else if (type === "MULTIPLE_CHOICE") {
                 answerValue = (a.selected_options || [])
                     .map(id => optionMap[id] || id)
                     .filter(Boolean);
             }
 
-            // DATE
             else if (type === "DATE") {
-                answerValue = a.answer_date ? new Date(a.answer_date).toISOString().split("T")[0] : null;
+                answerValue = a.answer_date
+                    ? new Date(a.answer_date).toISOString().split("T")[0]
+                    : null;
             }
 
             return {
@@ -61,6 +59,110 @@ class ResponseService {
         }
     }
 
+    async _checkSubmitPermission(user_id, survey_id, transaction) {
+        const survey = await this.Survey.findByPk(survey_id, { transaction });
+
+        if (!survey) throw new AppError("Survey not found", 404);
+
+        // public survey thì ai cũng submit được
+        if (survey.is_public) return;
+
+        const participant = await this.SurveyParticipant.findOne({
+            where: { user_id, survey_id },
+            transaction
+        });
+
+        if (!participant) {
+            throw new AppError("You are not allowed to access this survey", 403);
+        }
+
+        if (!["respondent", "editor"].includes(participant.role)) {
+            throw new AppError("You are not allowed to submit", 403);
+        }
+    }
+
+    async _buildAnswerRecords(response_id, answers, questionMap, optionMap) {
+        const records = [];
+
+        for (const ans of answers) {
+            const q = questionMap[ans.question_id];
+            if (!q) throw new AppError("Invalid question", 400);
+
+            if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
+                records.push({
+                    response_id,
+                    question_id: q.id,
+                    answer_text: ans.answer_text
+                });
+            }
+
+            else if (["NUMBER", "RATING"].includes(q.type)) {
+                const value = ans.answer_number ?? ans.answer_text;
+
+                if (value === undefined || value === null || isNaN(value)) {
+                    throw new AppError("Invalid number answer", 400);
+                }
+
+                records.push({
+                    response_id,
+                    question_id: q.id,
+                    answer_number: Number(value)
+                });
+            }
+
+            else if (["SINGLE_CHOICE", "DROPDOWN"].includes(q.type)) {
+                const option = optionMap[ans.option_id];
+                if (!option || option.question_id !== q.id) {
+                    throw new AppError("Invalid option", 400);
+                }
+
+                records.push({
+                    response_id,
+                    question_id: q.id,
+                    option_id: option.id
+                });
+            }
+
+            else if (q.type === "MULTIPLE_CHOICE") {
+                if (!Array.isArray(ans.option_ids) || !ans.option_ids.length) {
+                    throw new AppError("Options required", 400);
+                }
+
+                ans.option_ids.forEach(id => {
+                    const option = optionMap[id];
+                    if (!option || option.question_id !== q.id) {
+                        throw new AppError("Invalid option", 400);
+                    }
+                });
+
+                records.push({
+                    response_id,
+                    question_id: q.id,
+                    selected_options: ans.option_ids
+                });
+            }
+
+            else if (q.type === "DATE") {
+                const dateValue = new Date(ans.answer_text);
+                if (isNaN(dateValue.getTime())) {
+                    throw new AppError("Invalid date answer", 400);
+                }
+
+                records.push({
+                    response_id,
+                    question_id: q.id,
+                    answer_date: dateValue
+                });
+            }
+
+            else {
+                throw new AppError("Unsupported type", 400);
+            }
+        }
+
+        return records;
+    }
+
     async submitSurvey(user_id, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
@@ -68,6 +170,8 @@ class ResponseService {
         const transaction = await this.sequelize.transaction();
 
         try {
+            await this._checkSubmitPermission(user_id, survey_id, transaction);
+
             const existing = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
@@ -94,7 +198,6 @@ class ResponseService {
                 questions.map(q => [q.id, q])
             );
 
-            // preload options
             const optionIds = answers.flatMap(a =>
                 a.option_id ? [a.option_id] : a.option_ids || []
             );
@@ -114,87 +217,12 @@ class ResponseService {
                 submitted_at: new Date()
             }, { transaction });
 
-            const answerRecords = [];
-
-            for (const ans of answers) {
-                const q = questionMap[ans.question_id];
-                // console.log("Processing answer for question:", q?.type, q?.content);
-                if (!q) throw new AppError("Invalid question", 400);
-
-                // TEXT
-                if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: q.id,
-                        answer_text: ans.answer_text
-                    });
-                }
-
-                // NUMBER
-                else if (["NUMBER", "RATING"].includes(q.type)) {
-                    const value = ans.answer_number ?? ans.answer_text;
-
-                    if (value === undefined || value === null || isNaN(value)) {
-                        throw new AppError("Invalid number answer", 400);
-                    }
-
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: q.id,
-                        answer_number: Number(value)
-                    });
-                }
-
-                // SINGLE
-                else if (["SINGLE_CHOICE", "DROPDOWN"].includes(q.type)) {
-                    const option = optionMap[ans.option_id];
-                    if (!option || option.question_id !== q.id) {
-                        throw new AppError("Invalid option", 400);
-                    }
-
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: q.id,
-                        option_id: option.id
-                    });
-                }
-
-                // MULTIPLE
-                else if (q.type === "MULTIPLE_CHOICE") {
-                    if (!Array.isArray(ans.option_ids) || !ans.option_ids.length) {
-                        throw new AppError("Options required", 400);
-                    }
-
-                    ans.option_ids.forEach(id => {
-                        const option = optionMap[id];
-                        if (!option || option.question_id !== q.id) {
-                            throw new AppError("Invalid option", 400);
-                        }
-                    });
-
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: q.id,
-                        selected_options: ans.option_ids
-                    });
-                }
-
-                // DATE
-                else if (q.type === "DATE") {
-                    const dateValue = new Date(ans.answer_text);
-                    if (isNaN(dateValue.getTime())) {
-                        throw new AppError("Invalid date answer", 400);
-                    }
-                    answerRecords.push({
-                        response_id: response.id,
-                        question_id: q.id,
-                        answer_date: dateValue
-                    });
-                }
-                else {
-                    throw new AppError("Unsupported type", 400);
-                }
-            }
+            const answerRecords = await this._buildAnswerRecords(
+                response.id,
+                answers,
+                questionMap,
+                optionMap
+            );
 
             await this.Answer.bulkCreate(answerRecords, { transaction });
 
@@ -211,142 +239,14 @@ class ResponseService {
         }
     }
 
-    async getSurveySubmitByUserId(user_id, survey_id) {
-        const responses = await this.Response.findAll({
-            where: { user_id, survey_id },
-            include: [
-                {
-                    model: this.Answer,
-                    as: "answers",
-                    include: [
-                        {
-                            model: this.Question,
-                            as: "question",
-                            attributes: ["id", "content", "type", "order_index"]
-                        },
-                        {
-                            model: this.QuestionOption,
-                            as: "option",
-                            attributes: ["id", "label"],
-                            required: false
-                        }
-                    ]
-                }
-            ],
-            order: [
-                [{ model: this.Answer, as: "answers" },
-                { model: this.Question, as: "question" },
-                    "order_index", "ASC"]
-            ]
-        });
-
-        // console.log("Responses:", JSON.stringify(responses, null, 2));
-
-        const optionIds = responses.flatMap(r =>
-            r.answers.flatMap(a => [
-                ...(a.selected_options || []),
-                ...(a.option_id ? [a.option_id] : [])
-            ])
-        );
-
-        const options = optionIds.length
-            ? await this.QuestionOption.findAll({
-                where: { id: optionIds }
-            })
-            : [];
-
-        const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.label])
-        );
-
-        const result = responses.map(r => ({
-            response_id: r.id,
-            submitted_at: r.submitted_at,
-            answers: this._mapAnswerToResponse(r.answers, optionMap)
-        }));
-
-        return {
-            message: "Get user answers successfully",
-            count: result.length,
-            data: result
-        };
-    }
-
-    async getAllAnswerByResponseId(response_id) {
-        const response = await this.Response.findOne({
-            where: { id: response_id },
-            include: [
-                {
-                    model: this.Survey,
-                    as: "survey",
-                    attributes: ["id", "title", "description"]
-                },
-                {
-                    model: this.Answer,
-                    as: "answers",
-                    include: [
-                        {
-                            model: this.Question,
-                            as: "question",
-                            attributes: ["id", "content", "type", "order_index"]
-                        },
-                        {
-                            model: this.QuestionOption,
-                            as: "option",
-                            attributes: ["id", "label"],
-                            required: false
-                        }
-                    ]
-                }
-            ]
-        });
-
-        if (!response) throw new AppError("Response not found", 404);
-
-        const optionIds = response.answers.flatMap(a => a.selected_options || []);
-
-        const options = await this.QuestionOption.findAll({
-            where: { id: optionIds }
-        });
-
-        const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.label])
-        );
-
-        return {
-            response_id: response.id,
-            survey: response.survey,
-            submitted_at: response.submitted_at,
-            answers: this._mapAnswerToResponse(response.answers, optionMap)
-        };
-    }
-
-    async deleteResponse(user_id, response_id) {
-        const response = await this.Response.findOne({
-            where: { id: response_id, user_id }
-        });
-
-        if (!response) throw new AppError("Response not found", 404);
-
-        const user = await this.User.findByPk(user_id);
-
-        if (!user) throw new AppError("User not found", 404);
-
-        this._checkOwnership(response, user);
-
-        await this.Response.destroy({
-            where: { id: response_id }
-        });
-
-        return { message: "Delete response successfully" };
-    }
-
     async updateResponse(user_id, survey_id, answers) {
         if (!answers?.length) throw new AppError("Answers required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
+            await this._checkSubmitPermission(user_id, survey_id, transaction);
+
             const response = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
@@ -355,17 +255,47 @@ class ResponseService {
             if (!response) throw new AppError("Response not found", 404);
 
             const user = await this.User.findByPk(user_id);
-
             if (!user) throw new AppError("User not found", 404);
 
             this._checkOwnership(response, user);
+
+            const questionIds = answers.map(a => a.question_id);
+
+            const questions = await this.Question.findAll({
+                where: { id: questionIds, survey_id },
+                transaction
+            });
+
+            const questionMap = Object.fromEntries(
+                questions.map(q => [q.id, q])
+            );
+
+            const optionIds = answers.flatMap(a =>
+                a.option_id ? [a.option_id] : a.option_ids || []
+            );
+
+            const options = await this.QuestionOption.findAll({
+                where: { id: optionIds },
+                transaction
+            });
+
+            const optionMap = Object.fromEntries(
+                options.map(o => [o.id, o])
+            );
 
             await this.Answer.destroy({
                 where: { response_id: response.id },
                 transaction
             });
 
-            await this.submitSurvey(user_id, survey_id, answers);
+            const answerRecords = await this._buildAnswerRecords(
+                response.id,
+                answers,
+                questionMap,
+                optionMap
+            );
+
+            await this.Answer.bulkCreate(answerRecords, { transaction });
 
             await transaction.commit();
 

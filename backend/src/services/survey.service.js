@@ -3,6 +3,7 @@ import { AppError } from "../middlewares/handleException.middlware.js";
 import { Op } from "sequelize";
 import { sendInviteEmail } from "../utils/sendMail.js";
 import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
+import _checkSurveyAccess from "../utils/checkSurveyAccess.js"
 
 class SurveyService {
     constructor() {
@@ -22,51 +23,6 @@ class SurveyService {
             limit: safeLimit,
             offset: (safePage - 1) * safeLimit
         };
-    }
-
-    async _checkSurveyAccess(user, survey, access_token) {
-        // OWNER → editor luôn
-        if (_checkOwnerOrAdmin(user, survey)) {
-            return "editor";
-        }
-
-        // PUBLIC
-        if (survey.access_type === "PUBLIC") {
-            return "viewer";
-        }
-
-        // LINK
-        if (survey.access_type === "LINK") {
-            if (!access_token || access_token !== survey.access_token) {
-                throw new AppError("Invalid or missing access token", 403);
-            }
-            return "viewer";
-        }
-
-        // PRIVATE
-        if (survey.access_type === "PRIVATE") {
-            if (!user) {
-                throw new AppError("Unauthorized", 401);
-            }
-
-            const participant = await this.SurveyParticipant.findOne({
-                where: {
-                    survey_id: survey.id,
-                    [Op.or]: [
-                        { user_id: user.id },
-                        { email: user.email }
-                    ]
-                }
-            });
-
-            if (!participant) {
-                throw new AppError("You are not allowed to access this survey", 403);
-            }
-
-            return participant.role;
-        }
-
-        throw new AppError("Invalid survey access type", 400);
     }
 
     _getSurveyStatus(survey) {
@@ -166,7 +122,11 @@ class SurveyService {
             throw new AppError("Survey not found!", 404);
         }
 
-        let role = await this._checkSurveyAccess(user, survey, access_token);
+        let role = await _checkSurveyAccess(user, survey, access_token);
+
+        if (!["editor", "viewer", "respondent"].includes(role)) {
+            throw new AppError("Forbidden", 403);
+        }
 
         const status = this._getSurveyStatus(survey);
 
@@ -290,9 +250,10 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        const role = this._checkSurveyAccess(user, survey);
-        if (role !== "editor") {
-            throw new AppError("You do not have permission to edit this survey", 403);
+        const role = await _checkSurveyAccess(user, survey);
+
+        if (!["editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
         }
 
         const { title, description, start_at, end_at } = payload;
@@ -418,7 +379,7 @@ class SurveyService {
     }
 
     async inviteSurvey(surveyId, user, payload) {
-        const { email, role = "viewer" } = payload;
+        const { email, role = "respondent" } = payload;
         console.log(email)
         if (!email) {
             throw new AppError("Email required", 403);
@@ -478,7 +439,7 @@ class SurveyService {
     }
 
     async bulkInvite(surveyId, user, payload) {
-        const { emails = [], role = "viewer" } = payload;
+        const { emails = [], role = "respondent" } = payload;
 
         if (!Array.isArray(emails) || emails.length === 0) {
             throw new AppError("Emails must be a non-empty array", 400);
@@ -499,7 +460,7 @@ class SurveyService {
         }
 
         // validate role
-        const VALID_ROLES = ["viewer", "editor"];
+        const VALID_ROLES = ["viewer", "editor", "respondent"];
         if (!VALID_ROLES.includes(role)) {
             throw new AppError("Invalid role", 400);
         }

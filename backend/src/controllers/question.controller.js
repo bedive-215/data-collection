@@ -8,12 +8,12 @@ class QuestionController {
         try {
             const { survey_id } = req.params;
             const payload = req.body;
-            const user_id = req.user.id;
+            const user = req.user;
 
             const result = await QuestionService.createQuestion(
                 survey_id,
                 payload,
-                user_id
+                user
             );
 
             return res.status(201).json(result);
@@ -44,12 +44,12 @@ class QuestionController {
         try {
             const { question_id } = req.params;
             const payload = req.body;
-            const user_id = req.user.id;
+            const user = req.user;
 
             const result = await QuestionService.updateQuestion(
                 question_id,
                 payload,
-                user_id
+                user
             );
 
             return res.status(200).json(result);
@@ -63,10 +63,10 @@ class QuestionController {
     async deleteQuestion(req, res, next) {
         try {
             const { question_id } = req.params;
-
+            const user = req.user;
             const result = await QuestionService.deleteQuestion(
                 question_id,
-                req.user.id
+                user
             );
 
             return res.status(200).json(result);
@@ -81,11 +81,12 @@ class QuestionController {
         try {
             const { survey_id } = req.params;
             const { questions } = req.body;
+            const user = req.user;
 
             const result = await QuestionService.reorderQuestions(
                 survey_id,
                 questions,
-                req.user.id
+                user
             );
 
             return res.status(200).json(result);
@@ -101,7 +102,7 @@ class QuestionController {
             const { survey_id } = req.params;
             const { questions } = req.body;
 
-            const user_id = req.user.id;
+            const user = req.user;
 
             if (!questions || !Array.isArray(questions)) {
                 throw new AppError(
@@ -113,7 +114,7 @@ class QuestionController {
             const result = await QuestionService.bulkCreateQuestions(
                 survey_id,
                 questions,
-                user_id
+                user
             );
 
             return res.status(201).json(result);
