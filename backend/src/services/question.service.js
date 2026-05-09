@@ -2,6 +2,8 @@ import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import crypto from "crypto";
 import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
+import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
+
 class QuestionService {
     constructor() {
         this.Question = models.Question;
@@ -181,7 +183,7 @@ class QuestionService {
     }
 
     // update question (content, type, required, order_index, settings, options)
-    async updateQuestion(question_id, payload, user_id) {
+    async updateQuestion(question_id, payload, user) {
         const { content, type, required, order_index, settings, options } = payload;
 
         const question = await this.Question.findByPk(question_id, {
@@ -194,11 +196,10 @@ class QuestionService {
 
         if (!question) throw new AppError("Question not found", 404);
 
-        const user = await this.User.findByPk(user_id);
-        if (!user) throw new AppError("User not found", 404);
+        const role = await _checkSurveyAccess(user, survey);
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
+        if (!["editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
         }
 
         const t = await models.sequelize.transaction();
@@ -252,7 +253,7 @@ class QuestionService {
     }
 
     // delete question
-    async deleteQuestion(question_id, user_id) {
+    async deleteQuestion(question_id, user) {
         const question = await this.Question.findByPk(question_id, {
             include: {
                 model: this.Survey,
@@ -260,15 +261,14 @@ class QuestionService {
             }
         });
 
-        
+
         if (!question) throw new AppError("Question not found", 404);
         const survey = question.survey;
-        
-        const user = await this.User.findByPk(user_id);
-        if (!user) throw new AppError("User not found", 404);
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
+        const role = await _checkSurveyAccess(user, survey);
+
+        if (!["editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
         }
 
         await question.destroy();
@@ -301,15 +301,14 @@ class QuestionService {
 
 
     // reorder questions
-    async reorderQuestions(survey_id, questions, user_id) {
+    async reorderQuestions(survey_id, questions, user) {
         const survey = await this.Survey.findByPk(survey_id);
         if (!survey) throw new AppError("Survey not found", 404);
 
-        const user = await this.User.findByPk(user_id);
-        if (!user) throw new AppError("User not found", 404);
+        const role = await _checkSurveyAccess(user, survey);
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
+        if (!["editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
         }
 
         const t = await models.sequelize.transaction();
@@ -337,7 +336,7 @@ class QuestionService {
         }
     }
 
-    async bulkCreateQuestions(survey_id, questionsPayload, user_id) {
+    async bulkCreateQuestions(survey_id, questionsPayload, user) {
         if (!Array.isArray(questionsPayload) || questionsPayload.length === 0) {
             throw new AppError("Questions payload must be a non-empty array", 400);
         }
@@ -346,12 +345,12 @@ class QuestionService {
         const survey = await this.Survey.findByPk(survey_id);
         if (!survey) throw new AppError("Survey not found", 404);
 
-        const user = await this.User.findByPk(user_id);
-        if (!user) throw new AppError("User not found", 404);
+        const role = await _checkSurveyAccess(user, survey);
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
+        if (!["editor"].includes(role)) {
+            throw new AppError("Forbidden", 403);
         }
+
         const t = await models.sequelize.transaction();
 
         try {

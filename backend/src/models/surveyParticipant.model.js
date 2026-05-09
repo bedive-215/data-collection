@@ -20,8 +20,8 @@ export default (sequelize) => {
             allowNull: true
         },
         role: {
-            type: DataTypes.ENUM('viewer', 'editor'),
-            defaultValue: 'viewer'
+            type: DataTypes.ENUM('viewer', 'editor', 'respondent'),
+            defaultValue: 'respondent'
         }
     },
     {
