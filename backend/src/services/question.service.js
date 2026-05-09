@@ -124,7 +124,7 @@ class QuestionService {
         }
     }
 
-    async createQuestion(survey_id, payload, user_id) {
+    async createQuestion(survey_id, payload, user) {
         const { content, type, required, order_index, settings, options } = payload;
 
         this._validateQuestionInput({ content, type });
@@ -132,8 +132,6 @@ class QuestionService {
         const survey = await this.Survey.findByPk(survey_id);
         if (!survey) throw new AppError("Survey not found", 404);
 
-        const user = await this.User.findByPk(user_id);
-        if (!user) throw new AppError("User not found", 404);
 
         if (!_checkOwnerOrAdmin(user, survey)) {
             throw new AppError("You do not have permission to delete this survey", 403);
