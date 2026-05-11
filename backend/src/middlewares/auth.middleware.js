@@ -3,6 +3,7 @@ import { generateAccessToken } from "../utils/token.js";
 import "dotenv/config";
 import models from "../models/index.js";
 import { AppError } from "./handleException.middlware.js";
+import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
 
 export class authMiddleware {
 
@@ -25,7 +26,6 @@ export class authMiddleware {
             req.user = {
                 id: decoded.user_id,
                 email: decoded.email,
-                role: decoded.role,
                 full_name: user.full_name,
                 role: user.role,
                 phone_number: decoded.phone_number
@@ -112,6 +112,128 @@ export class authMiddleware {
             next();
         };
     }
+
+    checkSurveyAccess(...allowedRoles) {
+        return async (req, res, next) => {
+            try {
+                const { survey_id } = req.params;
+                const user = req.user;
+
+                const token =
+                    req.query.access_token || req.headers["x-access-token"];
+
+                const survey = await models.Survey.findByPk(survey_id, {
+                    include: [
+                        {
+                            model: models.SurveyAccess,
+                            as: "survey_access",
+                            attributes: ["access_token"]
+                        }
+                    ]
+                });
+
+                if (!survey) {
+                    throw new AppError("Survey not found", 404);
+                }
+
+                // Check owner or admin
+                const isOwner = user && survey.created_by === user.id;
+                const isAdmin = user && user.role === "ADMIN";
+
+                if (isOwner || isAdmin) {
+                    req.survey = survey;
+                    return next();
+                }
+
+                // PUBLIC
+                if (survey.access_type === "PUBLIC") {
+                    req.survey = survey;
+                    return next();
+                }
+
+                // LINK
+                if (survey.access_type === "LINK") {
+                    if (!token) {
+                        throw new AppError("Access token required", 403);
+                    }
+
+                    const valid =
+                        survey.survey_access?.access_token === token;
+
+                    if (!valid) {
+                        throw new AppError("Invalid access token", 403);
+                    }
+
+                    req.survey = survey;
+                    return next();
+                }
+
+                // PRIVATE
+                if (survey.access_type === "PRIVATE") {
+                    if (!user) {
+                        throw new AppError("Unauthorized", 401);
+                    }
+
+                    const participant = await models.SurveyParticipant.findOne({
+                        where: {
+                            survey_id,
+                            user_id: user.id
+                        }
+                    });
+
+                    if (!participant) {
+                        throw new AppError("Access denied", 403);
+                    }
+
+                    // nếu có truyền role → check role
+                    if (allowedRoles.length > 0) {
+                        if (!allowedRoles.includes(participant.role)) {
+                            throw new AppError(
+                                "Insufficient permission in this survey",
+                                403
+                            );
+                        }
+                    }
+
+                    req.participant = participant;
+                    req.survey = survey;
+                    return next();
+                }
+
+                throw new AppError("Invalid access type", 400);
+
+            } catch (err) {
+                next(err);
+            }
+        };
+    };
+
+    async checkSurveyOwnerOrAdmin(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const user = req.user;
+
+            if (!user) {
+                throw new AppError("Unauthorized", 401);
+            }
+
+            const survey = await models.Survey.findByPk(survey_id);
+
+            if (!survey) {
+                throw new AppError("Survey not found", 404);
+            }
+
+            if(!_checkOwnerOrAdmin(user, survey)) {
+                throw new AppError("Forbidden", 403);
+            }
+
+            req.survey = survey;
+
+            next();
+        } catch (err) {
+            next(err);
+        }
+    };
 }
 
 export default new authMiddleware;
