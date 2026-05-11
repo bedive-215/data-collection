@@ -15,6 +15,7 @@ const router = express.Router();
 router.post(
     "/surveys/:survey_id",
     validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('editor', 'respondent'),
     ResponseController.submit
 );
 

@@ -6,47 +6,55 @@ import { validate } from "../middlewares/validate.middleware.js";
 import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { createQuestionRequest } from "../validates/createQuestion.validate.js";
 import { questionIdParams } from "../validates/questionIdParams.validate.js";
+import { updateQuestionParams } from "../validates/updateQuestionParams.validate.js";
+import { deleteQuestionParams } from "../validates/deleteOptionParams.validate.js";
 
 const router = express.Router();
 
 // Create question
 router.post(
-    "/:survey_id",
+    "/survey/:survey_id",
     validate(createQuestionRequest),
+    authMiddleware.checkSurveyAccess('editor'),
     QuestionController.create
 );
 
 // Get all questions of survey
 router.get(
-    "/:survey_id",
+    "/survey/:survey_id",
     validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('viewer', 'editor', 'respondent'),
     QuestionController.getQuestionsBySurvey
 );
 
 // Delete question
 router.delete(
-    "/:question_id",
-    validate(questionIdParams),
+    "/:question_id/survey/:survey_id",
+    validate(deleteQuestionParams),
+    authMiddleware.checkSurveyAccess('editor'),
     QuestionController.deleteQuestion
 );
 
 // Update question
 router.patch(
-    "/:question_id",
-    validate(questionIdParams),
+    "/:question_id/survey/:survey_id",
+    validate(updateQuestionParams),
+    authMiddleware.checkSurveyAccess('editor'),
     QuestionController.updateQuestion
 );
 
 // Reorder questions
 router.patch(
-    "/:survey_id/reorder",
+    "/survey/:survey_id/reorder",
     validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('editor'),
     QuestionController.reorderQuestions
 );
 
 router.post(
-    "/:survey_id/bulk",
+    "/survey/:survey_id/bulk",
     validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('editor'),
     QuestionController.bulkCreateQuestions
 );
 
