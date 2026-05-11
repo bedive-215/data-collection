@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
-    const SurveyParticipant = sequelize.define("SurveyParticipant", {
+    const SurveyAccess = sequelize.define("SurveyAccess", {
         id: {
             type: DataTypes.UUID,
             primaryKey: true,
@@ -15,32 +15,20 @@ export default (sequelize) => {
                 key: "id"
             }
         },
-        user_id: {
-            type: DataTypes.UUID,
+        access_token: {
+            type: DataTypes.STRING,
             allowNull: false,
-            references: {
-                model: 'users',
-                key: 'id'
-            }
-        },
-        email: {
-            type: DataTypes.STRING(255),
-            allowNull: true
-        },
-        role: {
-            type: DataTypes.ENUM('viewer', 'editor', 'respondent'),
-            defaultValue: 'respondent'
         }
     },
     {
-        tableName: "survey_participants",
+        tableName: "survey_access",
         underscored: true,
         indexes: [
             {
                 unique: true,
-                fields: ['survey_id', 'user_id']
+                fields: ['survey_id', 'access_token']
             }
         ]
     });
-    return SurveyParticipant;
+    return SurveyAccess;
 }

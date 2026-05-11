@@ -57,12 +57,6 @@ export default (sequelize) => {
             type: DataTypes.ENUM('PUBLIC', 'LINK', 'PRIVATE'),
             defaultValue: 'PRIVATE'
         },
-        access_token: {
-            type: DataTypes.STRING(255),
-            allowNull: true,
-            unique: true
-        }
-
     }, {
         tableName: "surveys",
         timestamps: true,
