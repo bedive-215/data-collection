@@ -666,7 +666,6 @@ class SurveyService {
         return {
             ...this._mapSurvey(survey),
             status,
-            description: survey.description,
             questions: survey.questions.map(q => ({
                 id: q.id,
                 content: q.content,
