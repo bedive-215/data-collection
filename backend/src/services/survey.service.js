@@ -655,6 +655,7 @@ class SurveyService {
         return {
             id: survey.id,
             title: survey.title,
+            description: survey.description,
             start_at: survey.start_at,
             end_at: survey.end_at,
             created_at: survey.created_at
