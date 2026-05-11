@@ -115,6 +115,14 @@ const buildBEOptions = (optionRows) =>
       is_other:    r.is_other ?? false,
     }));
 
+/* ── getPlainText helper ──────────────────────────────────────────── */
+const getPlainText = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.innerText ?? "";
+};
+
 /* ── Toggle ───────────────────────────────────────────────────────── */
 function Toggle({ checked, onChange }) {
   return (
@@ -1023,7 +1031,7 @@ function QuestionBody({ q, type }) {
 
 /* ── QuestionCard ─────────────────────────────────────────────────── */
 function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDelete, onDuplicate, deletingId }) {
-  const [contentHtml, setContentHtml] = useState(q.content);
+  const [contentHtml, setContentHtml] = useState(q.content ?? "");
   const [type,        setType]        = useState(toFEType(q.type));
   const [required,    setRequired]    = useState(q.required ?? true);
   const [qImage,      setQImage]      = useState(null);
@@ -1046,12 +1054,6 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   const hasSettings = SETTINGS_TYPES.includes(type);
   const isDeleting  = deletingId === q.id;
 
-  const getPlainText = (html) => {
-    const tmp = document.createElement("div");
-    tmp.innerHTML = html;
-    return tmp.innerText ?? "";
-  };
-
   const handleTypeChange = (newType) => {
     setType(newType);
     if (CHOICE_TYPES.includes(newType) && !CHOICE_TYPES.includes(type)) {
@@ -1062,6 +1064,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   };
 
   const handleSave = async () => {
+    // ── validate bằng plain text (kiểm tra không rỗng)
     const plainContent = getPlainText(contentHtml).trim();
     if (!plainContent) return;
 
@@ -1072,7 +1075,8 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
 
     setSaving(true);
     const payload = {
-      content:  plainContent,
+      // ✅ Gửi HTML để giữ định dạng in đậm, in nghiêng, gạch chân...
+      content:  contentHtml,
       type:     toBEType(type),
       required,
       settings: hasSettings ? settings : undefined,
@@ -1106,9 +1110,17 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         <span style={{fontSize:11,fontWeight:700,color:hovered?C.primary:C.textDim,minWidth:22}}>
           {String(index+1).padStart(2,"0")}
         </span>
-        <p style={{flex:1,margin:0,fontSize:14,fontWeight:600,color:hovered?C.text:C.textSub}}>
-          {q.content || <em style={{color:C.textDim,fontWeight:400}}>Câu hỏi chưa có tiêu đề</em>}
-        </p>
+
+        {/* ✅ Render HTML content để hiển thị đúng định dạng */}
+        <p
+          style={{flex:1,margin:0,fontSize:14,fontWeight:600,color:hovered?C.text:C.textSub}}
+          dangerouslySetInnerHTML={{
+            __html: q.content
+              ? q.content
+              : `<em style="color:${C.textDim};font-weight:400">Câu hỏi chưa có tiêu đề</em>`
+          }}
+        />
+
         <span style={{fontSize:11,color:C.textDim,flexShrink:0,background:C.surfaceHigh,padding:"3px 8px",borderRadius:6,border:`1px solid ${C.border}`}}>
           {Q_TYPES.find(t=>t.value===toFEType(q.type))?.label}
         </span>
@@ -1303,15 +1315,10 @@ export default function QuestionPage() {
     if (v === "RATING") setSettings({ min: 1, max: 5 });
   };
 
-  const getPlainText = (html) => {
-    const tmp = document.createElement("div");
-    tmp.innerHTML = html;
-    return tmp.innerText ?? "";
-  };
-
   const handleAdd = async (e) => {
     e.preventDefault();
 
+    // ── validate bằng plain text
     const plainContent = getPlainText(contentHtml).trim();
     if (!plainContent) {
       setFormError("Nội dung câu hỏi không được để trống.");
@@ -1339,7 +1346,8 @@ export default function QuestionPage() {
     setFormError("");
 
     const payload = {
-      content:     plainContent,
+      // ✅ Gửi HTML để giữ định dạng in đậm, in nghiêng, gạch chân...
+      content:     contentHtml,
       type:        toBEType(type),
       required,
       order_index: questions.length,
