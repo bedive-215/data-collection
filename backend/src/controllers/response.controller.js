@@ -7,9 +7,8 @@ class ResponseController {
             if (!Array.isArray(req.body.answers)) {
                 return res.status(400).json({ message: "Invalid answers format" });
             }
-            const user = req.user;
             const result = await ResponseService.submitSurvey(
-                user,
+                req.user.id,
                 req.params.survey_id,
                 req.body.answers
             );
@@ -26,6 +25,7 @@ class ResponseController {
     async getAnswers(req, res, next) {
         try {
             const result = await ResponseService.getAllAnswerByResponseId(
+                req.user,
                 req.params.response_id
             );
             res.json(result);
@@ -38,7 +38,7 @@ class ResponseController {
     async update(req, res, next) {
         try {
             const result = await ResponseService.updateResponse(
-                req.user,
+                req.user.id,
                 req.params.survey_id,
                 req.body.answers
             );
@@ -53,7 +53,7 @@ class ResponseController {
     async delete(req, res, next) {
         try {
             const result = await ResponseService.deleteResponse(
-                req.user,
+                req.user.id,
                 req.params.response_id,
             );
             
@@ -67,7 +67,7 @@ class ResponseController {
     async getMyResponse(req, res, next) {
         try {
             const result = await ResponseService.getSurveySubmitByUserId(
-                req.user,
+                req.user.id,
                 req.params.survey_id
             );
             res.json(result);

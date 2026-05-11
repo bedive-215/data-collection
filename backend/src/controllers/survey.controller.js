@@ -28,10 +28,12 @@ class SurveyController {
             const user = req.user;
             const result = await SurveyService.getSurveyById(user, survey_id, access_token);
 
+            const role = req.participant?.role || null;
+
             return res.status(200).json({
                 message: result.message,
                 data: result.survey,
-                role: result.role
+                role
             });
         } catch (err) {
             next(err);

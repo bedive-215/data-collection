@@ -7,15 +7,11 @@ class QuestionOptionController {
     async createOption(req, res, next) {
         try {
             const { question_id } = req.params;
-            const { content } = req.body;
-
-            if (!content || !content.trim()) {
-                throw new AppError("Content is required", 400);
-            }
+            const payload = req.body;
 
             const result = await QuestionOptionService.createOption(
                 question_id,
-                content.trim()
+                payload
             );
 
             return res.status(201).json({
@@ -51,15 +47,11 @@ class QuestionOptionController {
     async updateOption(req, res, next) {
         try {
             const { option_id } = req.params;
-            const { content } = req.body;
-
-            if (!content || !content.trim()) {
-                throw new AppError("Content is required", 400);
-            }
+            const payload = req.body;
 
             const result = await QuestionOptionService.updateOption(
                 option_id,
-                content.trim()
+                payload
             );
 
             return res.status(200).json({

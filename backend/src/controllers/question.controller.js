@@ -8,12 +8,10 @@ class QuestionController {
         try {
             const { survey_id } = req.params;
             const payload = req.body;
-            const user = req.user;
 
             const result = await QuestionService.createQuestion(
                 survey_id,
                 payload,
-                user
             );
 
             return res.status(201).json(result);
@@ -44,12 +42,10 @@ class QuestionController {
         try {
             const { question_id } = req.params;
             const payload = req.body;
-            const user = req.user;
 
             const result = await QuestionService.updateQuestion(
                 question_id,
                 payload,
-                user
             );
 
             return res.status(200).json(result);
@@ -66,7 +62,6 @@ class QuestionController {
             const user = req.user;
             const result = await QuestionService.deleteQuestion(
                 question_id,
-                user
             );
 
             return res.status(200).json(result);
@@ -81,12 +76,10 @@ class QuestionController {
         try {
             const { survey_id } = req.params;
             const { questions } = req.body;
-            const user = req.user;
 
             const result = await QuestionService.reorderQuestions(
                 survey_id,
                 questions,
-                user
             );
 
             return res.status(200).json(result);
@@ -102,8 +95,6 @@ class QuestionController {
             const { survey_id } = req.params;
             const { questions } = req.body;
 
-            const user = req.user;
-
             if (!questions || !Array.isArray(questions)) {
                 throw new AppError(
                     "Questions must be an array",
@@ -114,7 +105,6 @@ class QuestionController {
             const result = await QuestionService.bulkCreateQuestions(
                 survey_id,
                 questions,
-                user
             );
 
             return res.status(201).json(result);
