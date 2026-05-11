@@ -1,7 +1,5 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
-import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
 
 class ResponseService {
     constructor() {
@@ -53,27 +51,6 @@ class ResponseService {
                 answer: answerValue
             };
         });
-    }
-
-    async _checkOwnership(response, user) {
-        if (response.user_id !== user.id && user.role !== "ADMIN") {
-            throw new AppError("Forbidden", 403);
-        }
-    }
-
-    async _checkSubmitPermission(user, survey_id, transaction) {
-
-        const survey = await this.Survey.findByPk(survey_id, { transaction });
-
-        if (!survey) throw new AppError("Survey not found", 404);
-
-        // public survey thì ai cũng submit được
-
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["respondent", "editor"].includes(role)) {
-            throw new AppError("You are not allowed to submit", 403);
-        }
     }
 
     async _buildAnswerRecords(response_id, answers, questionMap, optionMap) {
@@ -158,15 +135,13 @@ class ResponseService {
         return records;
     }
 
-    async submitSurvey(user, survey_id, answers) {
+    async submitSurvey(user_id, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
-            await this._checkSubmitPermission(user, survey_id, transaction);
-            const user_id = user.id;
             const existing = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
@@ -234,25 +209,18 @@ class ResponseService {
         }
     }
 
-    async updateResponse(user, survey_id, answers) {
+    async updateResponse(user_id, survey_id, answers) {
         if (!answers?.length) throw new AppError("Answers required", 400);
 
         const transaction = await this.sequelize.transaction();
 
         try {
-            await this._checkSubmitPermission(user, survey_id, transaction);
-            const user_id = user.id;
             const response = await this.Response.findOne({
                 where: { user_id, survey_id },
                 transaction
             });
 
             if (!response) throw new AppError("Response not found", 404);
-
-            const user = await this.User.findByPk(user_id);
-            if (!user) throw new AppError("User not found", 404);
-
-            this._checkOwnership(response, user);
 
             const questionIds = answers.map(a => a.question_id);
 
@@ -322,7 +290,7 @@ class ResponseService {
         };
     }
 
-    async getSurveySubmitByUserId(user, survey_id) {
+    async getSurveySubmitByUserId(user_id, survey_id) {
         if (!survey_id) {
             throw new AppError("Survey id is required", 400);
         }
@@ -333,15 +301,9 @@ class ResponseService {
             throw new AppError("Survey not found", 404);
         }
 
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["respondent", "editor", "owner"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
-
         const response = await this.Response.findOne({
             where: {
-                user_id: user.id,
+                user_id,
                 survey_id
             }
         });
@@ -443,6 +405,28 @@ class ResponseService {
                 answers: mappedAnswers
             }
         };
+    }
+
+    async deleteResponse(user_id, response_id) {
+        if (!response_id) {
+            throw new AppError("Response id is required", 400);
+        }
+
+        const response = await this.Response.findByPk(response_id);
+
+        if (!response) {
+            throw new AppError("Response not found", 404);
+        }
+
+        if (response.user_id !== user_id) {
+            throw new AppError("Forbidden", 403);
+        }
+
+        response.destroy();
+
+        return {
+            message: "Delete response successfull"
+        }
     }
 }
 

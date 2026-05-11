@@ -1,6 +1,5 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
 
 class QuestionOptionService {
     constructor() {
@@ -10,37 +9,41 @@ class QuestionOptionService {
         this.SurveyParticipant = models.SurveyParticipant;
     }
 
-    async _getRole(user, question, access_token) {
-        const survey = await this.Survey.findByPk(question.survey_id);
+    async createOption(question_id, payload) {
+        if (!question_id) {
+            throw new AppError("Question id is required", 400);
+        }
 
-        if (!survey) throw new AppError("Survey not found", 404);
+        const { label, value, order_index, is_other } = payload;
 
-        return await _checkSurveyAccess(
-            user,
-            survey,
-        );
-    }
-
-    async createOption(question_id, content, user, access_token) {
-        if (!question_id) throw new AppError("Question id is required", 400);
-        if (!content) throw new AppError("Content is required", 400);
+        if (!label) {
+            throw new AppError("Label is required", 400);
+        }
 
         const question = await this.Question.findByPk(question_id);
-        if (!question) throw new AppError("Question not found", 404);
-
-        const role = await this._getRole(user, question, access_token);
-
-        if (role !== "editor") {
-            throw new AppError("Forbidden", 403);
+        if (!question) {
+            throw new AppError("Question not found", 404);
         }
 
         if (question.type === "TEXT") {
             throw new AppError("TEXT question cannot have options", 400);
         }
 
+        const normalizeValue = (str) => {
+            return str
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, "");
+        };
+
         const option = await this.QuestionOption.create({
             question_id,
-            content
+            label,
+            value: value || normalizeValue(label),
+            order_index: order_index ?? 0,
+            is_other: is_other ?? false
         });
 
         return {
@@ -49,19 +52,34 @@ class QuestionOptionService {
         };
     }
 
-    async updateOption(option_id, content, user) {
+    async updateOption(option_id, payload) {
         const option = await this.QuestionOption.findByPk(option_id);
-        if (!option) throw new AppError("Option not found", 404);
-
-        const question = await this.Question.findByPk(option.question_id);
-
-        const role = await this._getRole(user, question);
-
-        if (role !== "editor") {
-            throw new AppError("Forbidden", 403);
+        if (!option) {
+            throw new AppError("Option not found", 404);
         }
 
-        option.content = content;
+        const { label, value, order_index, is_other } = payload;
+
+        if (
+            label === undefined &&
+            value === undefined &&
+            order_index === undefined &&
+            is_other === undefined
+        ) {
+            throw new AppError("No data provided to update", 400);
+        }
+
+        const question = await this.Question.findByPk(option.question_id);
+        if (!question) {
+            throw new AppError("Question not found", 404);
+        }
+
+        // Update từng field nếu có
+        if (label !== undefined) option.label = label;
+        if (value !== undefined) option.value = value;
+        if (order_index !== undefined) option.order_index = order_index;
+        if (is_other !== undefined) option.is_other = is_other;
+
         await option.save();
 
         return {
@@ -70,17 +88,11 @@ class QuestionOptionService {
         };
     }
 
-    async deleteOption(option_id, user) {
+    async deleteOption(option_id) {
         const option = await this.QuestionOption.findByPk(option_id);
         if (!option) throw new AppError("Option not found", 404);
 
         const question = await this.Question.findByPk(option.question_id);
-
-        const role = await this._getRole(user, question);
-
-        if (role !== "editor") {
-            throw new AppError("Forbidden", 403);
-        }
 
         await option.destroy();
 
@@ -89,15 +101,9 @@ class QuestionOptionService {
         };
     }
 
-    async getOptionsByQuestion(question_id, user, access_token) {
+    async getOptionsByQuestion(question_id) {
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
-
-        const role = await this._getRole(user, question, access_token);
-
-        if (!["viewer", "editor", "respondent"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
 
         const options = await this.QuestionOption.findAll({
             where: { question_id }
@@ -110,7 +116,7 @@ class QuestionOptionService {
         };
     }
 
-    async bulkCreateOptions(question_id, options, user, access_token) {
+    async bulkCreateOptions(question_id, options) {
         if (!question_id) {
             throw new AppError("Question id is required", 400);
         }
@@ -121,12 +127,6 @@ class QuestionOptionService {
 
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
-
-        const role = await this._getRole(user, question, access_token);
-
-        if (role !== "editor") {
-            throw new AppError("Forbidden", 403);
-        }
 
         if (question.type === "TEXT") {
             throw new AppError("TEXT question cannot have options", 400);

@@ -1,8 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import crypto from "crypto";
-import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
-import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
 
 class QuestionService {
     constructor() {
@@ -124,18 +122,10 @@ class QuestionService {
         }
     }
 
-    async createQuestion(survey_id, payload, user) {
+    async createQuestion(survey_id, payload) {
         const { content, type, required, order_index, settings, options } = payload;
 
         this._validateQuestionInput({ content, type });
-
-        const survey = await this.Survey.findByPk(survey_id);
-        if (!survey) throw new AppError("Survey not found", 404);
-
-
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
-        }
 
         const cleanedOptions = this._validateOptions(type, options);
         const validatedSettings = this._validateSettingsByType(type, settings);
@@ -181,7 +171,7 @@ class QuestionService {
     }
 
     // update question (content, type, required, order_index, settings, options)
-    async updateQuestion(question_id, payload, user) {
+    async updateQuestion(question_id, payload) {
         const { content, type, required, order_index, settings, options } = payload;
 
         const question = await this.Question.findByPk(question_id, {
@@ -190,15 +180,8 @@ class QuestionService {
                 as: "survey"
             }
         });
-        const survey = question.survey;
 
         if (!question) throw new AppError("Question not found", 404);
-
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["editor"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
 
         const t = await models.sequelize.transaction();
 
@@ -251,7 +234,7 @@ class QuestionService {
     }
 
     // delete question
-    async deleteQuestion(question_id, user) {
+    async deleteQuestion(question_id) {
         const question = await this.Question.findByPk(question_id, {
             include: {
                 model: this.Survey,
@@ -259,15 +242,7 @@ class QuestionService {
             }
         });
 
-
         if (!question) throw new AppError("Question not found", 404);
-        const survey = question.survey;
-
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["editor"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
 
         await question.destroy();
 
@@ -299,16 +274,7 @@ class QuestionService {
 
 
     // reorder questions
-    async reorderQuestions(survey_id, questions, user) {
-        const survey = await this.Survey.findByPk(survey_id);
-        if (!survey) throw new AppError("Survey not found", 404);
-
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["editor"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
-
+    async reorderQuestions(survey_id, questions) {
         const t = await models.sequelize.transaction();
 
         try {
@@ -334,19 +300,9 @@ class QuestionService {
         }
     }
 
-    async bulkCreateQuestions(survey_id, questionsPayload, user) {
+    async bulkCreateQuestions(survey_id, questionsPayload) {
         if (!Array.isArray(questionsPayload) || questionsPayload.length === 0) {
             throw new AppError("Questions payload must be a non-empty array", 400);
-        }
-
-        // 1. check survey + ownership
-        const survey = await this.Survey.findByPk(survey_id);
-        if (!survey) throw new AppError("Survey not found", 404);
-
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["editor"].includes(role)) {
-            throw new AppError("Forbidden", 403);
         }
 
         const t = await models.sequelize.transaction();

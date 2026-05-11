@@ -2,8 +2,10 @@ import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { Op } from "sequelize";
 import { sendInviteEmail } from "../utils/sendMail.js";
+import sequelize from "../configs/db.config.js";
 import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
-import _checkSurveyAccess from "../utils/checkSurveyAccess.js"
+
+const ALLOWED_EDITOR_ROLES = ['respondent', 'viewer'];
 
 class SurveyService {
     constructor() {
@@ -11,7 +13,8 @@ class SurveyService {
         this.Question = models.Question;
         this.QuestionOption = models.QuestionOption;
         this.User = models.User;
-        this.SurveyParticipant = models.SurveyParticipant
+        this.SurveyParticipant = models.SurveyParticipant;
+        this.SurveyAccess = models.SurveyAccess;
     }
 
     _sanitizePagination(page, limit) {
@@ -52,7 +55,7 @@ class SurveyService {
 
     // Create new survey
     async createSurvey(user, payload) {
-        const { title, description, start_at, end_at, access_type, access_token } = payload;
+        const { title, description, start_at, end_at } = payload;
 
         this._validateTitle(title);
 
@@ -66,8 +69,6 @@ class SurveyService {
             created_by: user.id,
             start_at: start_at || null,
             end_at: end_at || null,
-            access_type: access_type || "PRIVATE",
-            access_token: access_token || null
         });
 
         return {
@@ -91,7 +92,6 @@ class SurveyService {
                 "end_at",
                 "created_at",
                 "access_type",
-                "access_token",
                 "created_by"
             ],
             include: [
@@ -122,12 +122,6 @@ class SurveyService {
             throw new AppError("Survey not found!", 404);
         }
 
-        let role = await _checkSurveyAccess(user, survey, access_token);
-
-        if (!["editor", "viewer", "respondent"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
-
         const status = this._getSurveyStatus(survey);
 
         if (status !== "ACTIVE" && survey.created_by !== user?.id) {
@@ -137,7 +131,6 @@ class SurveyService {
         return {
             message: "Get survey successfully!",
             survey: this._mapSurveyDetail(survey, status),
-            role
         };
     }
 
@@ -250,12 +243,6 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        const role = await _checkSurveyAccess(user, survey);
-
-        if (!["editor"].includes(role)) {
-            throw new AppError("Forbidden", 403);
-        }
-
         const { title, description, start_at, end_at } = payload;
 
         if (title !== undefined) {
@@ -293,10 +280,6 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to delete this survey", 403);
-        }
-
         survey.destroy();
 
         return {
@@ -308,10 +291,6 @@ class SurveyService {
         const survey = await this.Survey.findByPk(surveyId);
         if (!survey) {
             throw new AppError("Survey not found", 404);
-        }
-
-        if (!this._checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to close this survey", 403);
         }
 
         survey.end_at = new Date();
@@ -339,7 +318,6 @@ class SurveyService {
         }
 
         survey.access_type = "PUBLIC";
-        survey.access_token = null;
         await survey.save();
 
         return {
@@ -349,38 +327,48 @@ class SurveyService {
     }
 
     async shareLink(surveyId, user) {
-        const survey = await this.Survey.findByPk(surveyId);
+        const t = await sequelize.transaction();
+        try {
+            const survey = await this.Survey.findByPk(surveyId, { transaction: t });
 
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
+            if (!survey) {
+                throw new AppError("Survey not found", 404);
+            }
+
+            if (!_checkOwnerOrAdmin(user, survey)) {
+                throw new AppError("You do not have permission to share this survey", 403);
+            }
+
+            // set access type
+            if (survey.access_type !== "LINK") {
+                survey.access_type = "LINK";
+                await survey.save({ transaction: t });
+            }
+
+            // find or create access
+            const [surveyAccess] = await this.SurveyAccess.findOrCreate({
+                where: { survey_id: survey.id },
+                defaults: {
+                    access_token: this._generateAccessToken()
+                },
+                transaction: t
+            });
+
+            await t.commit();
+
+            return {
+                message: "Share link generated successfully",
+                url: `${process.env.BASE_URL}/surveys/${survey.id}?access_token=${surveyAccess.access_token}`
+            };
+
+        } catch (error) {
+            await t.rollback();
+            throw error;
         }
-
-        // chỉ owner hoặc admin mới được lấy link
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to share this survey", 403);
-        }
-
-        // nếu chưa phải LINK → chuyển sang LINK
-        if (survey.access_type !== "LINK") {
-            survey.access_type = "LINK";
-        }
-
-        // nếu chưa có token → generate
-        if (!survey.access_token) {
-            survey.access_token = this._generateAccessToken();
-        }
-
-        await survey.save();
-
-        return {
-            message: "Share link generated successfully",
-            url: `${process.env.BASE_URL}/surveys/${survey.id}?access_token=${survey.access_token}`
-        };
     }
 
     async inviteSurvey(surveyId, user, payload) {
         const { email, role = "respondent" } = payload;
-        console.log(email)
         if (!email) {
             throw new AppError("Email required", 403);
         }
@@ -391,16 +379,18 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        // chỉ owner/admin được mời
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to invite", 403);
+        // editor chi co the moi voi vai tro la viewer hoac responsdent
+        if(!_checkOwnerOrAdmin(user, survey)) {
+            if( !ALLOWED_EDITOR_ROLES.includes(role)) {
+                throw new AppError("Editor can only invite respondent or viewer", 404);
+            }
         }
-
+        
         // chỉ dùng cho PRIVATE
         if (survey.access_type !== "PRIVATE") {
             throw new AppError("Invite only works for PRIVATE survey", 400);
         }
-
+        
         // check tồn tại user (optional)
         const existingUser = await this.User.findOne({ where: { email } });
 
@@ -441,6 +431,12 @@ class SurveyService {
     async bulkInvite(surveyId, user, payload) {
         const { emails = [], role = "respondent" } = payload;
 
+        // validate role
+        const VALID_ROLES = ["viewer", "editor", "respondent"];
+        if (!VALID_ROLES.includes(role)) {
+            throw new AppError("Invalid role", 400);
+        }
+
         if (!Array.isArray(emails) || emails.length === 0) {
             throw new AppError("Emails must be a non-empty array", 400);
         }
@@ -451,18 +447,15 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission", 403);
+        // if is editor cant invite editor
+        if(!_checkOwnerOrAdmin(user, survey)) {
+            if( !ALLOWED_EDITOR_ROLES.includes(role)) {
+                throw new AppError("Editor can only invite respondent or viewer", 404);
+            }
         }
 
         if (survey.access_type !== "PRIVATE") {
             throw new AppError("Bulk invite only works for PRIVATE survey", 400);
-        }
-
-        // validate role
-        const VALID_ROLES = ["viewer", "editor", "respondent"];
-        if (!VALID_ROLES.includes(role)) {
-            throw new AppError("Invalid role", 400);
         }
 
         // tìm user đã tồn tại
@@ -656,8 +649,6 @@ class SurveyService {
             data: surveys
         };
     }
-
-    // get survey invited
 
     // mapping functions
     _mapSurvey(survey) {
