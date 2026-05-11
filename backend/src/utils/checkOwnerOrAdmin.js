@@ -1,12 +1,8 @@
 const _checkOwnerOrAdmin = (user, survey) => {
-    if (!user) return false;
-    if (survey.created_by === user.id) {
-        return true;
-    }
-    if (user.role === "admin") {
-        return true;
-    }
-    return false;
-}
+    return (
+        user &&
+        (survey.created_by === user.id || user.role === "ADMIN")
+    );
+};
 
 export default _checkOwnerOrAdmin;
