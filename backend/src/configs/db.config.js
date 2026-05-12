@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import "dotenv/config"
+// Biến môi trường do bootstrap-env.js (import đầu tiên từ server.js) nạp từ backend/.env
 // URL format:
 // mysql://username:password@host:port/database
 

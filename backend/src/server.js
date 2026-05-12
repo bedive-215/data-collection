@@ -1,5 +1,5 @@
+import './bootstrap-env.js';
 import { app } from './app.js';
-import 'dotenv/config';
 import sequelize from './configs/db.config.js';
 import http from 'http';
 
