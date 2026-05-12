@@ -34,6 +34,7 @@ import SurveysPage from "@/pages/user/SurveysPage";
 // USER SURVEY
 import MySurveysPage from "@/pages/user/MySurveysPage";
 import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
+import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
 
 // Errors
 import NotFound from "@/pages/error/NotFound";
@@ -81,6 +82,11 @@ const routeConfig = [
     path:
       ROUTERS.USER.SURVEY_TAKE,
     element: SurveyTakePage,
+    layout: HomeLayout,
+  },
+  {
+    path: ROUTERS.USER.SURVEY_RESPONSE,
+    element: SurveyResponsePage,
     layout: HomeLayout,
   },
  {

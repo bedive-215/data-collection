@@ -64,6 +64,12 @@ export const AuthProvider = ({ children }) => {
     return {
       user_id: decoded.user_id || decoded.id || decoded.sub || null,
       email: decoded.email || null,
+      full_name:
+        decoded.full_name ||
+        decoded.name ||
+        decoded.display_name ||
+        decoded.given_name ||
+        null,
       role: decoded.role || decoded.roles || null,
     };
   };
@@ -118,7 +124,17 @@ export const AuthProvider = ({ children }) => {
 
     persistTokens(newAccess, newRefresh);
 
-    const newUser = buildUserFromToken(newAccess);
+    let newUser = buildUserFromToken(newAccess);
+    const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
+    if (fromBody && typeof fromBody === "object") {
+      newUser = {
+        ...newUser,
+        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id,
+        email: fromBody.email ?? newUser?.email,
+        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name,
+        role: fromBody.role ?? newUser?.role,
+      };
+    }
     if (newUser) setUser(newUser);
 
     return data;
@@ -136,7 +152,17 @@ export const AuthProvider = ({ children }) => {
 
     persistTokens(newAccess, newRefresh);
 
-    const newUser = buildUserFromToken(newAccess);
+    let newUser = buildUserFromToken(newAccess);
+    const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
+    if (fromBody && typeof fromBody === "object") {
+      newUser = {
+        ...newUser,
+        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id,
+        email: fromBody.email ?? newUser?.email,
+        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name,
+        role: fromBody.role ?? newUser?.role,
+      };
+    }
     if (newUser) setUser(newUser);
 
     return data;
@@ -194,8 +220,10 @@ export const AuthProvider = ({ children }) => {
     const reqInterceptor = apiClient.interceptors.request.use(
       (config) => {
         if (!config.headers) config.headers = {};
-        if (accessToken) {
-          config.headers["Authorization"] = `Bearer ${accessToken}`;
+        const token =
+          accessToken || localStorage.getItem(ACCESS_TOKEN_KEY) || null;
+        if (token) {
+          config.headers["Authorization"] = `Bearer ${token}`;
         }
         return config;
       },

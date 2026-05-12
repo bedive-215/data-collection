@@ -1,6 +1,6 @@
 // src/providers/AdminStatsProvider.jsx
 import React, { createContext, useState, useContext } from "react";
-import adminStatsService from "@/services/adminStatsService";
+import adminStatsService from "../services/adminStatsService";
 import { toast } from "react-toastify";
 
 export const AdminStatsContext = createContext();

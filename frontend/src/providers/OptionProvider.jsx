@@ -1,6 +1,6 @@
 // src/providers/OptionProvider.jsx
 import React, { createContext, useState, useContext } from "react";
-import optionService from "@/services/optionService";
+import optionService from "../services/optionService";
 import { toast } from "react-toastify";
 
 export const OptionContext = createContext();

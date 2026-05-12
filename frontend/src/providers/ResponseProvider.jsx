@@ -24,6 +24,9 @@ const ResponseProvider = ({ children }) => {
 
   const [error, setError] = useState(null);
 
+  // 🔹 helper unwrap API envelope { message, data }
+  const unwrap = (res) => res?.data ?? res;
+
   // 🔹 helper handle error
   const handleError = (err, defaultMsg) => {
     const msg =
@@ -48,10 +51,9 @@ const ResponseProvider = ({ children }) => {
         throw new Error("Payload không hợp lệ");
       }
 
-      const data = await responseService.submitSurvey(surveyId, payload);
-
+      const res = await responseService.submitSurvey(surveyId, payload);
       toast.success("Gửi khảo sát thành công!");
-      return data;
+      return unwrap(res);
     } catch (err) {
       handleError(err, "Gửi khảo sát thất bại");
     } finally {
@@ -67,7 +69,9 @@ const ResponseProvider = ({ children }) => {
     setError(null);
 
     try {
-      const data = await responseService.getMySubmission(surveyId);
+      const res = await responseService.getMySubmission(surveyId);
+      // API trả về { message: "...", data: { response_id, survey_id, submitted_at, answers[] } }
+      const data = unwrap(res);
       setMySubmission(data);
       return data;
     } catch (err) {
@@ -85,7 +89,8 @@ const ResponseProvider = ({ children }) => {
     setError(null);
 
     try {
-      const data = await responseService.getAllMyResponses();
+      const res = await responseService.getAllMyResponses();
+      const data = unwrap(res);
       setMyResponses(data);
       return data;
     } catch (err) {
@@ -103,10 +108,8 @@ const ResponseProvider = ({ children }) => {
     setError(null);
 
     try {
-      const data = await responseService.getUserSubmission(
-        surveyId,
-        userId
-      );
+      const res = await responseService.getUserSubmission(surveyId, userId);
+      const data = unwrap(res);
       setUserSubmission(data);
       return data;
     } catch (err) {
@@ -124,7 +127,8 @@ const ResponseProvider = ({ children }) => {
     setError(null);
 
     try {
-      const data = await responseService.getAllUserResponses(userId);
+      const res = await responseService.getAllUserResponses(userId);
+      const data = unwrap(res);
       setUserResponses(data);
       return data;
     } catch (err) {

@@ -1,8 +1,8 @@
 // src/context/UserContext.jsx
-import React, { createContext, useState, useContext, useCallback } from "react";
+import React, { createContext, useState, useContext, useCallback, useEffect } from "react";
 import { userService } from "@/services/userService";
 import { toast } from "react-toastify";
-import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Tạo context
 export const UserContext = createContext();
@@ -18,6 +18,7 @@ export const useUser = () => {
 
 // Provider chính
 const UserProvider = ({ children }) => {
+  const { accessToken } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -82,19 +83,15 @@ const UserProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
-  const token =
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("token");
-
-  console.log("TOKEN:", token);
-
-  if (token) {
-    fetchMyInfo();
-  } else {
-    console.log("NO TOKEN → SKIP FETCH");
-  }
-}, [fetchMyInfo]);
+    if (!accessToken) {
+      setUser(null);
+      setError(null);
+      return;
+    }
+    fetchMyInfo().catch(() => {});
+  }, [accessToken, fetchMyInfo]);
 
   // Cập nhật thông tin cá nhân + avatar (PATCH /me)
   const updateMyInfo = async (payload) => {

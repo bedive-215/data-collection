@@ -1,4 +1,8 @@
-
+/** Brand name & tagline (navbar, document title) */
+export const APP_BRAND = {
+  name: "EchoForm",
+  tagline: "Ask. Listen. Improve.",
+};
 
 export const ROUTERS = {
   USER: {
@@ -7,6 +11,7 @@ export const ROUTERS = {
     PROFILE: "/user/profile",
 
     SURVEY_TAKE: "/user/survey/:surveyId",
+    SURVEY_RESPONSE: "/user/survey/:surveyId/response",
 
     SURVEYS: "/user/surveys",
 
