@@ -203,8 +203,11 @@ class SurveyController {
             const result = await SurveyService.bulkInvite(survey_id, user, payload);
             return res.status(200).json({
                 message: result.message,
-                invited: result.invited,
-                failed: result.failed
+                invited: result.created ?? result.invited,
+                failed: result.failed ?? 0,
+                total: result.total,
+                skipped: result.skipped,
+                success: result.success,
             });
         } catch (err) {
             next(err);

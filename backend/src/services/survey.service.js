@@ -53,6 +53,21 @@ class SurveyService {
         );
     }
 
+    /**
+     * URL người dùng mở trên trình duyệt (SPA).
+     * FRONTEND_URL = gốc web (vd http://localhost:5173), khác BASE_URL (API) nếu tách cổng.
+     */
+    _shareSurveyPublicUrl(survey) {
+        const id = survey.id;
+        const token = survey.access_token;
+        const front = (process.env.FRONTEND_URL || "").trim().replace(/\/$/, "");
+        if (front) {
+            return `${front}/user/survey/${id}?access_token=${encodeURIComponent(token)}`;
+        }
+        const apiBase = (process.env.BASE_URL || "").trim().replace(/\/$/, "");
+        return `${apiBase}/surveys/${id}?access_token=${token}`;
+    }
+
     // Create new survey
     async createSurvey(user, payload) {
         const { title, description, start_at, end_at } = payload;
@@ -365,7 +380,30 @@ class SurveyService {
             await t.rollback();
             throw error;
         }
-    }
+
+
+        // chỉ owner hoặc admin mới được lấy link
+        if (!_checkOwnerOrAdmin(user, survey)) {
+            throw new AppError("You do not have permission to share this survey", 403);
+        }
+
+        // nếu chưa phải LINK → chuyển sang LINK
+        if (survey.access_type !== "LINK") {
+            survey.access_type = "LINK";
+        }
+
+        // nếu chưa có token → generate
+        if (!survey.access_token) {
+            survey.access_token = this._generateAccessToken();
+        }
+
+        await survey.save();
+
+        return {
+            message: "Share link generated successfully",
+            url: this._shareSurveyPublicUrl(survey)
+        };
+}
 
     async inviteSurvey(surveyId, user, payload) {
         const { email, role = "respondent" } = payload;
@@ -489,14 +527,14 @@ class SurveyService {
         const created = await this.SurveyParticipant.bulkCreate(toCreate);
 
         // gửi email mời
-        const emailPromises = toCreate.map(p =>
-            sendInviteEmail(
-                p.email,
-                survey.title,
-                `${process.env.BASE_URL}/surveys/${survey.id}`,
-                user.name,
-                user.email
-            )
+        const emailPromises = toCreate.map((p) =>
+            sendInviteEmail({
+                to: p.email,
+                surveyTitle: survey.title,
+                surveyLink: `${process.env.BASE_URL}/surveys/${survey.id}`,
+                senderName: user.name,
+                senderEmail: user.email,
+            }),
         );
 
         const results = await Promise.allSettled(emailPromises);

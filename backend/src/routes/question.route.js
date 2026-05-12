@@ -1,5 +1,6 @@
 import express from "express";
 import QuestionController from "../controllers/question.controller.js";
+import AiQuestionController from "../controllers/aiQuestion.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
 import { validate } from "../middlewares/validate.middleware.js";
@@ -7,9 +8,17 @@ import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { createQuestionRequest } from "../validates/createQuestion.validate.js";
 import { questionIdParams } from "../validates/questionIdParams.validate.js";
 import { updateQuestionParams } from "../validates/updateQuestionParams.validate.js";
-import { deleteQuestionParams } from "../validates/deleteOptionParams.validate.js";
+import { deleteQuestionParams } from "../validates/deleteQuestionParams.validate.js";
+import { aiSuggestQuestionsRequest } from "../validates/aiSuggestQuestions.validate.js";
 
 const router = express.Router();
+
+// AI: gợi ý / phân tích câu hỏi (phải khai báo trước POST /:survey_id để tránh nuốt path)
+router.post(
+  "/:survey_id/ai/suggest",
+  validate(aiSuggestQuestionsRequest),
+  AiQuestionController.suggest
+);
 
 // Create question
 router.post(
