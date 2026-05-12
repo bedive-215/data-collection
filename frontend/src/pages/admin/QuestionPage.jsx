@@ -1374,7 +1374,7 @@ export default function QuestionPage() {
 
   const handleDelete = async (id) => {
     setDeletingId(id);
-    try { await deleteQuestion(id); if (activeId === id) setActiveId(null); }
+    try { await deleteQuestion(id, surveyId); if (activeId === id) setActiveId(null); }
     finally { setDeletingId(null); }
   };
 
