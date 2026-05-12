@@ -35,13 +35,13 @@ const C = {
   warning:      "#f59e0b",
   warningBg:    "#fffbeb",
   warningBorder:"#fde68a",
-  font:         "'Inter', sans-serif",
+  font:         "'DM Sans', 'Inter', sans-serif",
   thumbColors:  [
-    "linear-gradient(135deg,#dbeafe,#c7d2fe)",
-    "linear-gradient(135deg,#dcfce7,#bbf7d0)",
-    "linear-gradient(135deg,#fee2e2,#fecaca)",
-    "linear-gradient(135deg,#e0f2fe,#bae6fd)",
-    "linear-gradient(135deg,#f3e8ff,#e9d5ff)",
+    "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
+    "conic-gradient(from 0deg at 50% 50%, #a8edea, #fed6e3, #ff9999, #a8edea)",
+    "conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #f093fb, #667eea)",
+    "conic-gradient(from 0deg at 50% 50%, #f5af19, #f12711, #fa709a, #f5af19)",
+    "conic-gradient(from 0deg at 50% 50%, #4facfe, #00f2fe, #43e97b, #4facfe)",
   ],
 };
 
@@ -55,6 +55,52 @@ const STATUS_MAP = {
   SCHEDULED: { label:"Lên lịch", color:C.warning, bg:"rgba(245,158,11,.12)" },
   CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,.12)" },
 };
+
+function RotatingGradient() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: -1,
+        opacity: 0.12,
+        animation: "rotateGradient 15s linear infinite",
+        background: "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
+      }}
+    />
+  );
+}
+
+function GlassmorphCard({ children, style = {}, delay = 0 }) {
+  return (
+    <div
+      style={{
+        background: "rgba(255, 255, 255, 0.7)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        border: "1px solid rgba(255, 255, 255, 0.25)",
+        borderRadius: "20px",
+        padding: "24px",
+        animation: `slideInUp 0.8s ease-out ${delay}s both`,
+        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)",
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-12px) rotateX(8deg) rotateZ(2deg)";
+        e.currentTarget.style.boxShadow = "0 20px 60px rgba(31, 38, 135, 0.3), 0 0 40px rgba(255, 107, 107, 0.2)";
+        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.4)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0) rotateX(0) rotateZ(0)";
+        e.currentTarget.style.boxShadow = "0 8px 32px rgba(31, 38, 135, 0.15)";
+        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.25)";
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function StatusBadge({ status }) {
   if (!status) return null;
@@ -989,6 +1035,8 @@ function SurveyCard({
   const [endAt,       setEndAt]       = useState(survey.end_at   ? survey.end_at.slice(0,16)   : "");
   const [saving,      setSaving]      = useState(false);
   const [deleting,    setDeleting]    = useState(false);
+  const [rotateX,     setRotateX]     = useState(0);
+  const [rotateY,     setRotateY]     = useState(0);
 
   const [shareOpen,        setShareOpen]        = useState(false);
   const [inviteOpen,       setInviteOpen]       = useState(false);
@@ -1005,6 +1053,12 @@ function SurveyCard({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRotateX((e.clientY - rect.top - rect.height / 2) / 10);
+    setRotateY((e.clientX - rect.left - rect.width / 2) / 10);
+  };
 
   const handleSave = async () => {
     try {
@@ -1076,23 +1130,35 @@ function SurveyCard({
         style={{
           background: C.surface,
           border: `1px solid ${C.border}`,
-          borderRadius: 18,
+          borderRadius: 20,
           overflow: "hidden",
-          transition: ".2s",
+          transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
           cursor: "pointer",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          animation: `slideInUp 0.8s ease-out ${0.1 + index * 0.1}s both`,
+          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          perspective: "1200px",
+          position: "relative",
+          transformStyle: "preserve-3d",
+          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         }}
-        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(79,110,247,.12)"; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
+        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 30px 80px rgba(0,0,0,0.25)"; }}
         onClick={() => !editing && navigate(`/user/my-surveys/${survey.id}`)}
       >
-        {/* THUMB */}
+        {/* Thumbnail */}
         <div style={{
           height:140, background: isClosed ? "linear-gradient(135deg,#f1f5f9,#e2e8f0)" : thumb,
           position:"relative", borderBottom:`1px solid ${C.border}`,
           display:"flex", alignItems:"center", justifyContent:"center",
           opacity: isClosed ? 0.7 : 1,
+          overflow: "hidden", flexShrink: 0,
         }}>
-          <FileText size={44} color="rgba(79,110,247,.35)"/>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(45deg, rgba(255,255,255,0.1), transparent 50%, rgba(0,0,0,0.05))" }} />
+          <FileText size={56} color={isClosed ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.2)"} strokeWidth={0.8} />
 
           {/* Badges top-left */}
           <div style={{position:"absolute", top:10, left:10, display:"flex", flexDirection:"column", gap:4}}>
@@ -1166,7 +1232,10 @@ function SurveyCard({
                 width:34, height:34, borderRadius:"50%",
                 border:"none", background:"rgba(255,255,255,.85)",
                 cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                transition: "all 0.2s",
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,1)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,.85)"; e.currentTarget.style.boxShadow = "none"; }}
             >
               <MoreVertical size={16}/>
             </button>
@@ -1177,6 +1246,7 @@ function SurveyCard({
                 background:C.surface, border:`1px solid ${C.border}`,
                 borderRadius:14, overflow:"hidden",
                 boxShadow:"0 10px 30px rgba(0,0,0,.1)", zIndex:20,
+                animation: "slideInUp 0.2s ease-out",
               }}>
                 {menuItems.map((item, i) => (
                   <button key={i} onClick={item.action} style={{
@@ -1219,15 +1289,15 @@ function SurveyCard({
             </div>
           ) : (
             <>
-              <h3 style={{fontSize:16, fontWeight:700, color:C.text, marginBottom:8, lineHeight:1.4}}>
+              <h3 style={{fontSize:16, fontWeight:700, color:C.text, marginBottom:8, lineHeight:1.4, marginTop: 0}}>
                 {survey.title}
               </h3>
-              <p style={{fontSize:13, color:C.textSub, lineHeight:1.6, minHeight:60}}>
+              <p style={{fontSize:13, color:C.textSub, lineHeight:1.6, minHeight:60, marginBottom: 12, marginTop: 0}}>
                 {survey.description || "Không có mô tả"}
               </p>
 
               {/* Footer */}
-              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12}}>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:"auto"}}>
                 <div style={{display:"flex", alignItems:"center", gap:6, fontSize:12, color:C.textDim}}>
                   <Calendar size={14}/>
                   {survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : ""}
@@ -1391,25 +1461,36 @@ export default function MySurveysPage() {
   );
 
   return (
-    <main style={{ minHeight:"100vh", background:C.bg, fontFamily:C.font }}>
+    <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow: "hidden" }}>
+      <RotatingGradient />
 
       {/* HEADER */}
       <div style={{
-        background:"#fff", borderBottom:`1px solid ${C.border}`,
+        background:"rgba(255, 255, 255, 0.7)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom:`1px solid rgba(255, 255, 255, 0.25)`,
         padding:"0 24px", height:70,
         display:"flex", alignItems:"center", justifyContent:"space-between", gap:20,
+        position: "relative", zIndex: 10,
       }}>
-        <div>
-          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0}}>My Surveys</h1>
+        <div style={{ animation: "slideInDown 0.8s ease-out" }}>
+          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0, background: "linear-gradient(135deg, #4f6ef7, #764ba2)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"}}>My Surveys</h1>
           <p style={{margin:"4px 0 0", fontSize:13, color:C.textSub}}>Tạo và quản lý survey của bạn</p>
         </div>
 
         {/* SEARCH */}
         <div style={{
           flex:1, maxWidth:520, height:42, borderRadius:999,
-          background:"#fff", border:`1px solid ${C.border}`,
+          background:"rgba(255, 255, 255, 0.7)",
+          backdropFilter: "blur(10px)",
+          border:`1px solid rgba(255, 255, 255, 0.5)`,
           display:"flex", alignItems:"center", gap:10, padding:"0 16px",
-        }}>
+          transition: "all 0.3s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)"; e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.3)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)"; e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)"; }}
+        >
           <Search size={15} color={C.textSub}/>
           <input
             value={search}
@@ -1431,29 +1512,35 @@ export default function MySurveysPage() {
             display:"flex", alignItems:"center", gap:8,
             padding:"10px 18px", borderRadius:14,
             border: showCreateForm ? `1px solid ${C.border}` : "none",
-            background: showCreateForm ? "#fff" : C.primaryGrad,
+            background: showCreateForm ? "rgba(255, 255, 255, 0.9)" : C.primaryGrad,
             color: showCreateForm ? C.textSub : "#fff",
             cursor:"pointer", fontWeight:700, fontFamily:C.font, fontSize:13,
-            boxShadow: showCreateForm ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
+            boxShadow: showCreateForm ? "none" : "0 8px 20px rgba(79, 110, 247, 0.3)",
             transition:"all .15s",
           }}
+          onMouseEnter={(e) => { if (!showCreateForm) e.currentTarget.style.transform = "translateY(-2px)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
         >
           {showCreateForm ? <X size={16}/> : <Plus size={16}/>}
           {showCreateForm ? "Huỷ" : "Survey mới"}
         </button>
       </div>
 
-      <div style={{maxWidth:1200, margin:"0 auto", padding:24}}>
+      <div style={{maxWidth:1200, margin:"0 auto", padding:24, position: "relative", zIndex: 1}}>
 
         {/* FORM */}
         {showCreateForm && (
           <div style={{
-            background:"#fff", borderRadius:20,
-            border:`1px solid ${C.border}`,
+            background:"rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderRadius:20,
+            border:`1px solid rgba(255, 255, 255, 0.25)`,
             padding:24, marginBottom:28,
-            boxShadow:"0 4px 20px rgba(0,0,0,0.06)",
+            boxShadow:"0 8px 32px rgba(31, 38, 135, 0.15)",
+            animation: "slideInUp 0.6s ease-out",
           }}>
-            <h2 style={{fontSize:18, fontWeight:700, marginBottom:20, color:C.text}}>
+            <h2 style={{fontSize:18, fontWeight:700, marginBottom:20, color:C.text, marginTop: 0}}>
               Tạo Survey Mới
             </h2>
             <form onSubmit={handleSubmit}>
@@ -1502,25 +1589,22 @@ export default function MySurveysPage() {
 
         {/* LOADING */}
         {loading && (
-          <div style={{display:"flex", justifyContent:"center", padding:"80px 0"}}>
+          <div style={{display:"flex", justifyContent:"center", padding:"80px 0", color:C.textDim}}>
             <Loader2 size={34} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
           </div>
         )}
 
         {/* EMPTY */}
         {!loading && filtered.length === 0 && (
-          <div style={{
-            background:"#fff", borderRadius:28, border:`1px solid ${C.border}`,
-            padding:"80px 20px", textAlign:"center",
-          }}>
+          <GlassmorphCard style={{ textAlign:"center", padding:"80px 20px" }}>
             <Inbox size={54} color={C.textDim}/>
-            <h3 style={{marginTop:16, color:C.text, fontWeight:700}}>
+            <h3 style={{marginTop:16, color:C.text, fontWeight:700, marginBottom: 8}}>
               {search ? `Không tìm thấy "${search}"` : "Chưa có survey nào"}
             </h3>
             <p style={{color:C.textSub, margin:"8px 0 0"}}>
               {search ? "Thử tìm với từ khóa khác" : "Hãy tạo survey đầu tiên"}
             </p>
-          </div>
+          </GlassmorphCard>
         )}
 
         {/* GRID */}
@@ -1530,7 +1614,7 @@ export default function MySurveysPage() {
               display:"flex", alignItems:"center", justifyContent:"space-between",
               marginBottom:16,
             }}>
-              <span style={{fontSize:13, color:C.textSub}}>
+              <span style={{fontSize:13, color:C.textSub, animation: "slideInUp 0.6s ease-out 0.1s both"}}>
                 {filtered.length} survey{search ? ` · kết quả cho "${search}"` : ""}
               </span>
             </div>
@@ -1560,7 +1644,15 @@ export default function MySurveysPage() {
         )}
       </div>
 
-      <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+        @keyframes spin{to{transform:rotate(360deg);}}
+        @keyframes slideInUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes slideInDown { from { opacity:0; transform:translateY(-40px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes rotateGradient { 0% { transform:rotate(0deg) } 100% { transform:rotate(360deg) } }
+        * { box-sizing:border-box }
+        button { font-family:'DM Sans',sans-serif }
+      `}</style>
     </main>
   );
 }

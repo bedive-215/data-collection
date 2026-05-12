@@ -9,6 +9,7 @@ import {
   AlignLeft, CheckSquare, Loader2, Send, Home,
   FileText, Mail, Calendar, Hash, Star, ChevronDown,
 } from "lucide-react";
+import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
 /* ── Type config ───────────────────────────────────────────────────── */
 const TYPE_CONFIG = {
@@ -30,12 +31,12 @@ function ProgressBar({ current, total }) {
     <div style={{ marginBottom: "2rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>Câu hỏi {current} / {total}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7" }}>{pct}%</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#4f46e5" }}>{pct}%</span>
       </div>
-      <div style={{ height: 6, background: "#e5e7eb", borderRadius: 99, overflow: "hidden" }}>
+      <div style={{ height: 6, background: "rgba(15,23,42,0.08)", borderRadius: 99, overflow: "hidden" }}>
         <div style={{
           height: "100%", width: `${pct}%`,
-          background: "linear-gradient(90deg,#6a8fff,#4f6ef7)",
+          background: "linear-gradient(90deg,#6366f1,#4f46e5)",
           borderRadius: 99, transition: "width .4s cubic-bezier(.4,0,.2,1)",
         }} />
       </div>
@@ -43,7 +44,7 @@ function ProgressBar({ current, total }) {
         {Array.from({ length: total }).map((_, i) => (
           <div key={i} style={{
             width: i === current - 1 ? 20 : 8, height: 8, borderRadius: 99,
-            background: i < current ? "#4f6ef7" : "#e5e7eb", transition: "all .3s ease",
+            background: i < current ? "#4f46e5" : "rgba(15,23,42,0.1)", transition: "all .3s ease",
           }} />
         ))}
       </div>
@@ -55,14 +56,19 @@ function ProgressBar({ current, total }) {
 function SuccessScreen({ onGoHome }) {
   return (
     <div style={{
-      minHeight: "100vh", background: "#f4f5f7",
+      minHeight: "100vh", background: "transparent", position: "relative",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "2rem",
+      fontFamily: "'DM Sans','Inter',sans-serif", padding: "2rem",
     }}>
+      <AnimatedSurveyBackdrop />
       <div style={{
-        background: "#fff", border: "1px solid #e5e7eb", borderRadius: 24,
+        position: "relative", zIndex: 1,
+        background: "rgba(255,255,255,0.86)", backdropFilter: "blur(22px) saturate(180%)",
+        WebkitBackdropFilter: "blur(22px) saturate(180%)",
+        border: "1px solid rgba(255,255,255,0.55)", borderRadius: 22,
         padding: "3rem 2.5rem", maxWidth: 440, width: "100%",
-        textAlign: "center", boxShadow: "0 4px 32px rgba(79,110,247,0.12)",
+        textAlign: "center",
+        boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 18px 48px rgba(15,23,42,0.1)",
         animation: "fadeUp .4s ease",
       }}>
         <div style={{
@@ -87,7 +93,7 @@ function SuccessScreen({ onGoHome }) {
           style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
             gap: 8, padding: "13px 32px",
-            background: "linear-gradient(135deg,#4f6ef7,#6a8fff)",
+            background: "linear-gradient(135deg,#4361ee,#6c7ef7)",
             color: "#fff", border: "none", borderRadius: 12,
             fontSize: 15, fontWeight: 700, cursor: "pointer",
             fontFamily: "inherit", width: "100%",
@@ -297,8 +303,11 @@ function QuestionCard({ question, answer, onChange }) {
 
   return (
     <div style={{
-      background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20,
-      padding: "2rem", boxShadow: "0 2px 16px rgba(79,110,247,0.06)",
+      background: "rgba(255,255,255,0.88)", backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      border: "1px solid rgba(255,255,255,0.6)", borderRadius: 20,
+      padding: "2rem",
+      boxShadow: "0 2px 0 rgba(255,255,255,0.85) inset, 0 14px 40px rgba(15,23,42,0.08)",
     }}>
       {/* Type badge */}
       <span style={{
@@ -748,11 +757,13 @@ export default function SurveyTakePage() {
   const validationHint = getValidationHint();
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#f4f5f7",
-      fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "2.5rem 1.5rem",
+    <main style={{
+      minHeight: "100vh", background: "transparent", position: "relative",
+      fontFamily: "'DM Sans','Inter',sans-serif", padding: "2.5rem 1.5rem",
+      overflowX: "hidden",
     }}>
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <AnimatedSurveyBackdrop />
+      <div style={{ maxWidth: 640, margin: "0 auto", position: "relative", zIndex: 1 }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "1.75rem" }}>
@@ -761,15 +772,15 @@ export default function SurveyTakePage() {
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               width: 38, height: 38, borderRadius: 10,
-              border: "1px solid #e5e7eb", background: "#fff",
-              cursor: "pointer", color: "#374151", flexShrink: 0,
+              border: "1px solid rgba(0,0,0,0.08)", background: "rgba(255,255,255,0.75)",
+              backdropFilter: "blur(8px)", cursor: "pointer", color: "#334155", flexShrink: 0,
             }}
           >
             <ChevronLeft size={18} />
           </button>
           <div>
-            <h1 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: 0 }}>Làm khảo sát</h1>
-            <p style={{ fontSize: 11, color: "#9ca3af", margin: 0, fontFamily: "monospace" }}>{surveyId}</p>
+            <h1 style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", margin: 0 }}>Làm khảo sát</h1>
+            <p style={{ fontSize: 11, color: "#94a3b8", margin: 0, fontFamily: "monospace" }}>{surveyId}</p>
           </div>
         </div>
 
@@ -780,7 +791,7 @@ export default function SurveyTakePage() {
             alignItems: "center", justifyContent: "center",
             padding: "5rem 0", gap: 14, color: "#9ca3af",
           }}>
-            <Loader2 size={32} color="#4f6ef7" style={{ animation: "spin 1s linear infinite" }} />
+            <Loader2 size={32} color="#4f46e5" style={{ animation: "spin 1s linear infinite" }} />
             <p style={{ fontSize: 14, margin: 0 }}>
               {loading ? "Đang tải câu hỏi..." : "Đang tải lựa chọn..."}
             </p>
@@ -790,8 +801,9 @@ export default function SurveyTakePage() {
         {/* Empty */}
         {!isPageLoading && total === 0 && (
           <div style={{
-            background: "#fff", borderRadius: 20, padding: "3rem",
-            textAlign: "center", color: "#9ca3af", border: "1px solid #e5e7eb",
+            background: "rgba(255,255,255,0.82)", backdropFilter: "blur(14px)", borderRadius: 20, padding: "3rem",
+            textAlign: "center", color: "#64748b", border: "1px solid rgba(255,255,255,0.55)",
+            boxShadow: "0 12px 32px rgba(15,23,42,0.06)",
           }}>
             <p style={{ fontSize: 15, margin: 0 }}>Khảo sát này chưa có câu hỏi nào.</p>
           </div>
@@ -824,8 +836,8 @@ export default function SurveyTakePage() {
                   disabled={submitting}
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
-                    padding: "13px 20px", background: "#fff",
-                    border: "1.5px solid #e5e7eb", borderRadius: 12,
+                    padding: "13px 20px", background: "rgba(255,255,255,0.85)",
+                    border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12,
                     fontSize: 14, fontWeight: 600, color: "#374151",
                     cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit",
                   }}
@@ -841,8 +853,8 @@ export default function SurveyTakePage() {
                   style={{
                     flex: 1, display: "flex", alignItems: "center",
                     justifyContent: "center", gap: 8, padding: "13px 20px",
-                    background: canProceed() ? "#4f6ef7" : "#e5e7eb",
-                    color: canProceed() ? "#fff" : "#9ca3af",
+                    background: canProceed() ? "linear-gradient(135deg,#4361ee,#6c7ef7)" : "rgba(15,23,42,0.08)",
+                    color: canProceed() ? "#fff" : "#94a3b8",
                     border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
                     cursor: canProceed() ? "pointer" : "not-allowed",
                     transition: "all .15s", fontFamily: "inherit",
@@ -857,8 +869,8 @@ export default function SurveyTakePage() {
                   style={{
                     flex: 1, display: "flex", alignItems: "center",
                     justifyContent: "center", gap: 8, padding: "13px 20px",
-                    background: canProceed() && !submitting ? "#16a34a" : "#e5e7eb",
-                    color: canProceed() && !submitting ? "#fff" : "#9ca3af",
+                    background: canProceed() && !submitting ? "linear-gradient(135deg,#059669,#10b981)" : "rgba(15,23,42,0.08)",
+                    color: canProceed() && !submitting ? "#fff" : "#94a3b8",
                     border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
                     cursor: canProceed() && !submitting ? "pointer" : "not-allowed",
                     transition: "all .15s", fontFamily: "inherit",
@@ -882,6 +894,6 @@ export default function SurveyTakePage() {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-    </div>
+    </main>
   );
 }
