@@ -164,7 +164,7 @@ const QuestionProvider = ({ children }) => {
   const updateQuestion = async (questionId, surveyId, payload) => {
     setLoading(true);
     try {
-      const res = await questionService.updateQuestion(questionId, payload);
+      const res = await questionService.updateQuestion(questionId, surveyId, payload);
       await fetchQuestionsBySurvey(surveyId);
       showToast("Cập nhật câu hỏi thành công!");
       return normalize(res.data.question);
@@ -178,10 +178,10 @@ const QuestionProvider = ({ children }) => {
   };
 
   /* ── DELETE ─────────────────────────────────────────────────────── */
-  const deleteQuestion = async (questionId) => {
+  const deleteQuestion = async (questionId, surveyId) => {
   setLoading(true);
     try {
-      await questionService.deleteQuestion(questionId);
+      await questionService.deleteQuestion(questionId, surveyId);
       setQuestions((prev) => prev.filter((q) => q.id !== questionId));
       showToast("Xóa câu hỏi thành công!");
     } catch (err) {

@@ -261,6 +261,22 @@ class SurveyController {
             next(err);
         }
     }
+
+    // Gia hạn thời gian khảo sát
+    async extendDeadline(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const user = req.user;
+            const result = await SurveyService.extendDeadline(survey_id, user, req.body);
+
+            return res.status(200).json({
+                message: result.message,
+                data: result.survey
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 export default new SurveyController();

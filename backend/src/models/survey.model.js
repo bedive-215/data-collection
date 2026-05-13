@@ -57,6 +57,12 @@ export default (sequelize) => {
             type: DataTypes.ENUM('PUBLIC', 'LINK', 'PRIVATE'),
             defaultValue: 'PRIVATE'
         },
+
+        notified_expired: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+            defaultValue: false
+        }
     }, {
         tableName: "surveys",
         timestamps: true,

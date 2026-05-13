@@ -8,6 +8,7 @@ import ResponseModel from "./response.model.js";
 import AnswerModel from "./answer.model.js";
 import SurveyParticipantModel from "./surveyParticipant.model.js";
 import SurveyAccessModel from "./surveyAccess.model.js";
+import NotificationModel from "./notification.model.js";
 
 
 const User = UserModel(sequelize);
@@ -19,6 +20,7 @@ const Response = ResponseModel(sequelize);
 const Answer = AnswerModel(sequelize);
 const SurveyParticipant = SurveyParticipantModel(sequelize);
 const SurveyAccess = SurveyAccessModel(sequelize);
+const Notification = NotificationModel(sequelize);
 
 // Define associations
 User.hasMany(UserOAuth, { foreignKey: "user_id", as: "oauth_providers" });
@@ -68,6 +70,10 @@ Survey.hasOne(SurveyAccess, { foreignKey: 'survey_id', as: 'survey_access' });
 
 SurveyAccess.belongsTo(Survey, { foreignKey: 'survey_id', as: 'survey', onDelete: 'CASCADE' });
 
+// Notifications
+User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user', onDelete: 'CASCADE' });
+
 const models = {
     User,
     UserOAuth,
@@ -78,6 +84,7 @@ const models = {
     Answer,
     SurveyParticipant,
     SurveyAccess,
+    Notification,
     sequelize,
 };
 

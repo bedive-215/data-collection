@@ -1,26 +1,17 @@
-// File: src/navigation/BottomTabNavigator.jsx
-import React, { useEffect, useRef } from 'react';
+﻿// File: src/navigation/BottomTabNavigator.jsx
+import React, { useEffect, useRef, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
-  Platform,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Dimensions,
-  Animated,
+  Platform, View, StyleSheet, TouchableOpacity, Text,
+  Dimensions, Animated
 } from 'react-native';
+import { useNotification } from '../providers/NotificationProvider';
 
 // Screens
-import HomeScreen    from '../screens/home/HomeScreen';
-import SurveysLayout from '../layouts/Surveyslayout'; // ← đổi sang Layout
+import HomeScreen from '../screens/home/HomeScreen';
+import SurveysLayout from '../layouts/Surveyslayout';
 import ProfileScreen from '../screens/home/ProfileScreen';
-
-const WarrantyScreen = () => (
-  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-    <Text>Warranty</Text>
-  </View>
-);
+import NotificationsScreen from '../screens/home/NotificationsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -37,8 +28,8 @@ const CustomTabButton = ({ children, onPress, accessibilityState }) => (
 
 // ===== Tab Icon với animation nổi lên =====
 const TabBarIcon = ({ emoji, focused, badge = 0 }) => {
-  const translateY     = useRef(new Animated.Value(0)).current;
-  const scaleAnim      = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const badgeScaleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -96,39 +87,39 @@ const TabBarIcon = ({ emoji, focused, badge = 0 }) => {
 
 // ===== Bottom Tab Navigator =====
 export default function BottomTabNavigator() {
-  const [warrantyBadge] = React.useState(0);
+  const { unreadCount } = useNotification();
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
+      initialRouteName='HomeTab'
       screenOptions={{
-        tabBarActiveTintColor:   '#F97316',
+        tabBarActiveTintColor: '#F97316',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarShowLabel: true,
-        headerShown:     false,
+        headerShown: false,
         tabBarStyle: {
-          position:       'absolute',
-          bottom:         0,
-          left:           0,
-          right:          0,
-          height:         Platform.OS === 'ios' ? 100 : 80,
-          paddingBottom:  Platform.OS === 'ios' ? 30 : 15,
-          paddingTop:     15,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: Platform.OS === 'ios' ? 100 : 80,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+          paddingTop: 15,
           paddingHorizontal: 10,
-          backgroundColor:   '#FFFFFF',
-          borderTopWidth:    0,
-          elevation:         30,
-          shadowColor:       '#000',
-          shadowOffset:      { width: 0, height: -8 },
-          shadowOpacity:     0.1,
-          shadowRadius:      20,
-          borderTopLeftRadius:  25,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 0,
+          elevation: 30,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.1,
+          shadowRadius: 20,
+          borderTopLeftRadius: 25,
           borderTopRightRadius: 25,
         },
         tabBarLabelStyle: {
-          fontSize:     11,
-          fontWeight:   '600',
-          marginTop:    8,
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 8,
           letterSpacing: 0.3,
         },
         tabBarItemStyle: {
@@ -138,47 +129,45 @@ export default function BottomTabNavigator() {
     >
       {/* Trang chủ */}
       <Tab.Screen
-        name="HomeTab"
+        name='HomeTab'
         component={HomeScreen}
         options={{
           tabBarLabel: 'Trang chủ',
           tabBarButton: (props) => <CustomTabButton {...props} />,
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="🏠" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabBarIcon emoji='🏠' focused={focused} />,
         }}
       />
 
-      {/* Khảo sát — dùng SurveysLayout */}
+      {/* Khảo sát */}
       <Tab.Screen
-        name="OrdersTab"
+        name='OrdersTab'
         component={SurveysLayout}
         options={{
           tabBarLabel: 'Khảo sát',
           tabBarButton: (props) => <CustomTabButton {...props} />,
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="📋" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabBarIcon emoji='📋' focused={focused} />,
         }}
       />
 
-      {/* Bảo hành */}
+      {/* Thông báo */}
       <Tab.Screen
-        name="WarrantyTab"
-        component={WarrantyScreen}
+        name='NotificationsTab'
+        component={NotificationsScreen}
         options={{
-          tabBarLabel: 'Bảo hành',
+          tabBarLabel: 'Thông báo',
           tabBarButton: (props) => <CustomTabButton {...props} />,
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="🛡️" focused={focused} badge={warrantyBadge} />
-          ),
+          tabBarIcon: ({ focused }) => <TabBarIcon emoji='🔔' focused={focused} badge={unreadCount} />,
         }}
       />
 
       {/* Cá nhân */}
       <Tab.Screen
-        name="ProfileTab"
+        name='ProfileTab'
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Cá nhân',
           tabBarButton: (props) => <CustomTabButton {...props} />,
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="👤" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabBarIcon emoji='👤' focused={focused} />,
         }}
       />
     </Tab.Navigator>
@@ -214,45 +203,45 @@ const styles = StyleSheet.create({
   },
   iconBackgroundFocused: {
     backgroundColor: '#F97316',
-    shadowColor:     '#F97316',
-    shadowOffset:    { width: 0, height: 10 },
-    shadowOpacity:   0.5,
-    shadowRadius:    20,
-    elevation:       15,
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 15,
   },
   whiteFilter: {
-    position:        'absolute',
+    position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius:    27,
+    borderRadius: 27,
   },
   emojiIcon: {
     textAlign: 'center',
-    zIndex:    10,
+    zIndex: 10,
   },
   badge: {
-    position:        'absolute',
-    top:             -2,
-    right:           8,
+    position: 'absolute',
+    top: -2,
+    right: 8,
     backgroundColor: '#EF4444',
-    borderRadius:    10,
-    minWidth:        20,
-    height:          20,
-    alignItems:      'center',
-    justifyContent:  'center',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 5,
-    borderWidth:     2,
-    borderColor:     '#FFFFFF',
-    shadowColor:     '#EF4444',
-    shadowOffset:    { width: 0, height: 2 },
-    shadowOpacity:   0.6,
-    shadowRadius:    5,
-    elevation:       6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 5,
+    elevation: 6,
   },
   badgeText: {
-    color:         '#FFFFFF',
-    fontSize:      10,
-    fontWeight:    '900',
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
     letterSpacing: -0.3,
   },
 });

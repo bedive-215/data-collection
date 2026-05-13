@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
+import { NotificationPanel } from "../../common/Notification";
 
 const font = "'DM Sans', 'Inter', system-ui, sans-serif";
 
@@ -331,14 +332,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button
-              type="button"
-              className="relative hidden md:grid place-items-center w-10 h-10 rounded-xl border-0 bg-transparent text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/80 cursor-pointer transition-colors"
-              aria-label="Thông báo"
-            >
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-white" />
-              <Bell size={19} strokeWidth={2} />
-            </button>
+            <NotificationPanel />
 
             <div className="relative" ref={dropdownRef}>
               <button

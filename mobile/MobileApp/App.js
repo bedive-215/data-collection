@@ -8,23 +8,26 @@ import ResponseProvider     from "./src/providers/Responseprovider";
 import SurveyProvider       from "./src/providers/Surveyprovider";
 import QuestionProvider     from "./src/providers/Questionprovider";
 import OptionProvider from "./src/providers/OptionProvider";
-import UserProvider  from "./src/providers/UserProvider"; 
+import UserProvider  from "./src/providers/UserProvider";
+import NotificationProvider from "./src/providers/NotificationProvider";
 export default function App() {
   return (
     <AuthProvider>
       <UserProvider>
         <OptionProvider>
-      <ResponseProvider>
-        <SurveyProvider>
-          <QuestionProvider>
-            <NavigationContainer>
-              <RootNavigator />
-            </NavigationContainer>
-            <Toast />
-          </QuestionProvider>
-        </SurveyProvider>
-      </ResponseProvider>
-      </OptionProvider>
+          <ResponseProvider>
+            <SurveyProvider>
+              <QuestionProvider>
+                <NotificationProvider>
+                  <NavigationContainer>
+                    <RootNavigator />
+                  </NavigationContainer>
+                  <Toast />
+                </NotificationProvider>
+              </QuestionProvider>
+            </SurveyProvider>
+          </ResponseProvider>
+        </OptionProvider>
       </UserProvider>
     </AuthProvider>
   );

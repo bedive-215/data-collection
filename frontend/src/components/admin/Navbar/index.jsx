@@ -1,6 +1,7 @@
 import React from "react";
 import { Bell, Settings, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationPanel } from "../../common/Notification";
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -31,10 +32,7 @@ export default function Navbar() {
       <div className="flex items-center gap-2">
 
         {/* Notifications */}
-        <button className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-blue-300 hover:bg-white/5 transition-all duration-200 active:scale-95">
-          <Bell size={18} strokeWidth={1.5} />
-          <span className="text-sm font-medium">Notifications</span>
-        </button>
+        <NotificationPanel />
 
         {/* Settings */}
         <button className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-blue-300 hover:bg-white/5 transition-all duration-200 active:scale-95">

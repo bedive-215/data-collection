@@ -13,7 +13,7 @@ const REFRESH_TOKEN_KEY = "refresh_token";
 // ============================
 // Context
 // ============================
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 // ============================
 // Decode JWT safely

@@ -6,7 +6,11 @@ import routerQuestion from './question.route.js';
 import routerResponse from './response.route.js';
 import routerOption from './option.route.js';
 import routerAdminStats from './adminStats.route.js';
+<<<<<<< HEAD
 import routerAnalytics from './surveyAnalytic.route.js'
+=======
+import routerNotification from './notification.route.js';
+>>>>>>> 2aa7318e04f618247071239c079a186ea22dd2c7
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -34,5 +38,8 @@ router.use('/admin-stats', routerAdminStats);
 
 router.use('/analytics', authMiddleware.auth.bind(authMiddleware));
 router.use('/analytics', routerAnalytics);
+
+router.use('/notifications', authMiddleware.auth.bind(authMiddleware));
+router.use('/notifications', routerNotification);
 
 export default router;

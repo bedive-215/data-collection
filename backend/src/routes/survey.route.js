@@ -59,8 +59,14 @@ route.patch('/:survey_id/publish',
     validate(surveyIdParams), 
     SurveyController.publicSurvey
 );
-// Share link
-route.patch('/:survey_id/share', 
+// Gia hạn thời gian khảo sát
+route.patch('/:survey_id/extend',
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    SurveyController.extendDeadline
+);
+
+route.patch('/:survey_id/share',
     validate(surveyIdParams),
     authMiddleware.checkSurveyAccess('editor'),
     SurveyController.shareLink
