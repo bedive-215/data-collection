@@ -6,6 +6,7 @@ import routerQuestion from './question.route.js';
 import routerResponse from './response.route.js';
 import routerOption from './option.route.js';
 import routerAdminStats from './adminStats.route.js';
+import routerNotification from './notification.route.js';
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -30,5 +31,8 @@ router.use('/options', routerOption);
 
 router.use('/admin-stats', authMiddleware.auth.bind(authMiddleware));
 router.use('/admin-stats', routerAdminStats);
+
+router.use('/notifications', authMiddleware.auth.bind(authMiddleware));
+router.use('/notifications', routerNotification);
 
 export default router;

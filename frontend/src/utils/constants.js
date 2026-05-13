@@ -9,6 +9,7 @@ export const ROUTERS = {
     HOME: "/user/home",
     DASHBOARD: "/user/dashboard",
     PROFILE: "/user/profile",
+    NOTIFICATIONS: "/user/notifications",
 
     SURVEY_TAKE: "/user/survey/:surveyId",
     SURVEY_RESPONSE: "/user/survey/:surveyId/response",
@@ -29,6 +30,7 @@ export const ROUTERS = {
     SURVEYS: "/admin/surveys",
     SURVEY_DETAIL:
       "/admin/surveys/:surveyId",
+    NOTIFICATIONS: "/admin/notifications",
   },
 
   PUBLIC: {

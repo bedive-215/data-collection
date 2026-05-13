@@ -35,6 +35,7 @@ import SurveysPage from "@/pages/user/SurveysPage";
 import MySurveysPage from "@/pages/user/MySurveysPage";
 import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
 import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
+import NotificationsPage from "@/pages/user/NotificationsPage";
 
 // Errors
 import NotFound from "@/pages/error/NotFound";
@@ -104,6 +105,11 @@ const routeConfig = [
     path:
       ROUTERS.USER.MY_SURVEY_DETAIL,
     element: MySurveyQuestionPage,
+    layout: HomeLayout,
+  },
+  {
+    path: ROUTERS.USER.NOTIFICATIONS,
+    element: NotificationsPage,
     layout: HomeLayout,
   },
 

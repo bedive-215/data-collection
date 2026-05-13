@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import App from "@/App";
 import "@/index.css";
@@ -13,6 +15,7 @@ import QuestionProvider from "@/providers/Questionprovider";
 import ResponseProvider from "@/providers/Responseprovider";
 import OptionProvider from "./providers/OptionProvider";
 import AdminStatsProvider from "./providers/AdminStatsProvider";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 console.log("🚀 Rendering App...");
 
@@ -28,8 +31,21 @@ root.render(
               <ResponseProvider>
                 <AdminStatsProvider>
                 <OptionProvider>
+                <NotificationProvider>
                 <App />
-                
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={3000}
+                  hideProgressBar={false}
+                  newestOnTop={true}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="light"
+                />
+                </NotificationProvider>
                 </OptionProvider>
                 </AdminStatsProvider>
               </ResponseProvider>

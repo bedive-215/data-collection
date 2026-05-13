@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import notificationService from "./notification.service.js";
 
 class ResponseService {
     constructor() {
@@ -197,6 +198,15 @@ class ResponseService {
             await this.Answer.bulkCreate(answerRecords, { transaction });
 
             await transaction.commit();
+
+            // Send notification to survey owner
+            const survey = await this.Survey.findByPk(survey_id);
+            const responder = await this.User.findByPk(user_id);
+            await notificationService.notifySurveyResponse({
+                survey,
+                responder,
+                responseId: response.id
+            });
 
             return {
                 message: "Submit survey successfully",
