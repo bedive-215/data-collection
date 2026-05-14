@@ -1,127 +1,642 @@
-import { Op, fn, col, literal } from "sequelize";
+import { fn, col, literal, Op } from "sequelize";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import models from "../models/index.js";
 
+/**
+ * Answer model fields:
+ *   option_id       — SINGLE_CHOICE / DROPDOWN
+ *   selected_options — MULTIPLE_CHOICE (JSON array of option UUIDs)
+ *   answer_text     — TEXT / PARAGRAPH / EMAIL
+ *   answer_number   — NUMBER / RATING
+ *   answer_date     — DATE
+ */
 class SurveyAnalyticsService {
-    constructor({ Question, QuestionOption, Answer, Response }) {
-        this.Question = Question;
-        this.QuestionOption = QuestionOption;
-        this.Answer = Answer;
-        this.Response = Response;
+    constructor() {
+        this.Question = models.Question;
+        this.QuestionOption = models.QuestionOption;
+        this.Answer = models.Answer;
+        this.Response = models.Response;
+        this.sequelize = models.sequelize;
     }
 
-    async getQuestionAnalytics(question_id) {
+    _buildResponseWhere(survey_id, filters = {}) {
+        const where = { survey_id };
+        if (filters.date_from || filters.date_to) {
+            where.created_at = {};
+            if (filters.date_from) where.created_at[Op.gte] = new Date(filters.date_from);
+            if (filters.date_to) where.created_at[Op.lte] = new Date(filters.date_to);
+        }
+        if (filters.response_ids?.length) {
+            where.id = { [Op.in]: filters.response_ids };
+        }
+        return where;
+    }
+
+    async _resolveResponseIds(survey_id, filters = {}) {
+        if (filters.response_ids?.length) return filters.response_ids;
+
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+        const rows = await this.Response.findAll({
+            where: responseWhere,
+            attributes: ["id"],
+            raw: true,
+        });
+        return rows.map((r) => r.id);
+    }
+
+    _emptyResult(question_id, type) {
+        return { question_id, type, total_responses: 0 };
+    }
+
+    _formatDuration(seconds) {
+        if (!seconds) return "0s";
+        const m = Math.floor(seconds / 60);
+        const s = Math.round(seconds % 60);
+        return m ? `${m}m ${s}s` : `${s}s`;
+    }
+
+    _computeWordFrequency(texts) {
+        const STOP_WORDS = new Set([
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
+            "of", "with", "is", "it", "i", "you", "we", "they", "this", "that",
+            "was", "are", "be", "have", "has", "do", "did", "not", "no", "so",
+            "my", "your", "our", "their", "its", "như", "và", "là", "của", "có",
+            "được", "trong", "với", "cho", "một", "các", "những", "này", "đó",
+        ]);
+
+        const freq = {};
+        for (const text of texts) {
+            const words = text
+                .toLowerCase()
+                .replace(/[^a-zA-ZÀ-ỹ\s]/g, " ")
+                .split(/\s+/)
+                .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+            for (const w of words) {
+                freq[w] = (freq[w] || 0) + 1;
+            }
+        }
+
+        return Object.entries(freq)
+            .sort((a, b) => b[1] - a[1])
+            .map(([word, count]) => ({ word, count }));
+    }
+
+    async getQuestionAnalytics(question_id, filters = {}, textOpts = {}) {
         const question = await this.Question.findByPk(question_id);
         if (!question) throw new AppError("Question not found", 404);
 
-        const totalResponses = await this.Answer.count({
-            where: { question_id }
+        const answerWhere = { question_id };
+        if (filters.survey_id) {
+            const ids = await this._resolveResponseIds(filters.survey_id, filters);
+            if (!ids.length) return this._emptyResult(question_id, question.type);
+            answerWhere.response_id = { [Op.in]: ids };
+        }
+
+        const totalResponses = await this.Answer.count({ where: answerWhere });
+
+        switch (question.type) {
+            case "SINGLE_CHOICE":
+            case "DROPDOWN":
+                return this._singleChoiceAnalytics(question, answerWhere, totalResponses);
+            case "MULTIPLE_CHOICE":
+                return this._multipleChoiceAnalytics(question, answerWhere, totalResponses);
+            case "RATING":
+                return this._ratingAnalytics(question, answerWhere, totalResponses);
+            case "NUMBER":
+                return this._numberAnalytics(question, answerWhere, totalResponses);
+            case "DATE":
+                return this._dateAnalytics(question, answerWhere, totalResponses);
+            case "TEXT":
+            case "PARAGRAPH":
+            case "EMAIL":
+                return this._textAnalytics(question, answerWhere, totalResponses, textOpts);
+            default:
+                throw new AppError(`Unsupported question type: ${question.type}`, 400);
+        }
+    }
+
+    // SINGLE_CHOICE / DROPDOWN
+    async _singleChoiceAnalytics(question, answerWhere, totalResponses) {
+        const options = await this.QuestionOption.findAll({
+            where: { question_id: question.id },
+            order: [["order_index", "ASC"]],
+            raw: true,
         });
 
-        if (["SINGLE_CHOICE", "MULTIPLE_CHOICE"].includes(question.type)) {
+        const countRows = await this.Answer.findAll({
+            where: { ...answerWhere, option_id: { [Op.ne]: null } },
+            attributes: [
+                "option_id",
+                [fn("COUNT", col("id")), "count"],
+            ],
+            group: ["option_id"],
+            raw: true,
+        });
 
-            const options = await this.QuestionOption.findAll({
-                where: { question_id },
-                attributes: [
-                    "id",
-                    "label",
-                    [
-                        fn("COUNT", col("Answers.id")),
-                        "count"
-                    ]
-                ],
-                include: [
-                    {
-                        model: this.Answer,
-                        attributes: []
-                    }
-                ],
-                group: ["QuestionOption.id"]
-            });
+        const countMap = {};
+        countRows.forEach((r) => { countMap[r.option_id] = parseInt(r.count) || 0; });
 
-            const result = options.map(opt => {
-                const count = parseInt(opt.get("count")) || 0;
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: question.type,
+            total_responses: totalResponses,
+            options: options.map((opt) => {
+                const count = countMap[opt.id] || 0;
                 return {
                     option_id: opt.id,
                     label: opt.label,
+                    value: opt.value,
                     count,
                     percent: totalResponses
-                        ? ((count / totalResponses) * 100).toFixed(2)
-                        : 0
+                        ? parseFloat(((count / totalResponses) * 100).toFixed(2))
+                        : 0,
                 };
-            });
-
-            return {
-                question_id,
-                type: question.type,
-                total_responses: totalResponses,
-                options: result
-            };
-        }
-
-        if (question.type === "RATING") {
-            const stats = await this.Answer.findOne({
-                where: { question_id },
-                attributes: [
-                    [fn("AVG", col("value")), "avg"],
-                    [fn("MIN", col("value")), "min"],
-                    [fn("MAX", col("value")), "max"]
-                ]
-            });
-
-            return {
-                question_id,
-                type: "RATING",
-                total_responses: totalResponses,
-                avg: parseFloat(stats.get("avg")) || 0,
-                min: parseInt(stats.get("min")) || 0,
-                max: parseInt(stats.get("max")) || 0
-            };
-        }
-
-        if (question.type === "TEXT") {
-            const answers = await this.Answer.findAll({
-                where: { question_id },
-                attributes: ["text_value"],
-                limit: 50
-            });
-
-            return {
-                question_id,
-                type: "TEXT",
-                total_responses: totalResponses,
-                answers: answers.map(a => a.text_value)
-            };
-        }
-
-        throw new AppError("Unsupported question type", 400);
+            }),
+        };
     }
 
-    async getSurveyAnalytics(survey_id) {
+    // MULTIPLE_CHOICE 
+    async _multipleChoiceAnalytics(question, answerWhere, totalResponses) {
+        const options = await this.QuestionOption.findAll({
+            where: { question_id: question.id },
+            order: [["order_index", "ASC"]],
+            raw: true,
+        });
+
+        const rows = await this.Answer.findAll({
+            where: answerWhere,
+            attributes: ["selected_options"],
+            raw: true,
+        });
+
+        const countMap = {};
+        rows.forEach((r) => {
+            if (!r.selected_options) return;
+            const ids = typeof r.selected_options === "string"
+                ? JSON.parse(r.selected_options)
+                : r.selected_options;
+            ids.forEach((id) => { countMap[id] = (countMap[id] || 0) + 1; });
+        });
+
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: question.type,
+            total_responses: totalResponses,
+            options: options.map((opt) => {
+                const count = countMap[opt.id] || 0;
+                return {
+                    option_id: opt.id,
+                    label: opt.label,
+                    value: opt.value,
+                    count,
+                    percent: totalResponses
+                        ? parseFloat(((count / totalResponses) * 100).toFixed(2))
+                        : 0,
+                };
+            }),
+        };
+    }
+
+    // RATING — dùng answer_number
+    async _ratingAnalytics(question, answerWhere, totalResponses) {
+        const scaleMin = question.settings?.min ?? 1;
+        const scaleMax = question.settings?.max ?? 5;
+
+        const stats = await this.Answer.findOne({
+            where: answerWhere,
+            attributes: [
+                [fn("AVG", col("answer_number")), "avg"],
+                [fn("MIN", col("answer_number")), "min"],
+                [fn("MAX", col("answer_number")), "max"],
+                [fn("STDDEV", col("answer_number")), "stddev"],
+            ],
+            raw: true,
+        });
+
+        const distribution = await this.Answer.findAll({
+            where: answerWhere,
+            attributes: [
+                [col("answer_number"), "rating"],
+                [fn("COUNT", col("id")), "count"],
+            ],
+            group: ["answer_number"],
+            order: [["answer_number", "ASC"]],
+            raw: true,
+        });
+
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: "RATING",
+            scale: { min: scaleMin, max: scaleMax },
+            total_responses: totalResponses,
+            avg: parseFloat(stats?.avg) || 0,
+            min: parseFloat(stats?.min) || 0,
+            max: parseFloat(stats?.max) || 0,
+            stddev: parseFloat(stats?.stddev) || 0,
+            distribution: distribution.map((d) => ({
+                rating: parseFloat(d.rating),
+                count: parseInt(d.count),
+                percent: totalResponses
+                    ? parseFloat(((d.count / totalResponses) * 100).toFixed(2))
+                    : 0,
+            })),
+        };
+    }
+
+    // NUMBER — dùng answer_number
+    async _numberAnalytics(question, answerWhere, totalResponses) {
+        const stats = await this.Answer.findOne({
+            where: answerWhere,
+            attributes: [
+                [fn("AVG", col("answer_number")), "avg"],
+                [fn("MIN", col("answer_number")), "min"],
+                [fn("MAX", col("answer_number")), "max"],
+                [fn("STDDEV", col("answer_number")), "stddev"],
+                [fn("SUM", col("answer_number")), "sum"],
+            ],
+            raw: true,
+        });
+
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: "NUMBER",
+            total_responses: totalResponses,
+            avg: parseFloat(stats?.avg) || 0,
+            min: parseFloat(stats?.min) || 0,
+            max: parseFloat(stats?.max) || 0,
+            sum: parseFloat(stats?.sum) || 0,
+            stddev: parseFloat(stats?.stddev) || 0,
+        };
+    }
+
+    // DATE — dùng answer_date
+    async _dateAnalytics(question, answerWhere, totalResponses) {
+        const distribution = await this.Answer.findAll({
+            where: answerWhere,
+            attributes: [
+                [fn("DATE_FORMAT", col("answer_date"), "%Y-%m"), "month"],
+                [fn("COUNT", col("id")), "count"],
+            ],
+            group: [literal("DATE_FORMAT(answer_date, '%Y-%m')")],
+            order: [[literal("DATE_FORMAT(answer_date, '%Y-%m')"), "ASC"]],
+            raw: true,
+        });
+
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: "DATE",
+            total_responses: totalResponses,
+            distribution: distribution.map((d) => ({
+                month: d.month,
+                count: parseInt(d.count),
+            })),
+        };
+    }
+
+    // TEXT / PARAGRAPH / EMAIL — dùng answer_text
+    async _textAnalytics(question, answerWhere, totalResponses, { page = 1, limit = 50 } = {}) {
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await this.Answer.findAndCountAll({
+            where: answerWhere,
+            attributes: ["id", "answer_text", "created_at"],
+            order: [["created_at", "DESC"]],
+            limit,
+            offset,
+        });
+
+        const wordFrequency = ["TEXT", "PARAGRAPH"].includes(question.type)
+            ? this._computeWordFrequency(rows.map((a) => a.answer_text).filter(Boolean))
+            : [];
+
+        return {
+            question_id: question.id,
+            question_content: question.content,
+            type: question.type,
+            total_responses: totalResponses,
+            pagination: {
+                page,
+                limit,
+                total_pages: Math.ceil(count / limit),
+                total_answers: count,
+            },
+            answers: rows.map((a) => ({
+                id: a.id,
+                text: a.answer_text,
+                submitted_at: a.created_at,
+            })),
+            ...(wordFrequency.length && { word_frequency: wordFrequency.slice(0, 30) }),
+        };
+    }
+
+    async getSurveyAnalytics(survey_id, filters = {}) {
         const questions = await this.Question.findAll({
-            where: { survey_id }
+            where: { survey_id },
+            order: [["order_index", "ASC"]],
         });
+        if (!questions.length) throw new AppError("No questions found for this survey", 404);
 
-        if (!questions.length) {
-            throw new AppError("No questions found", 404);
-        }
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+        const totalResponses = await this.Response.count({ where: responseWhere });
 
-        const totalResponses = await this.Response.count({
-            where: { survey_id }
-        });
-
-        const analytics = [];
-
-        for (const q of questions) {
-            const data = await this.getQuestionAnalytics(q.id);
-            analytics.push(data);
-        }
+        const analytics = await Promise.all(
+            questions.map((q) =>
+                this.getQuestionAnalytics(q.id, { ...filters, survey_id })
+            )
+        );
 
         return {
             survey_id,
             total_responses: totalResponses,
-            questions: analytics
+            generated_at: new Date().toISOString(),
+            filters_applied: filters,
+            questions: analytics,
+        };
+    }
+
+    async getCompletionStats(survey_id, filters = {}) {
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+
+        const [totalStarted, totalCompleted] = await Promise.all([
+            this.Response.count({ where: responseWhere }),
+
+            this.Response.count({
+                where: {
+                    ...responseWhere,
+                    submitted_at: { [Op.ne]: null }
+                }
+            }),
+        ]);
+
+        const avgTimeRow = await this.Response.findOne({
+            where: {
+                ...responseWhere,
+                submitted_at: { [Op.ne]: null }
+            },
+            attributes: [
+                [
+                    fn(
+                        "AVG",
+                        literal("TIMESTAMPDIFF(SECOND, created_at, submitted_at)")
+                    ),
+                    "avg_seconds"
+                ],
+            ],
+            raw: true,
+        });
+
+        const avgSeconds = parseFloat(avgTimeRow?.avg_seconds) || 0;
+
+        const incompleteIds = await this.Response.findAll({
+            where: {
+                ...responseWhere,
+                submitted_at: null
+            },
+            attributes: ["id"],
+            raw: true,
+        }).then(rows => rows.map(r => r.id));
+
+        let dropOffByQuestion = [];
+
+        if (incompleteIds.length) {
+            dropOffByQuestion = await this.Answer.findAll({
+                where: {
+                    response_id: { [Op.in]: incompleteIds }
+                },
+                attributes: [
+                    "question_id",
+                    [fn("COUNT", col("id")), "answered_count"]
+                ],
+                group: ["question_id"],
+                raw: true,
+            });
+        }
+
+        return {
+            survey_id,
+
+            total_started: totalStarted,
+            total_completed: totalCompleted,
+
+            completion_rate: totalStarted
+                ? Number(((totalCompleted / totalStarted) * 100).toFixed(2))
+                : 0,
+
+            avg_completion_time_seconds: Math.round(avgSeconds),
+            avg_completion_time_display: this._formatDuration(avgSeconds),
+
+            drop_off_by_question: dropOffByQuestion.map(d => ({
+                question_id: d.question_id,
+                answered_count: Number(d.answered_count),
+            })),
+        };
+    }
+
+    async getResponseTrend(survey_id, groupBy = "day", filters = {}) {
+        const VALID = ["day", "week", "month"];
+        if (!VALID.includes(groupBy)) throw new AppError("groupBy must be day | week | month", 400);
+
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+
+        const formatMap = { day: "%Y-%m-%d", week: "%Y-%u", month: "%Y-%m" };
+        const fmt = formatMap[groupBy];
+
+        const rows = await this.Response.findAll({
+            where: responseWhere,
+            attributes: [
+                [fn("DATE_FORMAT", col("created_at"), fmt), "period"],
+                [fn("COUNT", col("id")), "count"],
+            ],
+            group: [literal(`DATE_FORMAT(created_at, '${fmt}')`)],
+            order: [[literal(`DATE_FORMAT(created_at, '${fmt}')`), "ASC"]],
+            raw: true,
+        });
+
+        return {
+            survey_id,
+            group_by: groupBy,
+            trend: rows.map((r) => ({
+                period: r.period,
+                count: parseInt(r.count),
+            })),
+        };
+    }
+
+    async getCrossTab(survey_id, question_id_a, question_id_b, filters = {}) {
+        const [qA, qB] = await Promise.all([
+            this.Question.findByPk(question_id_a),
+            this.Question.findByPk(question_id_b),
+        ]);
+        if (!qA) throw new AppError("Question A not found", 404);
+        if (!qB) throw new AppError("Question B not found", 404);
+
+        const CHOICE_TYPES = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"];
+        if (!CHOICE_TYPES.includes(qA.type) || !CHOICE_TYPES.includes(qB.type)) {
+            throw new AppError("Cross-tab only supports choice questions", 400);
+        }
+
+        const responseIds = await this._resolveResponseIds(survey_id, filters);
+        if (!responseIds.length) {
+            return { survey_id, question_id_a, question_id_b, rows: [] };
+        }
+
+        const rows = await this.sequelize.query(
+            `
+        SELECT
+            oa.id    AS option_a_id,
+            oa.label AS option_a_label,
+            ob.id    AS option_b_id,
+            ob.label AS option_b_label,
+            COUNT(DISTINCT aa.response_id) AS count
+
+        FROM answers aa
+
+        JOIN answers ab 
+            ON aa.response_id = ab.response_id
+            AND ab.question_id = :qB
+
+        -- expand A (handle cả single + multiple)
+        LEFT JOIN JSON_TABLE(
+            IF(
+                JSON_VALID(aa.option_id),
+                aa.option_id,
+                JSON_ARRAY(aa.option_id)
+            ),
+            '$[*]' COLUMNS(option_id VARCHAR(36) PATH '$')
+        ) aa_multi ON TRUE
+
+        -- expand B
+        LEFT JOIN JSON_TABLE(
+            IF(
+                JSON_VALID(ab.option_id),
+                ab.option_id,
+                JSON_ARRAY(ab.option_id)
+            ),
+            '$[*]' COLUMNS(option_id VARCHAR(36) PATH '$')
+        ) ab_multi ON TRUE
+
+        -- join option A
+        JOIN question_options oa 
+            ON oa.id = aa_multi.option_id
+
+        -- join option B
+        JOIN question_options ob 
+            ON ob.id = ab_multi.option_id
+
+        WHERE aa.question_id = :qA
+        AND aa.response_id IN (:responseIds)
+
+        GROUP BY oa.id, ob.id
+        ORDER BY oa.id, ob.id
+        `,
+            {
+                replacements: { qA: question_id_a, qB: question_id_b, responseIds },
+                type: this.sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        const pivot = {};
+        for (const r of rows) {
+            if (!pivot[r.option_a_id]) {
+                pivot[r.option_a_id] = {
+                    option_id: r.option_a_id,
+                    label: r.option_a_label,
+                    breakdown: {},
+                };
+            }
+            pivot[r.option_a_id].breakdown[r.option_b_id] = {
+                option_id: r.option_b_id,
+                label: r.option_b_label,
+                count: Number(r.count),
+            };
+        }
+
+        return {
+            survey_id,
+            question_a: { id: qA.id, label: qA.content, type: qA.type },
+            question_b: { id: qB.id, label: qB.content, type: qB.type },
+            rows: Object.values(pivot),
+        };
+    }
+
+    async getIndividualResponses(survey_id, filters = {}, { page = 1, limit = 20 } = {}) {
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+        const offset = (page - 1) * limit;
+
+        const { count, rows: responses } = await this.Response.findAndCountAll({
+            where: responseWhere,
+            order: [["created_at", "DESC"]],
+            limit,
+            offset,
+            include: [
+                {
+                    model: this.Answer,
+                    include: [
+                        { model: this.Question, attributes: ["id", "content", "type"] },
+                        { model: this.QuestionOption, attributes: ["id", "label"], required: false },
+                    ],
+                },
+            ],
+        });
+
+        return {
+            survey_id,
+            pagination: {
+                page,
+                limit,
+                total_responses: count,
+                total_pages: Math.ceil(count / limit),
+            },
+            responses: responses.map((res) => ({
+                response_id: res.id,
+                status: res.status,
+                submitted_at: res.created_at,
+                time_to_complete_seconds: res.created_at && res.submitted_at
+                    ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
+                    : null,
+                answers: (res.Answers || []).map((ans) => ({
+                    question_id: ans.Question?.id,
+                    question_content: ans.Question?.content,
+                    type: ans.Question?.type,
+                    value: ans.QuestionOption?.label
+                        ?? ans.answer_text
+                        ?? ans.answer_number
+                        ?? ans.answer_date
+                        ?? null,
+                })),
+            })),
+        };
+    }
+
+    // ─────────────────────────────────────────────
+    // 7. DASHBOARD
+    // ─────────────────────────────────────────────
+
+    async getDashboard(survey_id, filters = {}) {
+        const [completion, trend, surveyAnalytics] = await Promise.all([
+            this.getCompletionStats(survey_id, filters),
+            this.getResponseTrend(survey_id, "day", filters),
+            this.getSurveyAnalytics(survey_id, filters),
+        ]);
+
+        return {
+            survey_id,
+            generated_at: new Date().toISOString(),
+            overview: {
+                total_started: completion.total_started,
+                total_completed: completion.total_completed,
+                completion_rate: completion.completion_rate,
+                avg_completion_time: completion.avg_completion_time_display,
+            },
+            trend: trend.trend,
+            questions: surveyAnalytics.questions,
         };
     }
 }
 
-export default SurveyAnalyticsService;
+export default new SurveyAnalyticsService();

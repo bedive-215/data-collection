@@ -1,6 +1,20 @@
 import ResponseService from "../services/response.service.js";
 
 class ResponseController {
+
+    // Start submit
+    async startSurvey(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const user_id = req.user.id;
+
+            const result = await ResponseService.startSurvey(user_id, survey_id);
+            res.status(201).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    
     // submit
     async submit(req, res, next) {
         try {
@@ -13,7 +27,7 @@ class ResponseController {
                 req.body.answers
             );
 
-            res.status(201).json(result);
+            res.status(200).json(result);
         } catch (err) {
             next(err);
         }

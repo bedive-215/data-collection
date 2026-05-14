@@ -136,6 +136,39 @@ class ResponseService {
         return records;
     }
 
+    async startSurvey(user_id, survey_id) {
+        if (!survey_id) {
+            throw new AppError("Survey id is required", 400);
+        }
+
+        const survey = await this.Survey.findByPk(survey_id);
+        if (!survey) {
+            throw new AppError("Survey not found", 404);
+        }
+
+        let response = await this.Response.findOne({
+            where: {
+                survey_id,
+                user_id,
+                submitted_at: null
+            }
+        });
+
+        if (!response) {
+            response = await this.Response.create({
+                survey_id,
+                user_id,
+                started_at: new Date()
+            });
+        }
+
+        return {
+            message: "Start survey successfully",
+            response_id: response.id,
+            started_at: response.started_at
+        };
+    }
+
     async submitSurvey(user_id, survey_id, answers) {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
@@ -143,12 +176,18 @@ class ResponseService {
         const transaction = await this.sequelize.transaction();
 
         try {
-            const existing = await this.Response.findOne({
-                where: { user_id, survey_id },
+            const response = await this.Response.findOne({
+                where: {
+                    user_id,
+                    survey_id,
+                    submitted_at: null
+                },
                 transaction
             });
 
-            if (existing) throw new AppError("Already submitted", 400);
+            if (!response) {
+                throw new AppError("Survey has not been started", 400);
+            }
 
             const questionIds = answers.map(a => a.question_id);
 
@@ -182,12 +221,6 @@ class ResponseService {
                 options.map(o => [o.id, o])
             );
 
-            const response = await this.Response.create({
-                survey_id,
-                user_id,
-                submitted_at: new Date()
-            }, { transaction });
-
             const answerRecords = await this._buildAnswerRecords(
                 response.id,
                 answers,
@@ -196,6 +229,11 @@ class ResponseService {
             );
 
             await this.Answer.bulkCreate(answerRecords, { transaction });
+
+            await response.update({
+                submitted_at: new Date(),
+                status: "COMPLETED"
+            }, { transaction });
 
             await transaction.commit();
 

@@ -7,9 +7,16 @@ import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
 import { userIdParams } from "../validates/userIdParams.validate.js";
 import { responseIdParams } from "../validates/responseIdParams.validate.js";
 import { getUserResponse } from "../validates/getUserResponse.validate.js";
+import route from "./auth.route.js";
 
 const router = express.Router();
 
+route.post(
+    "/surveys/:survey_id/start",
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('editor', 'respondent'),
+    ResponseController.startSurvey
+);
 
 // submit survey
 router.post(

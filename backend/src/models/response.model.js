@@ -25,6 +25,11 @@ export default (sequelize) => {
             },
             onDelete: "SET NULL"
         },
+        status: {
+            type: DataTypes.ENUM("IN_PROGRESS", "COMPLETED"),
+            defaultValue: "IN_PROGRESS"
+        },
+
         submitted_at: {
             type: DataTypes.DATE,
             allowNull: true

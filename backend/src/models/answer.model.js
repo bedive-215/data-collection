@@ -59,10 +59,10 @@ export default (sequelize) => {
         answer_date: {
             type: DataTypes.DATE,
             allowNull: true
-        }
+        },
     }, {
         tableName: "answers",
-        timestamps: false,
+        timestamps: true,
         underscored: true,
         indexes: [
             { fields: ["response_id"] },
