@@ -2,14 +2,6 @@ import { fn, col, literal, Op } from "sequelize";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import models from "../models/index.js";
 
-/**
- * Answer model fields:
- *   option_id       — SINGLE_CHOICE / DROPDOWN
- *   selected_options — MULTIPLE_CHOICE (JSON array of option UUIDs)
- *   answer_text     — TEXT / PARAGRAPH / EMAIL
- *   answer_number   — NUMBER / RATING
- *   answer_date     — DATE
- */
 class SurveyAnalyticsService {
     constructor() {
         this.Question = models.Question;
@@ -612,10 +604,6 @@ class SurveyAnalyticsService {
             })),
         };
     }
-
-    // ─────────────────────────────────────────────
-    // 7. DASHBOARD
-    // ─────────────────────────────────────────────
 
     async getDashboard(survey_id, filters = {}) {
         const [completion, trend, surveyAnalytics] = await Promise.all([

@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
+import surveyService from "./survey.service.js";
 import crypto from "crypto";
 
 class QuestionService {
@@ -252,9 +253,15 @@ class QuestionService {
     }
 
     // get questions by survey
-    async getQuestionsBySurvey(survey_id) {
+    async getQuestionsBySurvey(survey) {
+        const status = surveyService._getSurveyStatus(survey);
+
+        if (status !== "ACTIVE") {
+            throw new AppError(`Survey is ${status}`, 403);
+        }
+
         const questions = await this.Question.findAll({
-            where: { survey_id },
+            where: { survey_id: survey.id },
             include: [
                 {
                     model: this.Option,

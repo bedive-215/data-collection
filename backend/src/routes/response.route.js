@@ -11,6 +11,7 @@ import route from "./auth.route.js";
 
 const router = express.Router();
 
+//  start response
 route.post(
     "/surveys/:survey_id/start",
     validate(surveyIdParams),

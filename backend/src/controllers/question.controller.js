@@ -24,10 +24,8 @@ class QuestionController {
     // GET ALL QUESTIONS BY SURVEY
     async getQuestionsBySurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
-
             const result = await QuestionService.getQuestionsBySurvey(
-                survey_id
+                req.survey
             );
 
             return res.status(200).json(result);
