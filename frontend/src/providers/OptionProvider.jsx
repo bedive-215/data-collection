@@ -17,22 +17,15 @@ const OptionProvider = ({ children }) => {
 
   /* ─────────────────────────────────────────────
    * GET BY QUESTION
-   * GET /questions/:question_id/options
+   * GET /questions/:question_id/survey/:survey_id
    * BE trả về: { message, count, data: [...] }
-   *   Mỗi option: { id, question_id, content, createdAt, updatedAt }
    * ───────────────────────────────────────────── */
-  const fetchOptions = async (questionId) => {
+  const fetchOptions = async (questionId, surveyId) => {
     setLoading(true);
     try {
-      const res = await optionService.getOptionsByQuestion(questionId);
-
-      // axios bọc response trong res.data, hoặc có thể trả trực tiếp
+      const res = await optionService.getOptionsByQuestion(questionId, surveyId);
       const body = res.data ?? res;
-
-      // BE trả về { message, count, data: [...] }
-      // Fallback thêm key `options` phòng trường hợp BE đổi shape
       const list = body.data ?? body.options ?? [];
-
       setOptions((prev) => ({ ...prev, [questionId]: list }));
       return list;
     } catch (err) {
@@ -46,20 +39,21 @@ const OptionProvider = ({ children }) => {
 
   /* ─────────────────────────────────────────────
    * CREATE
-   * POST /questions/:question_id/options
-   * BE nhận: content (string)
-   * BE trả về: { message, option: { id, question_id, content, ... } }
+   * POST /questions/:question_id/survey/:survey_id
+   * BE nhận: { label, value?, order_index?, is_other? }
    * ───────────────────────────────────────────── */
-  const createOption = async (questionId, content) => {
+  const createOption = async (questionId, surveyId, content) => {
     if (!content || !content.trim()) {
       toast.error("Content không được để trống");
       return;
     }
 
     try {
-      const res = await optionService.createOption(questionId, content.trim());
+      const res = await optionService.createOption(questionId, surveyId, {
+        label: content.trim(),
+      });
       const data = res.data ?? res;
-      const newOpt = data.option;
+      const newOpt = data.data ?? data.option;
 
       setOptions((prev) => ({
         ...prev,
@@ -77,20 +71,19 @@ const OptionProvider = ({ children }) => {
 
   /* ─────────────────────────────────────────────
    * UPDATE
-   * PUT /options/:option_id
-   * BE nhận: content (string)
-   * BE trả về: { message, option: { id, question_id, content, ... } }
+   * PATCH /options/:option_id/survey/:survey_id
+   * BE nhận: { label?, value?, order_index?, is_other? }
    * ───────────────────────────────────────────── */
-  const updateOption = async (optionId, questionId, content) => {
-    if (!content || !content.trim()) {
-      toast.error("Content không được để trống");
+  const updateOption = async (optionId, questionId, surveyId, payload) => {
+    if (!payload || Object.keys(payload).length === 0) {
+      toast.error("Không có dữ liệu để cập nhật");
       return;
     }
 
     try {
-      const res = await optionService.updateOption(optionId, content.trim());
+      const res = await optionService.updateOption(optionId, surveyId, payload);
       const data = res.data ?? res;
-      const updated = data.option;
+      const updated = data.data ?? data.option;
 
       setOptions((prev) => ({
         ...prev,
@@ -110,12 +103,11 @@ const OptionProvider = ({ children }) => {
 
   /* ─────────────────────────────────────────────
    * DELETE
-   * DELETE /options/:option_id
-   * BE trả về: { message }
+   * DELETE /options/:option_id/survey/:survey_id
    * ───────────────────────────────────────────── */
-  const deleteOption = async (optionId, questionId) => {
+  const deleteOption = async (optionId, questionId, surveyId) => {
     try {
-      await optionService.deleteOption(optionId);
+      await optionService.deleteOption(optionId, surveyId);
 
       setOptions((prev) => ({
         ...prev,
@@ -134,11 +126,10 @@ const OptionProvider = ({ children }) => {
 
   /* ─────────────────────────────────────────────
    * BULK CREATE
-   * POST /questions/:question_id/options/bulk
-   * BE nhận: options (string[])
-   * BE trả về: { message, count, options[] }
+   * POST /questions/:question_id/survey/:survey_id/bulk
+   * BE nhận: { options: string[] }
    * ───────────────────────────────────────────── */
-  const bulkCreateOptions = async (questionId, contentArray) => {
+  const bulkCreateOptions = async (questionId, surveyId, contentArray) => {
     if (!Array.isArray(contentArray) || contentArray.length === 0) {
       toast.error("Danh sách option không hợp lệ");
       return;
@@ -151,9 +142,11 @@ const OptionProvider = ({ children }) => {
     }
 
     try {
-      const res = await optionService.bulkCreateOptions(questionId, cleaned);
+      const res = await optionService.bulkCreateOptions(questionId, surveyId, {
+        options: cleaned,
+      });
       const data = res.data ?? res;
-      const newOptions = data.options ?? data.data ?? [];
+      const newOptions = data.data ?? data.options ?? [];
 
       setOptions((prev) => ({
         ...prev,

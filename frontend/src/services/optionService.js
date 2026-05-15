@@ -1,26 +1,39 @@
 // src/services/optionService.js
 import apiClient from "@/api/apiClient";
 
-export const optionService = {
-  // 🟢 Tạo 1 option
-  createOption: (questionId, payload) =>
-    apiClient.post(`/api/v1/options/${questionId}`, payload),
+const optionService = {
+  // Tạo 1 option
+  createOption: (questionId, surveyId, payload) =>
+    apiClient.post(
+      `/api/v1/options/questions/${questionId}/survey/${surveyId}`,
+      payload
+    ),
 
-  // 🟢 Lấy option theo question
-  getOptionsByQuestion: (questionId) =>
-    apiClient.get(`/api/v1/options/${questionId}`),
+  // Lấy option theo question
+  getOptionsByQuestion: (questionId, surveyId) =>
+    apiClient.get(
+      `/api/v1/options/questions/${questionId}/survey/${surveyId}`
+    ),
 
-  // 🟡 Update option
-  updateOption: (optionId, payload) =>
-    apiClient.patch(`/api/v1/options/${optionId}`, payload),
+  // Update option
+  updateOption: (optionId, surveyId, payload) =>
+    apiClient.patch(
+      `/api/v1/options/${optionId}/survey/${surveyId}`,
+      payload
+    ),
 
-  // 🔴 Xóa option
-  deleteOption: (optionId) =>
-    apiClient.delete(`/api/v1/options/${optionId}`),
+  // Xóa option
+  deleteOption: (optionId, surveyId) =>
+    apiClient.delete(
+      `/api/v1/options/${optionId}/survey/${surveyId}`
+    ),
 
-  // 🟣 Bulk tạo option
-  bulkCreateOptions: (questionId, payload) =>
-    apiClient.post(`/api/v1/options/${questionId}/bulk`, payload),
+  // Bulk tạo option
+  bulkCreateOptions: (questionId, surveyId, payload) =>
+    apiClient.post(
+      `/api/v1/options/questions/${questionId}/survey/${surveyId}/bulk`,
+      payload
+    ),
 };
 
 export default optionService;

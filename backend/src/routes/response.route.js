@@ -21,8 +21,9 @@ route.post(
 // submit survey
 router.post(
     "/surveys/:survey_id",
+    authMiddleware.auth,
     validate(surveyIdParams),
-    authMiddleware.checkSurveyAccess('editor', 'respondent'),
+    authMiddleware.checkSurveyAccess(),
     ResponseController.submit
 );
 
