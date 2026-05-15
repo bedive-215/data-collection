@@ -543,25 +543,29 @@ export default function SurveyTakePage() {
   const [optionsLoading, setOptionsLoading] = useState(false);
 
   /* ── Fetch questions → fetch options song song ── */
-  useEffect(() => {
-    if (!surveyId) return;
+ /* ── Fetch questions → fetch options song song ── */
+useEffect(() => {
+  if (!surveyId) return;
 
-    fetchQuestionsBySurvey(surveyId).then(async (list) => {
-      if (!Array.isArray(list)) return;
+  fetchQuestionsBySurvey(surveyId).then(async (list) => {
+    if (!Array.isArray(list)) return;
 
-      const choiceQuestions = list.filter(
-        (q) => ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(q.type)
+    const choiceQuestions = list.filter(
+      (q) => ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(q.type)
+    );
+    if (choiceQuestions.length === 0) return;
+
+    setOptionsLoading(true);
+    try {
+      // ✅ Pass surveyId vào fetchOptions
+      await Promise.all(
+        choiceQuestions.map((q) => fetchOptions(q.id, surveyId))
       );
-      if (choiceQuestions.length === 0) return;
-
-      setOptionsLoading(true);
-      try {
-        await Promise.all(choiceQuestions.map((q) => fetchOptions(q.id)));
-      } finally {
-        setOptionsLoading(false);
-      }
-    });
-  }, [surveyId]);
+    } finally {
+      setOptionsLoading(false);
+    }
+  });
+}, [surveyId]);
 
   /* ── Merge + normalize options vào questions, sort theo order_index ── */
   const sorted = [...questions]
