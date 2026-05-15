@@ -187,13 +187,17 @@ export class authMiddleware {
 
                     // nếu có truyền role → check role
                     if (allowedRoles.length > 0) {
-                        if (!allowedRoles.includes(participant.role)) {
-                            throw new AppError(
-                                "Insufficient permission in this survey",
-                                403
-                            );
-                        }
-                    }
+    const role = participant.role?.toLowerCase();
+
+    const normalizedRoles = allowedRoles.map(r => r.toLowerCase());
+
+    if (!normalizedRoles.includes(role)) {
+        throw new AppError(
+            "Insufficient permission in this survey",
+            403
+        );
+    }
+}
 
                     req.participant = participant;
                     req.survey = survey;

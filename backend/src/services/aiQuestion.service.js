@@ -1,12 +1,12 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
 
 /** Đọc env lúc gọi API — tránh undefined khi module load trước dotenv */
-function getOpenAIConfig() {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+function getGeminiConfig() {
+  const key = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
   return { key, model };
 }
@@ -124,44 +124,43 @@ Rules:
 `;
 }
 
-async function callOpenAIJson(system, userContent) {
-  const { key, model } = getOpenAIConfig();
+async function callGeminiJson(system, userContent) {
+  const { key, model } = getGeminiConfig();
 
   if (!key) {
-    throw new AppError("Missing OPENAI_API_KEY", 500);
+    throw new AppError("Missing GEMINI_API_KEY", 500);
   }
 
   try {
-    const client = new OpenAI({ apiKey: key });
-    const response = await client.responses.create({
-      model,
-      input: `${system}\n\n${userContent}`,
-      temperature: 0.35,
-      max_output_tokens: 1200,
+    const ai = new GoogleGenAI({
+      apiKey: key,
     });
 
-    const text =
-      response.output_text ||
-      (Array.isArray(response.output)
-        ? response.output
-            .map((item) => (item.type === "output_text" ? item.text : ""))
-            .join("")
-        : "");
+    const response = await ai.models.generateContent({
+      model,
+      contents: `${system}\n\n${userContent}`,
+    });
+
+    const text = response.text;
 
     if (!text) {
-      throw new AppError("AI không trả về nội dung hợp lệ", 500);
+      throw new AppError("Gemini không trả về nội dung", 500);
     }
 
-    return JSON.parse(text).questions;
-  } catch (err) {
-    const statusCode = err?.status || err?.statusCode || 500;
-    const code = err?.code || err?.error?.code || err?.type;
-    const message =
-      code === "insufficient_quota"
-        ? "OpenAI quota đã hết. Vui lòng kiểm tra plan và billing của bạn."
-        : err?.message || "Lỗi gọi OpenAI";
+    // Gemini hay bọc ```json
+    const cleaned = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-    throw new AppError(message, statusCode === 429 ? 429 : 500);
+    return JSON.parse(cleaned).questions;
+  } catch (err) {
+    console.error("Gemini Error:", err);
+
+    throw new AppError(
+      err?.message || "Lỗi gọi Gemini API",
+      500
+    );
   }
 }
 class AiQuestionService {
@@ -181,7 +180,7 @@ class AiQuestionService {
     const { mode, rawText, surveyTitle, surveyDescription, count = 8 } = body;
 
     const system =
-      "You are an expert survey designer. Always respond with a single JSON object only, no prose.";
+  "You are an expert survey designer. Return ONLY valid JSON. No markdown. No code fences. No explanations.";
 
     let userPrompt;
     if (mode === "parse") {
@@ -195,7 +194,7 @@ class AiQuestionService {
       });
     }
 
-    const rawList = await callOpenAIJson(system, userPrompt);
+    const rawList = await callGeminiJson(system, userPrompt);
     const questions = rawList
       .map((q, i) => normalizeQuestion(q, i))
       .filter(Boolean)
