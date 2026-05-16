@@ -43,7 +43,9 @@ root.render(
                   pauseOnFocusLoss
                   draggable
                   pauseOnHover
-                  theme="light"
+                  theme="dark"
+                  toastClassName="!bg-slate-800 !text-white !rounded-xl !shadow-2xl"
+                  progressClassName="!bg-blue-500"
                 />
                 </NotificationProvider>
                 </OptionProvider>

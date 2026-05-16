@@ -16,14 +16,14 @@ class ResponseService {
 
     _mapAnswerToResponse(answers, optionMap = {}) {
         return answers.map(a => {
-            const type = a.question.type;
+            const type = a.question?.type || a.type;
             let answerValue = null;
 
             if (["TEXT", "PARAGRAPH", "EMAIL"].includes(type)) {
                 answerValue = a.answer_text;
             }
 
-            else if (["NUMBER", "RATING"].includes(type)) {
+            else if (["NUMBER", "RATING", "LINEAR_SCALE"].includes(type)) {
                 answerValue = a.answer_number;
             }
 
@@ -34,7 +34,10 @@ class ResponseService {
             }
 
             else if (type === "MULTIPLE_CHOICE") {
-                answerValue = (a.selected_options || [])
+                const ids = typeof a.selected_options === "string"
+                    ? JSON.parse(a.selected_options)
+                    : (a.selected_options || []);
+                answerValue = ids
                     .map(id => optionMap[id] || id)
                     .filter(Boolean);
             }
@@ -45,9 +48,17 @@ class ResponseService {
                     : null;
             }
 
+            else if (type === "TIME") {
+                answerValue = a.answer_text || null;
+            }
+
+            else if (type === "FILE_UPLOAD") {
+                answerValue = a.answer_text || null; // URL stored in answer_text
+            }
+
             return {
-                question_id: a.question.id,
-                question: a.question.content,
+                question_id: a.question?.id || a.question_id,
+                question: a.question?.content,
                 type,
                 answer: answerValue
             };
@@ -61,7 +72,7 @@ class ResponseService {
             const q = questionMap[ans.question_id];
             if (!q) throw new AppError("Invalid question", 400);
 
-            if (["TEXT", "PARAGRAPH", "EMAIL"].includes(q.type)) {
+            if (["TEXT", "PARAGRAPH", "EMAIL", "TIME", "FILE_UPLOAD"].includes(q.type)) {
                 records.push({
                     response_id,
                     question_id: q.id,
@@ -69,7 +80,7 @@ class ResponseService {
                 });
             }
 
-            else if (["NUMBER", "RATING"].includes(q.type)) {
+            else if (["NUMBER", "RATING", "LINEAR_SCALE"].includes(q.type)) {
                 const value = ans.answer_number ?? ans.answer_text;
 
                 if (value === undefined || value === null || isNaN(value)) {
@@ -129,7 +140,7 @@ class ResponseService {
             }
 
             else {
-                throw new AppError("Unsupported type", 400);
+                throw new AppError(`Unsupported question type: ${q.type}`, 400);
             }
         }
 
@@ -146,6 +157,17 @@ class ResponseService {
             throw new AppError("Survey not found", 404);
         }
 
+        // Kiểm tra max_responses
+        if (survey.max_responses) {
+            const completedCount = await this.Response.count({
+                where: { survey_id, status: "COMPLETED" }
+            });
+            if (completedCount >= survey.max_responses) {
+                throw new AppError("Survey has reached maximum responses", 400);
+            }
+        }
+
+        // Tìm response IN_PROGRESS cũ (để resume)
         let response = await this.Response.findOne({
             where: {
                 survey_id,
@@ -153,6 +175,8 @@ class ResponseService {
                 submitted_at: null
             }
         });
+
+        const isNew = !response;
 
         if (!response) {
             response = await this.Response.create({
@@ -162,10 +186,24 @@ class ResponseService {
             });
         }
 
+        // Lấy survey settings để trả về cho frontend
         return {
-            message: "Start survey successfully",
+            message: isNew ? "Survey started" : "Survey resumed",
             response_id: response.id,
-            started_at: response.started_at
+            started_at: response.started_at || response.created_at,
+            survey_settings: {
+                is_anonymous: survey.is_anonymous ?? false,
+                randomize_questions: survey.randomize_questions ?? false,
+                randomize_options: survey.randomize_options ?? false,
+                time_limit_seconds: survey.time_limit_seconds ?? null,
+                show_progress_bar: survey.show_progress_bar ?? true,
+                allow_back: survey.allow_back ?? true,
+                one_question_per_page: survey.one_question_per_page ?? true,
+                thank_you_message: survey.thank_you_message ?? null,
+                logo_url: survey.logo_url ?? null,
+                background_url: survey.background_url ?? null,
+                accent_color: survey.accent_color ?? "#6366f1",
+            }
         };
     }
 
@@ -186,7 +224,10 @@ class ResponseService {
             });
 
             if (!response) {
-                throw new AppError("Survey has not been started", 400);
+                throw new AppError(
+                    "Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.",
+                    400
+                );
             }
 
             const questionIds = answers.map(a => a.question_id);
@@ -245,6 +286,17 @@ class ResponseService {
                 responder,
                 responseId: response.id
             });
+
+            // Emit real-time update to admins watching this survey
+            if (global.emitToSurveyAdmins) {
+                const responseCount = await this.Response.count({ where: { survey_id, status: "COMPLETED" } });
+                global.emitToSurveyAdmins(survey_id, "survey:new-response", {
+                    survey_id,
+                    response_id: response.id,
+                    total_responses: responseCount,
+                    submitted_at: new Date(),
+                });
+            }
 
             return {
                 message: "Submit survey successfully",
@@ -474,6 +526,79 @@ class ResponseService {
 
         return {
             message: "Delete response successfull"
+        }
+    }
+
+    // Auto-save: upsert answers without marking as completed
+    async autoSave(user_id, survey_id, answers) {
+        if (!survey_id) throw new AppError("Survey id is required", 400);
+        if (!answers?.length) throw new AppError("Answers are required", 400);
+
+        const transaction = await this.sequelize.transaction();
+
+        try {
+            // Tìm response IN_PROGRESS
+            const response = await this.Response.findOne({
+                where: { user_id, survey_id, submitted_at: null },
+                transaction
+            });
+
+            if (!response) {
+                throw new AppError(
+                    "Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.",
+                    400
+                );
+            }
+
+            const questionIds = answers.map(a => a.question_id);
+
+            const questions = await this.Question.findAll({
+                where: { id: questionIds, survey_id },
+                transaction
+            });
+
+            const questionMap = Object.fromEntries(questions.map(q => [q.id, q]));
+
+            const optionIds = answers.flatMap(a =>
+                a.option_id ? [a.option_id] : a.option_ids || []
+            );
+
+            const options = await this.QuestionOption.findAll({
+                where: { id: optionIds },
+                transaction
+            });
+
+            const optionMap = Object.fromEntries(options.map(o => [o.id, o]));
+
+            // Xoá answers cũ cho các question_id này (upsert)
+            await this.Answer.destroy({
+                where: {
+                    response_id: response.id,
+                    question_id: { [models.Sequelize.Op.in]: questionIds }
+                },
+                transaction
+            });
+
+            const answerRecords = await this._buildAnswerRecords(
+                response.id,
+                answers,
+                questionMap,
+                optionMap
+            );
+
+            await this.Answer.bulkCreate(answerRecords, { transaction });
+
+            await transaction.commit();
+
+            return {
+                message: "Progress saved",
+                response_id: response.id,
+                saved_count: answers.length,
+            };
+
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
         }
     }
 }

@@ -9,6 +9,7 @@ import AnswerModel from "./answer.model.js";
 import SurveyParticipantModel from "./surveyParticipant.model.js";
 import SurveyAccessModel from "./surveyAccess.model.js";
 import NotificationModel from "./notification.model.js";
+import SectionModel from "./section.model.js";
 
 
 const User = UserModel(sequelize);
@@ -21,6 +22,7 @@ const Answer = AnswerModel(sequelize);
 const SurveyParticipant = SurveyParticipantModel(sequelize);
 const SurveyAccess = SurveyAccessModel(sequelize);
 const Notification = NotificationModel(sequelize);
+const Section = SectionModel(sequelize);
 
 // Define associations
 User.hasMany(UserOAuth, { foreignKey: "user_id", as: "oauth_providers" });
@@ -74,6 +76,14 @@ SurveyAccess.belongsTo(Survey, { foreignKey: 'survey_id', as: 'survey', onDelete
 User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user', onDelete: 'CASCADE' });
 
+// Survey <-> Sections (pages)
+Survey.hasMany(Section, { foreignKey: "survey_id", as: "sections" });
+Section.belongsTo(Survey, { foreignKey: "survey_id", as: "survey", onDelete: "CASCADE" });
+
+// Section <-> Question (1 section chứa nhiều question)
+Section.hasMany(Question, { foreignKey: "section_id", as: "questions" });
+Question.belongsTo(Section, { foreignKey: "section_id", as: "section", onDelete: "SET NULL" });
+
 const models = {
     User,
     UserOAuth,
@@ -85,6 +95,7 @@ const models = {
     SurveyParticipant,
     SurveyAccess,
     Notification,
+    Section,
     sequelize,
 };
 

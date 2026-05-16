@@ -21,7 +21,7 @@ export const useQuestion = () => {
  * Nếu BE (sequelize) lưu lowercase → cũng được xử lý qua BE_TO_FE_TYPE
  * ───────────────────────────────────────────────────────────────────── */
 const BE_TO_FE_TYPE = {
-  // lowercase legacy (sequelize storage)
+  // lowercase legacy
   text:            "TEXT",
   paragraph:       "PARAGRAPH",
   email:           "EMAIL",
@@ -31,6 +31,9 @@ const BE_TO_FE_TYPE = {
   single_choice:   "SINGLE_CHOICE",
   multiple_choice: "MULTIPLE_CHOICE",
   dropdown:        "DROPDOWN",
+  linear_scale:   "LINEAR_SCALE",
+  time:            "TIME",
+  file_upload:     "FILE_UPLOAD",
   // uppercase passthrough
   TEXT:            "TEXT",
   PARAGRAPH:       "PARAGRAPH",
@@ -41,6 +44,9 @@ const BE_TO_FE_TYPE = {
   SINGLE_CHOICE:   "SINGLE_CHOICE",
   MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
   DROPDOWN:        "DROPDOWN",
+  LINEAR_SCALE:    "LINEAR_SCALE",
+  TIME:            "TIME",
+  FILE_UPLOAD:     "FILE_UPLOAD",
 };
 
 /**
@@ -56,6 +62,8 @@ const normalizeOption = (opt, index) => {
       value:       opt,
       order_index: index,
       is_other:    false,
+      image_url:   null,
+      media_type:  null,
     };
   }
   return {
@@ -64,6 +72,8 @@ const normalizeOption = (opt, index) => {
     value:       opt.value ?? "",
     order_index: opt.order_index ?? index,
     is_other:    opt.is_other ?? false,
+    image_url:   opt.image_url ?? null,
+    media_type:  opt.media_type ?? null,
   };
 };
 
@@ -72,15 +82,23 @@ const normalizeOption = (opt, index) => {
  * Hỗ trợ cả hai key: "options" (mới, BE chuẩn) và "option" (legacy)
  */
 const normalize = (q) => ({
-  id:          q.id,
-  survey_id:   q.survey_id,
-  content:     q.content,
-  type:        BE_TO_FE_TYPE[q.type] ?? "TEXT",   // map → uppercase FE enum
-  required:    q.required ?? true,
-  order_index: q.order_index ?? 0,
-  settings:    q.settings ?? null,
-  // Ưu tiên "options" (BE chuẩn), fallback "option" (legacy)
-  options:     (q.options ?? q.option ?? []).map(normalizeOption),
+  id:                     q.id,
+  survey_id:              q.survey_id,
+  section_id:             q.section_id || null,
+  content:                q.content,
+  description:            q.description || null,
+  placeholder:            q.placeholder || null,
+  type:                   BE_TO_FE_TYPE[q.type] ?? "TEXT",
+  required:               q.required ?? true,
+  order_index:            q.order_index ?? 0,
+  settings:               q.settings ?? {},
+  media_url:              q.media_url || null,
+  media_type:             q.media_type || null,
+  condition:              q.condition || null,
+  hidden_from_analytics: q.hidden_from_analytics ?? false,
+  next_question_id:       q.next_question_id || null,
+  next_section_id:        q.next_section_id || null,
+  options: (q.options ?? q.option ?? []).map(normalizeOption),
 });
 
 const QuestionProvider = ({ children }) => {
@@ -89,8 +107,10 @@ const QuestionProvider = ({ children }) => {
   const [error, setError]         = useState(null);
 
   /* ── CREATE ─────────────────────────────────────────────────────
-   * payload đúng BE Joi schema:
+   * payload đúng BE Joi schema (mở rộng):
    *   { content, type (uppercase), required, order_index, settings,
+   *     description?, placeholder?, section_id?, media_url?, media_type?,
+   *     condition?, hidden_from_analytics?, next_question_id?, next_section_id?,
    *     options: [{ label, value, order_index?, is_other? }] }
    * ─────────────────────────────────────────────────────────────── */
   const createQuestion = async (surveyId, payload) => {
@@ -98,11 +118,8 @@ const QuestionProvider = ({ children }) => {
     try {
       const res  = await questionService.createQuestions(surveyId, payload);
       const data = res.data;
-
-      // BE res: { message, question: { ...question, options: [] } }
       const created = normalize(data.question);
       if (!created?.id) throw new Error("BE không trả về question.id");
-
       setQuestions((prev) => [...prev, created]);
       toast.success("Tạo câu hỏi thành công!");
       return created;

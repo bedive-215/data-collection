@@ -15,7 +15,7 @@ class QuestionOptionService {
             throw new AppError("Question id is required", 400);
         }
 
-        const { label, value, order_index, is_other } = payload;
+        const { label, value, order_index, is_other, image_url, media_type } = payload;
 
         if (!label) {
             throw new AppError("Label is required", 400);
@@ -44,7 +44,9 @@ class QuestionOptionService {
             label,
             value: value || normalizeValue(label),
             order_index: order_index ?? 0,
-            is_other: is_other ?? false
+            is_other: is_other ?? false,
+            image_url: image_url || null,
+            media_type: media_type || null,
         });
 
         return {
@@ -59,13 +61,15 @@ class QuestionOptionService {
             throw new AppError("Option not found", 404);
         }
 
-        const { label, value, order_index, is_other } = payload;
+        const { label, value, order_index, is_other, image_url, media_type } = payload;
 
         if (
             label === undefined &&
             value === undefined &&
             order_index === undefined &&
-            is_other === undefined
+            is_other === undefined &&
+            image_url === undefined &&
+            media_type === undefined
         ) {
             throw new AppError("No data provided to update", 400);
         }
@@ -80,6 +84,8 @@ class QuestionOptionService {
         if (value !== undefined) option.value = value;
         if (order_index !== undefined) option.order_index = order_index;
         if (is_other !== undefined) option.is_other = is_other;
+        if (image_url !== undefined) option.image_url = image_url || null;
+        if (media_type !== undefined) option.media_type = media_type || null;
 
         await option.save();
 
@@ -111,13 +117,22 @@ class QuestionOptionService {
         if (!question) throw new AppError("Question not found", 404);
 
         const options = await this.QuestionOption.findAll({
-            where: { question_id }
+            where: { question_id },
+            attributes: ["id", "label", "value", "order_index", "is_other", "image_url", "media_type"]
         });
 
         return {
             message: "Get options successfully",
             count: options.length,
-            options
+            options: options.map(o => ({
+                id: o.id,
+                label: o.label,
+                value: o.value,
+                order_index: o.order_index,
+                is_other: o.is_other ?? false,
+                image_url: o.image_url ?? null,
+                media_type: o.media_type ?? null,
+            })).sort((a, b) => a.order_index - b.order_index),
         };
     }
 
@@ -137,23 +152,39 @@ class QuestionOptionService {
             throw new AppError("TEXT question cannot have options", 400);
         }
 
+        // Support both string[] and { label, value }[] formats
         const cleanedOptions = options
-            .map(opt => opt?.trim())
-            .filter(opt => opt);
+            .map(opt => {
+                if (typeof opt === "string") {
+                    const label = opt.trim();
+                    return label ? { label, value: label.toLowerCase().replace(/\s+/g, "_") } : null;
+                }
+                if (typeof opt === "object" && opt?.label) {
+                    return { label: opt.label.trim(), value: opt.value?.trim() || opt.label.trim().toLowerCase().replace(/\s+/g, "_") };
+                }
+                return null;
+            })
+            .filter(Boolean);
 
-        const uniqueOptions = [...new Set(cleanedOptions)];
+        const uniqueMap = new Map();
+        cleanedOptions.forEach(opt => {
+            if (!uniqueMap.has(opt.value)) {
+                uniqueMap.set(opt.value, opt);
+            }
+        });
+        const uniqueOptions = [...uniqueMap.values()];
 
         const existing = await this.QuestionOption.findAll({
             where: {
                 question_id,
-                content: uniqueOptions
+                label: uniqueOptions.map(o => o.label)
             }
         });
 
-        const existingContents = existing.map(o => o.content);
+        const existingLabels = new Set(existing.map(o => o.label));
 
         const finalOptions = uniqueOptions.filter(
-            opt => !existingContents.includes(opt)
+            opt => !existingLabels.has(opt.label)
         );
 
         if (finalOptions.length === 0) {
@@ -161,9 +192,11 @@ class QuestionOptionService {
         }
 
         const createdOptions = await this.QuestionOption.bulkCreate(
-            finalOptions.map(content => ({
+            finalOptions.map((opt, idx) => ({
                 question_id,
-                content
+                label: opt.label,
+                value: opt.value,
+                order_index: idx,
             }))
         );
 

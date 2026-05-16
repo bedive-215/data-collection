@@ -26,7 +26,11 @@ class QuestionService {
             "RATING",
             "SINGLE_CHOICE",
             "MULTIPLE_CHOICE",
-            "DROPDOWN"
+            "DROPDOWN",
+            "LINEAR_SCALE",
+            "TIME",
+            "FILE_UPLOAD",
+            "MATRIX"
         ];
 
         if (!content || !content.trim()) {
@@ -54,7 +58,9 @@ class QuestionService {
                 label: opt.label?.trim(),
                 value: opt.value?.trim(),
                 order_index: opt.order_index ?? 0,
-                is_other: opt.is_other || false
+                is_other: opt.is_other || false,
+                image_url: opt.image_url || null,
+                media_type: opt.media_type || null,
             }))
             .filter(opt => opt.label && opt.value);
 
@@ -77,6 +83,19 @@ class QuestionService {
         switch (type) {
             case "TEXT":
             case "PARAGRAPH":
+                if (settings) {
+                    const { min_chars, max_chars } = settings;
+                    if (min_chars !== undefined && (typeof min_chars !== "number" || min_chars < 0)) {
+                        throw new AppError("min_chars must be a non-negative number", 400);
+                    }
+                    if (max_chars !== undefined && (typeof max_chars !== "number" || max_chars < 1)) {
+                        throw new AppError("max_chars must be a positive number", 400);
+                    }
+                    if (min_chars !== undefined && max_chars !== undefined && min_chars > max_chars) {
+                        throw new AppError("min_chars cannot be greater than max_chars", 400);
+                    }
+                    return { min_chars: min_chars ?? null, max_chars: max_chars ?? null };
+                }
                 return null;
 
             case "EMAIL":
@@ -88,15 +107,12 @@ class QuestionService {
             case "NUMBER":
                 if (settings) {
                     const { min, max } = settings;
-
                     if (min !== undefined && typeof min !== "number") {
                         throw new AppError("min must be number", 400);
                     }
-
                     if (max !== undefined && typeof max !== "number") {
                         throw new AppError("max must be number", 400);
                     }
-
                     if (min !== undefined && max !== undefined && min > max) {
                         throw new AppError("min <= max", 400);
                     }
@@ -104,14 +120,54 @@ class QuestionService {
                 return settings;
 
             case "RATING":
-                const min = settings?.min ?? 1;
-                const max = settings?.max ?? 5;
-
-                if (min >= max) {
+                const rMin = settings?.min ?? 1;
+                const rMax = settings?.max ?? 5;
+                if (rMin >= rMax) {
                     throw new AppError("Invalid rating range", 400);
                 }
+                return { min: rMin, max: rMax };
 
-                return { min, max };
+            case "LINEAR_SCALE":
+                if (settings) {
+                    const { min, max, min_label, max_label } = settings;
+                    if (min === undefined || max === undefined) {
+                        throw new AppError("LINEAR_SCALE requires min and max", 400);
+                    }
+                    if (typeof min !== "number" || typeof max !== "number" || min >= max) {
+                        throw new AppError("LINEAR_SCALE min must be less than max", 400);
+                    }
+                    return { min, max, min_label: min_label ?? null, max_label: max_label ?? null };
+                }
+                return { min: 1, max: 5, min_label: null, max_label: null };
+
+            case "TIME":
+                return settings || null;
+
+            case "FILE_UPLOAD":
+                if (settings) {
+                    const { max_size_mb, allowed_types } = settings;
+                    if (max_size_mb !== undefined && (typeof max_size_mb !== "number" || max_size_mb <= 0)) {
+                        throw new AppError("max_size_mb must be a positive number", 400);
+                    }
+                    if (allowed_types !== undefined && !Array.isArray(allowed_types)) {
+                        throw new AppError("allowed_types must be an array", 400);
+                    }
+                    return { max_size_mb: max_size_mb ?? 5, allowed_types: allowed_types ?? ["image/*"] };
+                }
+                return { max_size_mb: 5, allowed_types: ["image/*"] };
+
+            case "MATRIX":
+                if (settings) {
+                    const { rows, columns } = settings;
+                    if (!Array.isArray(rows) || rows.length < 1) {
+                        throw new AppError("MATRIX requires at least 1 row", 400);
+                    }
+                    if (!Array.isArray(columns) || columns.length < 2) {
+                        throw new AppError("MATRIX requires at least 2 columns", 400);
+                    }
+                    return { rows, columns };
+                }
+                return null;
 
             case "SINGLE_CHOICE":
             case "MULTIPLE_CHOICE":
@@ -124,7 +180,11 @@ class QuestionService {
     }
 
     async createQuestion(survey_id, payload) {
-        const { content, type, required, order_index, settings, options } = payload;
+        const {
+            content, type, required, order_index, settings, options,
+            description, placeholder, section_id, media_url, media_type,
+            condition, hidden_from_analytics, next_question_id, next_section_id,
+        } = payload;
 
         this._validateQuestionInput({ content, type });
 
@@ -137,10 +197,19 @@ class QuestionService {
             const question = await this.Question.create({
                 survey_id,
                 content: content.trim(),
+                description: description || null,
+                placeholder: placeholder || null,
                 type,
-                required,
-                order_index,
-                settings: validatedSettings
+                required: required ?? true,
+                order_index: order_index ?? 0,
+                settings: validatedSettings,
+                section_id: section_id || null,
+                media_url: media_url || null,
+                media_type: media_type || null,
+                condition: condition || null,
+                hidden_from_analytics: hidden_from_analytics ?? false,
+                next_question_id: next_question_id || null,
+                next_section_id: next_section_id || null,
             }, { transaction: t });
 
             let createdOptions = [];
@@ -173,7 +242,11 @@ class QuestionService {
 
     // update question (content, type, required, order_index, settings, options)
     async updateQuestion(question_id, payload) {
-        const { content, type, required, order_index, settings, options } = payload;
+        const {
+            content, type, required, order_index, settings, options,
+            description, placeholder, section_id, media_url, media_type,
+            condition, hidden_from_analytics, next_question_id, next_section_id,
+        } = payload;
 
         const question = await this.Question.findByPk(question_id, {
             include: {
@@ -187,14 +260,23 @@ class QuestionService {
         const t = await models.sequelize.transaction();
 
         try {
-            if (content !== undefined) question.content = content.trim();
+            if (content !== undefined)          question.content = content.trim();
+            if (description !== undefined)      question.description = description || null;
+            if (placeholder !== undefined)     question.placeholder = placeholder || null;
+            if (section_id !== undefined)       question.section_id = section_id || null;
+            if (media_url !== undefined)       question.media_url = media_url || null;
+            if (media_type !== undefined)      question.media_type = media_type || null;
+            if (condition !== undefined)       question.condition = condition || null;
+            if (hidden_from_analytics !== undefined) question.hidden_from_analytics = hidden_from_analytics;
+            if (next_question_id !== undefined) question.next_question_id = next_question_id || null;
+            if (next_section_id !== undefined)  question.next_section_id = next_section_id || null;
             if (type !== undefined) {
                 question.type = type;
                 question.settings = this._validateSettingsByType(type, settings);
             }
-            if (required !== undefined) question.required = required;
-            if (order_index !== undefined) question.order_index = order_index;
-            if (settings !== undefined) question.settings = settings;
+            if (required !== undefined)       question.required = required;
+            if (order_index !== undefined)    question.order_index = order_index;
+            if (settings !== undefined)      question.settings = this._validateSettingsByType(question.type, settings);
 
             await question.save({ transaction: t });
 
@@ -225,7 +307,10 @@ class QuestionService {
 
             return {
                 message: "Updated question successfully",
-                question
+                question: {
+                    ...question.toJSON(),
+                    survey_id: question.survey_id,
+                }
             };
 
         } catch (err) {
@@ -266,16 +351,41 @@ class QuestionService {
                 {
                     model: this.Option,
                     as: "options",
-                    attributes: ["id", "label", "value", "order_index", "is_other"]
+                    attributes: ["id", "label", "value", "order_index", "is_other", "image_url", "media_type"]
                 }
             ],
-            order: [["order_index", "ASC"]]
+            order: [["section_id", "ASC"], ["order_index", "ASC"]]
         });
 
         return {
             message: "Get questions successfully",
             count: questions.length,
-            questions
+            questions: questions.map(q => ({
+                id: q.id,
+                section_id: q.section_id,
+                content: q.content,
+                description: q.description,
+                placeholder: q.placeholder,
+                type: q.type,
+                required: q.required,
+                order_index: q.order_index,
+                settings: q.settings,
+                media_url: q.media_url,
+                media_type: q.media_type,
+                condition: q.condition,
+                hidden_from_analytics: q.hidden_from_analytics,
+                next_question_id: q.next_question_id,
+                next_section_id: q.next_section_id,
+                options: (q.options || []).sort((a, b) => a.order_index - b.order_index).map(o => ({
+                    id: o.id,
+                    label: o.label,
+                    value: o.value,
+                    order_index: o.order_index,
+                    is_other: o.is_other,
+                    image_url: o.image_url,
+                    media_type: o.media_type,
+                })),
+            }))
         };
     }
 
@@ -326,7 +436,9 @@ class QuestionService {
                     required = true,
                     order_index = index,
                     settings,
-                    options
+                    options,
+                    media_url,
+                    media_type,
                 } = q;
 
                 this._validateQuestionInput({ content, type });
@@ -342,13 +454,17 @@ class QuestionService {
                     type,
                     required,
                     order_index,
-                    settings: validatedSettings
+                    settings: validatedSettings,
+                    media_url: media_url || null,
+                    media_type: media_type || null,
                 });
 
                 if (cleanedOptions.length > 0) {
                     cleanedOptions.forEach((opt, optIndex) => {
                         optionData.push({
                             ...opt,
+                            image_url: opt.image_url || null,
+                            media_type: opt.media_type || null,
                             order_index: opt.order_index ?? optIndex,
                             question_id: tempId
                         });

@@ -11,8 +11,9 @@ import route from "./auth.route.js";
 
 const router = express.Router();
 
-//  start response
-route.post(
+
+// start survey session
+router.post(
     "/surveys/:survey_id/start",
     validate(surveyIdParams),
     authMiddleware.checkSurveyAccess('editor', 'respondent'),
@@ -40,6 +41,13 @@ router.put(
     "/:survey_id",
     validate(surveyIdParams),
     ResponseController.update
+);
+
+// Auto-save: lưu tiến độ
+router.patch(
+    "/:survey_id/autosave",
+    validate(surveyIdParams),
+    ResponseController.autoSave
 );
 
 // delete response

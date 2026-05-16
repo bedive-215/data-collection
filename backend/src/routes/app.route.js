@@ -8,6 +8,9 @@ import routerOption from './option.route.js';
 import routerAdminStats from './adminStats.route.js';
 import routerAnalytics from './surveyAnalytic.route.js'
 import routerNotification from './notification.route.js';
+import routerSection from './section.route.js';
+import routerMedia from './media.route.js';
+import routerOptionMedia from './optionMedia.route.js';
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -20,6 +23,9 @@ router.use('/users', routerUser);
 
 router.use('/survey', authMiddleware.auth.bind(authMiddleware));
 router.use('/survey', routerSurvey);
+
+router.use('/sections', authMiddleware.auth.bind(authMiddleware));
+router.use('/sections', routerSection);
 
 router.use('/questions', authMiddleware.auth.bind(authMiddleware));
 router.use('/questions', routerQuestion);
@@ -38,5 +44,11 @@ router.use('/analytics', routerAnalytics);
 
 router.use('/notifications', authMiddleware.auth.bind(authMiddleware));
 router.use('/notifications', routerNotification);
+
+router.use('/media', authMiddleware.auth.bind(authMiddleware));
+router.use('/media', routerMedia);
+
+// option-media routes are already wrapped by authMiddleware.auth.bind(authMiddleware) in optionMedia.route.js
+router.use('/option-media', routerOptionMedia);
 
 export default router;

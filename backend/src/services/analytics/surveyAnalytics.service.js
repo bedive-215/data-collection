@@ -553,6 +553,255 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
             insight: result,
         };
     }
+
+    async getDateHeatmap(survey_id, filters = {}) {
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+
+        const rows = await this.Response.findAll({
+            where: responseWhere,
+            attributes: [
+                [fn("DATE", col("created_at")), "date"],
+                [fn("COUNT", col("id")), "count"],
+            ],
+            group: [literal("DATE(created_at)")],
+            order: [[literal("DATE(created_at)"), "ASC"]],
+            raw: true,
+        });
+
+        // Fill gaps — generate all dates in range
+        const dateMap = {};
+        rows.forEach(r => { dateMap[r.date] = parseInt(r.count); });
+
+        // Detect range
+        let startDate, endDate;
+        if (filters.date_from && filters.date_to) {
+            startDate = new Date(filters.date_from);
+            endDate = new Date(filters.date_to);
+        } else {
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 90); // last 90 days default
+        }
+
+        const heatmap = [];
+        const cur = new Date(startDate);
+        while (cur <= endDate) {
+            const key = cur.toISOString().split("T")[0];
+            heatmap.push({ date: key, count: dateMap[key] || 0 });
+            cur.setDate(cur.getDate() + 1);
+        }
+
+        return { survey_id, heatmap, start_date: startDate.toISOString().split("T")[0], end_date: endDate.toISOString().split("T")[0] };
+    }
+
+    // ─────────────────────────────────────────────
+    // 9. RESPONSE SEARCH + FILTER
+    // ─────────────────────────────────────────────
+    async getFilteredResponses(survey_id, filters = {}, { page = 1, limit = 20 } = {}) {
+        // FIX: status is now in _buildResponseWhere, so DB-level filtering is correct.
+        // For search_query we still need a JS-level filter after fetching, because
+        // full-text search across joined answer values is complex in Sequelize.
+        // To get correct pagination for search_query, we fetch without pagination first.
+        const whereClause = this._buildResponseWhere(survey_id, filters);
+
+        if (filters.search_query) {
+            // Fetch all matching rows (status already filtered at DB), then JS-filter by search
+            const allRows = await this.Response.findAll({
+                where: whereClause,
+                order: [["created_at", "DESC"]],
+                include: [
+                    {
+                        model: this.Answer,
+                        as: "answers",
+                        include: [
+                            { model: this.Question, as: "question", attributes: ["id", "content", "type"] },
+                            { model: this.QuestionOption, as: "option", attributes: ["id", "label"], required: false },
+                        ],
+                    },
+                ],
+            });
+
+            const query = filters.search_query.toLowerCase();
+            const filtered = [];
+
+            for (const res of allRows) {
+                const answers = (res.answers || []).map(a => ({
+                    question_id: a.question?.id,
+                    question_content: a.question?.content,
+                    type: a.question?.type,
+                    value: a.option?.label ?? a.answer_text ?? (a.answer_number != null ? String(a.answer_number) : null) ?? a.answer_date ?? null,
+                }));
+
+                const hasMatch = answers.some(a =>
+                    (a.question_content || "").toLowerCase().includes(query) ||
+                    (String(a.value || "")).toLowerCase().includes(query)
+                );
+                if (!hasMatch) continue;
+
+                filtered.push({
+                    response_id: res.id,
+                    status: res.status,
+                    created_at: res.created_at,
+                    submitted_at: res.submitted_at,
+                    time_to_complete_seconds: res.created_at && res.submitted_at
+                        ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
+                        : null,
+                    answers,
+                });
+            }
+
+            const totalFiltered = filtered.length;
+            const offset = (page - 1) * limit;
+            return {
+                survey_id,
+                pagination: {
+                    page,
+                    limit,
+                    total_responses: totalFiltered,
+                    total_pages: Math.ceil(totalFiltered / limit) || 1,
+                },
+                responses: filtered.slice(offset, offset + limit),
+            };
+        }
+
+        // No search_query — use DB pagination directly (status already in WHERE)
+        const { count, rows: responses } = await this.Response.findAndCountAll({
+            where: whereClause,
+            order: [["created_at", "DESC"]],
+            limit,
+            offset: (page - 1) * limit,
+            include: [
+                {
+                    model: this.Answer,
+                    as: "answers",
+                    include: [
+                        { model: this.Question, as: "question", attributes: ["id", "content", "type"] },
+                        { model: this.QuestionOption, as: "option", attributes: ["id", "label"], required: false },
+                    ],
+                },
+            ],
+        });
+
+        return {
+            survey_id,
+            pagination: {
+                page,
+                limit,
+                total_responses: count,
+                total_pages: Math.ceil(count / limit) || 1,
+            },
+            responses: responses.map(res => ({
+                response_id: res.id,
+                status: res.status,
+                created_at: res.created_at,
+                submitted_at: res.submitted_at,
+                time_to_complete_seconds: res.created_at && res.submitted_at
+                    ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
+                    : null,
+                answers: (res.answers || []).map(a => ({
+                    question_id: a.question?.id,
+                    question_content: a.question?.content,
+                    type: a.question?.type,
+                    value: a.option?.label ?? a.answer_text ?? (a.answer_number != null ? String(a.answer_number) : null) ?? a.answer_date ?? null,
+                })),
+            })),
+        };
+    }
+
+    // ─────────────────────────────────────────────
+    // 10. EXPORT FULL CSV
+    // ─────────────────────────────────────────────
+    async exportCSV(survey_id, filters = {}) {
+        const questions = await this.Question.findAll({
+            where: { survey_id },
+            order: [["order_index", "ASC"]],
+            raw: true,
+        });
+
+        const optionsMap = {};
+        for (const q of questions) {
+            const opts = await this.QuestionOption.findAll({
+                where: { question_id: q.id },
+                order: [["order_index", "ASC"]],
+                raw: true,
+            });
+            optionsMap[q.id] = opts;
+        }
+
+        const responseWhere = this._buildResponseWhere(survey_id, filters);
+        const responses = await this.Response.findAll({
+            where: responseWhere,
+            order: [["created_at", "ASC"]],
+            include: [{ model: this.Answer, as: "answers" }],
+        });
+
+        // Header row
+        const headers = ["Response ID", "Status", "Submitted At", "Duration (s)", ...questions.map(q => q.content)];
+
+        // Data rows
+        const rows = responses.map(res => {
+            const ansMap = {};
+            (res.answers || []).forEach(a => { ansMap[a.question_id] = a; });
+
+            const row = [
+                res.id,
+                res.status,
+                res.submitted_at ? new Date(res.submitted_at).toISOString() : "",
+                res.submitted_at && res.created_at
+                    ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
+                    : "",
+            ];
+
+            questions.forEach(q => {
+                const a = ansMap[q.id];
+                if (!a) { row.push(""); return; }
+
+                const isMulti = q.type === "MULTIPLE_CHOICE";
+                const isChoice = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(q.type);
+
+                if (isChoice) {
+                    if (isMulti) {
+                        const selected = typeof a.selected_options === "string"
+                            ? JSON.parse(a.selected_options)
+                            : (a.selected_options || []);
+                        const labels = (optionsMap[q.id] || [])
+                            .filter(o => selected.includes(o.id))
+                            .map(o => o.label);
+                        row.push(labels.join("; "));
+                    } else {
+                        const opt = (optionsMap[q.id] || []).find(o => o.id === a.option_id);
+                        row.push(opt ? opt.label : "");
+                    }
+                } else if (a.answer_text !== null && a.answer_text !== undefined) {
+                    row.push(a.answer_text);
+                } else if (a.answer_number !== null && a.answer_number !== undefined) {
+                    row.push(String(a.answer_number));
+                } else if (a.answer_date) {
+                    row.push(new Date(a.answer_date).toISOString().split("T")[0]);
+                } else {
+                    row.push("");
+                }
+            });
+
+            return row;
+        });
+
+        // Build CSV string
+        const escape = v => {
+            const s = v == null ? "" : String(v);
+            if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+                return `"${s.replace(/"/g, '""')}"`;
+            }
+            return s;
+        };
+
+        const csv = [
+            headers.map(escape).join(","),
+            ...rows.map(row => row.map(escape).join(","))
+        ].join("\n");
+
+        return { csv, filename: `survey-${survey_id}-export-${Date.now()}.csv`, row_count: rows.length };
+    }
 }
 
 export default new SurveyAnalyticsService();

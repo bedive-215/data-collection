@@ -249,8 +249,8 @@ export default function Dashboard() {
           </div>
 
           <div className="flex justify-between mt-4">
-            {dateLabels.map((d) => (
-              <span key={d} className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">
+            {dateLabels.map((d, i) => (
+              <span key={`${d}-${i}`} className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">
                 {d}
               </span>
             ))}

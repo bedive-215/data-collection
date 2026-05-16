@@ -21,36 +21,36 @@ class NotificationService {
                 data
             });
 
-            console.log(`[NotificationService] Created notification ${notification.id} for user ${userId}`);
-            console.log(`[NotificationService] global.emitToUser exists:`, !!global.emitToUser);
+            console.log(`[NotificationService] Created notification ${notification.id} for user ${userId}, type: ${type}`);
 
             const emit = () => {
-    if (global.emitToUser) {
-        global.emitToUser(userId, "notification", {
-            id: notification.id,
-            type,
-            title,
-            message,
-            surveyId: data?.surveyId || null,
-            responseId: data?.responseId || null,
-            inviterId: data?.inviterId || null,
-            inviterName: data?.inviterName || null,
-            responderId: data?.responderId || null,
-            responderName: data?.responderName || null,
-            role: data?.role || null,
-            surveyTitle: data?.surveyTitle || null,
-            surveyEndAt: data?.surveyEndAt || null,
-            participantId: data?.participantId || null,
-            participantName: data?.participantName || null,
-            createdAt: notification.created_at,
-            read: false
-        });
-    } else {
-        console.warn(`[NotificationService] global.emitToUser not ready, retrying in 1s for user ${userId}`);
-        setTimeout(emit, 1000);
-    }
-};
-emit();
+                if (global.emitToUser) {
+                    console.log(`[NotificationService] EMIT to userId: ${userId}`);
+                    global.emitToUser(userId, "notification", {
+                        id: notification.id,
+                        type,
+                        title,
+                        message,
+                        surveyId: data?.surveyId || null,
+                        responseId: data?.responseId || null,
+                        inviterId: data?.inviterId || null,
+                        inviterName: data?.inviterName || null,
+                        responderId: data?.responderId || null,
+                        responderName: data?.responderName || null,
+                        role: data?.role || null,
+                        surveyTitle: data?.surveyTitle || null,
+                        surveyEndAt: data?.surveyEndAt || null,
+                        participantId: data?.participantId || null,
+                        participantName: data?.participantName || null,
+                        createdAt: notification.created_at,
+                        read: false
+                    });
+                } else {
+                    console.warn(`[NotificationService] global.emitToUser not ready, retrying in 1s for user ${userId}`);
+                    setTimeout(emit, 1000);
+                }
+            };
+            emit();
 
             return notification;
         } catch (error) {

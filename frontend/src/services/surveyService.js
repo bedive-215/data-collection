@@ -93,6 +93,36 @@ const surveyService = {
   deleteParticipant: (surveyId, pid) =>
     apiClient.delete(`${BASE_URL}/${surveyId}/participants/${pid}`),
 
+  // ─────────────────────────────
+  // SECTIONS (PAGES)
+  // ─────────────────────────────
+  // Mounted at /api/v1/sections → GET/POST /api/v1/sections/surveys/:survey_id/sections
+  getSections: (surveyId) =>
+    apiClient.get(`/api/v1/sections/surveys/${surveyId}/sections`),
+
+  createSection: (surveyId, payload) =>
+    apiClient.post(`/api/v1/sections/surveys/${surveyId}/sections`, payload),
+
+  updateSection: (sectionId, payload) =>
+    apiClient.patch(`/api/v1/sections/${sectionId}`, payload),
+
+  deleteSection: (sectionId) =>
+    apiClient.delete(`/api/v1/sections/${sectionId}`),
+
+  reorderSections: (surveyId, sections) =>
+    apiClient.patch(`/api/v1/sections/surveys/${surveyId}/sections/reorder`, { sections }),
+
+  bulkCreateSections: (surveyId, sections) =>
+    apiClient.post(`/api/v1/sections/surveys/${surveyId}/sections/bulk`, { sections }),
+
+  // ─────────────────────────────
+  // MEDIA UPLOAD
+  // ─────────────────────────────
+  uploadQuestionMedia: (formData) =>
+    apiClient.post("/media/question-media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+
 };
 
 export default surveyService;

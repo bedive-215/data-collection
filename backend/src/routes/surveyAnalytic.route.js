@@ -16,7 +16,7 @@ const route = Router();
 // ─────────────────────────────────────────────────────────────
 route.get(
     "/questions/:question_id/survey/:survey_id",
-    validate(createOptionParams),
+    validate(surveyIdParams),
     authMiddleware.checkSurveyOwnerOrAdmin,
     surveyAnalyticController.getQuestionAnalytics
 );
@@ -106,6 +106,39 @@ route.get(
     validate(createOptionParams),
     authMiddleware.checkSurveyOwnerOrAdmin,
     surveyAnalyticController.getInsightAgeGender
+);
+
+// ─────────────────────────────────────────────────────────────
+// Date Heatmap — GitHub-style activity calendar
+// GET /api/analytics/surveys/:survey_id/heatmap
+// ─────────────────────────────────────────────────────────────
+route.get(
+    "/surveys/:survey_id/heatmap",
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.getDateHeatmap
+);
+
+// ─────────────────────────────────────────────────────────────
+// Filtered Responses — search + status filter
+// GET /api/analytics/surveys/:survey_id/responses/filtered?search_query=&status=
+// ─────────────────────────────────────────────────────────────
+route.get(
+    "/surveys/:survey_id/responses/filtered",
+    validate(paginationParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.getFilteredResponses
+);
+
+// ─────────────────────────────────────────────────────────────
+// Export CSV — full survey data
+// GET /api/analytics/surveys/:survey_id/export
+// ─────────────────────────────────────────────────────────────
+route.get(
+    "/surveys/:survey_id/export",
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.exportCSV
 );
 
 export default route;

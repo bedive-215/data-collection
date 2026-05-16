@@ -5,7 +5,9 @@ import models from "../models/index.js";
 const parseFilters = (query) => {
     const filters = {};
     if (query.date_from) filters.date_from = query.date_from;
-    if (query.date_to) filters.date_to = query.date_to;
+    if (query.date_to)   filters.date_to   = query.date_to;
+    if (query.status)    filters.status    = query.status;
+    if (query.search_query) filters.search_query = query.search_query;
     if (query.response_ids) {
         filters.response_ids = query.response_ids.split(",").map((id) => id.trim());
     }
@@ -165,8 +167,50 @@ class SurveyAnalyticController {
             const filters = parseFilters(req.query);
             if (req.query.survey_id) filters.survey_id = req.query.survey_id;
 
-            const data = await SurveyAnalyticsService.getInsightAgeGender(question_id, filters);
+            const result = await SurveyAnalyticsService.getInsightAgeGender(question_id, filters);
+            return res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            next(err);
+        }
+    }
+    // GET /api/analytics/surveys/:survey_id/heatmap
+    // GitHub-style activity heatmap
+    async getDateHeatmap(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const filters = parseFilters(req.query);
+            const data = await SurveyAnalyticsService.getDateHeatmap(survey_id, filters);
             return res.status(200).json({ success: true, data });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // GET /api/analytics/surveys/:survey_id/responses/filtered
+    // Individual responses with search + status filter
+    async getFilteredResponses(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const filters = parseFilters(req.query);
+            const pagination = parsePagination(req.query, 20);
+            const data = await SurveyAnalyticsService.getFilteredResponses(survey_id, filters, pagination);
+            return res.status(200).json({ success: true, data });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // GET /api/analytics/surveys/:survey_id/export
+    // Full data export as CSV
+    async exportCSV(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const filters = parseFilters(req.query);
+            const { csv, filename } = await SurveyAnalyticsService.exportCSV(survey_id, filters);
+
+            res.setHeader("Content-Type", "text/csv; charset=utf-8");
+            res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+            return res.status(200).send(csv);
         } catch (err) {
             next(err);
         }

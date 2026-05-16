@@ -1,6 +1,11 @@
 import AppRouter from "@/routes/AppRouter";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import "@/i18n";
 
-const App = () => <AppRouter />;
+const App = () => (
+  <NotificationProvider>
+    <AppRouter />
+  </NotificationProvider>
+);
 
 export default App;
