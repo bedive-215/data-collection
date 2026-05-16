@@ -30,6 +30,7 @@ export class authMiddleware {
                 role: user.role,
                 phone_number: decoded.phone_number
             };
+            console.log('[DEBUG auth] user:', req.user); // TODO: remove
 
             next();
         } catch (err) {
@@ -73,7 +74,7 @@ export class authMiddleware {
 
             // Tạo access token mới
             const payload = {
-                id: user.id,
+                user_id: user.id,
                 email: user.email,
                 role: user.role,
                 full_name: user.full_name,
@@ -138,7 +139,8 @@ export class authMiddleware {
 
                 // Check owner or admin
                 const isOwner = user && survey.created_by === user.id;
-                const isAdmin = user && user.role === "ADMIN";
+                const isAdmin = user && user.role?.toLowerCase() === "admin";
+                console.log('[DEBUG checkSurveyAccess] user.role:', user?.role, '| isOwner:', isOwner, '| isAdmin:', isAdmin, '| survey.created_by:', survey.created_by); // TODO: remove
 
                 if (isOwner || isAdmin) {
                     req.survey = survey;

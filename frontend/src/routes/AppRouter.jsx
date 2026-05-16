@@ -23,6 +23,9 @@ import DashboardAdmin from "@/pages/admin/Dashboard";
 import AdminUsers from "@/pages/admin/Users";
 import SurveyPage from "@/pages/admin/SurveyPage";
 import QuestionPage from "@/pages/admin/QuestionPage";
+import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import AdminProfile from "@/pages/admin/Profile";
+import AdminNotificationsPage from "@/pages/admin/NotificationsPage";
 
 // User pages
 import Home from "@/pages/user/Home";
@@ -35,6 +38,7 @@ import SurveysPage from "@/pages/user/SurveysPage";
 import MySurveysPage from "@/pages/user/MySurveysPage";
 import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
 import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
+import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
 import NotificationsPage from "@/pages/user/NotificationsPage";
 
 // Errors
@@ -108,6 +112,12 @@ const routeConfig = [
     layout: HomeLayout,
   },
   {
+    path:
+      "/user/surveys/:surveyId/analytics",
+    element: UserAnalyticsPage,
+    layout: HomeLayout,
+  },
+  {
     path: ROUTERS.USER.NOTIFICATIONS,
     element: NotificationsPage,
     layout: HomeLayout,
@@ -135,6 +145,22 @@ const routeConfig = [
     path:
       ROUTERS.ADMIN.SURVEY_DETAIL,
     element: QuestionPage,
+    layout: AdminLayout,
+  },
+  {
+    path:
+      "/admin/surveys/:surveyId/analytics",
+    element: AnalyticsPage,
+    layout: AdminLayout,
+  },
+  {
+    path: "/admin/profile",
+    element: AdminProfile,
+    layout: AdminLayout,
+  },
+  {
+    path: "/admin/notifications",
+    element: AdminNotificationsPage,
     layout: AdminLayout,
   },
 ];

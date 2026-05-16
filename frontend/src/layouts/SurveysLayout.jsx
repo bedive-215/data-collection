@@ -10,7 +10,7 @@ import {
   Users, Link as LinkIcon, Send, CheckCircle2, Clock,
   LayoutGrid, List, SlidersHorizontal, RefreshCw, ArrowLeft,
   ChevronDown, ChevronUp, Sparkles,
-  UserPlus, UserMinus, Rocket, TrendingUp, Zap,
+  UserPlus, UserMinus, Rocket, TrendingUp, Zap, BarChart3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey }    from "@/providers/SurveyProvider";
@@ -818,6 +818,7 @@ function MySurveyCard({
 
   const menuItems=[
     {icon:<Pencil size={13}/>,label:"Chỉnh sửa",action:()=>{setEditing(true);setMenuOpen(false);}},
+    {icon:<BarChart3 size={13}/>,label:"Phân tích",action:()=>{navigate(`/user/surveys/${survey.id}/analytics`);setMenuOpen(false);}},
     {icon:<Share2 size={13}/>,label:"Tạo link chia sẻ",action:()=>{setShareOpen(true);setMenuOpen(false);}},
     {icon:<Mail size={13}/>,label:"Mời người dùng",action:()=>{setInviteOpen(true);setMenuOpen(false);}},
     {icon:<UserPlus size={13}/>,label:"Mời hàng loạt",action:()=>{setBulkInviteOpen(true);setMenuOpen(false);},color:C.primary},
