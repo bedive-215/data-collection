@@ -11,10 +11,10 @@ import {
   Plus, Trash2, Loader2, AlertCircle, Inbox, X,
   Pencil, Check, GripVertical, PlusCircle, Image, ChevronLeft, Sparkles,
   Type, AlignLeft, ChevronDown, List, CheckSquare,
-  ToggleLeft, Star, Grid, FileUp, Calendar, Clock,
+  ToggleLeft, Star, Grid, FileUp, Calendar, Clock, Mail,
   FileText, Video, Minus, Copy, Bold, Italic, Underline,
   Link, AlignLeft as AlignLeftIcon, AlignCenter, AlignRight,
-  ImagePlus,
+  ImagePlus, Layout, ChevronRight,
 } from "lucide-react";
 
 /* ── Design tokens (light theme — giống MySurveysPage) ───────────── */
@@ -78,11 +78,13 @@ const Q_TYPES = [
   { value:"NUMBER",          label:"Số",                 icon:<span style={{fontSize:13,lineHeight:1,fontWeight:700}}>#</span> },
   { value:"DATE",            label:"Ngày",               icon:<Calendar size={15}/> },
   { value:"TIME",            label:"Giờ",                icon:<Clock size={15}/> },
+  { value:"EMAIL",          label:"Email",               icon:<Mail size={15}/> },
   { value:"FILE_UPLOAD",     label:"Tải tệp lên",        icon:<FileUp size={15}/> },
 ];
 
+const SETTINGS_TYPES = ["NUMBER", "RATING", "DATE", "TEXT", "PARAGRAPH", "LINEAR_SCALE"];
 const CHOICE_TYPES = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"];
-const SETTINGS_TYPES = ["NUMBER", "RATING", "DATE"];
+const MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 /* ── Shared helpers ───────────────────────────────────────────────── */
 const inp = (err) => ({
@@ -147,6 +149,157 @@ function Toggle({ checked, onChange }) {
         }}/>
       </div>
     </label>
+  );
+}
+
+/* ── Section Panel (Page builder) ─────────────────────────────────── */
+function SectionPanel({ sections, activeSectionId, onSelect, onDelete, onAdd }) {
+  const [draft, setDraft] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const submit = () => {
+    const t = draft.trim();
+    if (!t) return;
+    onAdd(t);
+    setDraft("");
+    setAdding(false);
+  };
+
+  return (
+    <div style={{
+      background: C.surface, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      border: `1px solid rgba(99,102,241,0.18)`,
+      borderRadius: 14, overflow: "hidden",
+      boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 8px 24px rgba(15,23,42,0.06)",
+    }}>
+      <div style={{
+        padding: "10px 14px 8px",
+        borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: C.textSub, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Trang / Phần
+        </span>
+        <button onClick={() => setAdding(v => !v)} title="Thêm trang mới"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 22, height: 22, borderRadius: 6,
+            background: adding ? "rgba(79,110,247,0.18)" : C.primaryDim,
+            border: "none", cursor: "pointer",
+            color: C.primary, transition: "all .12s",
+          }}
+          onMouseEnter={e => { if (!adding) e.currentTarget.style.background = "rgba(79,110,247,0.18)"; }}
+          onMouseLeave={e => { if (!adding) e.currentTarget.style.background = C.primaryDim; }}
+        >
+          <Plus size={12} strokeWidth={2.5}/>
+        </button>
+      </div>
+
+      {adding && (
+        <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, background: C.surfaceHigh }}>
+          <input
+            autoFocus
+            type="text"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") submit(); if (e.key === "Escape") { setAdding(false); setDraft(""); } }}
+            placeholder="Tên trang mới..."
+            style={{
+              width: "100%", padding: "6px 10px",
+              border: `1px solid ${C.border}`, borderRadius: 8,
+              fontSize: 12, fontFamily: C.font, color: C.text,
+              background: "#fff", outline: "none", boxSizing: "border-box",
+              boxShadow: `0 0 0 3px rgba(79,110,247,0.1)`,
+            }}
+          />
+          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+            <button onClick={submit}
+              style={{ flex: 1, padding: "5px 8px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: C.font, background: C.primaryGrad, color: "#fff" }}>
+              Thêm
+            </button>
+            <button onClick={() => { setAdding(false); setDraft(""); }}
+              style={{ flex: 1, padding: "5px 8px", borderRadius: 7, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: C.font, background: "transparent", color: C.textSub }}>
+              Huỷ
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* "All questions" tab */}
+      <button
+        onClick={() => onSelect(null)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          width: "100%", padding: "9px 14px",
+          background: activeSectionId === null ? C.primaryDim : "transparent",
+          border: "none", borderBottom: `1px solid ${C.border}`,
+          cursor: "pointer", fontFamily: C.font, fontSize: 13,
+          color: activeSectionId === null ? C.primary : C.text,
+          transition: "all .12s",
+        }}
+        onMouseEnter={e => { if (activeSectionId !== null) e.currentTarget.style.background = C.surfaceHigh; }}
+        onMouseLeave={e => { if (activeSectionId !== null) e.currentTarget.style.background = "transparent"; }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Layout size={14} strokeWidth={2}/>
+          Tất cả câu hỏi
+        </span>
+      </button>
+
+      {/* Section list */}
+      {sections.map(sec => (
+        <div key={sec.id}
+          style={{
+            display: "flex", alignItems: "center",
+            background: activeSectionId === sec.id ? C.primaryDim : "transparent",
+            borderBottom: `1px solid ${C.border}`,
+            transition: "background .12s",
+          }}
+          onMouseEnter={e => { if (activeSectionId !== sec.id) e.currentTarget.style.background = C.surfaceHigh; }}
+          onMouseLeave={e => { if (activeSectionId !== sec.id) e.currentTarget.style.background = "transparent"; }}
+        >
+          <button
+            onClick={() => onSelect(sec.id)}
+            style={{
+              flex: 1, display: "flex", alignItems: "center", gap: 8,
+              padding: "9px 14px",
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: C.font, fontSize: 13,
+              color: activeSectionId === sec.id ? C.primary : C.text,
+              textAlign: "left", transition: "color .12s",
+            }}
+          >
+            <ChevronRight size={12} color={C.textSub} style={{ flexShrink: 0 }}/>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {sec.title || "Không có tiêu đề"}
+            </span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(sec.id); }}
+            title="Xóa trang"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, marginRight: 6,
+              background: "none", border: "none", cursor: "pointer",
+              color: C.textDim, borderRadius: 6, transition: "all .12s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.errorBg; e.currentTarget.style.color = C.error; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.textDim; }}
+          >
+            <Trash2 size={12}/>
+          </button>
+        </div>
+      ))}
+
+      {sections.length === 0 && !adding && (
+        <div style={{ padding: "16px 14px", textAlign: "center" }}>
+          <Layout size={28} color={C.textDim} style={{ marginBottom: 6, opacity: 0.5 }}/>
+          <p style={{ fontSize: 12, color: C.textDim, margin: 0 }}>
+            Chưa có trang nào.<br/>Nhấn + để thêm trang mới.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -880,6 +1033,36 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
 
 /* ── SettingsEditor ────────────────────────────────────────────────── */
 function SettingsEditor({ type, settings, onChange }) {
+  if (type === "TEXT" || type === "PARAGRAPH") {
+    return (
+      <div>
+        <span style={lbl}>Giới hạn ký tự</span>
+        <div style={{display:"flex",gap:12}}>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Tối thiểu</span>
+            <input
+              type="number"
+              value={settings?.min_chars ?? ""}
+              placeholder="Không giới hạn"
+              onChange={e => onChange({ ...settings, min_chars: e.target.value !== "" ? Number(e.target.value) : undefined })}
+              style={{...inp(false),padding:"7px 10px",fontSize:13}}
+            />
+          </div>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Tối đa</span>
+            <input
+              type="number"
+              value={settings?.max_chars ?? ""}
+              placeholder="Không giới hạn"
+              onChange={e => onChange({ ...settings, max_chars: e.target.value !== "" ? Number(e.target.value) : undefined })}
+              style={{...inp(false),padding:"7px 10px",fontSize:13}}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === "NUMBER") {
     return (
       <div>
@@ -905,6 +1088,62 @@ function SettingsEditor({ type, settings, onChange }) {
               style={{...inp(false),padding:"7px 10px",fontSize:13}}
             />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "LINEAR_SCALE") {
+    const min = settings?.min ?? 1;
+    const max = settings?.max ?? 5;
+    return (
+      <div>
+        <span style={lbl}>Phạm vi tuyến tính</span>
+        <div style={{display:"flex",gap:12}}>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Min</span>
+            <input
+              type="number"
+              value={min}
+              onChange={e => onChange({ ...settings, min: Number(e.target.value) })}
+              style={{...inp(false),padding:"7px 10px",fontSize:13}}
+            />
+          </div>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Max</span>
+            <input
+              type="number"
+              value={max}
+              onChange={e => onChange({ ...settings, max: Number(e.target.value) })}
+              style={{...inp(false),padding:"7px 10px",fontSize:13}}
+            />
+          </div>
+        </div>
+        <div style={{display:"flex",gap:12,marginTop:8}}>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nhãn min</span>
+            <input type="text" value={settings?.min_label ?? ""} placeholder="Ví dụ: Không hài lòng"
+              onChange={e => onChange({ ...settings, min_label: e.target.value || undefined })}
+              style={{...inp(false),padding:"7px 10px",fontSize:12}}/>
+          </div>
+          <div style={{flex:1}}>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nhãn max</span>
+            <input type="text" value={settings?.max_label ?? ""} placeholder="Ví dụ: Rất hài lòng"
+              onChange={e => onChange({ ...settings, max_label: e.target.value || undefined })}
+              style={{...inp(false),padding:"7px 10px",fontSize:12}}/>
+          </div>
+        </div>
+        {/* Preview scale */}
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:12,padding:"8px 12px",background:C.surfaceHigh,borderRadius:10,gap:4}}>
+          {[...Array(max-min+1)].map((_, i) => {
+            const val = min + i;
+            return (
+              <div key={val} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flex:1}}>
+                <span style={{fontSize:13,fontWeight:700,color:C.primary}}>{val}</span>
+                <div style={{width:"100%",height:6,background:`linear-gradient(90deg, ${C.primary}, ${C.primaryEnd})`,borderRadius:3}}/>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -1034,12 +1273,145 @@ function QuestionBody({ q, type }) {
   return null;
 }
 
+/* ── ConditionEditor — skip logic UI ───────────────────────────────────── */
+const OPERATORS = [
+  { value: "equals",        label: "bằng",        types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
+  { value: "not_equals",    label: "không bằng",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
+  { value: "contains",      label: "chứa",         types: ["TEXT","PARAGRAPH","EMAIL"] },
+  { value: "not_contains",  label: "không chứa",  types: ["TEXT","PARAGRAPH","EMAIL"] },
+  { value: "greater",       label: "lớn hơn",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
+  { value: "less",          label: "nhỏ hơn",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
+  { value: "answered",      label: "đã trả lời",    types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
+  { value: "not_answered",  label: "chưa trả lời",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
+];
+
+function ConditionEditor({ questions, currentQId, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const sourceId = value?.source_question_id ?? "";
+  const operator = value?.operator ?? "";
+  const condValue = value?.value ?? "";
+
+  const sourceQ = questions.find(q => q.id === sourceId);
+  const srcFEType = sourceQ ? toFEType(sourceQ.type) : "";
+  const availableOps = OPERATORS.filter(op => !srcFEType || op.types.includes(srcFEType));
+  const hasCondition = !!sourceId && !!operator;
+
+  const getValueInput = () => {
+    if (!sourceId || operator === "answered" || operator === "not_answered") return null;
+    const isChoice = ["SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN"].includes(srcFEType);
+    if (isChoice) {
+      const opts = sourceQ?.options ?? sourceQ?.option ?? [];
+      return (
+        <select value={condValue}
+          onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
+          style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}>
+          <option value="">— Chọn đáp án —</option>
+          {opts.map((o,i) => (
+            <option key={i} value={typeof o === "string" ? o : (o.value ?? o.label ?? "")}>
+              {typeof o === "string" ? o : (o.label ?? o.value ?? "")}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    if (["NUMBER","LINEAR_SCALE","RATING"].includes(srcFEType)) {
+      return (
+        <input type="number" value={condValue}
+          onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
+          placeholder="Giá trị..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
+      );
+    }
+    return (
+      <input type="text" value={condValue}
+        onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
+        placeholder="Giá trị..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
+    );
+  };
+
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+        <span style={{...lbl, marginBottom:0}}>Điều kiện hiển thị (Skip logic)</span>
+        <button onClick={() => setOpen(v => !v)} style={{
+          display:"flex",alignItems:"center",gap:5,
+          padding:"4px 10px",borderRadius:7,border:"none",cursor:"pointer",
+          fontSize:11,fontWeight:600,fontFamily:C.font,
+          background: hasCondition ? C.primary : C.surfaceHigh,
+          color: hasCondition ? "#fff" : C.textSub, transition:"all .12s",
+        }}>
+          {hasCondition ? "✓ Có điều kiện" : "+ Thêm điều kiện"}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{
+          background:C.surfaceHigh,border:`1px solid ${C.border}`,borderRadius:10,
+          padding:12,display:"flex",flexDirection:"column",gap:10,marginTop:6,
+        }}>
+          <p style={{fontSize:11,color:C.textSub,margin:0,lineHeight:1.4}}>
+            Câu hỏi này chỉ hiển thị khi điều kiện bên dưới được thỏa mãn.
+          </p>
+
+          <div>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Câu hỏi nguồn</span>
+            <select value={sourceId} onChange={e => onChange({ source_question_id: e.target.value, operator: "", value: "" })}
+              style={{...inp(false),padding:"6px 10px",fontSize:12,background:"#fff"}}>
+              <option value="">— Chọn câu hỏi —</option>
+              {questions.filter(q => q.id !== currentQId).map(q => (
+                <option key={q.id} value={q.id}>
+                  {String(q.order_index ?? questions.indexOf(q) + 1)}. {getPlainText(q.content ?? "").slice(0, 40)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {sourceId && (
+            <div>
+              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Điều kiện</span>
+              <select value={operator} onChange={e => onChange({ source_question_id: sourceId, operator: e.target.value, value: "" })}
+                style={{...inp(false),padding:"6px 10px",fontSize:12,background:"#fff"}}>
+                <option value="">— Chọn điều kiện —</option>
+                {availableOps.map(op => (
+                  <option key={op.value} value={op.value}>{op.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {sourceId && operator && !["answered","not_answered"].includes(operator) && (
+            <div>
+              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Giá trị</span>
+              {getValueInput()}
+            </div>
+          )}
+
+          <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
+            <button onClick={() => { onChange(null); setOpen(false); }}
+              style={{padding:"5px 12px",borderRadius:7,border:`1px solid ${C.border}`,background:"transparent",cursor:"pointer",fontSize:11,fontWeight:600,color:C.textSub,fontFamily:C.font}}>
+              Xóa điều kiện
+            </button>
+            <button onClick={() => setOpen(false)}
+              style={{padding:"5px 12px",borderRadius:7,border:"none",background:C.primaryGrad,cursor:"pointer",fontSize:11,fontWeight:600,color:"#fff",fontFamily:C.font}}>
+              Xong
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── QuestionCard ─────────────────────────────────────────────────── */
-function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDelete, onDuplicate, deletingId }) {
+function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDelete, onDuplicate, deletingId, sections, questions, surveyId }) {
   const [contentHtml, setContentHtml] = useState(q.content ?? "");
   const [type,        setType]        = useState(toFEType(q.type));
+  const [sectionId,   setSectionId]   = useState(q.section_id ?? null);
   const [required,    setRequired]    = useState(q.required ?? true);
-  const [qImage,      setQImage]      = useState(null);
+  const [description, setDescription] = useState(q.description ?? "");
+  const [placeholder, setPlaceholder] = useState(q.placeholder ?? "");
+  const [mediaUrl,    setMediaUrl]   = useState(q.media_url ?? "");
+  const [uploading,   setUploading]  = useState(false);
+  const [condition,  setCondition]  = useState(q.condition ?? null);
 
   const existingOptions = q.options ?? q.option ?? [];
   const [optionRows, setOptionRows] = useState(
@@ -1066,10 +1438,10 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
     }
     if (!SETTINGS_TYPES.includes(newType)) setSettings(null);
     if (newType === "RATING") setSettings({ min: 1, max: 5 });
+    if (newType === "LINEAR_SCALE") setSettings({ min: 1, max: 5 });
   };
 
   const handleSave = async () => {
-    // ── validate bằng plain text (kiểm tra không rỗng)
     const plainContent = getPlainText(contentHtml).trim();
     if (!plainContent) return;
 
@@ -1080,16 +1452,39 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
 
     setSaving(true);
     const payload = {
-      // ✅ Gửi HTML để giữ định dạng in đậm, in nghiêng, gạch chân...
       content:  contentHtml,
       type:     toBEType(type),
       required,
       settings: hasSettings ? settings : undefined,
+      description: description.trim() || null,
+      placeholder: placeholder.trim() || null,
+      media_url: mediaUrl.trim() || null,
+      section_id: sectionId || null,
+      condition: condition || null,
     };
     if (isChoice) payload.options = buildBEOptions(optionRows);
 
-    try { await onSave(q.id, q.survey_id, payload); }
+   try { await onSave(q.id, surveyId, payload); }
     finally { setSaving(false); }
+  };
+
+  const handleMediaUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!MEDIA_TYPES.includes(file.type)) { alert("Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP"); return; }
+    if (file.size > 5 * 1024 * 1024) { alert("File quá lớn. Tối đa 5MB."); return; }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await surveyService.uploadQuestionMedia(formData);
+      const data = res?.data ?? res;
+      setMediaUrl(data?.url || data?.data?.url || "");
+    } catch (err) {
+      console.error(err);
+      alert("Upload thất bại: " + (err?.response?.data?.message || err.message));
+    } finally { setUploading(false); }
   };
 
   if (!isActive) {
@@ -1131,9 +1526,52 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         />
 
         <span style={{fontSize:11,color:C.textDim,flexShrink:0,background:C.surfaceHigh,padding:"3px 8px",borderRadius:6,border:`1px solid ${C.border}`}}>
-          {Q_TYPES.find(t=>t.value===toFEType(q.type))?.label}
-        </span>
-        <button onClick={e=>{e.stopPropagation();onDelete(q.id);}} disabled={isDeleting}
+  {Q_TYPES.find(t=>t.value===toFEType(q.type))?.label}
+</span>
+
+{sections?.length > 0 && (
+  <select
+    value={q.section_id || ""}
+    onClick={e => e.stopPropagation()}
+    onChange={async (e) => {
+      e.stopPropagation();
+      await onSave(q.id, surveyId, {
+        content:    q.content,
+        type:       q.type,
+        required:   q.required,
+        options:    q.options,
+        settings:   q.settings,
+        description: q.description,
+        placeholder: q.placeholder,
+        media_url:   q.media_url,
+        condition:   q.condition,
+        section_id:  e.target.value || null,
+      });
+    }}
+    style={{
+      fontSize: 11,
+      padding: "3px 8px",
+      borderRadius: 6,
+      border: `1px solid ${q.section_id ? "rgba(79,110,247,0.3)" : C.border}`,
+      background: q.section_id ? C.primaryDim : C.surfaceHigh,
+      color: q.section_id ? C.primary : C.textDim,
+      cursor: "pointer",
+      fontFamily: C.font,
+      outline: "none",
+      maxWidth: 130,
+      flexShrink: 0,
+    }}
+  >
+    <option value="">📋 Chưa phân trang</option>
+    {sections.map(s => (
+      <option key={s.id} value={s.id}>
+        📄 {s.title?.slice(0, 14)}
+      </option>
+    ))}
+  </select>
+)}
+
+<button onClick={e=>{e.stopPropagation();onDelete(q.id);}} disabled={isDeleting}
           style={{...iconBtn(C.textSub),flexShrink:0}}
           onMouseEnter={e=>{e.currentTarget.style.background=C.errorBg;e.currentTarget.style.color=C.error;e.currentTarget.style.borderColor=C.errorBorder;}}
           onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;e.currentTarget.style.borderColor=C.border;}}>
@@ -1172,11 +1610,90 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         </div>
       </div>
 
-      <div style={{padding:"10px 20px 0",paddingLeft:36}}>
-        <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
+      {/* ── NEW: Description + Placeholder ── */}
+      <div style={{padding:"8px 20px 0",paddingLeft:36,display:"flex",flexDirection:"column",gap:8}}>
+        <div>
+          <span style={{...lbl, marginBottom:4}}>Mô tả câu hỏi (tùy chọn)</span>
+          <input
+            type="text"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Thêm gợi ý hoặc mô tả cho câu hỏi..."
+            style={{...inp(false), padding:"7px 10px", fontSize:12}}
+          />
+        </div>
+        {["TEXT","PARAGRAPH","EMAIL","DATE","NUMBER","TIME"].includes(type) && (
+          <div>
+            <span style={{...lbl, marginBottom:4}}>Placeholder (tùy chọn)</span>
+            <input
+              type="text"
+              value={placeholder}
+              onChange={e => setPlaceholder(e.target.value)}
+              placeholder="Văn bản gợi ý trong ô nhập liệu..."
+              style={{...inp(false), padding:"7px 10px", fontSize:12}}
+            />
+          </div>
+        )}
       </div>
 
-      <div style={{padding:"12px 20px 4px",paddingLeft:36,display:"flex",flexDirection:"column",gap:16}}>
+      {/* ── NEW: Media URL / upload ── */}
+      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          <span style={{...lbl, marginBottom:4}}>Hình ảnh / Video (URL tùy chọn)</span>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input
+              type="url"
+              value={mediaUrl}
+              onChange={e => setMediaUrl(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1}}
+            />
+            <label style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"7px 12px",border:`1px solid ${C.border}`,borderRadius:8,cursor:"pointer",fontSize:12,color:C.textSub,background:C.surfaceHigh,transition:"all .12s"}}
+              onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.surfaceHigh; e.currentTarget.style.color = C.textSub; }}>
+              {uploading ? <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> : <ImagePlus size={13}/>}
+              <input type="file" accept="image/*" onChange={handleMediaUpload} style={{display:"none"}}/>
+            </label>
+          </div>
+          {mediaUrl && (
+            <div style={{marginTop:6}}>
+              <img src={mediaUrl} alt="Preview" style={{maxWidth:120,maxHeight:80,borderRadius:8,objectFit:"cover",border:`1px solid ${C.border}`}}/>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Section / Page selector ── */}
+      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
+        <span style={{...lbl, marginBottom:4}}>Trang / Phần</span>
+        <select
+          value={sectionId || ""}
+          onChange={e => setSectionId(e.target.value || null)}
+          style={{
+            width:"100%",padding:"7px 10px",
+            border:`1px solid ${C.border}`,borderRadius:8,
+            fontSize:12,fontFamily:C.font,color:C.text,
+            background:"#fff",outline:"none",cursor:"pointer",
+          }}
+        >
+          <option value="">— Không thuộc trang nào —</option>
+          {sections.map(s => (
+            <option key={s.id} value={s.id}>{s.title || "Không có tiêu đề"}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* ── Skip logic / Conditional display ── */}
+      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
+        <ConditionEditor
+          questions={questions}
+          currentQId={q.id}
+          value={condition}
+          onChange={setCondition}
+        />
+      </div>
+
+      <div style={{padding:"10px 20px 0",paddingLeft:36,display:"flex",flexDirection:"column",gap:16}}>
         {isChoice && (
           <InlineOptionBuilder qType={type} optionRows={optionRows} onChange={setOptionRows}/>
         )}
@@ -1470,6 +1987,9 @@ export default function QuestionPage() {
   const [contentHtml, setContentHtml] = useState("");
   const [type,        setType]        = useState("TEXT");
   const [required,    setRequired]    = useState(true);
+  const [description, setDescription] = useState("");
+  const [placeholder, setPlaceholder] = useState("");
+  const [mediaUrl,    setMediaUrl]    = useState("");
   const [optionRows,  setOptionRows]  = useState([newOptionRow()]);
   const [settings,    setSettings]    = useState(null);
   const [formError,   setFormError]   = useState("");
@@ -1478,6 +1998,78 @@ export default function QuestionPage() {
 
   const [deletingId,  setDeletingId]  = useState(null);
   const pendingIdRef = useRef(null);
+
+  // ── Section / Page builder state ──
+  const [sections,       setSections]       = useState([]);
+  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState(null); // which section's questions to show
+  const [addingSection,  setAddingSection]  = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState("");
+
+const fetchSections = useCallback(async (sid) => {
+  if (!sid) return;
+  setSectionsLoading(true);
+  try {
+    const res = await surveyService.getSections(sid);
+    // API trả về { survey_id, sections: [...] }
+    const data = res?.data?.sections ?? res?.data?.data ?? res?.data ?? [];
+    setSections(Array.isArray(data) ? data : []);
+  } catch {
+    setSections([]);
+  } finally {
+    setSectionsLoading(false);
+  }
+}, []);
+  useEffect(() => {
+    if (surveyId) {
+      fetchSections(surveyId);
+      setActiveSectionId(null); // show all by default
+    }
+  }, [surveyId, fetchSections]);
+
+  const handleCreateSection = async (title) => {
+    const t = (title || newSectionTitle).trim();
+    if (!t) return;
+    try {
+      const res = await surveyService.createSection(surveyId, {
+        title: t,
+        order_index: sections.length,
+      });
+      const created = res?.data?.section ?? res?.data?.data ?? res?.data;
+      if (created) {
+        setSections(prev => [...prev, created]);
+        setNewSectionTitle("");
+        setAddingSection(false);
+      }
+    } catch { }
+  };
+
+  const handleDeleteSection = async (sectionId) => {
+    try {
+      await surveyService.deleteSection(sectionId);
+      setSections(prev => prev.filter(s => s.id !== sectionId));
+      if (activeSectionId === sectionId) setActiveSectionId(null);
+    } catch { }
+  };
+
+  // Group questions by section_id
+  const questionsBySection = useCallback(() => {
+    const grouped = {};
+    // "No section" questions
+    grouped["__none__"] = questions.filter(q => !q.section_id);
+    // Each section gets its questions
+    sections.forEach(s => {
+      grouped[s.id] = questions.filter(q => q.section_id === s.id);
+    });
+    return grouped;
+  }, [questions, sections]);
+
+  const displayedQuestions = activeSectionId
+    ? questions.filter(q => q.section_id === activeSectionId)
+    : questions;
+
+  const sectionCount = sections.length;
+  const noSectionCount = questions.filter(q => !q.section_id).length;
 
   useEffect(() => { if (surveyId) fetchQuestionsBySurvey(surveyId); }, [surveyId]);
 
@@ -1516,6 +2108,9 @@ export default function QuestionPage() {
     setContentHtml("");
     setType("TEXT");
     setRequired(true);
+    setDescription("");
+    setPlaceholder("");
+    setMediaUrl("");
     setOptionRows([newOptionRow()]);
     setSettings(null);
     setFormError("");
@@ -1528,6 +2123,7 @@ export default function QuestionPage() {
     if (!CHOICE_TYPES.includes(v)) setOptionRows([newOptionRow()]);
     if (!SETTINGS_TYPES.includes(v)) setSettings(null);
     if (v === "RATING") setSettings({ min: 1, max: 5 });
+    if (v === "LINEAR_SCALE") setSettings({ min: 1, max: 5 });
   };
 
   const handleAdd = async (e) => {
@@ -1561,12 +2157,15 @@ export default function QuestionPage() {
     setFormError("");
 
     const payload = {
-      // ✅ Gửi HTML để giữ định dạng in đậm, in nghiêng, gạch chân...
       content:     contentHtml,
       type:        toBEType(type),
       required,
       order_index: questions.length,
       settings:    hasSettings ? settings : undefined,
+      description: description.trim() || null,
+      placeholder: placeholder.trim() || null,
+      media_url: mediaUrl.trim() || null,
+      section_id: activeSectionId || null,
     };
 
     if (isChoice) {
@@ -1601,6 +2200,10 @@ export default function QuestionPage() {
       required:    q.required,
       order_index: questions.length,
       settings:    q.settings ?? undefined,
+      description: q.description ?? null,
+      placeholder: q.placeholder ?? null,
+      media_url:   q.media_url ?? null,
+      section_id:  q.section_id ?? null,
     };
     const feType = toFEType(q.type);
     if (CHOICE_TYPES.includes(feType) && opts.length > 0) {
@@ -1672,9 +2275,22 @@ export default function QuestionPage() {
 
       {/* ── Body ── */}
       <div style={{
-        maxWidth:900,margin:"0 auto",padding:"20px 24px 32px",
+        maxWidth:1100,margin:"0 auto",padding:"20px 24px 32px",
         display:"flex",gap:16,alignItems:"flex-start",
       }}>
+
+        {/* ── Left: Section/Page builder ── */}
+        <div style={{width:220,flexShrink:0}}>
+          <SectionPanel
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelect={setActiveSectionId}
+            onDelete={handleDeleteSection}
+            onAdd={handleCreateSection}
+          />
+        </div>
+
+        {/* ── Center: Questions ── */}
         <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:14}}>
 
           <div style={{
@@ -1771,7 +2387,34 @@ export default function QuestionPage() {
                     </div>
                   </div>
 
-                  <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
+                  {/* ── NEW: Description + Placeholder ── */}
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    <div>
+                      <span style={lbl}>Mô tả câu hỏi (tùy chọn)</span>
+                      <input type="text" value={description} onChange={e => setDescription(e.target.value)}
+                        placeholder="Thêm gợi ý hoặc mô tả..."
+                        style={{...inp(false), padding:"7px 10px", fontSize:12}}/>
+                    </div>
+                    {["TEXT","PARAGRAPH","EMAIL","DATE","NUMBER","TIME"].includes(type) && (
+                      <div>
+                        <span style={lbl}>Placeholder (tùy chọn)</span>
+                        <input type="text" value={placeholder} onChange={e => setPlaceholder(e.target.value)}
+                          placeholder="Văn bản gợi ý trong ô nhập liệu..."
+                          style={{...inp(false), padding:"7px 10px", fontSize:12}}/>
+                      </div>
+                    )}
+                    <div>
+                      <span style={lbl}>Hình ảnh / Video URL (tùy chọn)</span>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <input type="url" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
+                          placeholder="https://example.com/image.jpg"
+                          style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1}}/>
+                        {mediaUrl && (
+                          <img src={mediaUrl} alt="Preview" style={{maxWidth:60,maxHeight:40,borderRadius:6,objectFit:"cover",border:`1px solid ${C.border}`}}/>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
                   <Toggle checked={required} onChange={setRequired}/>
 
@@ -1870,7 +2513,19 @@ export default function QuestionPage() {
             </div>
           ) : (
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              {questions.map((q, index) => (
+              {/* ── Section header if filtering ── */}
+              {activeSectionId && (() => {
+                const sec = sections.find(s => s.id === activeSectionId);
+                return sec ? (
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",background:C.primaryDim,borderRadius:12,border:`1px solid rgba(99,102,241,0.2)`}}>
+                    <Layout size={16} color={C.primary}/>
+                    <span style={{fontSize:13,fontWeight:600,color:C.primary}}>{sec.title}</span>
+                    <span style={{fontSize:12,color:C.textSub,marginLeft:"auto"}}>{displayedQuestions.length} câu hỏi</span>
+                  </div>
+                ) : null;
+              })()}
+
+              {displayedQuestions.map((q, index) => (
                 <QuestionCard
                   key={q.id} q={q} index={index}
                   isActive={activeId === q.id}
@@ -1880,6 +2535,9 @@ export default function QuestionPage() {
                   onDelete={handleDelete}
                   onDuplicate={handleDuplicate}
                   deletingId={deletingId}
+                  sections={sections}
+                  questions={questions}
+                  surveyId={surveyId} 
                 />
               ))}
             </div>

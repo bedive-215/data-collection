@@ -40,6 +40,23 @@ const ResponseProvider = ({ children }) => {
   };
 
   // =========================================
+  // 🟢 START SURVEY SESSION
+  // =========================================
+  const startSurvey = async (surveyId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await responseService.startSurvey(surveyId);
+      return unwrap(res);
+    } catch (err) {
+      handleError(err, "Không thể bắt đầu khảo sát");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================================
   // 🟢 SUBMIT SURVEY
   // =========================================
   const submitSurvey = async (surveyId, payload) => {
@@ -157,6 +174,7 @@ const ResponseProvider = ({ children }) => {
         userSubmission,
 
         // actions
+        startSurvey,
         submitSurvey,
         getMySubmission,
         getAllMyResponses,

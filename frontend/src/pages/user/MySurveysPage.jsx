@@ -6,6 +6,7 @@ import {
   Lock, Globe, Copy, ExternalLink, Power, PowerOff,
   Users, ChevronRight, Link as LinkIcon, Send,
   UserPlus, UserMinus, ChevronDown, RefreshCw,
+  BarChart3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
@@ -1084,6 +1085,11 @@ function SurveyCard({
       action: () => { setEditing(true); setMenuOpen(false); },
     },
     {
+      icon: <BarChart3 size={14}/>,
+      label: "Phân tích",
+      action: () => { navigate(`/user/surveys/${survey.id}/analytics`); setMenuOpen(false); },
+    },
+    {
       icon: <Share2 size={14}/>,
       label: "Tạo link chia sẻ",
       action: () => { setShareOpen(true); setMenuOpen(false); },
@@ -1131,7 +1137,7 @@ function SurveyCard({
           background: C.surface,
           border: `1px solid ${C.border}`,
           borderRadius: 20,
-          overflow: "hidden",
+          overflow: "visible",
           transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
           cursor: "pointer",
           display: "flex",
@@ -1139,10 +1145,7 @@ function SurveyCard({
           height: "100%",
           animation: `slideInUp 0.8s ease-out ${0.1 + index * 0.1}s both`,
           boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          perspective: "1200px",
           position: "relative",
-          transformStyle: "preserve-3d",
-          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
@@ -1225,7 +1228,7 @@ function SurveyCard({
           )}
 
           {/* MENU */}
-          <div ref={menuRef} style={{position:"absolute", top:10, right:10}} onClick={e => e.stopPropagation()}>
+          <div ref={menuRef} style={{position:"absolute", top:10, right:10, zIndex:100}} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               style={{
@@ -1244,8 +1247,8 @@ function SurveyCard({
               <div style={{
                 position:"absolute", top:40, right:0, width:196,
                 background:C.surface, border:`1px solid ${C.border}`,
-                borderRadius:14, overflow:"hidden",
-                boxShadow:"0 10px 30px rgba(0,0,0,.1)", zIndex:20,
+                borderRadius:14, overflow:"visible",
+                boxShadow:"0 10px 30px rgba(0,0,0,.1)",
                 animation: "slideInUp 0.2s ease-out",
               }}>
                 {menuItems.map((item, i) => (
@@ -1461,7 +1464,7 @@ export default function MySurveysPage() {
   );
 
   return (
-    <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow: "hidden" }}>
+    <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow:"visible", position:"relative", zIndex:1 }}>
       <RotatingGradient />
 
       {/* HEADER */}
@@ -1526,7 +1529,7 @@ export default function MySurveysPage() {
         </button>
       </div>
 
-      <div style={{maxWidth:1200, margin:"0 auto", padding:24, position: "relative", zIndex: 1}}>
+      <div style={{maxWidth:1200, margin:"0 auto", padding:24, position: "relative", zIndex: 1, overflow:"visible"}}>
 
         {/* FORM */}
         {showCreateForm && (
@@ -1622,6 +1625,8 @@ export default function MySurveysPage() {
               display:"grid",
               gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",
               gap:20,
+              overflow:"visible",
+              position:"relative",
             }}>
               {filtered.map((survey, index) => (
                 <SurveyCard

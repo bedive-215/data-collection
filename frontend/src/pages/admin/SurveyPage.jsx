@@ -11,6 +11,7 @@ import {
   Image as ImageIcon, Share2, Mail, Lock, Globe,
   Power, PowerOff, ExternalLink, Link as LinkIcon,
   Send, UserPlus, UserMinus, RefreshCw, ChevronDown,
+  BarChart3, Settings,
 } from "lucide-react";
 
 /* ─── Token ──────────────────────────────────────────────────────── */
@@ -86,6 +87,40 @@ const inputStyle = {
 };
 
 const textareaStyle = { ...inputStyle, resize:"none" };
+
+/* ─── Toggle switch ─────────────────────────────────────────────── */
+function ToggleSwitch({ checked, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      style={{
+        width: 38, height: 22,
+        borderRadius: 11,
+        border: "none",
+        background: checked ? C.primary : C.surfaceHigh,
+        border: `1.5px solid ${checked ? C.primaryBorder : C.border}`,
+        cursor: "pointer",
+        position: "relative",
+        transition: "all .2s",
+        flexShrink: 0,
+        padding: 0,
+        outline: "none",
+      }}
+    >
+      <div style={{
+        width: 14, height: 14,
+        borderRadius: "50%",
+        background: checked ? "#fff" : C.textDim,
+        position: "absolute",
+        top: "50%",
+        transform: `translateY(-50%) translateX(${checked ? "20px" : "2px"})`,
+        transition: "all .2s",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+      }} />
+    </button>
+  );
+}
 
 /* ─── Status badge ───────────────────────────────────────────────── */
 const STATUS_MAP = {
@@ -164,9 +199,10 @@ function Modal({ open, onClose, title, children, width = 480 }) {
 
 /* ─── ShareLinkModal ─────────────────────────────────────────────── */
 function ShareLinkModal({ open, onClose, survey, onShare }) {
-  const [loading,  setLoading]  = useState(false);
-  const [shareUrl, setShareUrl] = useState(null);
-  const [copied,   setCopied]   = useState(false);
+  const [loading,    setLoading]    = useState(false);
+  const [shareUrl,   setShareUrl]   = useState(null);
+  const [copied,     setCopied]     = useState(false);
+  const [activeTab,  setActiveTab]  = useState("link"); // "link" | "qr"
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -183,8 +219,29 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownloadQR = () => {
+    if (!shareUrl) return;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}`;
+    const a = document.createElement("a");
+    a.href = qrUrl;
+    a.download = `survey-qr-${survey?.id ?? "code"}.png`;
+    a.click();
+  };
+
+  const getSocialShareUrl = (platform) => {
+    if (!shareUrl || !survey) return "#";
+    const title = encodeURIComponent(survey.title || "Khảo sát");
+    const url = encodeURIComponent(shareUrl);
+    switch (platform) {
+      case "facebook":  return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      case "twitter":  return `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+      case "zalo":     return `https://zalo.me/share?url=${url}`;
+      default: return "#";
+    }
+  };
+
   useEffect(() => {
-    if (!open) { setShareUrl(null); setCopied(false); }
+    if (!open) { setShareUrl(null); setCopied(false); setActiveTab("link"); }
   }, [open]);
 
   return (
@@ -207,73 +264,149 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
           <div>
             <div style={{fontSize:14, fontWeight:600, color:C.text}}>{survey?.title}</div>
             <div style={{fontSize:12, color:C.textSub, marginTop:2}}>
-              Tạo link để chia sẻ survey với mọi người
+              Chia sẻ khảo sát đến mọi người
             </div>
           </div>
         </div>
 
-        {shareUrl ? (
-          <div style={{display:"flex", flexDirection:"column", gap:10}}>
-            <label style={{fontSize:12, fontWeight:600, color:C.textSub, textTransform:"uppercase", letterSpacing:"0.04em"}}>
-              Link chia sẻ
-            </label>
-            <div style={{
-              display:"flex", alignItems:"center", gap:8,
-              padding:"10px 14px",
-              background:C.surfaceHigh, borderRadius:10,
-              border:`1px solid ${C.border}`,
-            }}>
-              <LinkIcon size={14} color={C.textSub} style={{flexShrink:0}}/>
-              <span style={{
-                flex:1, fontSize:13, color:C.text,
-                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-              }}>
-                {shareUrl}
-              </span>
-              <button onClick={handleCopy} style={{
-                display:"flex", alignItems:"center", gap:5,
-                padding:"5px 10px", borderRadius:7,
-                border:`1px solid ${copied ? C.successBorder : C.border}`,
-                background: copied ? C.successBg : "transparent",
-                color: copied ? C.success : C.textSub,
-                fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0,
-                transition:"all .2s",
-              }}>
-                {copied ? <Check size={12}/> : <Copy size={12}/>}
-                {copied ? "Đã sao chép" : "Sao chép"}
-              </button>
-            </div>
-            <button
-              onClick={() => window.open(shareUrl, "_blank")}
+        {/* Tab switcher */}
+        <div style={{display:"flex", gap:8, background:C.surfaceHigh, borderRadius:10, padding:4}}>
+          {["link","qr"].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
               style={{
-                display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                padding:"8px 0", borderRadius:10,
-                border:`1px solid ${C.primaryBorder}`,
-                background:C.primaryDim, color:C.primary,
-                fontSize:13, fontWeight:600, cursor:"pointer",
-              }}
-            >
-              <ExternalLink size={13}/> Mở link
+                flex:1, padding:"7px 0", borderRadius:8, border:"none", cursor:"pointer",
+                fontSize:13, fontWeight:600, fontFamily:C.font,
+                background: activeTab === tab ? C.primary : "transparent",
+                color: activeTab === tab ? "#fff" : C.textSub,
+                transition:"all .15s",
+              }}>
+              {tab === "link" ? "🔗 Link" : "⬡ QR Code"}
             </button>
+          ))}
+        </div>
+
+        {activeTab === "link" ? (
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {shareUrl ? (
+              <>
+                <label style={{fontSize:12, fontWeight:600, color:C.textSub, textTransform:"uppercase", letterSpacing:"0.04em"}}>
+                  Link chia sẻ
+                </label>
+                <div style={{
+                  display:"flex", alignItems:"center", gap:8,
+                  padding:"10px 14px",
+                  background:C.surfaceHigh, borderRadius:10,
+                  border:`1px solid ${C.border}`,
+                }}>
+                  <LinkIcon size={14} color={C.textSub} style={{flexShrink:0}}/>
+                  <span style={{flex:1, fontSize:13, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                    {shareUrl}
+                  </span>
+                  <button onClick={handleCopy} style={{
+                    display:"flex", alignItems:"center", gap:5,
+                    padding:"5px 10px", borderRadius:7,
+                    border:`1px solid ${copied ? C.successBorder : C.border}`,
+                    background: copied ? C.successBg : "transparent",
+                    color: copied ? C.success : C.textSub,
+                    fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0,
+                    transition:"all .2s",
+                  }}>
+                    {copied ? <Check size={12}/> : <Copy size={12}/>}
+                    {copied ? "Đã sao chép" : "Sao chép"}
+                  </button>
+                </div>
+
+                {/* Social share buttons */}
+                <div style={{display:"flex", gap:8}}>
+                  <a href={getSocialShareUrl("facebook")} target="_blank" rel="noreferrer"
+                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#1877f2", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
+                    f Facebook
+                  </a>
+                  <a href={getSocialShareUrl("twitter")} target="_blank" rel="noreferrer"
+                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#1da1f2", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
+                    𝕏 Twitter
+                  </a>
+                  <a href={getSocialShareUrl("zalo")} target="_blank" rel="noreferrer"
+                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#0068ff", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
+                    Zalo
+                  </a>
+                </div>
+
+                <button onClick={() => window.open(shareUrl, "_blank")} style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                  padding:"8px 0", borderRadius:10,
+                  border:`1px solid ${C.primaryBorder}`,
+                  background:C.primaryDim, color:C.primary,
+                  fontSize:13, fontWeight:600, cursor:"pointer",
+                }}>
+                  <ExternalLink size={13}/> Mở link
+                </button>
+              </>
+            ) : (
+              <button onClick={handleGenerate} disabled={loading} style={{
+                display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                padding:"12px 0", borderRadius:12, border:"none",
+                background: loading ? C.surfaceHigh : C.primaryGrad,
+                color: loading ? C.textSub : "#fff",
+                fontSize:14, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
+                boxShadow: loading ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
+              }}>
+                {loading
+                  ? <><Loader2 size={16} style={{animation:"spin 1s linear infinite"}}/> Đang tạo link...</>
+                  : <><LinkIcon size={16}/> Tạo link chia sẻ</>
+                }
+              </button>
+            )}
           </div>
         ) : (
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            style={{
-              display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-              padding:"12px 0", borderRadius:12, border:"none",
-              background: loading ? C.surfaceHigh : C.primaryGrad,
-              color: loading ? C.textSub : "#fff",
-              fontSize:14, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: loading ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
-            }}
-          >
-            {loading
-              ? <><Loader2 size={16} style={{animation:"spin 1s linear infinite"}}/> Đang tạo link...</>
-              : <><LinkIcon size={16}/> Tạo link chia sẻ</>
-            }
-          </button>
+          <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:14}}>
+            {shareUrl ? (
+              <>
+                <div style={{padding:16, background:"#fff", borderRadius:16, border:`1px solid ${C.border}`, boxShadow:"0 4px 16px rgba(0,0,0,0.08)"}}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`}
+                    alt="QR Code"
+                    style={{width:200, height:200, display:"block"}}
+                  />
+                </div>
+                <p style={{fontSize:12, color:C.textSub, margin:0, textAlign:"center"}}>
+                  Quét mã QR để mở khảo sát trên điện thoại
+                </p>
+                <button onClick={handleDownloadQR} style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  padding:"9px 20px", borderRadius:10, border:"none",
+                  background:C.primaryGrad, color:"#fff",
+                  fontSize:13, fontWeight:700, cursor:"pointer",
+                  boxShadow:"0 2px 12px rgba(79,110,247,0.3)",
+                }}>
+                  ⬇ Tải mã QR
+                </button>
+                {!shareUrl && (
+                  <button onClick={handleGenerate} disabled={loading}
+                    style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px 20px", borderRadius:10, border:`1px solid ${C.border}`, background:"transparent", color:C.textSub, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:C.font}}>
+                    <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Tạo link trước
+                  </button>
+                )}
+              </>
+            ) : (
+              <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:12, padding:"2rem 0"}}>
+                <div style={{width:120, height:120, background:C.surfaceHigh, borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                  <span style={{fontSize:48}}>⬡</span>
+                </div>
+                <p style={{fontSize:13, color:C.textSub, margin:0, textAlign:"center"}}>
+                  Tạo link trước để tạo mã QR
+                </p>
+                <button onClick={handleGenerate} disabled={loading} style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  padding:"10px 20px", borderRadius:10, border:"none",
+                  background: loading ? C.surfaceHigh : C.primaryGrad, color: loading ? C.textSub : "#fff",
+                  fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
+                }}>
+                  {loading ? <><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</> : <><LinkIcon size={14}/> Tạo link</>}
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </Modal>
@@ -1160,21 +1293,36 @@ function SurveyCard({
   onShare, onInvite, onBulkInvite,
   onPublish, onCloseSurvey,
   onGetParticipants, onDeleteParticipant,
-  deletingId, updatingId,
+  deletingId, updatingId, navigate,
 }) {
   const thumb    = C.thumbColors[index % C.thumbColors.length];
   const menuRef  = useRef(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
 
-  const [menuOpen,    setMenuOpen]    = useState(false);
-  const [editing,     setEditing]     = useState(false);
-  const [title,       setTitle]       = useState(s.title);
-  const [description, setDescription] = useState(s.description || "");
-  const [startAt,     setStartAt]     = useState(s.start_at ? s.start_at.slice(0,16) : "");
-  const [endAt,       setEndAt]       = useState(s.end_at   ? s.end_at.slice(0,16)   : "");
-  const [dateError,   setDateError]   = useState("");
-  const [hovered,     setHovered]     = useState(false);
+  const [menuOpen,       setMenuOpen]       = useState(false);
+  const [editing,        setEditing]        = useState(false);
+  const [showSettings,   setShowSettings]   = useState(false);
+  const [title,          setTitle]           = useState(s.title);
+  const [description,    setDescription]     = useState(s.description || "");
+  const [startAt,        setStartAt]        = useState(s.start_at ? s.start_at.slice(0,16) : "");
+  const [endAt,          setEndAt]          = useState(s.end_at   ? s.end_at.slice(0,16)   : "");
+  const [dateError,      setDateError]      = useState("");
+  const [hovered,        setHovered]        = useState(false);
+
+  // ── NEW: Advanced settings ──────────────────────────────────────
+  const [isAnonymous,        setIsAnonymous]        = useState(s.is_anonymous ?? false);
+  const [maxResponses,        setMaxResponses]        = useState(s.max_responses ?? "");
+  const [randomizeQuestions,  setRandomizeQuestions]  = useState(s.randomize_questions ?? false);
+  const [randomizeOptions,   setRandomizeOptions]   = useState(s.randomize_options ?? false);
+  const [timeLimit,            setTimeLimit]            = useState(s.time_limit_seconds ?? "");
+  const [allowBack,           setAllowBack]           = useState(s.allow_back ?? true);
+  const [oneQuestionPerPage, setOneQuestionPerPage] = useState(s.one_question_per_page ?? true);
+  const [thankYouMessage,      setThankYouMessage]      = useState(s.thank_you_message ?? "");
+  const [thankYouRedirectUrl,  setThankYouRedirectUrl]  = useState(s.thank_you_redirect_url ?? "");
+  const [logoUrl,             setLogoUrl]             = useState(s.logo_url ?? "");
+  const [backgroundUrl,       setBackgroundUrl]       = useState(s.background_url ?? "");
+  const [accentColor,          setAccentColor]          = useState(s.accent_color ?? "#6366f1");
 
   const [shareOpen,        setShareOpen]        = useState(false);
   const [inviteOpen,       setInviteOpen]       = useState(false);
@@ -1212,6 +1360,19 @@ function SurveyCard({
     setStartAt(s.start_at ? s.start_at.slice(0,16) : "");
     setEndAt(s.end_at   ? s.end_at.slice(0,16)   : "");
     setDateError("");
+    setIsAnonymous(s.is_anonymous ?? false);
+    setMaxResponses(s.max_responses ?? "");
+    setRandomizeQuestions(s.randomize_questions ?? false);
+    setRandomizeOptions(s.randomize_options ?? false);
+    setTimeLimit(s.time_limit_seconds ?? "");
+    setAllowBack(s.allow_back ?? true);
+    setOneQuestionPerPage(s.one_question_per_page ?? true);
+    setThankYouMessage(s.thank_you_message ?? "");
+    setThankYouRedirectUrl(s.thank_you_redirect_url ?? "");
+    setLogoUrl(s.logo_url ?? "");
+    setBackgroundUrl(s.background_url ?? "");
+    setAccentColor(s.accent_color ?? "#6366f1");
+    setShowSettings(false);
   };
 
   const save = async () => {
@@ -1225,8 +1386,22 @@ function SurveyCard({
       description: description.trim() || null,
       start_at:    startAt ? new Date(startAt).toISOString() : null,
       end_at:      endAt   ? new Date(endAt).toISOString()   : null,
+      is_anonymous: isAnonymous,
+      max_responses: maxResponses ? Number(maxResponses) : null,
+      randomize_questions: randomizeQuestions,
+      randomize_options: randomizeOptions,
+      time_limit_seconds: timeLimit ? Number(timeLimit) : null,
+      show_progress_bar: true,
+      allow_back: allowBack,
+      one_question_per_page: oneQuestionPerPage,
+      thank_you_message: thankYouMessage.trim() || null,
+      thank_you_redirect_url: thankYouRedirectUrl.trim() || null,
+      logo_url: logoUrl.trim() || null,
+      background_url: backgroundUrl.trim() || null,
+      accent_color: accentColor || "#6366f1",
     });
     setEditing(false);
+    setShowSettings(false);
   };
 
   const isDeleting  = deletingId === s.id;
@@ -1236,6 +1411,8 @@ function SurveyCard({
 
   const menuItems = [
     { icon:<Pencil size={13}/>,    label:"Chỉnh sửa",       action:startEdit },
+    { icon:<Settings size={13}/>,   label:"Cài đặt nâng cao", action:() => { startEdit(); setShowSettings(true); setMenuOpen(false); } },
+    { icon:<BarChart3 size={13}/>,  label:"Phân tích",        action:() => { navigate(`/admin/surveys/${s.id}/analytics`); setMenuOpen(false); } },
     { icon:<Share2 size={13}/>,    label:"Tạo link chia sẻ", action:() => { setShareOpen(true); setMenuOpen(false); } },
     { icon:<Mail size={13}/>,      label:"Mời người dùng",   action:() => { setInviteOpen(true); setMenuOpen(false); } },
     { icon:<UserPlus size={13}/>,  label:"Mời hàng loạt",    action:() => { setBulkInviteOpen(true); setMenuOpen(false); }, color:C.primary },
@@ -1443,6 +1620,115 @@ function SurveyCard({
                   <AlertCircle size={11}/> {dateError}
                 </div>
               )}
+
+              {/* ── Advanced settings toggle ─────────────────────────────── */}
+              <div>
+                <button
+                  onClick={() => setShowSettings(v => !v)}
+                  style={{
+                    display:"flex", alignItems:"center", gap:6,
+                    background:"transparent", border:`1px solid ${showSettings ? C.primaryBorder : C.border}`,
+                    borderRadius:8, padding:"6px 12px",
+                    color: showSettings ? C.primary : C.textSub,
+                    fontSize:12, fontWeight:600, cursor:"pointer",
+                    fontFamily:C.font, transition:"all .15s",
+                    background: showSettings ? C.primaryDim : "transparent",
+                  }}
+                >
+                  <Settings size={13}/> {showSettings ? "Ẩn cài đặt nâng cao" : "Cài đặt nâng cao"}
+                </button>
+
+                {showSettings && (
+                  <div style={{ marginTop:12, display:"flex", flexDirection:"column", gap:10, padding:"12px", background:C.bg, borderRadius:10, border:`1px solid ${C.border}` }}>
+                    {/* Row 1 */}
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
+                      <div style={{display:"flex", flexDirection:"column", gap:4}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Ẩn danh</label>
+                        <ToggleSwitch checked={isAnonymous} onChange={setIsAnonymous} />
+                      </div>
+                      <div style={{display:"flex", flexDirection:"column", gap:4}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Giới hạn phản hồi</label>
+                        <input type="number" value={maxResponses} onChange={e => setMaxResponses(e.target.value)}
+                          placeholder="Không giới hạn"
+                          style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                      </div>
+                    </div>
+
+                    {/* Row 2 */}
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Xáo trộn câu hỏi</label>
+                        <ToggleSwitch checked={randomizeQuestions} onChange={setRandomizeQuestions} />
+                      </div>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Xáo trộn lựa chọn</label>
+                        <ToggleSwitch checked={randomizeOptions} onChange={setRandomizeOptions} />
+                      </div>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Cho phép quay lại</label>
+                        <ToggleSwitch checked={allowBack} onChange={setAllowBack} />
+                      </div>
+                    </div>
+
+                    {/* Row 3 */}
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
+                      <div style={{display:"flex", flexDirection:"column", gap:4}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Giới hạn thời gian (giây)</label>
+                        <input type="number" value={timeLimit} onChange={e => setTimeLimit(e.target.value)}
+                          placeholder="0 = không giới hạn" min={30}
+                          style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                      </div>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>1 câu/trang</label>
+                        <ToggleSwitch checked={oneQuestionPerPage} onChange={setOneQuestionPerPage} />
+                      </div>
+                      <div style={{display:"flex", flexDirection:"column", gap:4}}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Màu chủ đạo</label>
+                        <div style={{display:"flex", alignItems:"center", gap:8}}>
+                          <input type="color" value={accentColor} onChange={e => setAccentColor(e.target.value)}
+                            style={{width:32, height:32, borderRadius:8, border:`1px solid ${C.border}`, cursor:"pointer", padding:0, background:"transparent"}}/>
+                          <span style={{fontSize:11, color:C.textSub, fontFamily:"monospace"}}>{accentColor}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Logo URL */}
+                    <div>
+                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Logo URL</label>
+                      <input type="url" value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
+                        placeholder="https://example.com/logo.png"
+                        style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                    </div>
+
+                    {/* Background URL */}
+                    <div>
+                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Ảnh nền URL</label>
+                      <input type="url" value={backgroundUrl} onChange={e => setBackgroundUrl(e.target.value)}
+                        placeholder="https://example.com/bg.jpg"
+                        style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                    </div>
+
+                    {/* Thank you message */}
+                    <div>
+                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Tin nhắn cảm ơn</label>
+                      <textarea value={thankYouMessage} onChange={e => setThankYouMessage(e.target.value)}
+                        placeholder="Cảm ơn bạn đã tham gia khảo sát!"
+                        rows={2}
+                        style={{...textareaStyle, fontSize:12, padding:"6px 10px"}}/>
+                    </div>
+
+                    {/* Thank you redirect URL */}
+                    <div>
+                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>URL chuyển hướng sau khi hoàn thành</label>
+                      <input type="url" value={thankYouRedirectUrl} onChange={e => setThankYouRedirectUrl(e.target.value)}
+                        placeholder="https://example.com/thank-you"
+                        style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                      <p style={{fontSize:11, color:C.textDim, margin:"3px 0 0"}}>Người trả lời sẽ được chuyển đến URL này sau khi gửi khảo sát.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div style={{display:"flex", gap:6, justifyContent:"flex-end"}}>
                 <button onClick={cancel} style={cancelBtn}>Huỷ</button>
                 <button onClick={save} disabled={isSaving} style={{
@@ -1899,6 +2185,7 @@ export default function SurveyPage() {
                 onDeleteParticipant={deleteParticipant}
                 deletingId={deletingId}
                 updatingId={updatingId}
+                navigate={navigate}
               />
             ))}
           </div>

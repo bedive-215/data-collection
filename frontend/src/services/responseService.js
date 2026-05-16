@@ -2,6 +2,12 @@
 import apiClient from "@/api/apiClient";
 
 export const responseService = {
+  // 🟢 Start survey session
+  startSurvey: async (surveyId) => {
+    const res = await apiClient.post(`/api/v1/responses/surveys/${surveyId}/start`);
+    return res.data;
+  },
+
   // 🟢 Submit survey
   submitSurvey: async (surveyId, payload) => {
     const res = await apiClient.post(

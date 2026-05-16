@@ -16,6 +16,7 @@ class SurveyService {
         this.User = models.User;
         this.SurveyParticipant = models.SurveyParticipant;
         this.SurveyAccess = models.SurveyAccess;
+        this.Section = models.Section;
     }
 
     _sanitizePagination(page, limit) {
@@ -71,12 +72,25 @@ class SurveyService {
 
     // Create new survey
     async createSurvey(user, payload) {
-        const { title, description, start_at, end_at } = payload;
+        const {
+            title, description, start_at, end_at,
+            is_anonymous, max_responses, randomize_questions,
+            randomize_options, time_limit_seconds, show_progress_bar,
+            allow_back, one_question_per_page, thank_you_message,
+            logo_url, background_url, accent_color,
+            show_correct_answers,
+        } = payload;
 
         this._validateTitle(title);
 
         if (start_at && end_at && new Date(end_at) <= new Date(start_at)) {
             throw new AppError("end_at must be after start_at", 400);
+        }
+
+        if (time_limit_seconds !== undefined && time_limit_seconds !== null) {
+            if (time_limit_seconds < 30) {
+                throw new AppError("time_limit_seconds must be at least 30", 400);
+            }
         }
 
         const survey = await this.Survey.create({
@@ -85,6 +99,19 @@ class SurveyService {
             created_by: user.id,
             start_at: start_at || null,
             end_at: end_at || null,
+            is_anonymous: is_anonymous ?? false,
+            max_responses: max_responses ?? null,
+            randomize_questions: randomize_questions ?? false,
+            randomize_options: randomize_options ?? false,
+            time_limit_seconds: time_limit_seconds ?? null,
+            show_progress_bar: show_progress_bar ?? true,
+            allow_back: allow_back ?? true,
+            one_question_per_page: one_question_per_page ?? true,
+            thank_you_message: thank_you_message || null,
+            logo_url: logo_url || null,
+            background_url: background_url || null,
+            accent_color: accent_color || "#6366f1",
+            show_correct_answers: show_correct_answers ?? false,
         });
 
         return {
@@ -100,36 +127,17 @@ class SurveyService {
         }
 
         const survey = await this.Survey.findByPk(survey_id, {
-            attributes: [
-                "id",
-                "title",
-                "description",
-                "start_at",
-                "end_at",
-                "created_at",
-                "access_type",
-                "created_by"
-            ],
             include: [
                 {
                     model: this.Question,
                     as: "questions",
-                    attributes: [
-                        "id",
-                        "content",
-                        "order_index",
-                        "type",
-                        "required"
-                    ],
-                    separate: false,
-                    order: [["order_index", "ASC"]],
-                    include: [
-                        {
-                            model: this.QuestionOption,
-                            as: "options",
-                            attributes: ["id", "label", "value", "order_index"]
-                        }
-                    ]
+                    include: [{ model: this.QuestionOption, as: "options" }]
+                },
+                {
+                    model: this.Section,
+                    as: "sections",
+                    include: [{ model: this.Question, as: "questions" }],
+                    order: [["order_index", "ASC"]]
                 }
             ]
         });
@@ -140,7 +148,8 @@ class SurveyService {
 
         const status = this._getSurveyStatus(survey);
 
-        if (status !== "ACTIVE" && survey.created_by !== user?.id) {
+        const isOwnerOrAdmin = _checkOwnerOrAdmin(user, survey);
+        if (status !== "ACTIVE" && !isOwnerOrAdmin) {
             throw new AppError(`Survey is ${status}`, 403);
         }
 
@@ -218,7 +227,12 @@ class SurveyService {
             attributes: [
                 "id",
                 "title",
-                "created_at"
+                "description",
+                "start_at",
+                "end_at",
+                "access_type",
+                "created_at",
+                "created_by"
             ],
             offset,
             limit: safeLimit,
@@ -230,6 +244,8 @@ class SurveyService {
             count,
             surveys: rows.map(s => ({
                 ...this._mapSurvey(s),
+                access_type: s.access_type,
+                created_by: s.created_by,
                 status: this._getSurveyStatus(s)
             })),
             page: safePage,
@@ -259,7 +275,14 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        const { title, description, start_at, end_at } = payload;
+        const {
+            title, description, start_at, end_at,
+            is_anonymous, max_responses, randomize_questions,
+            randomize_options, time_limit_seconds, show_progress_bar,
+            allow_back, one_question_per_page, thank_you_message,
+            logo_url, background_url, accent_color,
+            show_correct_answers,
+        } = payload;
 
         if (title !== undefined) {
             this._validateTitle(title);
@@ -280,6 +303,26 @@ class SurveyService {
             }
             survey.end_at = end_at;
         }
+
+        // ── NEW: Nâng cao survey settings ───────────────────────────
+        if (is_anonymous !== undefined)       survey.is_anonymous = is_anonymous;
+        if (max_responses !== undefined)     survey.max_responses = max_responses;
+        if (randomize_questions !== undefined) survey.randomize_questions = randomize_questions;
+        if (randomize_options !== undefined)  survey.randomize_options = randomize_options;
+        if (time_limit_seconds !== undefined) {
+            if (time_limit_seconds !== null && time_limit_seconds < 30) {
+                throw new AppError("time_limit_seconds must be at least 30", 400);
+            }
+            survey.time_limit_seconds = time_limit_seconds;
+        }
+        if (show_progress_bar !== undefined) survey.show_progress_bar = show_progress_bar;
+        if (allow_back !== undefined)        survey.allow_back = allow_back;
+        if (one_question_per_page !== undefined) survey.one_question_per_page = one_question_per_page;
+        if (thank_you_message !== undefined) survey.thank_you_message = thank_you_message || null;
+        if (logo_url !== undefined)          survey.logo_url = logo_url || null;
+        if (background_url !== undefined)    survey.background_url = background_url || null;
+        if (accent_color !== undefined)      survey.accent_color = accent_color || "#6366f1";
+        if (show_correct_answers !== undefined) survey.show_correct_answers = show_correct_answers;
 
         await survey.save();
 
@@ -735,7 +778,6 @@ const participant = await this.SurveyParticipant.create({
     return { total: count, page, totalPages: Math.ceil(count / limit), data: surveys };
 }
 
-    // mapping functions
     _mapSurvey(survey) {
         return {
             id: survey.id,
@@ -743,27 +785,73 @@ const participant = await this.SurveyParticipant.create({
             description: survey.description,
             start_at: survey.start_at,
             end_at: survey.end_at,
-            created_at: survey.created_at
+            created_at: survey.created_at,
+            is_anonymous: survey.is_anonymous ?? false,
+            max_responses: survey.max_responses ?? null,
+            randomize_questions: survey.randomize_questions ?? false,
+            randomize_options: survey.randomize_options ?? false,
+            time_limit_seconds: survey.time_limit_seconds ?? null,
+            show_progress_bar: survey.show_progress_bar ?? true,
+            allow_back: survey.allow_back ?? true,
+            one_question_per_page: survey.one_question_per_page ?? true,
+            thank_you_message: survey.thank_you_message ?? null,
+            logo_url: survey.logo_url ?? null,
+            background_url: survey.background_url ?? null,
+            accent_color: survey.accent_color ?? "#6366f1",
+            show_correct_answers: survey.show_correct_answers ?? false,
+            thank_you_redirect_url: survey.thank_you_redirect_url ?? null,
         };
     }
 
     _mapSurveyDetail(survey, status) {
-        return {
+        const base = {
             ...this._mapSurvey(survey),
             status,
-            questions: survey.questions.map(q => ({
-                id: q.id,
-                content: q.content,
-                type: q.type,
-                required: q.required,
-                order_index: q.order_index,
-                options: q.options?.map(o => ({
+            sections: (survey.sections || []).map(sec => ({
+                id: sec.id,
+                title: sec.title,
+                description: sec.description,
+                order_index: sec.order_index,
+                icon: sec.icon,
+                cover_url: sec.cover_url,
+                min_required: sec.min_required,
+                show_progress: sec.show_progress,
+                questions: (sec.questions || []).map(q => this._mapQuestion(q)).sort((a, b) => a.order_index - b.order_index),
+            })),
+            questions: (survey.questions || []).map(q => this._mapQuestion(q)).sort((a, b) => a.order_index - b.order_index),
+        };
+        return base;
+    }
+
+    _mapQuestion(q) {
+        return {
+            id: q.id,
+            survey_id: q.survey_id,
+            section_id: q.section_id,
+            content: q.content,
+            description: q.description ?? null,
+            placeholder: q.placeholder ?? null,
+            type: q.type,
+            required: q.required,
+            order_index: q.order_index,
+            settings: q.settings ?? {},
+            media_url: q.media_url ?? null,
+            media_type: q.media_type ?? null,
+            condition: q.condition ?? null,
+            hidden_from_analytics: q.hidden_from_analytics ?? false,
+            next_question_id: q.next_question_id ?? null,
+            next_section_id: q.next_section_id ?? null,
+            options: q.options
+                ? q.options.map(o => ({
                     id: o.id,
                     label: o.label,
                     value: o.value,
-                    order_index: o.order_index
-                })) || []
-            }))
+                    order_index: o.order_index,
+                    is_other: o.is_other ?? false,
+                    image_url: o.image_url ?? null,
+                    media_type: o.media_type ?? null,
+                })).sort((a, b) => a.order_index - b.order_index)
+                : [],
         };
     }
 }

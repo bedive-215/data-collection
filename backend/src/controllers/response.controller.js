@@ -70,13 +70,30 @@ class ResponseController {
                 req.user.id,
                 req.params.response_id,
             );
-            
+
             res.json(result);
         } catch (err) {
             next(err);
         }
     }
-    
+
+    // auto-save: lưu tiến độ từng câu hỏi mà không submit
+    async autoSave(req, res, next) {
+        try {
+            if (!Array.isArray(req.body.answers)) {
+                return res.status(400).json({ message: "Invalid answers format" });
+            }
+            const result = await ResponseService.autoSave(
+                req.user.id,
+                req.params.survey_id,
+                req.body.answers
+            );
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
     // get my response for a survey
     async getMyResponse(req, res, next) {
         try {
