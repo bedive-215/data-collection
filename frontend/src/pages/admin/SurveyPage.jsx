@@ -97,9 +97,8 @@ function ToggleSwitch({ checked, onChange }) {
       style={{
         width: 38, height: 22,
         borderRadius: 11,
-        border: "none",
-        background: checked ? C.primary : C.surfaceHigh,
-        border: `1.5px solid ${checked ? C.primaryBorder : C.border}`,
+         background: checked ? C.primary : C.surfaceHigh,
+  border: `1.5px solid ${checked ? C.primaryBorder : C.border}`,
         cursor: "pointer",
         position: "relative",
         transition: "all .2s",
@@ -1627,7 +1626,7 @@ function SurveyCard({
                   onClick={() => setShowSettings(v => !v)}
                   style={{
                     display:"flex", alignItems:"center", gap:6,
-                    background:"transparent", border:`1px solid ${showSettings ? C.primaryBorder : C.border}`,
+                   border:`1px solid ${showSettings ? C.primaryBorder : C.border}`,
                     borderRadius:8, padding:"6px 12px",
                     color: showSettings ? C.primary : C.textSub,
                     fontSize:12, fontWeight:600, cursor:"pointer",

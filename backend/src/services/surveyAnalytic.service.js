@@ -15,11 +15,27 @@ class SurveyAnalyticsService {
         const where = { survey_id };
         if (filters.date_from || filters.date_to) {
             where.created_at = {};
-            if (filters.date_from) where.created_at[Op.gte] = new Date(filters.date_from);
-            if (filters.date_to) where.created_at[Op.lte] = new Date(filters.date_to);
+            if (filters.date_from) {
+                // Start of day UTC — include the whole day_from
+                const startDate = new Date(filters.date_from);
+                startDate.setUTCHours(0, 0, 0, 0);
+                where.created_at[Op.gte] = startDate;
+            }
+            if (filters.date_to) {
+                // FIX: use END of day UTC so responses at any time on date_to are included.
+                // new Date("2026-05-16") = 2026-05-16T00:00:00.000Z (midnight) which would
+                // exclude responses created after midnight UTC on the same date.
+                const endDate = new Date(filters.date_to);
+                endDate.setUTCHours(23, 59, 59, 999);
+                where.created_at[Op.lte] = endDate;
+            }
         }
         if (filters.response_ids?.length) {
             where.id = { [Op.in]: filters.response_ids };
+        }
+        // FIX: status filter now applied at DB level
+        if (filters.status && ["IN_PROGRESS", "COMPLETED"].includes(filters.status)) {
+            where.status = filters.status;
         }
         return where;
     }
@@ -383,24 +399,22 @@ class SurveyAnalyticsService {
     }
 
     async getCompletionStats(survey_id, filters = {}) {
-        const responseWhere = this._buildResponseWhere(survey_id, filters);
+        // FIX: exclude status filter when counting total_started / total_completed
+        // so these stats are not affected by the status filter parameter
+        const baseFilters = { ...filters };
+        delete baseFilters.status;
+        const responseWhere = this._buildResponseWhere(survey_id, baseFilters);
 
         const [totalStarted, totalCompleted] = await Promise.all([
             this.Response.count({ where: responseWhere }),
-
+            // FIX: use status ENUM instead of submitted_at null check
             this.Response.count({
-                where: {
-                    ...responseWhere,
-                    submitted_at: { [Op.ne]: null }
-                }
+                where: { ...responseWhere, status: "COMPLETED" }
             }),
         ]);
 
         const avgTimeRow = await this.Response.findOne({
-            where: {
-                ...responseWhere,
-                submitted_at: { [Op.ne]: null }
-            },
+            where: { ...responseWhere, status: "COMPLETED" },
             attributes: [
                 [
                     fn(
@@ -416,10 +430,7 @@ class SurveyAnalyticsService {
         const avgSeconds = parseFloat(avgTimeRow?.avg_seconds) || 0;
 
         const incompleteIds = await this.Response.findAll({
-            where: {
-                ...responseWhere,
-                submitted_at: null
-            },
+            where: { ...responseWhere, status: "IN_PROGRESS" },
             attributes: ["id"],
             raw: true,
         }).then(rows => rows.map(r => r.id));
@@ -705,8 +716,75 @@ class SurveyAnalyticsService {
     // 9. RESPONSE SEARCH + FILTER
     // ─────────────────────────────────────────────
     async getFilteredResponses(survey_id, filters = {}, { page = 1, limit = 20 } = {}) {
+        // FIX: status is now in _buildResponseWhere, so DB-level filtering is correct.
+        // For search_query we still need a JS-level filter after fetching, because
+        // full-text search across joined answer values is complex in Sequelize.
+        // To get correct pagination for search_query, we fetch without pagination first.
+        const whereClause = this._buildResponseWhere(survey_id, filters);
+
+        if (filters.search_query) {
+            // Fetch all matching rows (status already filtered at DB), then JS-filter by search
+            const allRows = await this.Response.findAll({
+                where: whereClause,
+                order: [["created_at", "DESC"]],
+                include: [
+                    {
+                        model: this.Answer,
+                        as: "answers",
+                        include: [
+                            { model: this.Question, as: "question", attributes: ["id", "content", "type"] },
+                            { model: this.QuestionOption, as: "option", attributes: ["id", "label"], required: false },
+                        ],
+                    },
+                ],
+            });
+
+            const query = filters.search_query.toLowerCase();
+            const filtered = [];
+
+            for (const res of allRows) {
+                const answers = (res.answers || []).map(a => ({
+                    question_id: a.question?.id,
+                    question_content: a.question?.content,
+                    type: a.question?.type,
+                    value: a.option?.label ?? a.answer_text ?? (a.answer_number != null ? String(a.answer_number) : null) ?? a.answer_date ?? null,
+                }));
+
+                const hasMatch = answers.some(a =>
+                    (a.question_content || "").toLowerCase().includes(query) ||
+                    (String(a.value || "")).toLowerCase().includes(query)
+                );
+                if (!hasMatch) continue;
+
+                filtered.push({
+                    response_id: res.id,
+                    status: res.status,
+                    created_at: res.created_at,
+                    submitted_at: res.submitted_at,
+                    time_to_complete_seconds: res.created_at && res.submitted_at
+                        ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
+                        : null,
+                    answers,
+                });
+            }
+
+            const totalFiltered = filtered.length;
+            const offset = (page - 1) * limit;
+            return {
+                survey_id,
+                pagination: {
+                    page,
+                    limit,
+                    total_responses: totalFiltered,
+                    total_pages: Math.ceil(totalFiltered / limit) || 1,
+                },
+                responses: filtered.slice(offset, offset + limit),
+            };
+        }
+
+        // No search_query — use DB pagination directly (status already in WHERE)
         const { count, rows: responses } = await this.Response.findAndCountAll({
-            where: this._buildResponseWhere(survey_id, filters),
+            where: whereClause,
             order: [["created_at", "DESC"]],
             limit,
             offset: (page - 1) * limit,
@@ -722,30 +800,15 @@ class SurveyAnalyticsService {
             ],
         });
 
-        const filtered = [];
-
-        for (const res of responses) {
-            const answers = (res.answers || []).map(a => ({
-                question_id: a.question?.id,
-                question_content: a.question?.content,
-                type: a.question?.type,
-                value: a.option?.label ?? a.answer_text ?? a.answer_number ?? a.answer_date ?? null,
-            }));
-
-            // Filter by status
-            if (filters.status && res.status !== filters.status) continue;
-
-            // Filter by search query (partial match in answer text)
-            if (filters.search_query) {
-                const query = filters.search_query.toLowerCase();
-                const hasMatch = answers.some(a =>
-                    (a.question_content || "").toLowerCase().includes(query) ||
-                    (a.value || "").toLowerCase().includes(query)
-                );
-                if (!hasMatch) continue;
-            }
-
-            filtered.push({
+        return {
+            survey_id,
+            pagination: {
+                page,
+                limit,
+                total_responses: count,
+                total_pages: Math.ceil(count / limit) || 1,
+            },
+            responses: responses.map(res => ({
                 response_id: res.id,
                 status: res.status,
                 created_at: res.created_at,
@@ -753,19 +816,13 @@ class SurveyAnalyticsService {
                 time_to_complete_seconds: res.created_at && res.submitted_at
                     ? Math.round((new Date(res.submitted_at) - new Date(res.created_at)) / 1000)
                     : null,
-                answers,
-            });
-        }
-
-        return {
-            survey_id,
-            pagination: {
-                page,
-                limit,
-                total_responses: count,
-                total_pages: Math.ceil(count / limit),
-            },
-            responses: filtered,
+                answers: (res.answers || []).map(a => ({
+                    question_id: a.question?.id,
+                    question_content: a.question?.content,
+                    type: a.question?.type,
+                    value: a.option?.label ?? a.answer_text ?? (a.answer_number != null ? String(a.answer_number) : null) ?? a.answer_date ?? null,
+                })),
+            })),
         };
     }
 
