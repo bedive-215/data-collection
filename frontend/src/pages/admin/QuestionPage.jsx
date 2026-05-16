@@ -2,6 +2,9 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useQuestion } from "@/providers/QuestionProvider";
+import surveyService from "@/services/surveyService";
+import mediaService from "@/services/mediaService";
+import { toast } from "react-toastify";
 import {
   Plus, Trash2, Loader2, AlertCircle, Inbox, X,
   Pencil, Check, GripVertical, PlusCircle, Image,
@@ -9,8 +12,9 @@ import {
   ToggleLeft, Star, Grid, FileUp, Calendar, Clock,
   FileText, Video, Minus, Copy, Bold, Italic, Underline,
   Link, AlignLeft as AlignLeftIcon, AlignCenter, AlignRight,
-  ImagePlus,
+  ImagePlus, Sparkles,
 } from "lucide-react";
+import AiQuestionAssistant from "@/components/survey/AiQuestionAssistant";
 
 /* ── Design tokens ────────────────────────────────────────────────── */
 const C = {
@@ -113,7 +117,8 @@ const buildBEOptions = (optionRows) =>
       value:       r.value.trim(),
       order_index: i,
       is_other:    r.is_other ?? false,
-      // image is UI-only, not sent to BE
+      image_url:   r.image?.serverUrl || r.image?.url || null,
+      media_type:  r.image?.media_type || null,
     }));
 
 /* ── Toggle ───────────────────────────────────────────────────────── */
@@ -260,8 +265,91 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
   );
 }
 
+/* ── OptionImageUpload — upload ảnh option lên server ─────────────── */
+function OptionImageUpload({ image, onImageChange }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    onImageChange({ file, url: previewUrl, name: file.name, media_type: file.type.startsWith("video/") ? "video" : "image" });
+    e.target.value = "";
+
+    setUploading(true);
+    try {
+      const res = await mediaService.uploadOptionMedia(file);
+      const { url, media_type } = res.data?.data ?? {};
+      onImageChange({ file, serverUrl: url, url: previewUrl, name: file.name, media_type: media_type || "image" });
+    } catch (err) {
+      console.error("Upload option image failed:", err);
+      toast.error("Tải ảnh thất bại. Vui lòng thử lại.");
+      onImageChange(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (image) {
+    return (
+      <div style={{
+        position:"relative", display:"inline-flex", borderRadius:8,
+        overflow:"hidden", border:`1px solid ${C.border}`,
+        width:44, height:44, flexShrink:0,
+      }}>
+        {image.media_type === "video" ? (
+          <video src={image.url} style={{width:"100%",height:"100%",objectFit:"cover"}} controls/>
+        ) : (
+          <img src={image.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        )}
+        <button
+          type="button"
+          onClick={() => onImageChange(null)}
+          style={{
+            position:"absolute",top:2,right:2,
+            width:16,height:16,borderRadius:"50%",
+            background:"rgba(0,0,0,0.75)",border:"none",
+            color:"#fff",cursor:"pointer",fontSize:10,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            lineHeight:1,
+          }}
+        >×</button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} style={{display:"none"}}/>
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        title="Thêm ảnh cho lựa chọn"
+        style={{
+          display:"inline-flex",alignItems:"center",gap:5,
+          padding:"4px 10px",
+          background: uploading ? C.surfaceHigh : "rgba(79,110,247,0.08)",
+          border:`1px solid ${uploading ? C.border : C.primaryBorder}`,
+          borderRadius:6, color: uploading ? C.textDim : C.primary,
+          fontSize:11, fontWeight:600, cursor: uploading ? "not-allowed" : "pointer",
+          fontFamily:C.font, transition:"all .12s", whiteSpace:"nowrap",
+        }}
+        onMouseEnter={e=>{ if(!uploading){e.currentTarget.style.background="rgba(79,110,247,0.18)";e.currentTarget.style.color=C.primary;} }}
+        onMouseLeave={e=>{ if(!uploading){e.currentTarget.style.background="rgba(79,110,247,0.08)";e.currentTarget.style.color=C.primary;} }}
+      >
+        {uploading
+          ? <><Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/> Đang...</>
+          : <><ImagePlus size={11}/> Ảnh</>
+        }
+      </button>
+    </>
+  );
+}
+
 /* ── RichTextEditor ────────────────────────────────────────────────── */
-function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 80, hasError = false }) {
+function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 80, hasError = false, onFileUpload }) {
   const editorRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isEmpty, setIsEmpty] = useState(!value);
@@ -383,17 +471,32 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
 
         <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
 
-        {/* Image insert */}
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          style={{display:"none"}}
-          onChange={e => { const f = e.target.files?.[0]; if(f) insertImageInEditor(f); e.target.value=""; }}
-        />
+        {/* Image insert — triggers upload for question */}
+        {onFileUpload ? (
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*,video/*"
+            style={{display:"none"}}
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              e.target.value = "";
+              onFileUpload(f);
+            }}
+          />
+        ) : (
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            style={{display:"none"}}
+            onChange={e => { const f = e.target.files?.[0]; if(f) insertImageInEditor(f); e.target.value=""; }}
+          />
+        )}
         <button
           type="button"
-          title="Chèn ảnh"
+          title="Hình ảnh / Video (URL tùy chọn)"
           onMouseDown={(e) => { e.preventDefault(); imageInputRef.current?.click(); }}
           style={{
             display:"flex", alignItems:"center", justifyContent:"center",
@@ -448,30 +551,28 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
   );
 }
 
-/* ── QuestionImageUploadArea — UI only ────────────────────────────── */
-function QuestionImageUploadArea({ image, onImageChange }) {
+/* ── QuestionImageUploadArea — preview hiển thị ảnh đã upload ─────── */
+function QuestionImageUploadArea({ image, onImageChange, uploading }) {
   const fileRef = useRef(null);
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    onImageChange({ file, url, name: file.name });
+    const previewUrl = URL.createObjectURL(file);
+    onImageChange({ file, url: previewUrl, name: file.name, media_type: file.type.startsWith("video/") ? "video" : "image" });
     e.target.value = "";
+    // Upload is handled externally via onFileUpload callback
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const url = URL.createObjectURL(file);
-    onImageChange({ file, url, name: file.name });
-  };
-
+  // Show preview + overlay with replace/delete controls
   if (image) {
     return (
-      <div style={{position:"relative",borderRadius:10,overflow:"hidden",border:`1px solid ${C.border}`,maxWidth:300}}>
-        <img src={image.url} alt={image.name} style={{width:"100%",maxHeight:180,objectFit:"cover",display:"block"}}/>
+      <div style={{position:"relative",borderRadius:10,overflow:"hidden",border:`1px solid ${C.border}`,maxWidth:360,marginTop:8}}>
+        {image.media_type === "video" ? (
+          <video src={image.url} style={{width:"100%",maxHeight:180,objectFit:"cover",display:"block"}} controls/>
+        ) : (
+          <img src={image.url} alt={image.name} style={{width:"100%",maxHeight:180,objectFit:"cover",display:"block"}}/>
+        )}
         <div style={{
           position:"absolute",top:0,left:0,right:0,bottom:0,
           background:"rgba(0,0,0,0)",transition:"background .15s",
@@ -491,7 +592,7 @@ function QuestionImageUploadArea({ image, onImageChange }) {
             }}
             onMouseEnter={e=>e.currentTarget.style.opacity="1"}
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
-          >Thay ảnh</button>
+          >{uploading?<Loader2 size={12} style={{animation:"spin 1s linear infinite",display:"inline"}}/>:"Thay ảnh"}</button>
           <button
             type="button"
             onClick={() => onImageChange(null)}
@@ -505,38 +606,16 @@ function QuestionImageUploadArea({ image, onImageChange }) {
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
           >Xóa ảnh</button>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+        <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} style={{display:"none"}}/>
         <div style={{padding:"5px 10px",fontSize:11,color:C.textDim,background:C.surfaceHigh}}>
           {image.name}
-          <span style={{marginLeft:6,color:C.primary,fontSize:10}}>UI only · chưa gửi server</span>
+          {uploading && <span style={{marginLeft:6,color:"#a78bfa",fontSize:10}}>Đang tải lên...</span>}
         </div>
       </div>
     );
   }
 
-  return (
-    <>
-      <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
-      <div
-        onClick={() => fileRef.current?.click()}
-        onDragOver={e=>e.preventDefault()}
-        onDrop={handleDrop}
-        style={{
-          border:`1.5px dashed ${C.border}`,
-          borderRadius:10,padding:"14px 20px",
-          textAlign:"center",cursor:"pointer",
-          color:C.textDim,fontSize:12,
-          transition:"all .15s",background:"transparent",
-          display:"flex",alignItems:"center",gap:10,
-        }}
-        onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
-        onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textDim;}}
-      >
-        <ImagePlus size={16}/>
-        <span>Thêm ảnh cho câu hỏi · <span style={{color:C.textDim,fontSize:11}}>UI only</span></span>
-      </div>
-    </>
-  );
+  return null;
 }
 
 /* ── OptionRow — for existing saved options (label/value schema) ───── */
@@ -546,18 +625,29 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   const [value,    setValue]    = useState(opt.value ?? "");
   const [saving,   setSaving]   = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [optImage, setOptImage] = useState(null); // UI only
+  const [optImage, setOptImage] = useState(
+    opt.image_url
+      ? { serverUrl: opt.image_url, url: opt.image_url, media_type: opt.media_type || "image" }
+      : null
+  );
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const startEdit = () => { setLabel(opt.label ?? ""); setValue(opt.value ?? ""); setEditing(true); };
 
   const saveEdit = async () => {
+    if (uploadingImage) { toast.warn("Vui lòng đợi ảnh tải lên xong trước khi lưu."); return; }
     const trimLabel = label.trim();
     const trimValue = value.trim();
     if (!trimLabel || !trimValue) { setEditing(false); return; }
-    if (trimLabel === opt.label && trimValue === opt.value) { setEditing(false); return; }
+    if (trimLabel === opt.label && trimValue === opt.value && !optImage?.serverUrl) { setEditing(false); return; }
     setSaving(true);
     try {
-      await onUpdate(opt.id, questionId, { label: trimLabel, value: trimValue });
+      await onUpdate(opt.id, questionId, {
+        label: trimLabel,
+        value: trimValue,
+        image_url: optImage?.serverUrl || null,
+        media_type: optImage?.media_type || null,
+      });
       setEditing(false);
     } finally { setSaving(false); }
   };
@@ -568,12 +658,26 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   };
 
   const fileRef = useRef(null);
-  const handleOptImageFile = (e) => {
+
+  const handleOptImageFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setOptImage({ file, url, name: file.name });
+    const previewUrl = URL.createObjectURL(file);
+    setOptImage({ file, url: previewUrl, media_type: file.type.startsWith("video/") ? "video" : "image" });
     e.target.value = "";
+
+    setUploadingImage(true);
+    try {
+      const res = await mediaService.uploadOptionMedia(file);
+      const { url, media_type } = res.data?.data ?? {};
+      setOptImage(prev => prev ? { ...prev, serverUrl: url, media_type: media_type || prev.media_type } : null);
+    } catch (err) {
+      console.error("Upload option image failed:", err);
+      toast.error("Tải ảnh thất bại. Vui lòng thử lại.");
+      setOptImage(null);
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const Marker = () => {
@@ -617,7 +721,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
         ) : (
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}>
             {optImage && (
-              <img src={optImage.url} alt="" style={{width:32,height:32,objectFit:"cover",borderRadius:5,border:`1px solid ${C.border}`}}/>
+              <img src={optImage.serverUrl || optImage.url} alt="" style={{width:32,height:32,objectFit:"cover",borderRadius:5,border:`1px solid ${C.border}`}}/>
             )}
             <span style={{fontSize:13,color:C.text}}>{opt.label}</span>
             <span style={{fontSize:11,color:C.textDim,background:C.surfaceHigh,padding:"1px 7px",borderRadius:4,border:`1px solid ${C.border}`}}>
@@ -628,16 +732,19 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
 
         <div style={{display:"flex",gap:4}}>
           {/* Image upload for option — UI only */}
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleOptImageFile} style={{display:"none"}}/>
+          <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleOptImageFile} style={{display:"none"}}/>
           <button
             type="button"
-            title="Thêm ảnh lựa chọn (UI only)"
+            title={uploadingImage ? "Đang tải ảnh..." : "Thêm ảnh lựa chọn"}
             onClick={()=>fileRef.current?.click()}
-            style={iconBtn(optImage?C.primary:C.textSub)}
+            style={iconBtn(optImage?C.primary:uploadingImage?"#a78bfa":C.textSub)}
             onMouseEnter={e=>e.currentTarget.style.background=C.primaryDim}
             onMouseLeave={e=>e.currentTarget.style.background="transparent"}
           >
-            <ImagePlus size={11}/>
+            {uploadingImage
+              ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>
+              : <ImagePlus size={11}/>
+            }
           </button>
 
           {editing ? (
@@ -673,13 +780,16 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
       {/* Show option image preview if uploaded */}
       {optImage && !editing && (
         <div style={{paddingLeft:56,display:"flex",alignItems:"center",gap:8}}>
-          <img src={optImage.url} alt="" style={{maxWidth:120,maxHeight:80,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}/>
+          {optImage.media_type === "video" ? (
+            <video src={optImage.serverUrl || optImage.url} style={{maxWidth:120,maxHeight:80,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}} controls/>
+          ) : (
+            <img src={optImage.serverUrl || optImage.url} alt="" style={{maxWidth:120,maxHeight:80,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}/>
+          )}
           <button
             type="button"
             onClick={()=>setOptImage(null)}
             style={{fontSize:10,color:C.error,background:"none",border:"none",cursor:"pointer",fontFamily:C.font}}
           >× Xóa ảnh</button>
-          <span style={{fontSize:10,color:C.textDim}}>UI only</span>
         </div>
       )}
     </div>
@@ -749,14 +859,14 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
         </span>
       </span>
 
-      <div style={{display:"flex",gap:8,marginBottom:4,paddingLeft:56}}>
+      <div style={{display:"flex",gap:8,marginBottom:4,paddingLeft:28}}>
         <span style={{flex:1,fontSize:10,color:C.textDim,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>
           Label (hiển thị)
         </span>
         <span style={{flex:1,fontSize:10,color:C.textDim,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>
           Value (lưu DB)
         </span>
-        <div style={{width:58}}/>
+        <div style={{width:44}}/>
       </div>
 
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -801,8 +911,8 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                 onBlur={e => e.target.style.borderColor = C.border}
               />
 
-              {/* Image for option row — UI only */}
-              <ImageUploadButton image={row.image} onImageChange={img => handleOptImage(i, img)} size="sm"/>
+              {/* Image for option row */}
+              <OptionImageUpload image={row.image} onImageChange={img => handleOptImage(i, img)}/>
 
               <button
                 type="button"
@@ -823,12 +933,12 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
             {/* Option image preview */}
             {row.image && (
               <div style={{paddingLeft:52,display:"flex",alignItems:"center",gap:8}}>
-                <img
-                  src={row.image.url}
-                  alt=""
-                  style={{maxWidth:100,maxHeight:64,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}
-                />
-                <span style={{fontSize:10,color:C.textDim}}>UI only · chưa gửi server</span>
+                {row.image.media_type === "video" ? (
+                  <video src={row.image.serverUrl || row.image.url} style={{maxWidth:100,maxHeight:64,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}} controls/>
+                ) : (
+                  <img src={row.image.serverUrl || row.image.url} alt="" style={{maxWidth:100,maxHeight:64,objectFit:"cover",borderRadius:6,border:`1px solid ${C.border}`}}/>
+                )}
+                <span style={{fontSize:10,color:C.textDim}}>Ảnh đã tải lên server</span>
               </div>
             )}
           </div>
@@ -858,7 +968,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
               background:C.surfaceHigh, border:`1px solid ${C.border}`,
               fontSize:12, color:C.textSub, fontWeight:500,
             }}>
-              {o.image && <img src={o.image.url} alt="" style={{width:14,height:14,objectFit:"cover",borderRadius:3}}/>}
+              {o.image && <img src={o.image.serverUrl || o.image.url} alt="" style={{width:14,height:14,objectFit:"cover",borderRadius:3}}/>}
               <span style={{width:5,height:5,borderRadius:"50%",background:C.primary,flexShrink:0}}/>
               {o.label}
               {o.value && <span style={{color:C.textDim,fontSize:10}}>({o.value})</span>}
@@ -991,6 +1101,9 @@ function QuestionBody({ q, type }) {
               ? <span style={{fontSize:12,color:C.textSub,minWidth:18}}>{i+1}.</span>
               : <div style={{width:15,height:15,borderRadius:"50%",border:`1.5px solid ${C.textDim}`,flexShrink:0}}/>
             }
+            {opt.image_url && (
+              <img src={opt.image_url} alt="" style={{width:28,height:28,objectFit:"cover",borderRadius:5,border:`1px solid ${C.border}`,flexShrink:0}}/>
+            )}
             <span style={{fontSize:13,color:C.text,flex:1}}>{opt.label}</span>
             <span style={{fontSize:11,color:C.textDim,background:C.surfaceHigh,padding:"1px 7px",borderRadius:4,border:`1px solid ${C.border}`}}>
               {opt.value}
@@ -1031,7 +1144,12 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   const [contentHtml, setContentHtml] = useState(q.content);
   const [type,        setType]        = useState(toFEType(q.type));
   const [required,    setRequired]    = useState(q.required ?? true);
-  const [qImage,      setQImage]      = useState(null); // UI only
+  const [qImage, setQImage] = useState(
+    q.media_url
+      ? { serverUrl: q.media_url, url: q.media_url, media_type: q.media_type || "image" }
+      : null
+  );
+  const [qImageUploading, setQImageUploading] = useState(false);
 
   const existingOptions = q.options ?? q.option ?? [];
   const [optionRows, setOptionRows] = useState(
@@ -1039,7 +1157,15 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       ? existingOptions.map(o =>
           typeof o === "string"
             ? { label: o, value: o, order_index: 0, is_other: false, image: null }
-            : { label: o.label ?? "", value: o.value ?? "", order_index: o.order_index ?? 0, is_other: o.is_other ?? false, image: null }
+            : {
+                label: o.label ?? "",
+                value: o.value ?? "",
+                order_index: o.order_index ?? 0,
+                is_other: o.is_other ?? false,
+                image: o.image_url
+                  ? { serverUrl: o.image_url, url: o.image_url, media_type: o.media_type || "image" }
+                  : null,
+              }
         )
       : [newOptionRow()]
   );
@@ -1067,9 +1193,43 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
     if (newType === "RATING") setSettings({ min: 1, max: 5 });
   };
 
+  // Trigger file input click from toolbar button
+  const handleQImageUpload = (file) => {
+    setQImageUploading(true);
+    mediaService.uploadQuestionMedia(file)
+      .then(res => {
+        const { url, media_type } = res.data?.data ?? {};
+        const previewUrl = URL.createObjectURL(file);
+        setQImage({
+          file,
+          serverUrl: url,
+          url: previewUrl,
+          name: file.name,
+          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image"),
+        });
+      })
+      .catch(err => {
+        console.error("Upload question image failed:", err);
+        toast.error("Tải ảnh thất bại. Vui lòng thử lại.");
+      })
+      .finally(() => setQImageUploading(false));
+  };
+
   const handleSave = async () => {
     const plainContent = getPlainText(contentHtml).trim();
     if (!plainContent) return;
+
+    // Block save if image is still uploading
+    if (qImage?.file && !qImage?.serverUrl) {
+      toast.warn("Vui lòng đợi ảnh tải lên xong trước khi lưu.");
+      return;
+    }
+    // Block save if any option image is still uploading
+    const anyUploading = optionRows.some(r => r.image?.file && !r.image?.serverUrl);
+    if (anyUploading) {
+      toast.warn("Vui lòng đợi ảnh tải lên xong trước khi lưu.");
+      return;
+    }
 
     if (isChoice) {
       const validOpts = buildBEOptions(optionRows);
@@ -1082,6 +1242,8 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       type:     toBEType(type),
       required,
       settings: hasSettings ? settings : undefined,
+      media_url: qImage?.serverUrl || null,
+      media_type: qImage?.media_type || null,
     };
     if (isChoice) payload.options = buildBEOptions(optionRows);
 
@@ -1149,6 +1311,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
             onChange={setContentHtml}
             placeholder="Câu hỏi không có tiêu đề"
             minHeight={56}
+            onFileUpload={handleQImageUpload}
           />
         </div>
         <div style={{marginTop:22,minWidth:200}}>
@@ -1156,9 +1319,9 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         </div>
       </div>
 
-      {/* Question image — UI only */}
+      {/* Question image — shown below the input when an image is uploaded */}
       <div style={{padding:"10px 20px 0",paddingLeft:36}}>
-        <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
+        <QuestionImageUploadArea image={qImage} onImageChange={setQImage} uploading={qImageUploading}/>
       </div>
 
       <div style={{padding:"12px 20px 4px",paddingLeft:36,display:"flex",flexDirection:"column",gap:16}}>
@@ -1268,6 +1431,9 @@ export default function QuestionPage() {
 
   const [activeId,    setActiveId]    = useState(null);
   const [showForm,    setShowForm]    = useState(false);
+  const [aiOpen,      setAiOpen]      = useState(false);
+  const [surveyTitle, setSurveyTitle] = useState("");
+  const [surveyDescription, setSurveyDescription] = useState("");
 
   // ── New question form state ──────────────────────────────────────
   const [contentHtml, setContentHtml] = useState("");
@@ -1277,13 +1443,41 @@ export default function QuestionPage() {
   const [settings,    setSettings]    = useState(null);
   const [formError,   setFormError]   = useState("");
   const [formLoading, setFormLoading] = useState(false);
-  const [qImage,      setQImage]      = useState(null); // UI only
+  const [qImage, setQImage] = useState(null);
+  const [qImageUploading, setQImageUploading] = useState(false);
   // ────────────────────────────────────────────────────────────────
 
   const [deletingId,  setDeletingId]  = useState(null);
   const pendingIdRef = useRef(null);
 
   useEffect(() => { if (surveyId) fetchQuestionsBySurvey(surveyId); }, [surveyId]);
+
+  // Fetch survey info for AI assistant
+  useEffect(() => {
+    let cancelled = false;
+    if (!surveyId) return;
+    (async () => {
+      try {
+        const res = await surveyService.getSurveyById(surveyId);
+        console.log("Survey response:", res);
+        const body = res?.data;
+        console.log("Body:", body);
+        const s = body?.data ?? body?.survey ?? (body?.id != null ? body : null);
+        console.log("Survey data:", s);
+        if (!cancelled && s) {
+          setSurveyTitle(s.title || "");
+          setSurveyDescription(s.description || "");
+          console.log("Set title:", s.title, "desc:", s.description);
+        }
+      } catch {
+        if (!cancelled) {
+          setSurveyTitle("");
+          setSurveyDescription("");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [surveyId]);
 
   useEffect(() => {
     if (!pendingIdRef.current) return;
@@ -1299,6 +1493,7 @@ export default function QuestionPage() {
     setSettings(null);
     setFormError("");
     setQImage(null);
+    setQImageUploading(false);
   };
 
   const handleFormTypeChange = (v) => {
@@ -1307,6 +1502,28 @@ export default function QuestionPage() {
     if (!CHOICE_TYPES.includes(v)) setOptionRows([newOptionRow()]);
     if (!SETTINGS_TYPES.includes(v)) setSettings(null);
     if (v === "RATING") setSettings({ min: 1, max: 5 });
+  };
+
+  // Trigger file upload from toolbar button in new question form
+  const handleNewQImageUpload = (file) => {
+    setQImageUploading(true);
+    mediaService.uploadQuestionMedia(file)
+      .then(res => {
+        const { url, media_type } = res.data?.data ?? {};
+        const previewUrl = URL.createObjectURL(file);
+        setQImage({
+          file,
+          serverUrl: url,
+          url: previewUrl,
+          name: file.name,
+          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image"),
+        });
+      })
+      .catch(err => {
+        console.error("Upload question image failed:", err);
+        toast.error("Tải ảnh thất bại. Vui lòng thử lại.");
+      })
+      .finally(() => setQImageUploading(false));
   };
 
   // Extract plain text from HTML
@@ -1325,6 +1542,11 @@ export default function QuestionPage() {
       return;
     }
 
+    if (qImage?.file && !qImage?.serverUrl) {
+      setFormError("Vui lòng đợi ảnh tải lên xong trước khi tạo câu hỏi.");
+      return;
+    }
+
     const isChoice    = CHOICE_TYPES.includes(type);
     const hasSettings = SETTINGS_TYPES.includes(type);
 
@@ -1332,6 +1554,11 @@ export default function QuestionPage() {
       const valid = buildBEOptions(optionRows);
       if (valid.length < 2) {
         setFormError("Cần ít nhất 2 lựa chọn hợp lệ (label và value không được rỗng).");
+        return;
+      }
+      // Block if any option image is still uploading
+      if (optionRows.some(r => r.image?.file && !r.image?.serverUrl)) {
+        setFormError("Vui lòng đợi ảnh tải lên xong trước khi tạo câu hỏi.");
         return;
       }
     }
@@ -1351,6 +1578,8 @@ export default function QuestionPage() {
       required,
       order_index: questions.length,
       settings:    hasSettings ? settings : undefined,
+      media_url:   qImage?.serverUrl || null,
+      media_type:  qImage?.media_type || null,
     };
 
     if (isChoice) {
@@ -1395,6 +1624,8 @@ export default function QuestionPage() {
           value:       typeof o === "string" ? o : (o.value ?? ""),
           order_index: i,
           is_other:    typeof o === "object" ? (o.is_other ?? false) : false,
+          image_url:   typeof o === "object" ? (o.image_url ?? null) : null,
+          media_type:  typeof o === "object" ? (o.media_type ?? null) : null,
         }))
         .filter(o => o.label && o.value);
     }
@@ -1463,6 +1694,23 @@ export default function QuestionPage() {
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           {formLoading && <Loader2 size={14} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>}
           <span style={{fontSize:12,color:C.textSub}}>{questions.length} câu hỏi</span>
+          <button
+            type="button"
+            onClick={() => { setAiOpen(true); setShowForm(false); setActiveId(null); }}
+            style={{
+              display:"flex",alignItems:"center",gap:7,
+              padding:"8px 14px",
+              background:C.surface,
+              color:C.primary,
+              border:`1px solid rgba(99,102,241,0.35)`,
+              borderRadius:10,
+              fontSize:12,fontWeight:700,
+              cursor:"pointer",fontFamily:C.font,
+            }}
+          >
+            <Sparkles size={14}/>
+            Tạo bằng AI
+          </button>
           <button onClick={triggerAdd} style={{
             display:"flex",alignItems:"center",gap:7,
             padding:"8px 16px",
@@ -1538,6 +1786,7 @@ export default function QuestionPage() {
                         placeholder="Nhập nội dung câu hỏi..."
                         minHeight={72}
                         hasError={!!formError && !getPlainText(contentHtml).trim()}
+                        onFileUpload={handleNewQImageUpload}
                       />
                     </div>
                     <div style={{paddingTop:24,minWidth:200}}>
@@ -1546,8 +1795,8 @@ export default function QuestionPage() {
                     </div>
                   </div>
 
-                  {/* Question image — UI only */}
-                  <QuestionImageUploadArea image={qImage} onImageChange={setQImage}/>
+                  {/* Question image — shown below editor when image is uploaded */}
+                  <QuestionImageUploadArea image={qImage} onImageChange={setQImage} uploading={qImageUploading}/>
 
                   {/* Required toggle */}
                   <Toggle checked={required} onChange={setRequired}/>
@@ -1638,6 +1887,15 @@ export default function QuestionPage() {
               }}>
                 Thêm câu hỏi đầu tiên
               </button>
+              <button type="button" onClick={()=>setAiOpen(true)} style={{
+                fontSize:13,fontWeight:700,color:C.primary,background:C.surface,
+                border:`1px solid rgba(99,102,241,0.35)`,cursor:"pointer",borderRadius:10,
+                padding:"9px 18px",fontFamily:C.font,
+                display:"flex",alignItems:"center",gap:8,
+              }}>
+                <Sparkles size={14}/>
+                Tạo bằng AI
+              </button>
             </div>
           ) : (
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1660,6 +1918,30 @@ export default function QuestionPage() {
         {/* Sidebar */}
         <Sidebar onAddQuestion={triggerAdd}/>
       </div>
+
+      <AiQuestionAssistant
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        surveyId={surveyId}
+        surveyTitle={surveyTitle}
+        surveyDescription={surveyDescription}
+        existingCount={questions.length}
+        onApplied={async (payload) => {
+          for (let i = 0; i < payload.length; i++) {
+            const q = payload[i];
+            await createQuestion(surveyId, {
+              content: q.content,
+              type: q.type,
+              required: q.required,
+              order_index: q.order_index,
+              settings: q.settings,
+              options: q.options,
+            });
+          }
+          fetchQuestionsBySurvey(surveyId);
+        }}
+        C={C}
+      />
 
       <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
     </div>

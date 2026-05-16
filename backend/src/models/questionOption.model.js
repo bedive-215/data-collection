@@ -31,6 +31,20 @@ export default (sequelize) => {
         is_other: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
+        },
+
+        // NEW: URL ảnh/video của lựa chọn
+        image_url: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+            defaultValue: null
+        },
+
+        // NEW: loại media (image | video)
+        media_type: {
+            type: DataTypes.ENUM('image', 'video'),
+            allowNull: true,
+            defaultValue: null
         }
 
     }, {

@@ -24,6 +24,7 @@ router.post(
 router.post(
     "/survey/:survey_id",
     validate(createQuestionRequest),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('editor'),
     QuestionController.create
 );
@@ -32,6 +33,7 @@ router.post(
 router.get(
     "/survey/:survey_id",
     validate(surveyIdParams),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('viewer', 'editor', 'respondent'),
     QuestionController.getQuestionsBySurvey
 );
@@ -40,6 +42,7 @@ router.get(
 router.delete(
     "/:question_id/survey/:survey_id",
     validate(deleteQuestionParams),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('editor'),
     QuestionController.deleteQuestion
 );
@@ -48,6 +51,7 @@ router.delete(
 router.patch(
     "/:question_id/survey/:survey_id",
     validate(updateQuestionParams),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('editor'),
     QuestionController.updateQuestion
 );
@@ -56,6 +60,7 @@ router.patch(
 router.patch(
     "/survey/:survey_id/reorder",
     validate(surveyIdParams),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('editor'),
     QuestionController.reorderQuestions
 );
@@ -63,6 +68,7 @@ router.patch(
 router.post(
     "/survey/:survey_id/bulk",
     validate(surveyIdParams),
+    authMiddleware.auth.bind(authMiddleware),
     authMiddleware.checkSurveyAccess('editor'),
     QuestionController.bulkCreateQuestions
 );
