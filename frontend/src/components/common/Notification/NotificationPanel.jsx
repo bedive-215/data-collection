@@ -1,6 +1,7 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useAuth } from '../../../hooks/useAuth';
 import NotificationDetailModal from './NotificationDetailModal';
 import {
     Bell, CheckCheck, X, Mail, Clock, FileText,
@@ -120,6 +121,7 @@ const formatTime = (dateString) => {
 /* ─── Component ─── */
 const NotificationPanel = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotification();
     const [isOpen, setIsOpen]                           = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
@@ -285,7 +287,7 @@ const NotificationPanel = () => {
                         {notifications.length > 0 && (
                             <div className="px-4 py-3 border-t border-slate-100/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/50">
                                 <button
-                                    onClick={() => { setIsOpen(false); navigate('/user/notifications'); }}
+                                    onClick={() => { setIsOpen(false); navigate(user?.role === 'admin' ? '/admin/notifications' : '/user/notifications'); }}
                                     className="w-full text-center text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-1.5 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 rounded-lg"
                                 >
                                     Xem tất cả thông báo →

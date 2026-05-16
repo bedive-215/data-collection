@@ -31,8 +31,13 @@ const setupSocket = (server) => {
         });
     };
 
+    const emitToSurveyAdmins = (surveyId, event, data) => {
+        io.to(`survey-admin:${surveyId}`).emit(event, data);
+    };
+
     global.io = io;
     global.emitToUser = emitToUser;
+    global.emitToSurveyAdmins = emitToSurveyAdmins;
 
     io.use(async (socket, next) => {
         try {
@@ -111,6 +116,12 @@ const setupSocket = (server) => {
 
         socket.on("ping", () => {
             socket.emit("pong", { timestamp: Date.now() });
+        });
+
+        // Real-time: when a survey response is submitted, notify admins watching this survey
+        socket.on("admin:watch-survey", (surveyId) => {
+            socket.join(`survey-admin:${surveyId}`);
+            console.log(`[Socket] Admin watching survey:${surveyId}`);
         });
 
         socket.on("disconnect", (reason) => {

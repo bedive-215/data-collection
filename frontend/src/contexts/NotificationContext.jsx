@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
@@ -15,7 +15,6 @@ export const useNotification = () => {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-/* ─── Normalize: chuẩn hoá mọi notification từ REST lẫn Socket ─── */
 const normalizeNotification = (n) => {
     const raw = n.data || {};
     return {
@@ -26,30 +25,27 @@ const normalizeNotification = (n) => {
         createdAt: n.createdAt || n.created_at || null,
         data: {
             ...raw,
-            surveyTitle:   raw.surveyTitle   || raw.title        || null,
-            surveyId:      raw.surveyId      || raw.survey_id    || null,
-            surveyEndAt:   raw.surveyEndAt   || raw.end_at       || null,
+            surveyTitle: raw.surveyTitle || raw.title || null,
+            surveyId: raw.surveyId || raw.survey_id || null,
+            surveyEndAt: raw.surveyEndAt || raw.end_at || null,
             responseCount: raw.responseCount ?? null,
-            inviterName:   raw.inviterName   || null,
+            inviterName: raw.inviterName || null,
             responderName: raw.responderName || null,
             participantName: raw.participantName || null,
-            roleLabel:     raw.roleLabel     || null,
-            role:          raw.role          || null,
+            roleLabel: raw.roleLabel || null,
+            role: raw.role || null,
         },
     };
 };
 
 export const NotificationProvider = ({ children }) => {
-    const [socket, setSocket] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isConnected, setIsConnected] = useState(false);
     const { user, accessToken } = useAuth();
     const toastCallbackRef = useRef(null);
-
-    const setToastCallback = useCallback((callback) => {
-        toastCallbackRef.current = callback;
-    }, []);
+    const socketRef = useRef(null);
+    const fetchNotificationsRef = useRef(null);
 
     const fetchNotifications = useCallback(async () => {
         if (!accessToken) return;
@@ -66,6 +62,8 @@ export const NotificationProvider = ({ children }) => {
             console.error('Error fetching notifications:', error);
         }
     }, [accessToken]);
+
+    fetchNotificationsRef.current = fetchNotifications;
 
     const markAsRead = useCallback(async (notificationId) => {
         try {
@@ -125,15 +123,28 @@ export const NotificationProvider = ({ children }) => {
         setUnreadCount(prev => prev + 1);
     }, []);
 
+    const setToastCallback = useCallback((callback) => {
+        toastCallbackRef.current = callback;
+    }, []);
+
+    // Main socket effect
     useEffect(() => {
+        // Clear on user change
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsConnected(false);
+
+        // Disconnect old socket
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
+
         if (!user || !accessToken) {
-            if (socket) {
-                socket.disconnect();
-                setSocket(null);
-                setIsConnected(false);
-            }
             return;
         }
+
+        console.log('[Socket] Connecting for user:', user.user_id);
 
         const socketInstance = io(API_URL, {
             auth: { token: accessToken },
@@ -144,12 +155,12 @@ export const NotificationProvider = ({ children }) => {
         });
 
         socketInstance.on('connect', () => {
-            console.log('[Socket] Connected to notification server');
+            console.log('[Socket] Connected for user:', user.user_id);
             setIsConnected(true);
         });
 
-        socketInstance.on('disconnect', (reason) => {
-            console.log('[Socket] Disconnected:', reason);
+        socketInstance.on('disconnect', () => {
+            console.log('[Socket] Disconnected');
             setIsConnected(false);
         });
 
@@ -160,18 +171,14 @@ export const NotificationProvider = ({ children }) => {
 
         socketInstance.on('notification', (notification) => {
             console.log('[Socket] New notification:', notification);
+            console.log('[Socket] Current user:', user.user_id);
             addNotification(notification);
 
-            // Show toast for new notification
             const normalized = normalizeNotification(notification);
             const toastMessage = normalized.message || normalized.title || 'Có thông báo mới';
             toast.info(toastMessage, {
                 position: 'bottom-right',
                 autoClose: 4000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
             });
 
             if (toastCallbackRef.current) {
@@ -179,11 +186,15 @@ export const NotificationProvider = ({ children }) => {
             }
         });
 
-        setSocket(socketInstance);
-        fetchNotifications();
+        socketRef.current = socketInstance;
 
-        return () => { socketInstance.disconnect(); };
-    }, [user, accessToken, fetchNotifications, addNotification]);
+        // Fetch notifications
+        fetchNotificationsRef.current();
+
+        return () => {
+            socketInstance.disconnect();
+        };
+    }, [user?.user_id, accessToken]);
 
     const value = {
         notifications,
