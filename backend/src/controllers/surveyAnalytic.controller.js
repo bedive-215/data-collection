@@ -1,5 +1,5 @@
 import { AppError } from "../middlewares/handleException.middlware.js";
-import SurveyAnalyticsService from "../services/surveyAnalytic.service.js";
+import SurveyAnalyticsService from "../services/analytics/surveyAnalytics.service.js";
 import models from "../models/index.js";
 
 const parseFilters = (query) => {
@@ -99,20 +99,20 @@ class SurveyAnalyticController {
         try {
             const { question_id } = req.params;
             const filters = parseFilters(req.query);
-    
+
             // survey_id is needed to scope answers to filtered responses
             if (req.query.survey_id) filters.survey_id = req.query.survey_id;
-    
+
             // TEXT / PARAGRAPH pagination
             const textOpts = parsePagination(req.query, 50);
-    
+
             const data = await SurveyAnalyticsService.getQuestionAnalytics(question_id, filters, textOpts);
             return res.status(200).json({ success: true, data });
         } catch (err) {
             next(err);
         }
     };
-    
+
     // GET /api/analytics/surveys/:survey_id/crosstab
     //   ?question_a=<uuid>&question_b=<uuid>&date_from=...&date_to=...
     // Cross-tabulation between two choice questions
@@ -120,13 +120,13 @@ class SurveyAnalyticController {
         try {
             const { survey_id } = req.params;
             const { question_a, question_b } = req.query;
-    
+
             if (!question_a || !question_b) {
                 throw new AppError("query params question_a and question_b are required", 400);
             }
-    
+
             const filters = parseFilters(req.query);
-    
+
             const data = await SurveyAnalyticsService.getCrossTab(
                 survey_id,
                 question_a,
@@ -138,6 +138,39 @@ class SurveyAnalyticController {
             next(err);
         }
     };
+
+    async compareByGender(req, res, next) {
+        try {
+            const { question_id } = req.params;
+            const result = await SurveyAnalyticsService.getCompareByGender(question_id, req.survey);
+            return res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async compareByAge(req, res, next) {
+        try {
+            const { question_id } = req.params;
+            const result = await SurveyAnalyticsService.getCompareByAge(question_id);
+            return res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getInsightAgeGender(req, res, next) {
+        try {
+            const { question_id } = req.params;
+            const filters = parseFilters(req.query);
+            if (req.query.survey_id) filters.survey_id = req.query.survey_id;
+
+            const data = await SurveyAnalyticsService.getInsightAgeGender(question_id, filters);
+            return res.status(200).json({ success: true, data });
+        } catch (err) {
+            next(err);
+        }
+    }
 };
 
 export default new SurveyAnalyticController();

@@ -15,7 +15,7 @@ class AuthService {
   }
 
 
-  async register({ email, password, full_name, date_of_birth, phone_number }) {
+  async register({ email, password, full_name, date_of_birth, phone_number, gender }) {
 
     const existing = await this.User.findOne({
       where: {
@@ -35,6 +35,7 @@ class AuthService {
       password_hash,
       full_name,
       date_of_birth,
+      gender,
       phone_number,
       email_verified: false,
     });
@@ -64,7 +65,14 @@ class AuthService {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) throw new AppError('Invalid email or password', 400);
 
-    const payload = { user_id: user.id, email: user.email, role: user.role, full_name: user.full_name, phone_number: user.phone_number };
+    const payload = { 
+      user_id: user.id, 
+      email: user.email, 
+      role: user.role, 
+      full_name: user.full_name, 
+      phone_number: user.phone_number, 
+      gender: user.gender 
+    };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
     const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -82,6 +90,7 @@ class AuthService {
         email: user.email,
         phone_number: user.phone_number,
         date_of_birth: user.date_of_birth,
+        gender: user.gender,
         role: user.role,
         avatar: user.avatar
       }
@@ -220,7 +229,7 @@ class AuthService {
     }
   }
 
-  async oauthLogin({ token, phone_number, date_of_birth }) {
+  async oauthLogin({ token, phone_number, date_of_birth, gender }) {
     if (!token) throw new AppError('Token is required', 400);
 
     // 1. Verify Google token
@@ -236,6 +245,7 @@ class AuthService {
         full_name: name,
         email_verified: true,
         password_hash: null,
+        gender,
         phone_number: phone_number || null,
         date_of_birth: date_of_birth || null,
       });
@@ -266,6 +276,7 @@ class AuthService {
     const missingFields = {
       phone_number: !user.phone_number,
       date_of_birth: !user.date_of_birth,
+      gender: !user.gender
     };
 
     const isProfileComplete = !missingFields.phone_number && !missingFields.date_of_birth;
@@ -283,7 +294,9 @@ class AuthService {
     const payload = {
       user_id: user.id,
       email: user.email,
+      gender: user.gender,
       full_name: user.full_name,
+      phone_number: user.phone_number,
       role: user.role,
     };
 
@@ -306,6 +319,7 @@ class AuthService {
         email: user.email,
         phone_number: user.phone_number,
         date_of_birth: user.date_of_birth,
+        gender: user.gender,
         role: user.role,
         avatar: user.avatar,
       },

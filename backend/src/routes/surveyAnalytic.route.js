@@ -87,4 +87,25 @@ route.get(
     surveyAnalyticController.getCrossTab
 );
 
+route.get(
+    "/questions/:question_id/surveys/:survey_id/gender",
+    validate(createOptionParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.compareByGender
+);
+
+route.get(
+    "/questions/:question_id/surveys/:survey_id/age",
+    validate(createOptionParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.compareByAge
+);
+
+route.get(
+    "/questions/:question_id/surveys/:survey_id/insight",
+    validate(createOptionParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.getInsightAgeGender
+);
+
 export default route;
