@@ -2270,12 +2270,11 @@ const fetchSections = useCallback(async (sid) => {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,padding:0,fontFamily:C.font,position:"relative",overflowX:"hidden"}}>
-      <AnimatedSurveyBackdrop />
       <div style={{position:"relative",zIndex:1}}>
 
       {/* ── Body ── */}
       <div style={{
-        maxWidth:1100,margin:"0 auto",padding:"20px 24px 32px",
+        maxWidth:1100,margin:"0 auto",padding:"4px 24px 32px",
         display:"flex",gap:16,alignItems:"flex-start",
       }}>
 
