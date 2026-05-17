@@ -40,6 +40,7 @@ import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
 import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
 import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
 import NotificationsPage from "@/pages/user/NotificationsPage";
+import SurveyStudio from "@/pages/user/SurveyStudio";
 
 // Errors
 import NotFound from "@/pages/error/NotFound";
@@ -109,6 +110,12 @@ const routeConfig = [
     path:
       ROUTERS.USER.MY_SURVEY_DETAIL,
     element: MySurveyQuestionPage,
+    layout: HomeLayout,
+  },
+  {
+    path:
+      "/user/my-surveys/:surveyId/studio",
+    element: SurveyStudio,
     layout: HomeLayout,
   },
   {

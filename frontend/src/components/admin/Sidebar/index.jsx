@@ -93,6 +93,14 @@ const Icons = {
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
     </svg>
   ),
+
+  bar_chart: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
 };
 
 /* ────────────────────────────────────────────────────────────
@@ -117,6 +125,13 @@ const navItems = [
     id: "surveys",
     label: "Questions",
     icon: "quiz",
+    path: ROUTERS.ADMIN.SURVEYS,
+  },
+
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: "bar_chart",
     path: ROUTERS.ADMIN.SURVEYS,
   },
 

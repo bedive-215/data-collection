@@ -817,7 +817,7 @@ function MySurveyCard({
   const isPublished=survey.is_published;
 
   const menuItems=[
-    {icon:<Pencil size={13}/>,label:"Chỉnh sửa",action:()=>{setEditing(true);setMenuOpen(false);}},
+    {icon:<Pencil size={13}/>,label:"Mở Studio",action:()=>{navigate(`/user/my-surveys/${survey.id}/studio`);setMenuOpen(false);}},
     {icon:<BarChart3 size={13}/>,label:"Phân tích",action:()=>{navigate(`/user/surveys/${survey.id}/analytics`);setMenuOpen(false);}},
     {icon:<Share2 size={13}/>,label:"Tạo link chia sẻ",action:()=>{setShareOpen(true);setMenuOpen(false);}},
     {icon:<Mail size={13}/>,label:"Mời người dùng",action:()=>{setInviteOpen(true);setMenuOpen(false);}},
@@ -859,7 +859,7 @@ function MySurveyCard({
           boxShadow:"0 4px 18px rgba(15,23,42,0.08)",
           opacity:isClosed?0.7:1,display:"flex",flexDirection:"column",height:"100%",
         }}
-        onClick={()=>!editing&&navigate(`/user/my-surveys/${survey.id}`)}
+        onClick={()=>!editing&&navigate(`/user/my-surveys/${survey.id}/studio`)}
       >
         {/* Thumb */}
         <div style={{height:120,background:isClosed?"linear-gradient(135deg,#f1f5f9,#e2e8f0)":thumb,position:"relative",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
@@ -869,23 +869,6 @@ function MySurveyCard({
             <StatusBadge status={survey.status}/>
             {isPublished&&<span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:999,color:"#4361ee",background:"rgba(67,97,238,0.15)",display:"flex",alignItems:"center",gap:3,fontFamily:C.font}}><Globe size={8}/> Live</span>}
           </div>
-          {!editing&&(
-            <div style={{position:"absolute",bottom:8,left:8,display:"flex",gap:5}} onClick={e=>e.stopPropagation()}>
-              {[
-                {icon:<Share2 size={11}/>,action:()=>setShareOpen(true),title:"Chia sẻ"},
-                {icon:<Mail size={11}/>,action:()=>setInviteOpen(true),title:"Mời"},
-                {icon:<UserPlus size={11}/>,action:()=>setBulkInviteOpen(true),title:"Mời hàng loạt"},
-                {icon:<Users size={11}/>,action:()=>setParticipantsOpen(true),title:"Participants"},
-                {icon:isPublished?<Lock size={11}/>:<Globe size={11}/>,action:()=>setPublishOpen(true),title:"Publish",active:isPublished},
-                !isClosed&&{icon:<PowerOff size={11}/>,action:()=>setCloseOpen(true),title:"Đóng"},
-              ].filter(Boolean).map((btn,i)=>(
-                <button key={i} title={btn.title} onClick={btn.action} style={{width:26,height:26,borderRadius:7,border:`1px solid rgba(255,255,255,0.6)`,background:btn.active?"rgba(245,158,11,0.85)":"rgba(255,255,255,0.75)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:btn.active?"#fff":C.textSub,backdropFilter:"blur(4px)",transition:"all .12s"}}
-                  onMouseEnter={e=>{e.currentTarget.style.background="rgba(67,97,238,0.85)";e.currentTarget.style.color="#fff";e.currentTarget.style.borderColor="transparent";}}
-                  onMouseLeave={e=>{e.currentTarget.style.background=btn.active?"rgba(245,158,11,0.85)":"rgba(255,255,255,0.75)";e.currentTarget.style.color=btn.active?"#fff":C.textSub;e.currentTarget.style.borderColor="rgba(255,255,255,0.6)";}}
-                >{btn.icon}</button>
-              ))}
-            </div>
-          )}
           <div ref={menuRef} style={{position:"absolute",top:8,right:8}} onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setMenuOpen(!menuOpen)} style={{width:28,height:28,borderRadius:8,border:`1px solid rgba(255,255,255,0.6)`,background:"rgba(255,255,255,0.75)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",transition:"all .12s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.95)";}}
@@ -895,8 +878,8 @@ function MySurveyCard({
               <div style={{position:"absolute",top:34,right:0,width:192,background:"rgba(255,255,255,0.96)",backdropFilter:"blur(20px)",border:`1px solid ${C.glassBorder}`,borderRadius:14,overflow:"hidden",boxShadow:"0 16px 48px rgba(0,0,0,.15)",zIndex:500,animation:"slideUp .12s ease"}}>
                 {menuItems.map((item,i)=>(
                   <button key={i} onClick={item.action} style={{width:"100%",border:"none",background:"transparent",padding:"9px 13px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",fontSize:12,color:item.color||C.text,fontFamily:C.font,borderBottom:i<menuItems.length-1?`1px solid rgba(0,0,0,0.05)`:"none"}}
-                    onMouseEnter={e=>e.currentTarget.style.background="rgba(67,97,238,0.06)"}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(67,97,238,0.06)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
                   >{item.icon}{item.label}{deleting&&item.label==="Xóa"&&<Loader2 size={11} style={{marginLeft:"auto",animation:"spin 1s linear infinite"}}/>}</button>
                 ))}
               </div>
