@@ -11,6 +11,7 @@ import routerNotification from './notification.route.js';
 import routerSection from './section.route.js';
 import routerMedia from './media.route.js';
 import routerOptionMedia from './optionMedia.route.js';
+import routerAiChat from './aiChat.route.js';
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -50,5 +51,8 @@ router.use('/media', routerMedia);
 
 // option-media routes are already wrapped by authMiddleware.auth.bind(authMiddleware) in optionMedia.route.js
 router.use('/option-media', routerOptionMedia);
+
+// AI Chat route (public - no auth required)
+router.use('/ai', routerAiChat);
 
 export default router;
