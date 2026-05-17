@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import analyticsService from "@/services/analyticsService";
 import { toast } from "react-toastify";
-import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import {
   userTheme as T, chartColors, questionTypeBadge,
   DATE_PRESETS, resolveDatePreset, formatNumber,
@@ -775,12 +774,11 @@ export default function UserAnalyticsPage() {
   const npsData = calcNPS(npsAnswers);
 
   return (
-    <main style={{ minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", background: "transparent", position: "relative", overflowX: "hidden" }}>
-      <AnimatedSurveyBackdrop />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "16px 18px 48px" }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "transparent", position: "relative", overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 18px 48px" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button onClick={() => navigate(ROUTERS.USER.MY_SURVEYS)} style={{
               width: 42, height: 42, borderRadius: 14, border: "none",
@@ -1304,6 +1302,6 @@ export default function UserAnalyticsPage() {
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4); cursor: pointer; }
         input::placeholder { color: #94a3b8; }
       `}</style>
-    </main>
+    </div>
   );
 }
