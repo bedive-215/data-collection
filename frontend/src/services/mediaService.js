@@ -13,7 +13,7 @@ export const mediaService = {
   uploadOptionMedia: (file) => {
     const formData = new FormData();
     formData.append("file", file);
-    return apiClient.post("/api/v1/option-media", formData);
+    return apiClient.post("/api/v1/option-media/option-media", formData);
   },
 };
 

@@ -30,6 +30,7 @@ export const ROUTERS = {
     SURVEYS: "/admin/surveys",
     SURVEY_DETAIL:
       "/admin/surveys/:surveyId",
+    ANALYTICS: "/admin/surveys/:surveyId/analytics",
     NOTIFICATIONS: "/admin/notifications",
   },
 
