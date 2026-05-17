@@ -1,373 +1,537 @@
-// ─── SurveysPage.native.jsx ──────────────────────────────────────
-// React Native version of SurveysPage.jsx
-// Dependencies: @react-navigation/native, react-native-vector-icons or lucide-react-native
+// ─── SurveysPage.native.jsx ───────────────────────────────────────────────
+// React Native version
+// Deps: lucide-react-native, @react-navigation/native, react-native-safe-area-context
 
-import React, {
-  useEffect, useMemo, useState, useCallback,
-} from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, Modal, ActivityIndicator, FlatList,
-  SafeAreaView, StatusBar, Pressable, Platform,
-} from 'react-native';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  ScrollView,
+  Modal,
+  ActivityIndicator,
+  StyleSheet,
+  Animated,
+  SafeAreaView,
+  StatusBar,
+  Dimensions,
+  Platform,
+  RefreshControl,
+} from "react-native";
+// import { useNavigation } from "@react-navigation/native";
+// import { useSurvey } from "@/providers/SurveyProvider";
+// import { useResponse } from "@/providers/ResponseProvider";
 
-// ─── REPLACE with your actual providers ───
-import { useSurvey } from '@/providers/SurveyProvider';
-import { useResponse } from '@/providers/ResponseProvider';
-
-// ─── REPLACE with your navigation setup ───
-// import { useNavigation } from '@react-navigation/native';
-
-// ─────────────────────────────────────────────────────────────
-// DESIGN TOKENS
-// ─────────────────────────────────────────────────────────────
-const C = {
-  bg:            '#f4f5f7',
-  surface:       '#ffffff',
-  primary:       '#4f6ef7',
-  primaryLight:  '#eef2ff',
-  primaryBorder: '#c5cdfb',
-  text:          '#111827',
-  textSub:       '#6b7280',
-  textDim:       '#9ca3af',
-  success:       '#16a34a',
-  successBg:     '#dcfce7',
-  successBorder: '#86efac',
-  border:        '#e8ecf5',
-  error:         '#ef4444',
-  errorBg:       '#fef2f2',
-  font:          Platform.OS === 'ios' ? 'System' : 'sans-serif',
+/* ─── Icons ────────────────────────────────────────────────── */
+let IconSet = {};
+try { IconSet = require("lucide-react-native"); } catch {}
+const Icon = ({ name, size = 16, color = "#64748b" }) => {
+  const Comp = IconSet[name];
+  if (!Comp) return <Text style={{ fontSize: size * 0.75, color }}>■</Text>;
+  return <Comp size={size} color={color} />;
 };
 
-// ─────────────────────────────────────────────────────────────
-// TABS
-// ─────────────────────────────────────────────────────────────
+const { width: SW } = Dimensions.get("window");
+
+/* ─── Colors ───────────────────────────────────────────────── */
+const C = {
+  bg:           "#f4f5f7",
+  surface:      "#ffffff",
+  primary:      "#4f6ef7",
+  primaryLight: "#eef2ff",
+  primaryBorder:"#4f6ef7",
+  text:         "#111827",
+  textSub:      "#6b7280",
+  textDim:      "#9ca3af",
+  border:       "#e8ecf5",
+  success:      "#16a34a",
+  successBg:    "#dcfce7",
+  successBorder:"#bbf7d0",
+  done:         "#f0fdf4",
+  doneBorder:   "#bbf7d0",
+};
+
+/* ─── Tabs ─────────────────────────────────────────────────── */
 const TABS = [
-  { key: 'all',     label: 'Tất cả' },
-  { key: 'pending', label: 'Chưa làm' },
-  { key: 'done',    label: 'Đã hoàn thành' },
+  { key: "all",     label: "Tất cả" },
+  { key: "pending", label: "Chưa làm" },
+  { key: "done",    label: "Đã hoàn thành" },
 ];
 
-// ─────────────────────────────────────────────────────────────
-// TYPE META
-// ─────────────────────────────────────────────────────────────
-const TYPE_META = {
+/* ─── Type config ──────────────────────────────────────────── */
+const TYPE_CONFIG = {
   SINGLE_CHOICE: {
-    label: 'Một lựa chọn', color: '#1d4ed8',
-    bg: '#eff6ff', border: '#bfdbfe', accent: '#2563eb',
+    label: "Một lựa chọn",
+    barColor: "#2563eb",
+    badgeBg: "#eff6ff",
+    badgeBorder: "#bfdbfe",
+    badgeColor: "#1d4ed8",
   },
   MULTIPLE_CHOICE: {
-    label: 'Nhiều lựa chọn', color: '#6d28d9',
-    bg: '#f5f3ff', border: '#ddd6fe', accent: '#7c3aed',
+    label: "Nhiều lựa chọn",
+    barColor: "#7c3aed",
+    badgeBg: "#f5f3ff",
+    badgeBorder: "#ddd6fe",
+    badgeColor: "#6d28d9",
   },
   TEXT: {
-    label: 'Văn bản', color: '#0e7490',
-    bg: '#ecfeff', border: '#a5f3fc', accent: '#0891b2',
+    label: "Văn bản",
+    barColor: "#0891b2",
+    badgeBg: "#ecfeff",
+    badgeBorder: "#a5f3fc",
+    badgeColor: "#0e7490",
   },
 };
 
-function typeMeta(type) {
-  return TYPE_META[type] ?? {
-    label: type, color: '#6b7280',
-    bg: '#f3f4f6', border: '#e5e7eb', accent: '#9ca3af',
+function getTypeCfg(type) {
+  return TYPE_CONFIG[type] ?? {
+    label: type || "Khác",
+    barColor: "#888",
+    badgeBg: "#f3f4f6",
+    badgeBorder: "#e5e7eb",
+    badgeColor: "#6b7280",
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// OptionRow
-// ─────────────────────────────────────────────────────────────
-function OptionRow({ label, isSelected, isMultiple }) {
+/* ─── Mock data ────────────────────────────────────────────── */
+const MOCK_SURVEYS = [
+  {
+    id: "1",
+    title: "Khảo sát sự hài lòng khách hàng Q2",
+    description: "Đánh giá mức độ hài lòng của khách hàng về sản phẩm và dịch vụ.",
+    created_at: "2024-05-01T00:00:00Z",
+  },
+  {
+    id: "2",
+    title: "Khảo sát nội bộ nhân viên 2024",
+    description: "Thu thập phản hồi từ nhân viên về môi trường làm việc và phúc lợi.",
+    created_at: "2024-04-20T00:00:00Z",
+  },
+  {
+    id: "3",
+    title: "Đánh giá chất lượng sản phẩm mới",
+    description: "Đánh giá sản phẩm ra mắt tháng 3/2024.",
+    created_at: "2024-03-10T00:00:00Z",
+  },
+  {
+    id: "4",
+    title: "Khảo sát trải nghiệm người dùng ứng dụng",
+    description: null,
+    created_at: "2024-02-15T00:00:00Z",
+  },
+];
+
+const MOCK_DONE_IDS = new Set(["1", "3"]);
+
+const MOCK_ANSWERS = [
+  { question_id: "q1", type: "TEXT",            question: "Tên của bạn là gì?",              answer: "Nguyễn Văn A", options: [] },
+  { question_id: "q2", type: "SINGLE_CHOICE",   question: "Bạn đánh giá dịch vụ thế nào?",  answer: "Tốt",          options: ["Tốt", "Trung bình", "Kém"] },
+  { question_id: "q3", type: "MULTIPLE_CHOICE", question: "Tính năng nào bạn thích nhất?",   answer: ["Giao diện đẹp", "Tốc độ nhanh"], options: ["Giao diện đẹp", "Tốc độ nhanh", "Dễ sử dụng", "Hỗ trợ tốt"] },
+];
+
+/* ─── Helpers ──────────────────────────────────────────────── */
+function getAnswerSet(answer) {
+  if (answer === null || answer === undefined) return new Set();
+  if (Array.isArray(answer)) return new Set(answer.map(s => String(s).trim()).filter(Boolean));
+  return new Set(String(answer).split(",").map(s => s.trim()).filter(Boolean));
+}
+
+/* ─── FadeIn ───────────────────────────────────────────────── */
+function FadeIn({ children, delay = 0, style }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(16)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 400, delay: delay * 1000, useNativeDriver: true }),
+      Animated.timing(ty,      { toValue: 0, duration: 400, delay: delay * 1000, useNativeDriver: true }),
+    ]).start();
+  }, []);
+  return <Animated.View style={[{ opacity, transform: [{ translateY: ty }] }, style]}>{children}</Animated.View>;
+}
+
+/* ─── Skeleton card ────────────────────────────────────────── */
+function CardSkeleton({ index }) {
+  const pulse = useRef(new Animated.Value(0.5)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1,   duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
   return (
-    <View style={[
-      styles.optionRow,
-      isSelected && styles.optionRowSelected,
-    ]}>
+    <Animated.View style={[ss.card, { opacity: pulse, marginBottom: 12 }]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: "#f1f1f1" }} />
+        <View style={{ width: 80, height: 20, borderRadius: 10, backgroundColor: "#f1f1f1" }} />
+      </View>
+      <View style={{ height: 14, backgroundColor: "#f1f1f1", borderRadius: 6, width: "75%", marginBottom: 8 }} />
+      <View style={{ height: 11, backgroundColor: "#f1f1f1", borderRadius: 6, width: "100%", marginBottom: 5 }} />
+      <View style={{ height: 11, backgroundColor: "#f1f1f1", borderRadius: 6, width: "60%", marginBottom: 16 }} />
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <View style={{ height: 11, backgroundColor: "#f1f1f1", borderRadius: 6, width: 60 }} />
+        <View style={{ height: 32, backgroundColor: "#f1f1f1", borderRadius: 12, width: 90 }} />
+      </View>
+    </Animated.View>
+  );
+}
+
+/* ─── AnswerBlock ──────────────────────────────────────────── */
+function AnswerBlock({ item }) {
+  const isText     = item.type === "TEXT";
+  const isMultiple = item.type === "MULTIPLE_CHOICE";
+  const answerSet  = getAnswerSet(item.answer);
+  const hasAnswer  = answerSet.size > 0;
+
+  if (isText) {
+    return item.answer?.trim() ? (
+      <View style={ss.textAnswer}>
+        <Text style={ss.textAnswerText}>{item.answer}</Text>
+      </View>
+    ) : (
+      <Text style={ss.emptyText}>Không có câu trả lời</Text>
+    );
+  }
+
+  const options = item.options ?? [];
+
+  const renderOption = (label, isSelected, i) => (
+    <View
+      key={i}
+      style={[
+        ss.optionRow,
+        isSelected && { borderColor: "#bfdbfe", backgroundColor: "rgba(239,246,255,0.9)" },
+      ]}
+    >
       {isMultiple ? (
-        <View style={[
-          styles.checkbox,
-          isSelected && styles.checkboxSelected,
-        ]}>
-          {isSelected && (
-            <Text style={styles.checkmark}>✓</Text>
-          )}
+        <View style={[ss.checkbox, isSelected && { backgroundColor: "#2563eb", borderColor: "#2563eb" }]}>
+          {isSelected && <Icon name="Check" size={10} color="#fff" />}
         </View>
       ) : (
-        <View style={[
-          styles.radio,
-          isSelected && styles.radioSelected,
-        ]}>
-          {isSelected && <View style={styles.radioDot} />}
+        <View style={ss.radio}>
+          {isSelected && <View style={ss.radioDot} />}
         </View>
       )}
-      <Text style={[
-        styles.optionLabel,
-        isSelected && styles.optionLabelSelected,
-      ]}>
+      <Text style={[ss.optionLabel, isSelected && { color: "#1e40af", fontWeight: "700" }]}>
         {label}
       </Text>
     </View>
   );
-}
 
-// ─────────────────────────────────────────────────────────────
-// SubmissionModal
-// ─────────────────────────────────────────────────────────────
-function SubmissionModal({ surveyId, surveyTitle, onClose }) {
-  const { getMySubmission } = useResponse();
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
-  const [answers, setAnswers] = useState([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSub = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await getMySubmission(surveyId);
-        if (cancelled) return;
-        const raw = res?.data ?? res ?? [];
-        setAnswers(raw.flatMap(r => r.answers ?? []));
-      } catch {
-        if (!cancelled) setError('Không thể tải câu trả lời.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchSub();
-    return () => { cancelled = true; };
-  }, [surveyId]);
-
-  const renderAnswer = ({ item, index }) => {
-    const meta = typeMeta(item.type);
-    const isText     = item.type === 'TEXT';
-    const isMultiple = item.type === 'MULTIPLE_CHOICE';
-    const selectedSet = isMultiple
-      ? new Set(Array.isArray(item.answer) ? item.answer : String(item.answer ?? '').split(',').map(s => s.trim()))
-      : new Set([String(item.answer ?? '')]);
-
+  if (options.length > 0) {
     return (
-      <View style={[styles.answerCard, { borderTopColor: meta.accent }]}>
-        <View style={styles.answerCardHeader}>
-          <View style={[styles.typeBadge, { backgroundColor: meta.bg, borderColor: meta.border }]}>
-            <Text style={[styles.typeBadgeText, { color: meta.color }]}>{meta.label}</Text>
-          </View>
-        </View>
-        <Text style={styles.questionText}>
-          {index + 1}. {item.question}
-        </Text>
-        {isText ? (
-          <View style={styles.textAnswerBox}>
-            <Text style={styles.textAnswerText}>
-              {item.answer || 'Không có dữ liệu'}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.optionsList}>
-            {(item.options ?? []).map((opt, oi) => {
-              const label = opt?.label ?? opt?.value ?? opt?.content ?? '';
-              const isSel = selectedSet.has(label) || selectedSet.has(String(opt.id));
-              return (
-                <OptionRow
-                  key={oi}
-                  label={label}
-                  isSelected={isSel}
-                  isMultiple={isMultiple}
-                />
-              );
-            })}
-          </View>
-        )}
+      <View style={{ gap: 6 }}>
+        {!hasAnswer && <Text style={ss.emptyText}>Chưa chọn lựa chọn nào</Text>}
+        {options.map((opt, i) => {
+          const label = typeof opt === "string" ? opt : opt.label ?? opt.value ?? opt.content ?? "";
+          const isSelected = answerSet.has(label) || answerSet.has(String(opt.id ?? ""));
+          return renderOption(label, isSelected, i);
+        })}
       </View>
     );
-  };
+  }
 
-  return (
-    <Modal
-      visible
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        {/* Header */}
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>← Đóng</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalBrand}>InsightFlow</Text>
-          <View style={{ width: 60 }} />
-        </View>
+  if (hasAnswer) {
+    return (
+      <View style={{ gap: 6 }}>
+        {[...answerSet].map((label, i) => renderOption(label, true, i))}
+      </View>
+    );
+  }
 
-        {/* Body */}
-        <View style={styles.modalBadgeRow}>
-          <View style={styles.completedBadge}>
-            <Text style={styles.completedBadgeText}>✓ Đã hoàn thành</Text>
-          </View>
-        </View>
-        <Text style={styles.modalTitle}>{surveyTitle}</Text>
-        {!loading && (
-          <Text style={styles.modalSubtitle}>{answers.length} câu trả lời</Text>
-        )}
-
-        {loading && (
-          <View style={styles.centered}>
-            <ActivityIndicator color={C.primary} size="large" />
-            <Text style={styles.loadingText}>Đang tải...</Text>
-          </View>
-        )}
-
-        {!loading && error && (
-          <View style={styles.centered}>
-            <Text style={styles.errorEmoji}>⚠️</Text>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {!loading && !error && answers.length === 0 && (
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>Không có câu trả lời.</Text>
-          </View>
-        )}
-
-        {!loading && !error && answers.length > 0 && (
-          <FlatList
-            data={answers}
-            keyExtractor={(_, i) => String(i)}
-            renderItem={renderAnswer}
-            contentContainerStyle={styles.answerList}
-          />
-        )}
-      </SafeAreaView>
-    </Modal>
-  );
+  return <Text style={ss.emptyText}>Không có câu trả lời</Text>;
 }
 
-// ─────────────────────────────────────────────────────────────
-// SurveyCard
-// ─────────────────────────────────────────────────────────────
-function SurveyCard({ survey, done, onStart, onViewSubmission }) {
-  const createdDate = survey?.created_at
-    ? new Date(survey.created_at).toLocaleDateString('vi-VN')
-    : '';
-
+/* ─── QuestionCard ─────────────────────────────────────────── */
+function QuestionCard({ item, index }) {
+  const cfg = getTypeCfg(item.type);
   return (
-    <TouchableOpacity
-      onPress={() => done && onViewSubmission(survey.id, survey.title)}
-      activeOpacity={done ? 0.7 : 1}
-      style={[
-        styles.surveyCard,
-        done ? styles.surveyCardDone : styles.surveyCardPending,
-      ]}
-    >
-      {/* Top row */}
-      <View style={styles.cardTopRow}>
-        <View style={[
-          styles.cardIcon,
-          done ? styles.cardIconDone : styles.cardIconPending,
-        ]}>
-          <Text style={{ fontSize: 18 }}>{done ? '✓' : '📄'}</Text>
-        </View>
-        <View style={[
-          styles.statusBadge,
-          done ? styles.statusBadgeDone : styles.statusBadgePending,
-        ]}>
-          <Text style={[
-            styles.statusBadgeText,
-            done ? styles.statusBadgeTextDone : styles.statusBadgeTextPending,
-          ]}>
-            {done ? 'Đã hoàn thành' : 'Survey'}
-          </Text>
+    <View style={[ss.questionCard, { borderTopColor: cfg.barColor }]}>
+      <View style={ss.questionMeta}>
+        <Text style={ss.questionIndex}>Câu {index + 1}</Text>
+        <View style={[ss.typeBadge, { backgroundColor: cfg.badgeBg, borderColor: cfg.badgeBorder }]}>
+          <Text style={[ss.typeBadgeText, { color: cfg.badgeColor }]}>{cfg.label}</Text>
         </View>
       </View>
-
-      {/* Body */}
-      <Text style={styles.cardTitle} numberOfLines={2}>{survey.title}</Text>
-      <Text style={styles.cardDesc} numberOfLines={2}>{survey.description}</Text>
-
-      {/* Footer */}
-      <View style={styles.cardFooter}>
-        <Text style={styles.cardDate}>🕐 {createdDate}</Text>
-        {done ? (
-          <View style={styles.viewResultBtn}>
-            <Text style={styles.viewResultBtnText}>Xem kết quả →</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.startBtn}
-            onPress={() => onStart(survey.id)}
-          >
-            <Text style={styles.startBtnText}>Bắt đầu →</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// CardSkeleton
-// ─────────────────────────────────────────────────────────────
-function CardSkeleton() {
-  return (
-    <View style={styles.skeleton}>
-      <View style={styles.skeletonTopRow}>
-        <View style={styles.skeletonIcon} />
-        <View style={styles.skeletonBadge} />
-      </View>
-      <View style={[styles.skeletonLine, { width: '75%' }]} />
-      <View style={[styles.skeletonLine, { width: '100%' }]} />
-      <View style={[styles.skeletonLine, { width: '60%' }]} />
-      <View style={styles.skeletonFooter}>
-        <View style={[styles.skeletonLine, { width: 60 }]} />
-        <View style={styles.skeletonBtn} />
-      </View>
+      <Text style={ss.questionText}>{item.question}</Text>
+      <AnswerBlock item={item} />
     </View>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────────────────────────
-export default function SurveysPage({ navigation }) {
-  // If using React Navigation, replace with: const navigation = useNavigation();
+/* ─── Submission Modal ─────────────────────────────────────── */
+function SubmissionModal({ surveyId, surveyTitle, onClose, getMySubmission }) {
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+  const [answers, setAnswers] = useState([]);
 
-  const { surveys, loading, error, fetchPublicSurveys } = useSurvey();
-  const { getAllMyResponses } = useResponse();
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        setLoading(true); setError(null);
+        const res = await getMySubmission?.(surveyId);
+        const raw = res?.data ?? res ?? [];
+        const all = Array.isArray(raw)
+          ? raw.flatMap(r => r.answers ?? [])
+          : raw.answers ?? [];
+        setAnswers(all.length > 0 ? all : MOCK_ANSWERS); // mock fallback
+      } catch {
+        setError("Không thể tải câu trả lời.");
+        setAnswers(MOCK_ANSWERS); // mock fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, [surveyId]);
 
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <View style={ss.modalOverlay}>
+        <View style={ss.modalBox}>
+          {/* Header */}
+          <View style={ss.modalHeader}>
+            <TouchableOpacity onPress={onClose} style={ss.modalBackBtn}>
+              <Icon name="ArrowLeft" size={16} color={C.textSub} />
+              <Text style={ss.modalBackText}>Đóng</Text>
+            </TouchableOpacity>
+            <Text style={ss.modalBrand}>InsightFlow</Text>
+            <View style={{ width: 70 }} />
+          </View>
+
+          {/* Body */}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={ss.modalBody}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Hero */}
+            <View style={ss.modalHero}>
+              <View style={ss.completedBadge}>
+                <Icon name="CheckCircle2" size={13} color={C.success} />
+                <Text style={ss.completedBadgeText}>ĐÃ HOÀN THÀNH</Text>
+              </View>
+              <Text style={ss.modalTitle}>{surveyTitle}</Text>
+              {!loading && (
+                <Text style={ss.modalSubtitle}>{answers.length} câu hỏi</Text>
+              )}
+            </View>
+
+            {/* Loading */}
+            {loading && (
+              <View style={ss.centered}>
+                <ActivityIndicator size="large" color={C.primary} />
+                <Text style={[ss.loadingText, { marginTop: 10 }]}>Đang tải...</Text>
+              </View>
+            )}
+
+            {/* Error */}
+            {!loading && error && (
+              <View style={ss.centered}>
+                <Text style={{ fontSize: 36 }}>⚠️</Text>
+                <Text style={ss.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {/* Empty */}
+            {!loading && !error && answers.length === 0 && (
+              <View style={ss.centered}>
+                <Icon name="Inbox" size={42} color={C.textDim} />
+                <Text style={ss.emptyStateText}>Không có câu trả lời.</Text>
+              </View>
+            )}
+
+            {/* Answers */}
+            {!loading && answers.length > 0 && (
+              <View style={{ gap: 12 }}>
+                {answers.map((item, idx) => (
+                  <QuestionCard key={item.question_id ?? idx} item={item} index={idx} />
+                ))}
+              </View>
+            )}
+
+            <View style={{ height: 32 }} />
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+/* ─── Survey Card ──────────────────────────────────────────── */
+function SurveyCard({ survey, done, onStart, onViewSubmission, viewMode }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const createdDate = survey?.created_at
+    ? new Date(survey.created_at).toLocaleDateString("vi-VN")
+    : "";
+
+  const isListMode = viewMode === "list";
+
+  const handlePressIn  = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+  const handlePressOut = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={() => done ? onViewSubmission(survey.id, survey.title) : undefined}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={done ? 0.85 : 1}
+        style={[
+          ss.card,
+          done && { backgroundColor: "#f9fffe", borderColor: C.doneBorder },
+          isListMode && { flexDirection: "row", alignItems: "center", gap: 14 },
+        ]}
+      >
+        {/* Icon */}
+        <View style={[
+          ss.cardIcon,
+          done
+            ? { backgroundColor: C.successBg }
+            : { backgroundColor: C.primaryLight },
+          isListMode && { marginBottom: 0, flexShrink: 0 },
+        ]}>
+          <Icon
+            name={done ? "CheckCircle2" : "FileText"}
+            size={22}
+            color={done ? C.success : C.primary}
+          />
+        </View>
+
+        {/* Content */}
+        <View style={[{ flex: 1 }, !isListMode && { marginTop: 16 }]}>
+          <View style={ss.cardTopRow}>
+            <View style={[
+              ss.statusBadge,
+              done
+                ? { backgroundColor: C.successBg, borderColor: C.successBorder }
+                : { backgroundColor: "#f4f5f7", borderColor: C.border },
+            ]}>
+              <Text style={[ss.statusBadgeText, done && { color: C.success }]}>
+                {done ? "Đã hoàn thành" : "Survey"}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={ss.cardTitle} numberOfLines={2}>{survey.title}</Text>
+
+          {!isListMode && (
+            <Text style={ss.cardDesc} numberOfLines={2}>
+              {survey.description || "Không có mô tả"}
+            </Text>
+          )}
+
+          <View style={ss.cardFooter}>
+            <View style={ss.cardDateRow}>
+              <Icon name="Clock" size={12} color={C.textDim} />
+              <Text style={ss.cardDate}>{createdDate}</Text>
+            </View>
+
+            {done ? (
+              <View style={[ss.actionChip, { backgroundColor: C.successBg, borderColor: C.successBorder }]}>
+                <Text style={[ss.actionChipText, { color: C.success }]}>Xem kết quả →</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={() => onStart(survey.id)}
+                style={ss.startBtn}
+                activeOpacity={0.85}
+              >
+                <Text style={ss.startBtnText}>Bắt đầu →</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+/* ─── Filter Panel ─────────────────────────────────────────── */
+function FilterPanel({ sortBy, onSortChange, onReset }) {
+  const SORTS = [
+    { key: "newest", label: "Mới nhất" },
+    { key: "oldest", label: "Cũ nhất" },
+    { key: "name",   label: "Tên A-Z" },
+  ];
+  return (
+    <View style={ss.filterPanel}>
+      <Text style={ss.filterLabel}>SẮP XẾP THEO</Text>
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+        {SORTS.map(s => (
+          <TouchableOpacity
+            key={s.key}
+            onPress={() => onSortChange(s.key)}
+            style={[
+              ss.sortBtn,
+              sortBy === s.key && { borderColor: C.primary, backgroundColor: C.primaryLight },
+            ]}
+          >
+            <Text style={[ss.sortBtnText, sortBy === s.key && { color: C.primary }]}>
+              {s.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity onPress={onReset} style={ss.resetBtn}>
+        <Text style={ss.resetBtnText}>Reset bộ lọc</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ─── Main Page ────────────────────────────────────────────── */
+export default function SurveysPage() {
+  // Thay bằng provider thật:
+  // const navigation = useNavigation();
+  // const { surveys, loading, error, fetchPublicSurveys } = useSurvey();
+  // const { getAllMyResponses, getMySubmission } = useResponse();
+
+  const [surveys,      setSurveys]      = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [refreshing,   setRefreshing]   = useState(false);
+  const [error,        setError]        = useState(null);
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
-  const [modalSurvey, setModalSurvey]     = useState(null);
-  const [activeTab, setActiveTab]         = useState('all');
-  const [search, setSearch]               = useState('');
-  const [sortBy, setSortBy]               = useState('newest');
-  const [showFilter, setShowFilter]       = useState(false);
+  const [modalSurvey,  setModalSurvey]  = useState(null);
+  const [activeTab,    setActiveTab]    = useState("all");
+  const [search,       setSearch]       = useState("");
+  const [sortBy,       setSortBy]       = useState("newest");
+  const [viewMode,     setViewMode]     = useState("grid");
+  const [showFilter,   setShowFilter]   = useState(false);
 
-  // ── Fetch data
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isRefresh = false) => {
     try {
-      await fetchPublicSurveys();
-      const responseRes = await getAllMyResponses().catch(() => null);
-      const ids = new Set(
-        (responseRes?.data ?? []).map(r => r.survey_id ?? r.surveyId)
-      );
-      setDoneSurveyIds(ids);
-    } catch (err) {
-      console.error(err);
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+      // Thật: await fetchPublicSurveys();
+      // Thật: const res = await getAllMyResponses().catch(() => null);
+      await new Promise(r => setTimeout(r, 800)); // mock delay
+      setSurveys(MOCK_SURVEYS);
+      setDoneSurveyIds(MOCK_DONE_IDS);
+    } catch (e) {
+      setError(e.message || "Không thể tải dữ liệu");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [fetchPublicSurveys, getAllMyResponses]);
+  }, []);
 
   useEffect(() => { fetchData(); }, []);
 
-  // ── Counts
   const totalCount   = surveys.length;
-  const doneCount    = surveys.filter(s =>  doneSurveyIds.has(s.id)).length;
+  const doneCount    = surveys.filter(s => doneSurveyIds.has(s.id)).length;
   const pendingCount = surveys.filter(s => !doneSurveyIds.has(s.id)).length;
 
-  // ── Filter + sort
+  const tabCounts = { all: totalCount, pending: pendingCount, done: doneCount };
+
   const displayed = useMemo(() => {
     let list = [...surveys];
-    if (activeTab === 'pending') list = list.filter(s => !doneSurveyIds.has(s.id));
-    if (activeTab === 'done')    list = list.filter(s =>  doneSurveyIds.has(s.id));
+    if (activeTab === "pending") list = list.filter(s => !doneSurveyIds.has(s.id));
+    if (activeTab === "done")    list = list.filter(s =>  doneSurveyIds.has(s.id));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(s =>
@@ -375,755 +539,476 @@ export default function SurveysPage({ navigation }) {
         s.description?.toLowerCase().includes(q)
       );
     }
-    if (sortBy === 'newest') list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    if (sortBy === 'oldest') list.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-    if (sortBy === 'name')   list.sort((a,b) => (a.title ?? '').localeCompare(b.title ?? ''));
+    if (sortBy === "newest") list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (sortBy === "oldest") list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    if (sortBy === "name")   list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
     return list;
   }, [surveys, doneSurveyIds, activeTab, search, sortBy]);
 
-  const getTabCount = (key) =>
-    key === 'all' ? totalCount : key === 'pending' ? pendingCount : doneCount;
+  const handleStart = (surveyId) => {
+    // navigation.navigate("SurveyDetail", { surveyId });
+    console.log("Navigate to survey:", surveyId);
+  };
 
-  const handleStart = (id) => navigation?.navigate('SurveyTake', { surveyId: id });
+  const numColumns = viewMode === "grid" ? 2 : 1;
+  const cardWidth  = viewMode === "grid"
+    ? (SW - 32 - 12) / 2   // 16 padding each side + 12 gap
+    : SW - 32;
 
-  const renderCard = ({ item }) => (
-    <SurveyCard
-      survey={item}
-      done={doneSurveyIds.has(item.id)}
-      onStart={handleStart}
-      onViewSubmission={(id, title) => setModalSurvey({ id, title })}
-    />
+  const renderItem = ({ item, index }) => (
+    <View style={viewMode === "grid" ? { width: cardWidth, marginLeft: index % 2 === 1 ? 12 : 0 } : {}}>
+      <SurveyCard
+        survey={item}
+        done={doneSurveyIds.has(item.id)}
+        onStart={handleStart}
+        onViewSubmission={(id, title) => setModalSurvey({ id, title })}
+        viewMode={viewMode}
+      />
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={ss.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
-      {/* Modal */}
+      {/* ── Header ── */}
+      <View style={ss.header}>
+        <View style={{ flex: 1 }}>
+          <Text style={ss.pageTitle}>Khảo sát</Text>
+          <Text style={ss.pageSubtitle}>
+            {loading
+              ? "Đang tải..."
+              : `${totalCount} khảo sát · ${doneCount} hoàn thành · ${pendingCount} chưa làm`}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => fetchData(true)} style={ss.refreshBtn}>
+          <Icon name="RefreshCw" size={15} color={C.textSub} />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Tabs ── */}
+      <View style={ss.tabsContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ss.tabsScroll}>
+          {TABS.map(tab => {
+            const isActive = activeTab === tab.key;
+            const count = tabCounts[tab.key];
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                style={[ss.tabBtn, isActive && ss.tabBtnActive]}
+              >
+                <Text style={[ss.tabLabel, isActive && ss.tabLabelActive]}>{tab.label}</Text>
+                {!loading && (
+                  <View style={[ss.tabCount, isActive && ss.tabCountActive]}>
+                    <Text style={[ss.tabCountText, isActive && ss.tabCountTextActive]}>{count}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* ── Toolbar ── */}
+      <View style={ss.toolbar}>
+        {/* Search */}
+        <View style={ss.searchBar}>
+          <Icon name="Search" size={15} color={C.textDim} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Tìm kiếm khảo sát..."
+            placeholderTextColor={C.textDim}
+            style={ss.searchInput}
+          />
+          {!!search && (
+            <TouchableOpacity onPress={() => setSearch("")}>
+              <Icon name="X" size={14} color={C.textDim} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Filter + View mode */}
+        <View style={ss.toolbarRight}>
+          <TouchableOpacity
+            onPress={() => setShowFilter(v => !v)}
+            style={[ss.iconToolBtn, showFilter && { backgroundColor: C.primaryLight, borderColor: C.primary }]}
+          >
+            <Icon name="SlidersHorizontal" size={15} color={showFilter ? C.primary : C.textSub} />
+          </TouchableOpacity>
+
+          <View style={ss.viewToggle}>
+            <TouchableOpacity
+              onPress={() => setViewMode("grid")}
+              style={[ss.viewBtn, viewMode === "grid" && ss.viewBtnActive]}
+            >
+              <Icon name="LayoutGrid" size={15} color={viewMode === "grid" ? C.primary : C.textDim} />
+            </TouchableOpacity>
+            <View style={ss.viewDivider} />
+            <TouchableOpacity
+              onPress={() => setViewMode("list")}
+              style={[ss.viewBtn, viewMode === "list" && ss.viewBtnActive]}
+            >
+              <Icon name="List" size={15} color={viewMode === "list" ? C.primary : C.textDim} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Filter Panel ── */}
+      {showFilter && (
+        <FilterPanel
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onReset={() => { setSearch(""); setSortBy("newest"); setActiveTab("all"); setShowFilter(false); }}
+        />
+      )}
+
+      {/* ── Content ── */}
+      {loading ? (
+        <ScrollView contentContainerStyle={ss.listContent}>
+          {viewMode === "grid" ? (
+            <View style={ss.gridRow}>
+              {[0, 1, 2, 3, 4, 5].map(i => (
+                <View key={i} style={{ width: cardWidth, marginLeft: i % 2 === 1 ? 12 : 0 }}>
+                  <CardSkeleton index={i} />
+                </View>
+              ))}
+            </View>
+          ) : (
+            [0, 1, 2, 3].map(i => <CardSkeleton key={i} index={i} />)
+          )}
+        </ScrollView>
+      ) : error ? (
+        <View style={ss.centeredFull}>
+          <Text style={{ fontSize: 48 }}>⚠️</Text>
+          <Text style={ss.errorStateText}>{error}</Text>
+          <TouchableOpacity onPress={() => fetchData()} style={ss.retryBtn}>
+            <Text style={ss.retryBtnText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      ) : displayed.length === 0 ? (
+        <View style={ss.centeredFull}>
+          <Icon name="Inbox" size={52} color={C.textDim} />
+          <Text style={ss.emptyStateTitle}>Không có khảo sát nào</Text>
+          <Text style={ss.emptyStateSub}>
+            {search ? `Không tìm thấy kết quả cho "${search}"` : "Chưa có dữ liệu"}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          key={viewMode}   // re-mount khi đổi view mode để reset numColumns
+          data={displayed}
+          keyExtractor={item => item.id}
+          numColumns={viewMode === "grid" ? 2 : 1}
+          renderItem={renderItem}
+          contentContainerStyle={ss.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchData(true)}
+              colors={[C.primary]}
+              tintColor={C.primary}
+            />
+          }
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          columnWrapperStyle={viewMode === "grid" ? null : undefined}
+        />
+      )}
+
+      {/* ── Submission Modal ── */}
       {modalSurvey && (
         <SubmissionModal
           surveyId={modalSurvey.id}
           surveyTitle={modalSurvey.title}
           onClose={() => setModalSurvey(null)}
+          getMySubmission={async () => null}   // thay bằng provider thật
         />
       )}
-
-      <FlatList
-        data={loading ? [] : displayed}
-        keyExtractor={item => String(item.id)}
-        renderItem={renderCard}
-        numColumns={1}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={
-          <View>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.pageTitle}>Khảo sát</Text>
-                <Text style={styles.pageSubtitle}>
-                  {loading
-                    ? 'Đang tải...'
-                    : `${totalCount} khảo sát · ${doneCount} hoàn thành · ${pendingCount} chưa làm`}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={fetchData} style={styles.refreshBtn}>
-                <Text style={styles.refreshBtnText}>⟳ Làm mới</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Tabs */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.tabsScroll}
-              contentContainerStyle={styles.tabsContainer}
-            >
-              {TABS.map(tab => {
-                const isActive = activeTab === tab.key;
-                const count = getTabCount(tab.key);
-                return (
-                  <TouchableOpacity
-                    key={tab.key}
-                    onPress={() => setActiveTab(tab.key)}
-                    style={[styles.tab, isActive && styles.tabActive]}
-                  >
-                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                      {tab.label}
-                    </Text>
-                    {!loading && (
-                      <View style={[styles.tabCount, isActive && styles.tabCountActive]}>
-                        <Text style={[styles.tabCountText, isActive && styles.tabCountTextActive]}>
-                          {count}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* Search */}
-            <View style={styles.searchRow}>
-              <View style={styles.searchBox}>
-                <Text style={styles.searchIcon}>🔍</Text>
-                <TextInput
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Tìm kiếm khảo sát..."
-                  placeholderTextColor={C.textDim}
-                  style={styles.searchInput}
-                />
-                {search ? (
-                  <TouchableOpacity onPress={() => setSearch('')}>
-                    <Text style={styles.clearText}>✕</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowFilter(v => !v)}
-                style={[styles.filterBtn, showFilter && styles.filterBtnActive]}
-              >
-                <Text style={[styles.filterBtnText, showFilter && styles.filterBtnTextActive]}>
-                  ⚙
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Filter Panel */}
-            {showFilter && (
-              <View style={styles.filterPanel}>
-                <Text style={styles.filterLabel}>Sắp xếp theo</Text>
-                <View style={styles.sortRow}>
-                  {[
-                    { key: 'newest', label: 'Mới nhất' },
-                    { key: 'oldest', label: 'Cũ nhất' },
-                    { key: 'name',   label: 'Tên A-Z' },
-                  ].map(item => (
-                    <TouchableOpacity
-                      key={item.key}
-                      onPress={() => setSortBy(item.key)}
-                      style={[styles.sortBtn, sortBy === item.key && styles.sortBtnActive]}
-                    >
-                      <Text style={[styles.sortBtnText, sortBy === item.key && styles.sortBtnTextActive]}>
-                        {item.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  onPress={() => { setSearch(''); setSortBy('newest'); setActiveTab('all'); setShowFilter(false); }}
-                  style={styles.resetBtn}
-                >
-                  <Text style={styles.resetBtnText}>Reset</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          loading ? (
-            <View>
-              {Array(4).fill(0).map((_, i) => <CardSkeleton key={i} />)}
-            </View>
-          ) : error ? (
-            <View style={styles.centered}>
-              <Text style={styles.errorEmoji}>⚠️</Text>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={fetchData}>
-                <Text style={styles.retryText}>Thử lại</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.centered}>
-              <Text style={styles.emptyEmoji}>📭</Text>
-              <Text style={styles.emptyTitle}>Không có khảo sát nào</Text>
-              <Text style={styles.emptySubtitle}>
-                {search ? `Không tìm thấy kết quả cho "${search}"` : 'Chưa có dữ liệu'}
-              </Text>
-            </View>
-          )
-        }
-      />
     </SafeAreaView>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-  listContainer: {
-    padding: 16,
-    paddingBottom: 40,
-  },
+/* ─── Styles ───────────────────────────────────────────────── */
+const ss = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: C.bg },
 
-  // ── Header
+  // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: C.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
     gap: 12,
   },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: C.text,
-    marginBottom: 4,
-  },
-  pageSubtitle: {
-    fontSize: 13,
-    color: C.textSub,
-  },
+  pageTitle: { fontSize: 24, fontWeight: "800", color: C.text },
+  pageSubtitle: { fontSize: 12, color: C.textDim, marginTop: 2 },
   refreshBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
+    width: 38, height: 38, borderRadius: 12,
+    borderWidth: 1, borderColor: C.border,
     backgroundColor: C.surface,
-    alignSelf: 'flex-start',
-  },
-  refreshBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textSub,
+    alignItems: "center", justifyContent: "center",
   },
 
-  // ── Tabs
-  tabsScroll: {
-    marginBottom: 12,
-  },
+  // Tabs
   tabsContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    backgroundColor: C.surface,
-    borderRadius: 16,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    gap: 6,
-  },
-  tabActive: {
-    backgroundColor: C.primary,
-  },
-  tabLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textSub,
-  },
-  tabLabelActive: {
-    color: '#fff',
-  },
-  tabCount: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 999,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  tabCountActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
-  tabCountText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: C.textSub,
-  },
-  tabCountTextActive: {
-    color: '#fff',
-  },
-
-  // ── Search
-  searchRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 12,
-  },
-  searchBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  searchIcon: {
-    fontSize: 14,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    color: C.text,
-    padding: 0,
-  },
-  clearText: {
-    fontSize: 13,
-    color: C.textDim,
-  },
-  filterBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterBtnActive: {
-    borderColor: C.primary,
-    backgroundColor: C.primaryLight,
-  },
-  filterBtnText: {
-    fontSize: 18,
-    color: C.textSub,
-  },
-  filterBtnTextActive: {
-    color: C.primary,
-  },
-
-  // ── Filter Panel
-  filterPanel: {
-    backgroundColor: C.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  filterLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: C.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 10,
-  },
-  sortRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sortBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surface,
-  },
-  sortBtnActive: {
-    borderColor: C.primary,
-    backgroundColor: C.primaryLight,
-  },
-  sortBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: C.textSub,
-  },
-  sortBtnTextActive: {
-    color: C.primary,
-  },
-  resetBtn: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  resetBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: C.textSub,
-  },
-
-  // ── Survey Card
-  surveyCard: {
-    backgroundColor: C.surface,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  surveyCardDone: {
-    borderColor: '#bbf7d0',
-  },
-  surveyCardPending: {
-    borderColor: C.border,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardIconDone: {
-    backgroundColor: '#dcfce7',
-  },
-  cardIconPending: {
-    backgroundColor: '#eef2ff',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  statusBadgeDone: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#bbf7d0',
-  },
-  statusBadgePending: {
-    backgroundColor: '#f4f5f7',
-    borderColor: C.border,
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statusBadgeTextDone: {
-    color: '#16a34a',
-  },
-  statusBadgeTextPending: {
-    color: C.textDim,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: C.text,
-    marginBottom: 6,
-    lineHeight: 22,
-  },
-  cardDesc: {
-    fontSize: 13,
-    color: C.textSub,
-    lineHeight: 20,
-    marginBottom: 14,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardDate: {
-    fontSize: 12,
-    color: C.textDim,
-  },
-  viewResultBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#dcfce7',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  viewResultBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#16a34a',
-  },
-  startBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: C.primary,
-  },
-  startBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-  },
-
-  // ── Skeleton
-  skeleton: {
-    backgroundColor: C.surface,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  skeletonTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  skeletonIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-  },
-  skeletonBadge: {
-    width: 80,
-    height: 22,
-    borderRadius: 999,
-    backgroundColor: '#f3f4f6',
-  },
-  skeletonLine: {
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#f3f4f6',
-    marginBottom: 8,
-  },
-  skeletonFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  skeletonBtn: {
-    width: 90,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#f3f4f6',
-  },
-
-  // ── States
-  centered: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: C.primary,
-    fontWeight: '600',
-    marginTop: 8,
-  },
-  errorEmoji: {
-    fontSize: 48,
-  },
-  errorText: {
-    fontSize: 14,
-    color: C.textSub,
-  },
-  retryText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.primary,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.text,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: C.textSub,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: C.textSub,
-  },
-
-  // ── Modal
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#f4f5f7',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
     backgroundColor: C.surface,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  closeBtn: {},
-  closeBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: C.textSub,
+  tabsScroll: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
+    flexDirection: "row",
   },
-  modalBrand: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: C.textSub,
+  tabBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 12,
   },
-  modalBadgeRow: {
-    alignItems: 'center',
-    paddingTop: 24,
-    paddingBottom: 8,
+  tabBtnActive: {
+    backgroundColor: C.primary,
   },
-  completedBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: C.successBg,
-    borderWidth: 1,
-    borderColor: C.successBorder,
+  tabLabel: { fontSize: 13, fontWeight: "600", color: C.textSub },
+  tabLabelActive: { color: "#fff" },
+  tabCount: {
+    paddingHorizontal: 7, paddingVertical: 2,
+    borderRadius: 999, backgroundColor: "#f1f1f1",
   },
-  completedBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#15803d',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: C.text,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: C.textSub,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  answerList: {
-    padding: 16,
-    gap: 12,
-    paddingBottom: 40,
-  },
-  answerCard: {
+  tabCountActive: { backgroundColor: "rgba(255,255,255,0.25)" },
+  tabCountText: { fontSize: 11, fontWeight: "700", color: C.textSub },
+  tabCountTextActive: { color: "#fff" },
+
+  // Toolbar
+  toolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     backgroundColor: C.surface,
-    borderRadius: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  searchBar: {
+    flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 12, paddingVertical: 9,
+    backgroundColor: C.bg, borderRadius: 12,
+    borderWidth: 1, borderColor: C.border,
+  },
+  searchInput: { flex: 1, fontSize: 13, color: C.text, paddingVertical: 0 },
+  toolbarRight: { flexDirection: "row", gap: 8, alignItems: "center" },
+  iconToolBtn: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
+  },
+  viewToggle: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: C.surface,
+    borderRadius: 12, overflow: "hidden",
+    borderWidth: 1, borderColor: C.border,
+  },
+  viewBtn: { paddingHorizontal: 10, paddingVertical: 9 },
+  viewBtnActive: { backgroundColor: C.primaryLight },
+  viewDivider: { width: 1, height: 20, backgroundColor: C.border },
+
+  // Filter panel
+  filterPanel: {
+    backgroundColor: C.surface,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  filterLabel: {
+    fontSize: 10, fontWeight: "700", color: C.textSub,
+    letterSpacing: 0.8, marginBottom: 8,
+  },
+  sortBtn: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 8, borderWidth: 1, borderColor: C.border,
+    backgroundColor: C.surface,
+  },
+  sortBtnText: { fontSize: 12, fontWeight: "600", color: C.textSub },
+  resetBtn: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 14, paddingVertical: 7,
+    borderRadius: 10, borderWidth: 1, borderColor: C.border,
+    backgroundColor: C.surface,
+  },
+  resetBtnText: { fontSize: 12, fontWeight: "600", color: C.textSub },
+
+  // List content
+  listContent: { padding: 16, paddingBottom: 40 },
+  gridRow: { flexDirection: "row", flexWrap: "wrap" },
+
+  // Card
+  card: {
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: C.border,
-    borderTopWidth: 3,
-    marginBottom: 12,
-    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  answerCardHeader: {
-    padding: 16,
-    paddingBottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  cardIcon: {
+    width: 44, height: 44, borderRadius: 12,
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 0,
   },
-  typeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+  cardTopRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: 999, borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 10, fontWeight: "700", color: C.textDim, textTransform: "uppercase", letterSpacing: 0.5,
+  },
+  cardTitle: {
+    fontSize: 14, fontWeight: "700", color: C.text,
+    marginBottom: 6, lineHeight: 20,
+  },
+  cardDesc: {
+    fontSize: 12, color: C.textDim,
+    lineHeight: 18, marginBottom: 14,
+  },
+  cardFooter: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginTop: 8,
+  },
+  cardDateRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  cardDate: { fontSize: 11, color: C.textDim },
+  actionChip: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 10, borderWidth: 1,
+  },
+  actionChipText: { fontSize: 11, fontWeight: "700" },
+  startBtn: {
+    paddingHorizontal: 14, paddingVertical: 7,
+    borderRadius: 12,
+    backgroundColor: C.primary,
+  },
+  startBtnText: { fontSize: 12, fontWeight: "700", color: "#fff" },
+
+  // States
+  centeredFull: {
+    flex: 1, alignItems: "center", justifyContent: "center", padding: 40,
+  },
+  centered: { alignItems: "center", justifyContent: "center", paddingVertical: 40 },
+  loadingText: { fontSize: 13, fontWeight: "600", color: C.textSub },
+  emptyStateTitle: { fontSize: 15, fontWeight: "700", color: C.textSub, marginTop: 14, textAlign: "center" },
+  emptyStateSub: { fontSize: 13, color: C.textDim, marginTop: 5, textAlign: "center" },
+  errorStateText: { fontSize: 14, color: C.textSub, marginTop: 10, textAlign: "center" },
+  retryBtn: {
+    marginTop: 14, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 12, backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.primary,
+  },
+  retryBtnText: { fontSize: 13, fontWeight: "700", color: C.primary },
+
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  modalBox: {
+    backgroundColor: "#f4f5f7",
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderWidth: 1, borderColor: C.border,
+    height: "90%",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    padding: 14,
+    backgroundColor: C.surface,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+  },
+  modalBackBtn: { flexDirection: "row", alignItems: "center", gap: 6, padding: 4 },
+  modalBackText: { fontSize: 13, fontWeight: "600", color: C.textSub },
+  modalBrand: { fontSize: 13, fontWeight: "800", color: C.text },
+  modalBody: { padding: 20 },
+  modalHero: { alignItems: "center", marginBottom: 22 },
+  completedBadge: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 999,
-    borderWidth: 1,
+    backgroundColor: C.successBg, borderWidth: 1, borderColor: C.successBorder,
+    marginBottom: 12,
   },
-  typeBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
+  completedBadgeText: {
+    fontSize: 10, fontWeight: "800",
+    letterSpacing: 1, color: "#15803d",
   },
-  questionText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: C.text,
-    lineHeight: 20,
+  modalTitle: { fontSize: 18, fontWeight: "800", color: C.text, textAlign: "center" },
+  modalSubtitle: { fontSize: 13, color: C.textDim, marginTop: 4 },
+
+  // Question card
+  questionCard: {
+    backgroundColor: C.surface,
+    borderRadius: 16,
+    borderWidth: 1, borderColor: "#e5e7eb",
+    borderTopWidth: 3,
     padding: 16,
-    paddingTop: 10,
+    overflow: "hidden",
   },
-  optionsList: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 8,
+  questionMeta: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginBottom: 8,
   },
+  questionIndex: { fontSize: 11, color: C.textDim },
+  typeBadge: {
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: 999, borderWidth: 1,
+  },
+  typeBadgeText: { fontSize: 10, fontWeight: "700" },
+  questionText: { fontSize: 13, fontWeight: "700", color: C.text, marginBottom: 12, lineHeight: 19 },
+
+  // Answer
+  textAnswer: {
+    backgroundColor: "#f8faff",
+    borderWidth: 1, borderColor: "#e5e7eb",
+    borderRadius: 10, padding: 12,
+  },
+  textAnswerText: { fontSize: 13, color: "#374151", lineHeight: 20 },
+  emptyText: { fontSize: 13, color: C.textDim, fontStyle: "italic" },
   optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fafafa',
-    gap: 12,
-    marginBottom: 6,
-  },
-  optionRowSelected: {
-    borderColor: '#bfdbfe',
-    backgroundColor: 'rgba(239,246,255,0.7)',
+    flexDirection: "row", alignItems: "center", gap: 10,
+    padding: 10, borderRadius: 10,
+    borderWidth: 1, borderColor: "#e5e7eb",
+    backgroundColor: "#fafafa",
   },
   checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxSelected: {
-    borderColor: '#2563eb',
-    backgroundColor: '#2563eb',
-  },
-  checkmark: {
-    fontSize: 11,
-    color: '#fff',
-    fontWeight: '700',
+    width: 18, height: 18, borderRadius: 4,
+    borderWidth: 2, borderColor: "#d1d5db",
+    alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
   },
   radio: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioSelected: {
-    borderColor: '#2563eb',
+    width: 18, height: 18, borderRadius: 9,
+    borderWidth: 2, borderColor: "#d1d5db",
+    alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
   },
   radioDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#2563eb',
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: "#2563eb",
   },
-  optionLabel: {
-    fontSize: 13,
-    color: '#6b7280',
-    flex: 1,
-  },
-  optionLabelSelected: {
-    fontWeight: '600',
-    color: '#1e40af',
-  },
-  textAnswerBox: {
-    margin: 16,
-    marginTop: 0,
-    padding: 12,
-    backgroundColor: '#f8faff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-  },
-  textAnswerText: {
-    fontSize: 13,
-    color: '#374151',
-    lineHeight: 20,
-  },
+  optionLabel: { fontSize: 13, color: "#6b7280", flex: 1 },
+  errorText: { fontSize: 13, color: C.textSub, marginTop: 8, textAlign: "center" },
+  emptyStateText: { fontSize: 13, color: C.textDim, marginTop: 10 },
 });

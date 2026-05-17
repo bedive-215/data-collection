@@ -1,658 +1,581 @@
-// ─── SurveysLayout.native.jsx ────────────────────────────────────
-// React Native version of SurveysLayout.jsx
-// Dependencies: @react-navigation/native
+/**
+ * SurveysLayout.native.jsx
+ * React Native — full conversion of SurveysLayout.jsx
+ * No mock data. All logic preserved from the web version.
+ *
+ * Dependencies:
+ *   npm install @react-navigation/native
+ *   @react-native-async-storage/async-storage
+ *
+ * Providers (same interface as web):
+ *   useSurvey, useResponse
+ *
+ * Sub-component (you must also port or stub):
+ *   CreateSurveyComposer  →  @/components/survey/CreateSurveyComposer
+ */
 
 import React, {
   useEffect, useState, useRef, useMemo, useCallback,
-} from 'react';
+} from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, Modal, ActivityIndicator, FlatList,
-  StatusBar, Platform, Dimensions,
-  KeyboardAvoidingView, Pressable, Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSurvey }   from '../providers/Surveyprovider';
-import { useResponse } from '../providers/Responseprovider';
+  View, Text, TextInput, TouchableOpacity, ScrollView,
+  FlatList, Modal, StyleSheet, ActivityIndicator, Image,
+  KeyboardAvoidingView, Platform, Animated, Dimensions,
+  Alert, RefreshControl,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
-// ─────────────────────────────────────────────────────────────
-// DESIGN TOKENS
-// ─────────────────────────────────────────────────────────────
+import { useSurvey }   from "../providers/SurveyProvider";
+import { useResponse } from "../providers/ResponseProvider";
+import CreateSurveyComposer from "../components/survey/CreateSurveyComposer";
+
+const { width: SW } = Dimensions.get("window");
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════════════════════════ */
 const C = {
-  bg:            '#f7f8fc',
-  surface:       '#ffffff',
-  surfaceHigh:   '#f4f5f9',
-  border:        'rgba(0,0,0,0.07)',
-  borderMed:     'rgba(0,0,0,0.12)',
-  primary:       '#4361ee',
-  primaryLight:  '#eef0fd',
-  primaryBorder: '#c5cdfb',
-  text:          '#0f1117',
-  textSub:       '#6b7280',
-  textDim:       '#9ca3af',
-  error:         '#ef4444',
-  errorBg:       '#fef2f2',
-  errorBorder:   '#fecaca',
-  success:       '#10b981',
-  successBg:     '#ecfdf5',
-  successBorder: '#a7f3d0',
-  warning:       '#f59e0b',
-  warningBg:     '#fffbeb',
-  warningBorder: '#fde68a',
-};
+  bg:           "#eef2ff",
+  surface:      "rgba(255,255,255,0.90)",
+  glassBorder:  "rgba(255,255,255,0.55)",
+  border:       "rgba(99,102,241,0.1)",
+  primary:      "#4f46e5",
+  primaryLight: "rgba(79,70,229,0.14)",
+  primaryBorder:"rgba(79,70,229,0.35)",
+  text:         "#0f172a",
+  textSub:      "#64748b",
+  textDim:      "#94a3b8",
+  error:        "#ef4444",
+  errorBg:      "rgba(239,68,68,0.10)",
+  errorBorder:  "rgba(239,68,68,0.25)",
+  success:      "#10b981",
+  successBg:    "rgba(16,185,129,0.10)",
+  successBorder:"rgba(16,185,129,0.25)",
+  warning:      "#f59e0b",
+  warningBg:    "rgba(245,158,11,0.10)",
+  white:        "#ffffff",
+  gray100:      "#f3f4f6",
+  gray200:      "#e5e7eb",
+  gray400:      "#9ca3af",
+  gray500:      "#6b7280",
+  gray700:      "#374151",
+  gray900:      "#111827",
 
-const THUMB_COLORS = [
-  ['#e0e7ff', '#c7d2fe'],
-  ['#d1fae5', '#a7f3d0'],
-  ['#fce7f3', '#fbcfe8'],
-  ['#e0f2fe', '#bae6fd'],
-  ['#fef3c7', '#fde68a'],
-  ['#f3e8ff', '#e9d5ff'],
-];
-
-const STATUS_MAP = {
-  ACTIVE:    { label: 'Đang mở',  color: '#059669', bg: '#d1fae5' },
-  DRAFT:     { label: 'Nháp',     color: C.textSub, bg: '#f3f4f6' },
-  EXPIRED:   { label: 'Hết hạn',  color: '#dc2626', bg: '#fee2e2' },
-  SCHEDULED: { label: 'Lên lịch', color: '#d97706', bg: '#fef3c7' },
-  CLOSED:    { label: 'Đã đóng',  color: '#6b7280', bg: '#f3f4f6' },
+  // Thumb gradient backgrounds (simulated as solid tints in RN)
+  thumbColors: [
+    "#ffd6d6", "#d6eaff", "#e3d6ff",
+    "#fff3d6", "#d6fff0", "#d6f0ff",
+  ],
 };
-
-const TYPE_META = {
-  SINGLE_CHOICE:   { label: 'Một lựa chọn',   color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe', accent: '#2563eb' },
-  MULTIPLE_CHOICE: { label: 'Nhiều lựa chọn', color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe', accent: '#7c3aed' },
-  TEXT:            { label: 'Văn bản',         color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc', accent: '#0891b2' },
-};
-function typeMeta(type) {
-  return TYPE_META[type] ?? { label: type, color: '#6b7280', bg: '#f3f4f6', border: '#e5e7eb', accent: '#9ca3af' };
-}
 
 const MY_SURVEYS_PREVIEW = 4;
 
-// ─────────────────────────────────────────────────────────────
-// StatusBadge
-// ─────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
+   STATUS BADGE
+════════════════════════════════════════════════════════════════ */
+const STATUS_MAP = {
+  ACTIVE:    { label: "Đang mở",  color: "#059669", bg: "rgba(16,185,129,0.15)" },
+  DRAFT:     { label: "Nháp",     color: C.textSub, bg: "rgba(107,114,128,0.12)" },
+  EXPIRED:   { label: "Hết hạn",  color: "#dc2626", bg: "rgba(239,68,68,0.12)" },
+  SCHEDULED: { label: "Lên lịch", color: "#d97706", bg: "rgba(245,158,11,0.12)" },
+  CLOSED:    { label: "Đã đóng",  color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+};
+
 function StatusBadge({ status }) {
   if (!status) return null;
   const s = STATUS_MAP[status] || STATUS_MAP.DRAFT;
   return (
-    <View style={[sb.badge, { backgroundColor: s.bg }]}>
-      <Text style={[sb.text, { color: s.color }]}>{s.label}</Text>
+    <View style={[styles.badge, { backgroundColor: s.bg }]}>
+      <Text style={[styles.badgeText, { color: s.color }]}>{s.label}</Text>
     </View>
   );
 }
-const sb = StyleSheet.create({
-  badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
-  text:  { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
-});
 
-// ─────────────────────────────────────────────────────────────
-// BottomSheetModal
-// ─────────────────────────────────────────────────────────────
-function BottomSheet({ visible, onClose, title, children, tall = false }) {
-  if (!visible) return null;
+/* ════════════════════════════════════════════════════════════════
+   GLASS CARD
+════════════════════════════════════════════════════════════════ */
+function GlassCard({ children, style }) {
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <Pressable style={bss.backdrop} onPress={onClose}>
-        <Pressable style={[bss.sheet, tall && bss.sheetTall]} onPress={() => {}}>
-          <View style={bss.handle} />
-          <View style={bss.header}>
-            <Text style={bss.title}>{title}</Text>
-            <TouchableOpacity onPress={onClose} style={bss.closeBtn}>
-              <Text style={bss.closeBtnText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={bss.body} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <View style={[styles.glassCard, style]}>
+      {children}
+    </View>
   );
 }
-const bss = StyleSheet.create({
-  backdrop:  { flex: 1, backgroundColor: 'rgba(15,17,23,0.5)', justifyContent: 'flex-end' },
-  sheet:     { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '75%', paddingBottom: 32 },
-  sheetTall: { maxHeight: '90%' },
-  handle:    { width: 36, height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
-  header:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.07)' },
-  title:     { fontSize: 15, fontWeight: '700', color: C.text },
-  closeBtn:  { width: 28, height: 28, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: C.textSub },
-  body:      { padding: 16 },
-});
 
-// ─────────────────────────────────────────────────────────────
-// ShareLinkModal
-// ─────────────────────────────────────────────────────────────
-function ShareLinkModal({ visible, onClose, survey, onShare }) {
-  const [shareUrl,   setShareUrl]   = useState(null);
-  const [copied,     setCopied]     = useState(false);
-  const [error,      setError]      = useState('');
-  const [generating, setGenerating] = useState(false);
+/* ════════════════════════════════════════════════════════════════
+   SHARE LINK MODAL
+════════════════════════════════════════════════════════════════ */
+function ShareLinkModal({ open, onClose, survey, onShare }) {
+  const [shareUrl, setShareUrl] = useState(null);
+  const [copied, setCopied]     = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
 
   useEffect(() => {
-    if (!visible || !survey) return;
-    let cancelled = false;
-    const generate = async () => {
-      setGenerating(true); setShareUrl(null); setError(''); setCopied(false);
-      try {
-        const result = await onShare(survey.id);
-        if (cancelled) return;
-        const url = typeof result === 'string' ? result : result?.url || result?.data?.url || null;
-        if (url) setShareUrl(url);
-        else setError('Không lấy được link.');
-      } catch {
-        if (!cancelled) setError('Tạo link thất bại.');
-      } finally {
-        if (!cancelled) setGenerating(false);
-      }
-    };
-    generate();
-    return () => { cancelled = true; };
-  }, [visible, survey?.id]);
+    if (!open) { setShareUrl(null); setCopied(false); setError(""); setLoading(false); }
+  }, [open]);
 
-  const handleCopy = async () => {
+  const parseUrl = (result) =>
+    typeof result === "string" ? result : result?.url ?? result?.data?.url ?? null;
+
+  const handleGenerate = async () => {
+    if (!survey?.id) return;
+    setLoading(true); setError("");
+    try {
+      const result = await onShare(survey.id);
+      const url = parseUrl(result);
+      if (url) setShareUrl(url);
+      else setError("Không lấy được link.");
+    } catch { setError("Tạo link thất bại."); }
+    finally { setLoading(false); }
+  };
+
+  const handleCopy = () => {
     if (!shareUrl) return;
-    // Clipboard.setString(shareUrl);
+    // Clipboard API — install @react-native-clipboard/clipboard if needed
+    try {
+      const Clipboard = require("@react-native-clipboard/clipboard").default;
+      Clipboard.setString(shareUrl);
+    } catch { /* fallback: show alert */ Alert.alert("Link", shareUrl); }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Chia sẻ khảo sát">
-      {generating && (
-        <View style={ss.centered}>
-          <ActivityIndicator color={C.primary} size="large" />
-          <Text style={ss.loadingText}>Đang tạo link...</Text>
-        </View>
-      )}
-      {!generating && error ? (
-        <View style={ss.errorBox}>
-          <Text style={ss.errorBoxText}>{error}</Text>
-          <TouchableOpacity onPress={() => { setError(''); setGenerating(true); }}>
-            <Text style={ss.retryText}>Thử lại</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-      {!generating && shareUrl && !error && (
-        <View style={ss.linkContainer}>
-          <View style={ss.linkBox}>
-            <Text style={ss.linkText} numberOfLines={1}>{shareUrl}</Text>
-          </View>
-          <TouchableOpacity
-            onPress={handleCopy}
-            style={[ss.copyBtn, copied && ss.copyBtnSuccess]}
-          >
-            <Text style={[ss.copyBtnText, copied && ss.copyBtnTextSuccess]}>
-              {copied ? '✓ Đã sao chép!' : '⎘ Sao chép link'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </BottomSheet>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// InviteModal
-// ─────────────────────────────────────────────────────────────
-function InviteModal({ visible, onClose, survey, onInvite }) {
-  const [emails,    setEmails]    = useState('');
-  const [loading,   setLoading]   = useState(false);
-  const [success,   setSuccess]   = useState(false);
-  const [sentCount, setSentCount] = useState(0);
-  const [error,     setError]     = useState('');
-
-  const handleSubmit = async () => {
-    const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
-    if (list.length === 0) { setError('Vui lòng nhập ít nhất 1 email.'); return; }
-    setLoading(true); setError(''); setSuccess(false);
-    try {
-      await Promise.all(list.map(email => onInvite(survey.id, { email, role: 'viewer' })));
-      setSentCount(list.length); setSuccess(true); setEmails('');
-    } catch { setError('Mời không thành công.'); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <BottomSheet visible={visible} onClose={onClose} title="Mời người tham gia">
-      {success && (
-        <View style={[ss.successBox, { marginBottom: 12 }]}>
-          <Text style={ss.successText}>✓ Đã gửi lời mời đến {sentCount} địa chỉ email.</Text>
-        </View>
-      )}
-      <Text style={ss.fieldLabel}>Địa chỉ email</Text>
-      <TextInput
-        value={emails}
-        onChangeText={t => { setEmails(t); setError(''); }}
-        placeholder={"example@email.com\nuser2@email.com"}
-        placeholderTextColor={C.textDim}
-        multiline
-        numberOfLines={4}
-        style={ss.textarea}
-      />
-      {error ? <Text style={ss.errorText}>{error}</Text> : null}
-      <View style={ss.actionRow}>
-        <TouchableOpacity onPress={onClose} style={ss.cancelBtn}>
-          <Text style={ss.cancelBtnText}>Đóng</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={loading}
-          style={[ss.primaryBtn, loading && ss.primaryBtnDisabled]}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={ss.primaryBtnText}>✈ Gửi lời mời</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </BottomSheet>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// BulkInviteModal
-// ─────────────────────────────────────────────────────────────
-function BulkInviteModal({ visible, onClose, survey, onBulkInvite }) {
-  const [emails,  setEmails]  = useState('');
-  const [role,    setRole]    = useState('viewer');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
-  const [error,   setError]   = useState('');
-
-  const parseEmails = () => emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
-  const emailCount  = parseEmails().length;
-
-  const handleSubmit = async () => {
-    const list = parseEmails();
-    if (list.length === 0) { setError('Vui lòng nhập ít nhất 1 email.'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await onBulkInvite(survey.id, { emails: list, role });
-      setSuccess({ sent: res?.sent ?? list.length, failed: res?.failed ?? 0 });
-      setEmails('');
-    } catch { setError('Bulk invite thất bại, vui lòng thử lại.'); }
-    finally { setLoading(false); }
-  };
-
-  const ROLES = [
-    { value: 'viewer',     label: '👁 Viewer',    desc: 'Chỉ xem' },
-    { value: 'respondent', label: '✏ Respondent', desc: 'Trả lời' },
-    { value: 'editor',     label: '🛠 Editor',     desc: 'Chỉnh sửa' },
-  ];
-
-  return (
-    <BottomSheet visible={visible} onClose={onClose} title="Mời hàng loạt" tall>
-      {success && (
-        <View style={[ss.successBox, { marginBottom: 12 }]}>
-          <Text style={ss.successText}>✓ Đã gửi hàng loạt! Thành công: {success.sent}{success.failed > 0 ? ` · Thất bại: ${success.failed}` : ''}</Text>
-        </View>
-      )}
-      <Text style={ss.fieldLabel}>Vai trò</Text>
-      <View style={ss.roleRow}>
-        {ROLES.map(r => (
-          <TouchableOpacity
-            key={r.value}
-            onPress={() => setRole(r.value)}
-            style={[ss.roleBtn, role === r.value && ss.roleBtnActive]}
-          >
-            <Text style={[ss.roleBtnLabel, role === r.value && ss.roleBtnLabelActive]}>{r.label}</Text>
-            <Text style={ss.roleBtnDesc}>{r.desc}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <Text style={ss.fieldLabel}>Danh sách email</Text>
-      <TextInput
-        value={emails}
-        onChangeText={t => { setEmails(t); setError(''); }}
-        placeholder={"user1@email.com\nuser2@email.com, user3@email.com"}
-        placeholderTextColor={C.textDim}
-        multiline
-        numberOfLines={6}
-        style={[ss.textarea, { height: 120 }]}
-      />
-      {emailCount > 0 && (
-        <Text style={ss.emailCountText}>{emailCount} email</Text>
-      )}
-      {error ? <Text style={ss.errorText}>{error}</Text> : null}
-      <View style={ss.actionRow}>
-        <TouchableOpacity onPress={onClose} style={ss.cancelBtn}>
-          <Text style={ss.cancelBtnText}>Đóng</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={loading || emailCount === 0}
-          style={[ss.primaryBtn, (loading || emailCount === 0) && ss.primaryBtnDisabled]}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={ss.primaryBtnText}>+ Mời {emailCount > 0 ? `${emailCount} người` : 'hàng loạt'}</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </BottomSheet>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// ParticipantsModal
-// FIX: Chỉ có 1 useEffect duy nhất, không duplicate
-// ─────────────────────────────────────────────────────────────
-function ParticipantsModal({ visible, open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
-  const isVisible = visible ?? open ?? false;
-
-  const [participants, setParticipants] = useState([]);
-  const [count,        setCount]        = useState(0);
-  const [loading,      setLoading]      = useState(false);
-  const [deleting,     setDeleting]     = useState(null);
-  const [confirmId,    setConfirmId]    = useState(null);
-  const [search,       setSearch]       = useState('');
-  const [error,        setError]        = useState('');
-
-  const cancelRef = useRef(false);
-
-const load = useCallback(async () => {
-  cancelRef.current = false;
-  setLoading(true);
-  setError('');
-  
-  try {
-    const res = await onGetParticipants(survey.id);
-    if (cancelRef.current) return;
-    
-    const list = Array.isArray(res?.participants) ? res.participants : [];
-    setParticipants(list);
-    setCount(res?.count || 0);
-  } catch(e) {
-    if (!cancelRef.current) setError('Lỗi tải dữ liệu');
-  } finally {
-    if (!cancelRef.current) setLoading(false);
-  }
-}, [survey?.id, onGetParticipants]);
-
-useEffect(() => {
-  if (!isVisible) {
-    cancelRef.current = true;  // cancel bất kỳ load đang chạy
-    return;
-  }
-  setSearch('');
-  setConfirmId(null);
-  load();
-}, [isVisible, survey?.id]);
-
-  const handleDelete = useCallback(async (participantId) => {
-    setDeleting(participantId);
-    try {
-      await onDeleteParticipant(survey.id, participantId);
-      setParticipants(prev => prev.filter(p => p.participant_id !== participantId));
-      setCount(prev => Math.max(0, prev - 1));
-      setConfirmId(null);
-    } catch {
-      Alert.alert('Lỗi', 'Không thể xoá người tham gia, vui lòng thử lại.');
-    } finally {
-      setDeleting(null);
-    }
-  }, [survey?.id, onDeleteParticipant]);
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return participants;
-    const q = search.toLowerCase();
-    return participants.filter(p =>
-      p.email?.toLowerCase().includes(q) ||
-      p.name?.toLowerCase().includes(q)
-    );
-  }, [participants, search]);
-
-  const AVATAR_PALETTE = [
-    { bg: '#E6F1FB', color: '#185FA5' },
-    { bg: '#EAF3DE', color: '#3B6D11' },
-    { bg: '#FBEAF0', color: '#993556' },
-    { bg: '#FAEEDA', color: '#854F0B' },
-    { bg: '#EEEDFE', color: '#534AB7' },
-    { bg: '#E1F5EE', color: '#0F6E56' },
-  ];
-
-  const ROLE_COLORS = {
-    editor:     { bg: '#E6F1FB', color: '#185FA5' },
-    respondent: { bg: '#EAF3DE', color: '#3B6D11' },
-    viewer:     { bg: '#F1EFE8', color: '#5F5E5A' },
-  };
-
-  const getInitials = (name, email) => {
-    if (name) return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    return (email || '?')[0].toUpperCase();
-  };
-
-  return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <Pressable style={pm.backdrop} onPress={onClose}>
-        <Pressable style={pm.sheet} onPress={() => {}}>
-          <View style={pm.handle} />
-
-          {/* Header */}
-          <View style={pm.header}>
-            <View style={pm.headerLeft}>
-              <Text style={pm.headerTitle}>Người tham gia</Text>
-              {!loading && (
-                <View style={pm.countBadge}>
-                  <Text style={pm.countBadgeText}>{count}</Text>
-                </View>
-              )}
-            </View>
-            <TouchableOpacity onPress={onClose} style={pm.closeBtn}>
-              <Text style={pm.closeBtnText}>✕</Text>
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Chia sẻ khảo sát</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Stat + Reload */}
-          <View style={pm.statRow}>
-            <View style={pm.statCard}>
-              <View style={pm.statIcon}>
-                <Text style={{ fontSize: 18 }}>👥</Text>
-              </View>
-              <View>
-                <Text style={pm.statNum}>{loading ? '—' : count}</Text>
-                <Text style={pm.statLabel}>Tổng participants</Text>
-              </View>
+          <View style={styles.modalBody}>
+            <View style={styles.infoBox}>
+              <Text style={styles.infoBoxTitle}>{survey?.title}</Text>
+              <Text style={styles.infoBoxSub}>Tạo link để chia sẻ survey với mọi người</Text>
             </View>
-            <TouchableOpacity onPress={load} disabled={loading} style={pm.reloadBtn}>
-              <Text style={pm.reloadBtnText}>⟳ Tải lại</Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Search */}
-          <View style={pm.searchRow}>
-            <Text style={pm.searchIcon}>🔍</Text>
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Tìm theo tên hoặc email..."
-              placeholderTextColor="#9ca3af"
-              style={pm.searchInput}
-            />
-            {search ? (
-              <TouchableOpacity onPress={() => setSearch('')}>
-                <Text style={{ color: '#9ca3af', fontSize: 14 }}>✕</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-
-          {/* List body */}
-          <ScrollView
-            style={pm.listScroll}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
             {!!error && (
-              <View style={pm.errorBox}>
-                <Text style={pm.errorText}>{error}</Text>
-                <TouchableOpacity onPress={load}>
-                  <Text style={pm.retryText}>Thử lại</Text>
+              <View style={styles.errorRow}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity onPress={handleGenerate} disabled={loading}>
+                  <Text style={styles.retryBtn}>Thử lại</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {loading && (
-              <View style={{ paddingVertical: 40, alignItems: 'center', gap: 8 }}>
-                <ActivityIndicator color="#4361ee" size="large" />
-                <Text style={{ fontSize: 13, color: '#6b7280' }}>Đang tải...</Text>
-              </View>
-            )}
-
-            {!loading && !error && filtered.length === 0 && (
-              <View style={{ paddingVertical: 48, alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 36 }}>👤</Text>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>
-                  {search ? `Không tìm thấy "${search}"` : 'Chưa có người tham gia'}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#6b7280' }}>
-                  {search ? 'Thử tìm với từ khoá khác' : 'Mời người dùng để họ xuất hiện ở đây'}
-                </Text>
-              </View>
-            )}
-
-            {!loading && !error && filtered.map((p, i) => {
-              const av        = AVATAR_PALETTE[i % AVATAR_PALETTE.length];
-              const roleMeta  = ROLE_COLORS[p.role] || ROLE_COLORS.viewer;
-              const initials  = getInitials(p.name, p.email);
-              const pid       = p.participant_id ?? p.id;
-              const isConfirm = confirmId === pid;
-              const isDel     = deleting  === pid;
-
-              return (
-                <View
-                  key={pid ?? i}
-                  style={[
-                    pm.row,
-                    i < filtered.length - 1 && pm.rowBorder,
-                    isConfirm && pm.rowDanger,
-                  ]}
+            {shareUrl ? (
+              <View style={styles.urlBox}>
+                <Text style={styles.urlText} numberOfLines={1}>{shareUrl}</Text>
+                <TouchableOpacity
+                  style={[styles.copyBtn, copied && styles.copyBtnDone]}
+                  onPress={handleCopy}
                 >
-                  <View style={[pm.avatar, { backgroundColor: av.bg }]}>
-                    <Text style={[pm.avatarText, { color: av.color }]}>{initials}</Text>
-                  </View>
-
-                  <View style={pm.info}>
-                    <Text style={pm.name} numberOfLines={1}>
-  {p.name || p.email || 'Unknown'}
-</Text>
-{p.name && p.email ? (  // chỉ hiện email riêng nếu đã có name hiển thị
-  <Text style={pm.emailText}>{p.email}</Text>
-) : null}
-                  </View>
-
-                  {p.role ? (
-                    <View style={[pm.rolePill, { backgroundColor: roleMeta.bg }]}>
-                      <Text style={[pm.rolePillText, { color: roleMeta.color }]}>{p.role}</Text>
-                    </View>
-                  ) : null}
-
-                  {isConfirm ? (
-                    <View style={pm.confirmBtns}>
-                      <TouchableOpacity onPress={() => setConfirmId(null)} style={pm.cancelSmallBtn}>
-                        <Text style={pm.cancelSmallText}>Huỷ</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleDelete(pid)}
-                        disabled={isDel}
-                        style={pm.deleteSmallBtn}
-                      >
-                        {isDel
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <Text style={pm.deleteSmallText}>🗑 Xoá</Text>
-                        }
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity onPress={() => setConfirmId(pid)} style={pm.delIconBtn}>
-                      <Text style={{ fontSize: 16 }}>🗑</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              );
-            })}
-
-            {!loading && filtered.length > 0 && search.trim() && (
-              <Text style={pm.hint}>Hiển thị {filtered.length} / {participants.length} người</Text>
+                  <Text style={[styles.copyBtnText, copied && { color: C.success }]}>
+                    {copied ? "✓ Đã sao chép!" : "Sao chép link"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.primaryBtn, loading && styles.btnDisabled]}
+                onPress={handleGenerate}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color={C.white} size="small" />
+                  : <Text style={styles.primaryBtnText}>🔗 Tạo link chia sẻ</Text>}
+              </TouchableOpacity>
             )}
-
-            <View style={{ height: 24 }} />
-          </ScrollView>
-
-          <View style={pm.footer}>
-            <TouchableOpacity onPress={onClose} style={pm.closeFooterBtn}>
-              <Text style={pm.closeFooterText}>Đóng</Text>
-            </TouchableOpacity>
           </View>
-        </Pressable>
-      </Pressable>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 }
 
-const pm = StyleSheet.create({
-  backdrop:       { flex: 1, backgroundColor: 'rgba(15,17,23,0.55)', justifyContent: 'flex-end' },
-  sheet:          { backgroundColor: '#fff', borderTopLeftRadius: 22, borderTopRightRadius: 22, maxHeight: '90%', paddingBottom: 0 },
-  handle:         { width: 40, height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 6 },
-  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.07)' },
-  headerLeft:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:    { fontSize: 16, fontWeight: '700', color: '#111827' },
-  countBadge:     { paddingHorizontal: 9, paddingVertical: 2, borderRadius: 999, backgroundColor: '#eef0fd', borderWidth: 1, borderColor: '#c5cdfb' },
-  countBadgeText: { fontSize: 12, fontWeight: '700', color: '#4361ee' },
-  closeBtn:       { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText:   { fontSize: 12, color: '#6b7280' },
-  statRow:        { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, paddingBottom: 0 },
-  statCard:       { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#f8fafc', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', padding: 12 },
-  statIcon:       { width: 36, height: 36, borderRadius: 9, backgroundColor: '#eef0fd', alignItems: 'center', justifyContent: 'center' },
-  statNum:        { fontSize: 20, fontWeight: '700', color: '#111827' },
-  statLabel:      { fontSize: 11, color: '#6b7280' },
-  reloadBtn:      { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)', backgroundColor: '#fff' },
-  reloadBtnText:  { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  searchRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 14, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
-  searchIcon:     { fontSize: 14 },
-  searchInput:    { flex: 1, fontSize: 13, color: '#111827', paddingVertical: 0 },
-  listScroll:     { flex: 1, paddingHorizontal: 14 },
-  row:            { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11 },
-  rowBorder:      { borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  rowDanger:      { backgroundColor: '#fef2f2', borderRadius: 10, paddingHorizontal: 8, marginHorizontal: -8 },
-  avatar:         { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  avatarText:     { fontSize: 13, fontWeight: '700' },
-  info:           { flex: 1, minWidth: 0 },
-  name:           { fontSize: 13, fontWeight: '600', color: '#111827' },
-  emailText:      { fontSize: 11, color: '#6b7280', marginTop: 1 },
-  rolePill:       { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, flexShrink: 0 },
-  rolePillText:   { fontSize: 10, fontWeight: '700' },
-  confirmBtns:    { flexDirection: 'row', gap: 6 },
-  cancelSmallBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
-  cancelSmallText:{ fontSize: 11, fontWeight: '600', color: '#6b7280' },
-  deleteSmallBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: '#ef4444', minWidth: 60, alignItems: 'center' },
-  deleteSmallText:{ fontSize: 11, fontWeight: '700', color: '#fff' },
-  delIconBtn:     { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', alignItems: 'center', justifyContent: 'center' },
-  errorBox:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fef2f2', borderRadius: 10, padding: 12, marginVertical: 8 },
-  errorText:      { fontSize: 12, color: '#ef4444', flex: 1 },
-  retryText:      { fontSize: 12, fontWeight: '700', color: '#ef4444', marginLeft: 8 },
-  hint:           { fontSize: 11, color: '#9ca3af', textAlign: 'center', paddingVertical: 10 },
-  footer:         { padding: 14, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.07)' },
-  closeFooterBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)', alignItems: 'center' },
-  closeFooterText:{ fontSize: 14, fontWeight: '600', color: '#6b7280' },
-});
+/* ════════════════════════════════════════════════════════════════
+   INVITE MODAL
+════════════════════════════════════════════════════════════════ */
+function InviteModal({ open, onClose, survey, onInvite }) {
+  const [emails, setEmails]     = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [success, setSuccess]   = useState(false);
+  const [sentCount, setSentCount] = useState(0);
+  const [error, setError]       = useState("");
 
-// ─────────────────────────────────────────────────────────────
-// PublishModal
-// ─────────────────────────────────────────────────────────────
-function PublishModal({ visible, onClose, survey, onPublish }) {
+  useEffect(() => {
+    if (!open) { setEmails(""); setSuccess(false); setError(""); setSentCount(0); }
+  }, [open]);
+
+  const handleSubmit = async () => {
+    const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+    if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError(""); setSuccess(false);
+    try {
+      await Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })));
+      setSentCount(list.length); setSuccess(true); setEmails("");
+    } catch { setError("Mời không thành công."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Mời người tham gia</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalBody}>
+            {success && (
+              <View style={styles.successRow}>
+                <Text style={styles.successText}>✓ Đã gửi lời mời đến {sentCount} địa chỉ email.</Text>
+              </View>
+            )}
+            <Text style={styles.fieldLabel}>Địa chỉ email</Text>
+            <TextInput
+              style={[styles.textarea, !!error && styles.inputError]}
+              value={emails}
+              onChangeText={t => { setEmails(t); setError(""); }}
+              placeholder={"example@email.com\nuser2@email.com"}
+              placeholderTextColor={C.textDim}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            {!!error && <Text style={styles.errorText}>{error}</Text>}
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Đóng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryBtn, styles.primaryBtnSm, loading && styles.btnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color={C.white} size="small" />
+                  : <Text style={styles.primaryBtnText}>✉ Gửi lời mời</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BULK INVITE MODAL
+════════════════════════════════════════════════════════════════ */
+const ROLES = [
+  { value: "viewer",     label: "👁 Viewer",     desc: "Chỉ xem" },
+  { value: "respondent", label: "✏️ Respondent", desc: "Trả lời" },
+  { value: "editor",     label: "🛠 Editor",     desc: "Chỉnh sửa" },
+];
+
+function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
+  const [emails, setEmails]   = useState("");
+  const [role, setRole]       = useState("viewer");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError]     = useState("");
+
+  useEffect(() => {
+    if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("viewer"); }
+  }, [open]);
+
+  const parseEmails = () => emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+  const emailCount = parseEmails().length;
+
+  const handleSubmit = async () => {
+    const list = parseEmails();
+    if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await onBulkInvite(survey.id, { emails: list, role });
+      setSuccess({ sent: res?.sent ?? list.length, failed: res?.failed ?? 0 });
+      setEmails("");
+    } catch { setError("Bulk invite thất bại."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 480 }]} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Mời hàng loạt</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalBody}>
+            <View style={[styles.infoBox, { flexDirection: "row", alignItems: "center", gap: 10 }]}>
+              <View style={styles.bulkIcon}>
+                <Text style={{ fontSize: 18 }}>👥</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoBoxTitle}>{survey?.title}</Text>
+                <Text style={styles.infoBoxSub}>Nhập nhiều email để mời hàng loạt</Text>
+              </View>
+              {emailCount > 0 && (
+                <View style={styles.emailCountBadge}>
+                  <Text style={styles.emailCountText}>{emailCount} email</Text>
+                </View>
+              )}
+            </View>
+
+            {success && (
+              <View style={styles.successRow}>
+                <Text style={styles.successText}>✓ Đã gửi! Thành công: {success.sent}{success.failed > 0 ? ` / Thất bại: ${success.failed}` : ""}</Text>
+              </View>
+            )}
+
+            {/* Role selector */}
+            <Text style={styles.fieldLabel}>Vai trò</Text>
+            <View style={styles.roleRow}>
+              {ROLES.map(r => (
+                <TouchableOpacity
+                  key={r.value}
+                  style={[styles.roleBtn, role === r.value && styles.roleBtnActive]}
+                  onPress={() => setRole(r.value)}
+                >
+                  <Text style={[styles.roleBtnLabel, role === r.value && styles.roleBtnLabelActive]}>{r.label}</Text>
+                  <Text style={styles.roleBtnDesc}>{r.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.fieldLabel, { marginTop: 10 }]}>Danh sách email</Text>
+            <TextInput
+              style={[styles.textarea, { minHeight: 120 }, !!error && styles.inputError]}
+              value={emails}
+              onChangeText={t => { setEmails(t); setError(""); }}
+              placeholder={"user1@email.com\nuser2@email.com, user3@email.com"}
+              placeholderTextColor={C.textDim}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+            {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Đóng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryBtn, styles.primaryBtnSm, (loading || emailCount === 0) && styles.btnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading || emailCount === 0}
+              >
+                {loading
+                  ? <ActivityIndicator color={C.white} size="small" />
+                  : <Text style={styles.primaryBtnText}>👥 Mời {emailCount > 0 ? `${emailCount} người` : "hàng loạt"}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PARTICIPANTS MODAL
+════════════════════════════════════════════════════════════════ */
+const AV_COLORS = [
+  { bg: "#e0e7ff", color: "#3730a3" }, { bg: "#d1fae5", color: "#065f46" },
+  { bg: "#fce7f3", color: "#9d174d" }, { bg: "#fef3c7", color: "#78350f" },
+  { bg: "#f3e8ff", color: "#5b21b6" },
+];
+const ROLE_STYLE = {
+  viewer:     { color: "#1d4ed8", bg: "#eff6ff" },
+  respondent: { color: "#059669", bg: "#ecfdf5" },
+  editor:     { color: "#7c3aed", bg: "#f5f3ff" },
+};
+
+function getInitials(name, email) {
+  if (name) return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  return (email || "?")[0].toUpperCase();
+}
+
+function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
+  const [participants, setParticipants] = useState([]);
+  const [count, setCount]               = useState(0);
+  const [loading, setLoading]           = useState(false);
+  const [deleting, setDeleting]         = useState(null);
+  const [confirmPid, setConfirmPid]     = useState(null);
+  const [search, setSearch]             = useState("");
+  const [error, setError]               = useState("");
+
+  const load = useCallback(async () => {
+    if (!survey?.id) return;
+    setLoading(true); setError("");
+    try {
+      const res = await onGetParticipants(survey.id, {});
+      setParticipants(res?.participants ?? []);
+      setCount(res?.count ?? 0);
+    } catch { setError("Không thể tải danh sách."); }
+    finally { setLoading(false); }
+  }, [survey?.id, onGetParticipants]);
+
+  useEffect(() => {
+    if (open) { load(); setSearch(""); setConfirmPid(null); setError(""); }
+    else { setParticipants([]); setCount(0); }
+  }, [open, load]);
+
+  const handleDelete = async (pid) => {
+    setDeleting(pid);
+    try {
+      await onDeleteParticipant(survey.id, pid);
+      setParticipants(p => p.filter(x => x.participant_id !== pid));
+      setCount(c => Math.max(0, c - 1));
+      setConfirmPid(null);
+    } finally { setDeleting(null); }
+  };
+
+  const filtered = participants.filter(p => {
+    const q = search.toLowerCase();
+    return p.email?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q) || p.role?.toLowerCase().includes(q);
+  });
+
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 500, maxHeight: "90%" }]} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Quản lý người tham gia</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalBody}>
+            {/* Count + reload */}
+            <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
+              <View style={[styles.infoBox, { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }]}>
+                <Text style={{ fontSize: 22, fontWeight: "900", color: C.text }}>{count}</Text>
+                <Text style={styles.infoBoxSub}>Tổng participants</Text>
+              </View>
+              <TouchableOpacity onPress={load} disabled={loading} style={styles.reloadBtn}>
+                {loading
+                  ? <ActivityIndicator size="small" color={C.textSub} />
+                  : <Text style={styles.reloadBtnText}>↻ Tải lại</Text>}
+              </TouchableOpacity>
+            </View>
+
+            {!!error && !loading && (
+              <View style={styles.errorRow}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity onPress={load}><Text style={styles.retryBtn}>Thử lại</Text></TouchableOpacity>
+              </View>
+            )}
+
+            {/* Search */}
+            <View style={styles.searchRow}>
+              <Text style={{ color: C.textDim, marginRight: 6 }}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Tìm theo tên, email..."
+                placeholderTextColor={C.textDim}
+              />
+              {!!search && (
+                <TouchableOpacity onPress={() => setSearch("")}>
+                  <Text style={{ color: C.textDim }}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* List */}
+            <ScrollView style={{ maxHeight: 300, marginTop: 8 }} showsVerticalScrollIndicator={false}>
+              {loading ? (
+                <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                  <ActivityIndicator color={C.primary} />
+                  <Text style={[styles.infoBoxSub, { marginTop: 8 }]}>Đang tải...</Text>
+                </View>
+              ) : filtered.length === 0 ? (
+                <View style={{ alignItems: "center", paddingVertical: 36 }}>
+                  <Text style={{ fontSize: 28, marginBottom: 8 }}>👥</Text>
+                  <Text style={styles.infoBoxSub}>{search ? `Không tìm thấy "${search}"` : "Chưa có người tham gia"}</Text>
+                </View>
+              ) : (
+                filtered.map((p, i) => {
+                  const av = AV_COLORS[i % AV_COLORS.length];
+                  const deleteKey = p.participant_id ?? p.id;
+                  const isConfirming = confirmPid === deleteKey;
+                  const isDeleting = deleting === deleteKey;
+                  const rs = ROLE_STYLE[p.role?.toLowerCase()] ?? { color: C.primary, bg: C.primaryLight };
+                  return (
+                    <View key={p.participant_id ?? p.id ?? i} style={[styles.participantRow, isConfirming && { backgroundColor: C.errorBg }]}>
+                      <View style={[styles.avatar, { backgroundColor: av.bg }]}>
+                        <Text style={[styles.avatarText, { color: av.color }]}>{getInitials(p.name, p.email)}</Text>
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={styles.participantName} numberOfLines={1}>{p.name || p.email}</Text>
+                        {p.name && <Text style={styles.participantEmail} numberOfLines={1}>{p.email}</Text>}
+                      </View>
+                      {p.role && (
+                        <View style={[styles.rolePill, { backgroundColor: rs.bg }]}>
+                          <Text style={[styles.rolePillText, { color: rs.color }]}>{p.role}</Text>
+                        </View>
+                      )}
+                      {isConfirming ? (
+                        <View style={{ flexDirection: "row", gap: 6 }}>
+                          <TouchableOpacity style={styles.cancelBtn} onPress={() => setConfirmPid(null)}>
+                            <Text style={styles.cancelBtnText}>Huỷ</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.primaryBtn, styles.primaryBtnSm, { backgroundColor: C.error }]}
+                            onPress={() => handleDelete(deleteKey)}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting
+                              ? <ActivityIndicator color={C.white} size="small" />
+                              : <Text style={styles.primaryBtnText}>Xoá</Text>}
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.iconBtn}
+                          onPress={() => setConfirmPid(deleteKey)}
+                        >
+                          <Text style={{ fontSize: 14, color: C.textDim }}>🗑</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+
+            {!loading && !error && filtered.length > 0 && !!search && (
+              <Text style={[styles.infoBoxSub, { textAlign: "center", marginTop: 6 }]}>
+                {filtered.length} / {participants.length} người
+              </Text>
+            )}
+            <View style={{ alignItems: "flex-end", marginTop: 10 }}>
+              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Đóng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PUBLISH MODAL
+════════════════════════════════════════════════════════════════ */
+function PublishModal({ open, onClose, survey, onPublish }) {
   const [loading, setLoading] = useState(false);
   const isPublished = survey?.is_published;
   const handleConfirm = async () => {
@@ -661,38 +584,49 @@ function PublishModal({ visible, onClose, survey, onPublish }) {
     finally { setLoading(false); }
   };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={isPublished ? 'Ẩn khảo sát' : 'Publish khảo sát'}>
-      <View style={ss.confirmBox}>
-        <Text style={ss.confirmEmoji}>{isPublished ? '🔒' : '🌐'}</Text>
-        <Text style={ss.confirmText}>
-          {isPublished
-            ? 'Khảo sát sẽ bị ẩn và không còn nhận câu trả lời mới.'
-            : 'Khảo sát sẽ được công khai và có thể nhận câu trả lời.'}
-        </Text>
-      </View>
-      <View style={ss.actionRow}>
-        <TouchableOpacity onPress={onClose} style={ss.cancelBtn}>
-          <Text style={ss.cancelBtnText}>Huỷ</Text>
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{isPublished ? "Ẩn khảo sát" : "Publish khảo sát"}</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalBody}>
+            <View style={[styles.confirmBox, { backgroundColor: isPublished ? C.warningBg : C.primaryLight }]}>
+              <Text style={styles.confirmEmoji}>{isPublished ? "🔒" : "🌐"}</Text>
+              <Text style={styles.confirmText}>
+                {isPublished
+                  ? "Khảo sát sẽ bị ẩn và không còn nhận câu trả lời mới."
+                  : "Khảo sát sẽ được công khai và có thể nhận câu trả lời."}
+              </Text>
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Huỷ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryBtn, styles.primaryBtnSm, loading && styles.btnDisabled, isPublished && { backgroundColor: C.warning }]}
+                onPress={handleConfirm}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color={C.white} size="small" />
+                  : <Text style={styles.primaryBtnText}>{isPublished ? "🔒 Ẩn survey" : "🌐 Publish"}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleConfirm}
-          disabled={loading}
-          style={[ss.primaryBtn, loading && ss.primaryBtnDisabled]}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={ss.primaryBtnText}>{isPublished ? '🔒 Ẩn survey' : '🌐 Publish'}</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </BottomSheet>
+      </TouchableOpacity>
+    </Modal>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// CloseModal
-// ─────────────────────────────────────────────────────────────
-function CloseModal({ visible, onClose, survey, onCloseSurvey }) {
+/* ════════════════════════════════════════════════════════════════
+   CLOSE MODAL
+════════════════════════════════════════════════════════════════ */
+function CloseModal({ open, onClose, survey, onCloseSurvey }) {
   const [loading, setLoading] = useState(false);
   const handleConfirm = async () => {
     setLoading(true);
@@ -700,490 +634,499 @@ function CloseModal({ visible, onClose, survey, onCloseSurvey }) {
     finally { setLoading(false); }
   };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Đóng khảo sát">
-      <View style={[ss.confirmBox, { backgroundColor: C.errorBg, borderColor: C.errorBorder }]}>
-        <Text style={ss.confirmEmoji}>⛔</Text>
-        <Text style={ss.confirmText}>Sau khi đóng, survey sẽ không nhận thêm câu trả lời.</Text>
-        <Text style={[ss.confirmText, { color: C.textSub, fontSize: 12, marginTop: 4 }]}>Hành động này không thể hoàn tác.</Text>
-      </View>
-      <View style={ss.actionRow}>
-        <TouchableOpacity onPress={onClose} style={ss.cancelBtn}>
-          <Text style={ss.cancelBtnText}>Huỷ</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleConfirm}
-          disabled={loading}
-          style={[ss.primaryBtn, { backgroundColor: C.error }, loading && ss.primaryBtnDisabled]}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={ss.primaryBtnText}>⏼ Đóng survey</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </BottomSheet>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// ContextMenuSheet
-// ─────────────────────────────────────────────────────────────
-function ContextMenuSheet({ visible, onClose, items }) {
-  return (
-    <BottomSheet visible={visible} onClose={onClose} title="Tùy chọn">
-      {items.map((item, i) => (
-        <TouchableOpacity
-          key={i}
-          onPress={() => { 
-            onClose(); 
-            setTimeout(() => item.action(), 150); // ← thêm dòng này
-          }}
-          style={[cms.item, i < items.length - 1 && cms.itemBorder]}
-        >
-          <Text style={cms.itemIcon}>{item.emoji}</Text>
-          <Text style={[cms.itemLabel, item.danger && { color: C.error }]}>{item.label}</Text>
-        </TouchableOpacity>
-      ))}
-    </BottomSheet>
-  );
-}
-const cms = StyleSheet.create({
-  item:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-  itemBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  itemIcon:   { fontSize: 16, width: 24, textAlign: 'center' },
-  itemLabel:  { fontSize: 14, fontWeight: '500', color: C.text },
-});
-
-// ─────────────────────────────────────────────────────────────
-// MySurveyCard
-// ─────────────────────────────────────────────────────────────
-function MySurveyCard({
-  survey, index, navigation,
-  onDelete, onUpdate, onShare, onInvite, onPublish, onCloseSurvey,
-  onBulkInvite, onGetParticipants, onDeleteParticipant,
-}) {
-  const thumb = THUMB_COLORS[index % THUMB_COLORS.length];
-  const isClosed    = survey.status === 'CLOSED';
-  const isPublished = survey.is_published;
-
-  const [menuOpen,     setMenuOpen]     = useState(false);
-  const [editing,      setEditing]      = useState(false);
-  const [title,        setTitle]        = useState(survey.title);
-  const [description,  setDescription]  = useState(survey.description || '');
-  const [saving,       setSaving]       = useState(false);
-
-  const [shareOpen,        setShareOpen]        = useState(false);
-  const [inviteOpen,       setInviteOpen]        = useState(false);
-  const [publishOpen,      setPublishOpen]       = useState(false);
-  const [closeOpen,        setCloseOpen]         = useState(false);
-  const [bulkInviteOpen,   setBulkInviteOpen]    = useState(false);
-  const [participantsOpen, setParticipantsOpen]  = useState(false);
-
-  const handleSave = async () => {
-    try { setSaving(true); await onUpdate(survey.id, { title, description }); setEditing(false); }
-    catch (err) { console.error(err); } finally { setSaving(false); }
-  };
-
-  const menuItems = [
-    { emoji: '✏️', label: 'Chỉnh sửa',       action: () => setEditing(true) },
-    { emoji: '🔗', label: 'Tạo link chia sẻ', action: () => setShareOpen(true) },
-    { emoji: '✉️', label: 'Mời người dùng',   action: () => setInviteOpen(true) },
-    { emoji: '👥', label: 'Mời hàng loạt',    action: () => setBulkInviteOpen(true) },
-    { emoji: '👤', label: 'Xem participants',  action: () => setParticipantsOpen(true) },
-    { emoji: isPublished ? '🔒' : '🌐', label: isPublished ? 'Ẩn survey' : 'Publish', action: () => setPublishOpen(true) },
-    !isClosed && { emoji: '⏼', label: 'Đóng survey', action: () => setCloseOpen(true) },
-    { emoji: '🗑️', label: 'Xóa', action: () => {
-      Alert.alert('Xoá survey', 'Bạn có chắc muốn xoá survey này?', [
-        { text: 'Huỷ', style: 'cancel' },
-        { text: 'Xoá', style: 'destructive', onPress: () => onDelete(survey.id) },
-      ]);
-    }, danger: true },
-  ].filter(Boolean);
-
-  return (
-    <View>
-      <TouchableOpacity
-        onPress={() => !editing && navigation?.navigate('QuestionScreen', { surveyId: survey.id })}
-        activeOpacity={0.85}
-        style={[msc.card, isClosed && { opacity: 0.75 }]}
-      >
-        {/* Thumbnail */}
-        <View style={[msc.thumb, { backgroundColor: isClosed ? '#e2e8f0' : thumb[0] }]}>
-          <Text style={msc.thumbIcon}>📄</Text>
-          <View style={msc.thumbBadges}>
-            <StatusBadge status={survey.status} />
-            {isPublished && (
-              <View style={msc.liveBadge}>
-                <Text style={msc.liveBadgeText}>🌐 Live</Text>
-              </View>
-            )}
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Đóng khảo sát</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => setMenuOpen(true)} style={msc.menuBtn}>
-            <Text style={msc.menuBtnText}>⋯</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Body */}
-        <View style={msc.body}>
-          {editing ? (
-            <View style={msc.editForm}>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Tiêu đề survey"
-                placeholderTextColor={C.textDim}
-                style={msc.editInput}
-              />
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Mô tả"
-                placeholderTextColor={C.textDim}
-                multiline
-                numberOfLines={2}
-                style={[msc.editInput, { height: 60 }]}
-              />
-              <View style={msc.editActions}>
-                <TouchableOpacity onPress={() => setEditing(false)} style={ss.cancelBtn}>
-                  <Text style={ss.cancelBtnText}>Huỷ</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleSave}
-                  disabled={saving}
-                  style={[ss.primaryBtn, saving && ss.primaryBtnDisabled, { paddingVertical: 7, paddingHorizontal: 14 }]}
-                >
-                  {saving
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={ss.primaryBtnText}>✓ Lưu</Text>
-                  }
-                </TouchableOpacity>
-              </View>
+          <View style={styles.modalBody}>
+            <View style={[styles.confirmBox, { backgroundColor: C.errorBg }]}>
+              <Text style={styles.confirmEmoji}>⛔</Text>
+              <Text style={styles.confirmText}>Sau khi đóng, survey sẽ không nhận thêm câu trả lời. Hành động này không thể hoàn tác.</Text>
             </View>
-          ) : (
-            <>
-              <Text style={msc.cardTitle} numberOfLines={1}>{survey.title}</Text>
-              <Text style={msc.cardDesc} numberOfLines={2}>{survey.description || 'Không có mô tả'}</Text>
-              <Text style={msc.cardDate}>
-                📅 {survey.created_at ? new Date(survey.created_at).toLocaleDateString('vi-VN') : ''}
-              </Text>
-            </>
-          )}
-        </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Huỷ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryBtn, styles.primaryBtnSm, { backgroundColor: C.error }, loading && styles.btnDisabled]}
+                onPress={handleConfirm}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color={C.white} size="small" />
+                  : <Text style={styles.primaryBtnText}>⏹ Đóng survey</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
       </TouchableOpacity>
-
-      {/* Context Menu */}
-      <ContextMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
-
-      {/* Modals */}
-      <ShareLinkModal    visible={shareOpen}        onClose={() => setShareOpen(false)}        survey={survey} onShare={onShare} />
-      <InviteModal       visible={inviteOpen}        onClose={() => setInviteOpen(false)}       survey={survey} onInvite={onInvite} />
-      <PublishModal      visible={publishOpen}       onClose={() => setPublishOpen(false)}      survey={survey} onPublish={onPublish} />
-      <CloseModal        visible={closeOpen}         onClose={() => setCloseOpen(false)}        survey={survey} onCloseSurvey={onCloseSurvey} />
-      <BulkInviteModal   visible={bulkInviteOpen}    onClose={() => setBulkInviteOpen(false)}   survey={survey} onBulkInvite={onBulkInvite} />
-      <ParticipantsModal visible={participantsOpen}  onClose={() => setParticipantsOpen(false)} survey={survey} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant} />
-    </View>
+    </Modal>
   );
 }
 
-const msc = StyleSheet.create({
-  card:      { backgroundColor: C.surface, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  thumb:     { height: 110, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  thumbIcon: { fontSize: 36, opacity: 0.2 },
-  thumbBadges: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', gap: 6 },
-  liveBadge:   { backgroundColor: 'rgba(67,97,238,0.12)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  liveBadgeText: { fontSize: 10, fontWeight: '700', color: C.primary },
-  menuBtn:   { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.75)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)', alignItems: 'center', justifyContent: 'center' },
-  menuBtnText: { fontSize: 16, color: C.textSub },
-  body:      { padding: 14 },
-  cardTitle: { fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 4 },
-  cardDesc:  { fontSize: 12, color: C.textSub, lineHeight: 18, marginBottom: 10 },
-  cardDate:  { fontSize: 11, color: C.textDim },
-  editForm:  { gap: 8 },
-  editInput: { borderWidth: 1, borderColor: C.border, borderRadius: 9, padding: 9, fontSize: 12, color: C.text, backgroundColor: '#fff' },
-  editActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 7, marginTop: 4 },
-});
-
-// ─────────────────────────────────────────────────────────────
-// SubmissionModal
-// ─────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
+   SUBMISSION VIEWER MODAL
+════════════════════════════════════════════════════════════════ */
 function SubmissionModal({ surveyId, surveyTitle, onClose }) {
   const { getMySubmission } = useResponse();
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [error, setError]     = useState(null);
   const [answers, setAnswers] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-    const fetch_ = async () => {
+    (async () => {
       try {
-        setLoading(true);
+        setLoading(true); setError(null);
         const res = await getMySubmission(surveyId);
         if (cancelled) return;
-        setAnswers((res?.data ?? res ?? []).flatMap(r => r.answers ?? []));
-      } catch {
-        if (!cancelled) setError('Không thể tải câu trả lời.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetch_();
+        const raw = res?.data ?? res ?? [];
+        const all = Array.isArray(raw)
+          ? raw.flatMap(r => r.answers ?? [])
+          : (raw.answers ?? []);
+        setAnswers(all);
+      } catch { if (!cancelled) setError("Không thể tải câu trả lời."); }
+      finally { if (!cancelled) setLoading(false); }
+    })();
     return () => { cancelled = true; };
   }, [surveyId]);
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f8fc' }}>
-        <View style={smm.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={smm.closeText}>← Đóng</Text>
+      <View style={styles.submissionModal}>
+        {/* Header */}
+        <View style={styles.submissionHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.submissionBack}>
+            <Text style={styles.submissionBackText}>← Đóng</Text>
           </TouchableOpacity>
-          <Text style={smm.brand}>InsightFlow</Text>
+          <Text style={styles.submissionBrand}>InsightFlow</Text>
           <View style={{ width: 60 }} />
         </View>
 
-        <View style={smm.badgeRow}>
-          <View style={smm.badge}>
-            <Text style={smm.badgeText}>✓ Đã hoàn thành</Text>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+          {/* Title */}
+          <View style={{ alignItems: "center", marginBottom: 24 }}>
+            <View style={styles.doneBadge}>
+              <Text style={styles.doneBadgeText}>✓ Đã hoàn thành</Text>
+            </View>
+            <Text style={styles.submissionTitle}>{surveyTitle}</Text>
+            {!loading && (
+              <Text style={styles.infoBoxSub}>{answers.length} câu hỏi</Text>
+            )}
           </View>
-        </View>
-        <Text style={smm.title}>{surveyTitle}</Text>
-        {!loading && <Text style={smm.subtitle}>{answers.length} câu trả lời</Text>}
 
-        {loading && (
-          <View style={ss.centered}>
-            <ActivityIndicator color={C.primary} size="large" />
-            <Text style={ss.loadingText}>Đang tải...</Text>
-          </View>
-        )}
-        {!loading && error && (
-          <View style={ss.centered}>
-            <Text style={ss.emptyText}>{error}</Text>
-          </View>
-        )}
-        {!loading && !error && answers.length === 0 && (
-          <View style={ss.centered}>
-            <Text style={ss.emptyText}>Không có câu trả lời.</Text>
-          </View>
-        )}
-        {!loading && !error && answers.length > 0 && (
-          <FlatList
-            data={answers}
-            keyExtractor={(_, i) => String(i)}
-            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-            renderItem={({ item, index }) => {
-              const meta = typeMeta(item.type);
-              const isText     = item.type === 'TEXT';
-              const isMultiple = item.type === 'MULTIPLE_CHOICE';
-              const selectedSet = isMultiple
-                ? new Set(Array.isArray(item.answer) ? item.answer : String(item.answer ?? '').split(',').map(s => s.trim()))
-                : new Set([String(item.answer ?? '')]);
-              return (
-                <View style={[smm.answerCard, { borderTopColor: meta.accent }]}>
-                  <View style={smm.answerCardHeader}>
-                    <Text style={smm.questionText}>{index + 1}. {item.question}</Text>
-                    <View style={[smm.typeBadge, { backgroundColor: meta.bg, borderColor: meta.border }]}>
-                      <Text style={[smm.typeBadgeText, { color: meta.color }]}>{meta.label}</Text>
-                    </View>
-                  </View>
-                  {isText ? (
-                    <View style={smm.textBox}>
-                      <Text style={smm.textBoxContent}>{item.answer || 'Không có dữ liệu'}</Text>
-                    </View>
-                  ) : (
-                    <View style={{ gap: 6 }}>
-                      {(item.options ?? []).map((opt, oi) => {
-                        const label = opt?.label ?? opt?.value ?? opt?.content ?? '';
-                        const isSel = selectedSet.has(label) || selectedSet.has(String(opt.id));
-                        return (
-                          <View key={oi} style={[smm.optRow, isSel && smm.optRowSel]}>
-                            <View style={[isMultiple ? smm.checkbox : smm.radio, isSel && (isMultiple ? smm.checkboxSel : smm.radioSel)]}>
-                              {isSel && <Text style={smm.checkmark}>{isMultiple ? '✓' : ''}</Text>}
-                              {isSel && !isMultiple && <View style={smm.radioDot} />}
-                            </View>
-                            <Text style={[smm.optLabel, isSel && smm.optLabelSel]}>{label}</Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
-              );
-            }}
-          />
-        )}
-      </SafeAreaView>
+          {loading && (
+            <View style={{ alignItems: "center", paddingVertical: 48 }}>
+              <ActivityIndicator color={C.primary} />
+              <Text style={[styles.infoBoxSub, { marginTop: 10 }]}>Đang tải...</Text>
+            </View>
+          )}
+          {!loading && !!error && (
+            <View style={{ alignItems: "center", paddingVertical: 48 }}>
+              <Text style={styles.infoBoxSub}>{error}</Text>
+            </View>
+          )}
+          {!loading && !error && answers.length === 0 && (
+            <View style={{ alignItems: "center", paddingVertical: 48 }}>
+              <Text style={{ fontSize: 32, marginBottom: 10 }}>📭</Text>
+              <Text style={styles.infoBoxSub}>Không có câu trả lời.</Text>
+            </View>
+          )}
+          {!loading && !error && answers.map((item, idx) => (
+            <AnswerCard key={item.question_id ?? idx} item={item} index={idx} />
+          ))}
+        </ScrollView>
+      </View>
     </Modal>
   );
 }
 
-const smm = StyleSheet.create({
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.07)' },
-  closeText:       { fontSize: 14, fontWeight: '600', color: C.textSub },
-  brand:           { fontSize: 13, fontWeight: '700', color: C.textSub },
-  badgeRow:        { alignItems: 'center', paddingTop: 20, paddingBottom: 8 },
-  badge:           { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999, backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#86efac' },
-  badgeText:       { fontSize: 11, fontWeight: '700', color: '#15803d', textTransform: 'uppercase', letterSpacing: 0.5 },
-  title:           { fontSize: 20, fontWeight: '800', color: C.text, textAlign: 'center', paddingHorizontal: 20, marginBottom: 4 },
-  subtitle:        { fontSize: 13, color: C.textSub, textAlign: 'center', marginBottom: 12 },
-  answerCard:      { backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', borderTopWidth: 3, marginBottom: 12, padding: 14 },
-  answerCardHeader:{ marginBottom: 10 },
-  questionText:    { fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 8, lineHeight: 20 },
-  typeBadge:       { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
-  typeBadgeText:   { fontSize: 10, fontWeight: '700' },
-  textBox:         { padding: 12, backgroundColor: '#f8faff', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb' },
-  textBoxContent:  { fontSize: 13, color: '#374151', lineHeight: 20 },
-  optRow:          { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: 9, borderWidth: 1, borderColor: '#e5e7eb', backgroundColor: '#fafafa', marginBottom: 4 },
-  optRowSel:       { borderColor: '#bfdbfe', backgroundColor: '#eff6ff' },
-  checkbox:        { width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center' },
-  checkboxSel:     { borderColor: '#2563eb', backgroundColor: '#2563eb' },
-  radio:           { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center' },
-  radioSel:        { borderColor: '#2563eb' },
-  radioDot:        { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563eb' },
-  checkmark:       { fontSize: 10, color: '#fff', fontWeight: '700' },
-  optLabel:        { fontSize: 12, color: '#6b7280', flex: 1 },
-  optLabelSel:     { fontWeight: '600', color: '#1e40af' },
-});
+function AnswerCard({ item, index }) {
+  const isText = item.type === "TEXT";
+  const isMultiple = item.type === "MULTIPLE_CHOICE";
 
-// ─────────────────────────────────────────────────────────────
-// PublicSurveyCard
-// ─────────────────────────────────────────────────────────────
-function PublicSurveyCard({ survey, done, onStart, onViewSubmission }) {
-  const createdDate = survey?.created_at ? new Date(survey.created_at).toLocaleDateString('vi-VN') : '';
+  const getAnswerSet = (answer) => {
+    if (answer === null || answer === undefined) return new Set();
+    if (Array.isArray(answer)) return new Set(answer.map(s => String(s).trim()).filter(Boolean));
+    return new Set(String(answer).split(",").map(s => s.trim()).filter(Boolean));
+  };
+  const answerSet = getAnswerSet(item.answer);
+  const hasAnswer = answerSet.size > 0;
+  const options = item.options ?? [];
+
+  return (
+    <View style={styles.answerCard}>
+      <View style={styles.answerCardHeader}>
+        <Text style={styles.answerCardIdx}>Câu {index + 1}</Text>
+      </View>
+      <Text style={styles.answerCardQ}>{item.question}</Text>
+      {isText ? (
+        item.answer?.trim()
+          ? <View style={styles.answerTextBox}><Text style={styles.answerTextContent}>{item.answer}</Text></View>
+          : <Text style={styles.noAnswerText}>Không có câu trả lời</Text>
+      ) : (
+        options.length > 0 ? options.map((opt, i) => {
+          const label = typeof opt === "string" ? opt : (opt.label ?? opt.value ?? opt.content ?? "");
+          const isSel = answerSet.has(label) || answerSet.has(String(opt.id ?? ""));
+          return <AnswerOption key={i} label={label} selected={isSel} isMultiple={isMultiple} />;
+        }) : hasAnswer
+          ? [...answerSet].map((label, i) => <AnswerOption key={i} label={label} selected isMultiple={isMultiple} />)
+          : <Text style={styles.noAnswerText}>Không có câu trả lời</Text>
+      )}
+    </View>
+  );
+}
+
+function AnswerOption({ label, selected, isMultiple }) {
+  return (
+    <View style={[styles.answerOption, selected && styles.answerOptionSel]}>
+      <View style={[
+        isMultiple ? styles.checkbox : styles.radio,
+        selected && (isMultiple ? styles.checkboxSel : styles.radioSel),
+      ]}>
+        {selected && <Text style={{ color: C.white, fontSize: isMultiple ? 10 : 8 }}>{isMultiple ? "✓" : "●"}</Text>}
+      </View>
+      <Text style={[styles.answerOptionText, selected && styles.answerOptionTextSel]}>{label}</Text>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STATS STRIP
+════════════════════════════════════════════════════════════════ */
+function StatsStrip({ mySurveys, total, done, pending, loading }) {
+  const stats = [
+    { label: "My Surveys",      value: mySurveys, emoji: "📄", color: "#6366f1" },
+    { label: "Đã hoàn thành",   value: done,      emoji: "✅", color: "#10b981" },
+    { label: "Chưa làm",        value: pending,   emoji: "⚡", color: "#f59e0b" },
+    { label: "Tổng khảo sát",   value: total,     emoji: "📊", color: "#ec4899" },
+  ];
+  return (
+    <View style={styles.statsStrip}>
+      {stats.map((s, i) => (
+        <GlassCard key={i} style={styles.statCard}>
+          <Text style={styles.statEmoji}>{s.emoji}</Text>
+          <Text style={[styles.statValue, { color: s.color }]}>{loading ? "—" : s.value}</Text>
+          <Text style={styles.statLabel}>{s.label}</Text>
+        </GlassCard>
+      ))}
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PUBLIC SURVEY CARD SKELETON
+════════════════════════════════════════════════════════════════ */
+function PublicCardSkeleton() {
+  const opacity = useRef(new Animated.Value(0.5)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 750, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.5, duration: 750, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return (
+    <Animated.View style={[styles.publicCard, { opacity }]}>
+      <View style={[styles.cardThumb, { backgroundColor: C.gray100 }]} />
+      <View style={{ padding: 14 }}>
+        <View style={[styles.skeletonLine, { width: "70%" }]} />
+        <View style={[styles.skeletonLine, { width: "100%", marginTop: 6 }]} />
+        <View style={[styles.skeletonLine, { width: "55%", marginTop: 4 }]} />
+      </View>
+    </Animated.View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PUBLIC SURVEY CARD
+════════════════════════════════════════════════════════════════ */
+function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index }) {
+  const thumbColor = C.thumbColors[index % C.thumbColors.length];
+  const createdDate = survey?.created_at
+    ? new Date(survey.created_at).toLocaleDateString("vi-VN")
+    : "";
+
   return (
     <TouchableOpacity
-      onPress={() => done && onViewSubmission(survey.id, survey.title)}
-      activeOpacity={done ? 0.7 : 1}
-      style={[psc.card, done && psc.cardDone]}
+      style={[styles.publicCard, done && styles.publicCardDone]}
+      onPress={done ? () => onViewSubmission(survey.id, survey.title) : undefined}
+      activeOpacity={done ? 0.75 : 1}
     >
-      {done && <View style={psc.topLine} />}
-      <View style={psc.topRow}>
-        <View style={[psc.icon, done ? psc.iconDone : psc.iconPending]}>
-          <Text style={{ fontSize: 18 }}>{done ? '✓' : '📄'}</Text>
+      {/* Thumb */}
+      <View style={[styles.cardThumb, { backgroundColor: done ? "#d1fae5" : thumbColor }]}>
+        <Text style={styles.cardThumbIcon}>{done ? "✓" : "📋"}</Text>
+        <View style={{ position: "absolute", top: 8, left: 8, flexDirection: "row", gap: 4 }}>
+          {done
+            ? <View style={styles.donePill}><Text style={styles.donePillText}>✓ Hoàn thành</Text></View>
+            : survey.status && <StatusBadge status={survey.status} />}
         </View>
-        <View style={[psc.badge, done ? psc.badgeDone : psc.badgePending]}>
-          <Text style={[psc.badgeText, done ? psc.badgeTextDone : psc.badgeTextPending]}>
-            {done ? 'Đã hoàn thành' : 'Survey'}
-          </Text>
-        </View>
+        {done && <View style={styles.doneBar} />}
       </View>
-      <Text style={psc.title} numberOfLines={2}>{survey.title}</Text>
-      <Text style={psc.desc} numberOfLines={2}>{survey.description}</Text>
-      <View style={psc.footer}>
-        <Text style={psc.date}>🕐 {createdDate}</Text>
-        {done
-          ? <View style={psc.viewBtn}><Text style={psc.viewBtnText}>Xem kết quả →</Text></View>
-          : <TouchableOpacity style={psc.startBtn} onPress={() => onStart(survey.id)}>
-              <Text style={psc.startBtnText}>Bắt đầu →</Text>
+
+      {/* Body */}
+      <View style={styles.cardBody}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{survey.title}</Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>{survey.description || "Không có mô tả"}</Text>
+        <View style={styles.cardFooter}>
+          <Text style={styles.cardDate}>🕐 {createdDate}</Text>
+          {done ? (
+            <View style={styles.viewResultBtn}>
+              <Text style={styles.viewResultBtnText}>Xem kết quả →</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.startBtn}
+              onPress={() => onStart(survey.id)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.startBtnText}>Bắt đầu →</Text>
             </TouchableOpacity>
-        }
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
-const psc = StyleSheet.create({
-  card:          { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1, overflow: 'hidden' },
-  cardDone:      { borderColor: 'rgba(16,185,129,0.2)' },
-  topLine:       { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: '#10b981' },
-  topRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  icon:          { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  iconDone:      { backgroundColor: '#ecfdf5' },
-  iconPending:   { backgroundColor: '#eef0fd' },
-  badge:         { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
-  badgeDone:     { backgroundColor: '#dcfce7', borderColor: '#a7f3d0' },
-  badgePending:  { backgroundColor: '#f4f5f9', borderColor: 'rgba(0,0,0,0.07)' },
-  badgeText:     { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
-  badgeTextDone: { color: '#059669' },
-  badgeTextPending: { color: C.textDim },
-  title:         { fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 6, lineHeight: 20 },
-  desc:          { fontSize: 12, color: C.textSub, lineHeight: 18, marginBottom: 14 },
-  footer:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  date:          { fontSize: 11, color: C.textDim },
-  viewBtn:       { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#a7f3d0' },
-  viewBtnText:   { fontSize: 11, fontWeight: '700', color: '#059669' },
-  startBtn:      { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: C.primary },
-  startBtnText:  { fontSize: 11, fontWeight: '700', color: '#fff' },
-});
+/* ════════════════════════════════════════════════════════════════
+   MY SURVEY CARD
+════════════════════════════════════════════════════════════════ */
+function MySurveyCard({
+  survey, index,
+  onDelete, onUpdate, onShare, onInvite, onPublish, onCloseSurvey,
+  onBulkInvite, onGetParticipants, onDeleteParticipant,
+}) {
+  const navigation = useNavigation();
+  const thumbColor = C.thumbColors[index % C.thumbColors.length];
+  const [menuOpen, setMenuOpen]     = useState(false);
+  const [editing, setEditing]       = useState(false);
+  const [title, setTitle]           = useState(survey.title);
+  const [description, setDescription] = useState(survey.description || "");
+  const [startAt, setStartAt]       = useState(survey.start_at ? survey.start_at.slice(0, 16) : "");
+  const [endAt, setEndAt]           = useState(survey.end_at ? survey.end_at.slice(0, 16) : "");
+  const [saving, setSaving]         = useState(false);
+  const [deleting, setDeleting]     = useState(false);
 
-// ─────────────────────────────────────────────────────────────
-// CreateSurveyForm
-// ─────────────────────────────────────────────────────────────
-function CreateSurveyForm({ onSubmit, onCancel, submitting }) {
-  const [title,       setTitle]       = useState('');
-  const [description, setDescription] = useState('');
+  const [shareOpen, setShareOpen]           = useState(false);
+  const [inviteOpen, setInviteOpen]         = useState(false);
+  const [publishOpen, setPublishOpen]       = useState(false);
+  const [closeOpen, setCloseOpen]           = useState(false);
+  const [bulkInviteOpen, setBulkInviteOpen] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+
+  const isClosed = survey.status === "CLOSED";
+  const isPublished = survey.is_published;
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await onUpdate(survey.id, { title, description, start_at: startAt || null, end_at: endAt || null });
+      setEditing(false);
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = () => {
+    Alert.alert("Xoá survey", "Bạn chắc chắn muốn xoá?", [
+      { text: "Huỷ", style: "cancel" },
+      { text: "Xoá", style: "destructive", onPress: async () => {
+        setDeleting(true);
+        try { await onDelete(survey.id); } finally { setDeleting(false); }
+      }},
+    ]);
+  };
+
+  const menuItems = [
+    { label: "✏️ Chỉnh sửa",        action: () => { setEditing(true); setMenuOpen(false); } },
+    { label: "📊 Phân tích",         action: () => { navigation.navigate("SurveyAnalytics", { surveyId: survey.id }); setMenuOpen(false); } },
+    { label: "🔗 Tạo link chia sẻ", action: () => { setShareOpen(true); setMenuOpen(false); } },
+    { label: "✉️ Mời người dùng",   action: () => { setInviteOpen(true); setMenuOpen(false); } },
+    { label: "👥 Mời hàng loạt",    action: () => { setBulkInviteOpen(true); setMenuOpen(false); } },
+    { label: "👤 Xem participants",  action: () => { setParticipantsOpen(true); setMenuOpen(false); } },
+    { label: isPublished ? "🔒 Ẩn survey" : "🌐 Publish", action: () => { setPublishOpen(true); setMenuOpen(false); } },
+    !isClosed && { label: "⏹ Đóng survey", action: () => { setCloseOpen(true); setMenuOpen(false); } },
+    { label: "🗑 Xóa", action: () => { setMenuOpen(false); handleDelete(); }, danger: true },
+  ].filter(Boolean);
+
   return (
-    <View style={csf.wrap}>
-      <Text style={csf.heading}>✨ Tạo survey mới</Text>
-      <TextInput
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Tiêu đề survey *"
-        placeholderTextColor={C.textDim}
-        style={csf.input}
-      />
-      <TextInput
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Mô tả (tuỳ chọn)"
-        placeholderTextColor={C.textDim}
-        multiline
-        numberOfLines={2}
-        style={[csf.input, { height: 60 }]}
-      />
-      <View style={csf.actions}>
-        <TouchableOpacity onPress={onCancel} style={ss.cancelBtn}>
-          <Text style={ss.cancelBtnText}>Huỷ</Text>
+    <>
+      <TouchableOpacity
+        style={[styles.myCard, isClosed && { opacity: 0.7 }]}
+        onPress={() => !editing && navigation.navigate("MySurveyDetail", { surveyId: survey.id })}
+        activeOpacity={0.88}
+      >
+        {/* Thumb */}
+        <View style={[styles.cardThumb, { backgroundColor: isClosed ? C.gray100 : thumbColor }]}>
+          <Text style={styles.cardThumbIcon}>{isClosed ? "⏹" : "📋"}</Text>
+          <View style={{ position: "absolute", top: 8, left: 8 }}>
+            <StatusBadge status={survey.status} />
+            {isPublished && (
+              <View style={[styles.badge, { backgroundColor: "rgba(67,97,238,0.18)", marginTop: 4 }]}>
+                <Text style={[styles.badgeText, { color: C.primary }]}>🌐 Live</Text>
+              </View>
+            )}
+          </View>
+          {/* Quick action buttons */}
+          {!editing && (
+            <View style={styles.thumbActions}>
+              {[
+                { e: "🔗", onPress: () => setShareOpen(true) },
+                { e: "✉️", onPress: () => setInviteOpen(true) },
+                { e: "👥", onPress: () => setBulkInviteOpen(true) },
+                { e: "👤", onPress: () => setParticipantsOpen(true) },
+                { e: isPublished ? "🔒" : "🌐", onPress: () => setPublishOpen(true) },
+                !isClosed && { e: "⏹", onPress: () => setCloseOpen(true) },
+              ].filter(Boolean).map((btn, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.thumbActionBtn}
+                  onPress={e => { e.stopPropagation?.(); btn.onPress(); }}
+                >
+                  <Text style={{ fontSize: 12 }}>{btn.e}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {/* Menu button */}
+          <TouchableOpacity
+            style={styles.menuBtn}
+            onPress={e => { e.stopPropagation?.(); setMenuOpen(true); }}
+          >
+            <Text style={{ fontSize: 16, color: C.textSub }}>⋮</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Body */}
+        <View style={styles.cardBody}>
+          {editing ? (
+            <View style={{ gap: 8 }}>
+              <TextInput
+                style={styles.editInput}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Tiêu đề"
+                placeholderTextColor={C.textDim}
+              />
+              <TextInput
+                style={[styles.editInput, { minHeight: 60 }]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Mô tả"
+                placeholderTextColor={C.textDim}
+                multiline
+                textAlignVertical="top"
+              />
+              <TextInput
+                style={styles.editInput}
+                value={startAt}
+                onChangeText={setStartAt}
+                placeholder="Bắt đầu (YYYY-MM-DDTHH:MM)"
+                placeholderTextColor={C.textDim}
+              />
+              <TextInput
+                style={styles.editInput}
+                value={endAt}
+                onChangeText={setEndAt}
+                placeholder="Kết thúc (YYYY-MM-DDTHH:MM)"
+                placeholderTextColor={C.textDim}
+              />
+              <View style={styles.modalActions}>
+                <TouchableOpacity onPress={() => setEditing(false)} style={styles.cancelBtn}>
+                  <Text style={styles.cancelBtnText}>Huỷ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.primaryBtn, styles.primaryBtnSm, saving && styles.btnDisabled]}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  {saving
+                    ? <ActivityIndicator color={C.white} size="small" />
+                    : <Text style={styles.primaryBtnText}>✓ Lưu</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.cardTitle} numberOfLines={1}>{survey.title}</Text>
+              <Text style={styles.cardDesc} numberOfLines={2}>{survey.description || "Không có mô tả"}</Text>
+              <View style={styles.cardFooter}>
+                <Text style={styles.cardDate}>
+                  📅 {survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : ""}
+                </Text>
+                {deleting && <ActivityIndicator size="small" color={C.error} />}
+              </View>
+            </>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      {/* Context menu */}
+      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setMenuOpen(false)}>
+          <TouchableOpacity style={[styles.modalBox, { maxWidth: 260, padding: 0, overflow: "hidden" }]} activeOpacity={1}>
+            {menuItems.map((item, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.menuItem, i > 0 && { borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.05)" }]}
+                onPress={item.action}
+              >
+                <Text style={[styles.menuItemText, item.danger && { color: C.error }]}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </TouchableOpacity>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => onSubmit({ title, description })}
-          disabled={submitting || !title.trim()}
-          style={[ss.primaryBtn, (submitting || !title.trim()) && ss.primaryBtnDisabled]}
-        >
-          {submitting
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={ss.primaryBtnText}>+ Tạo Survey</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </View>
+      </Modal>
+
+      <ShareLinkModal open={shareOpen} onClose={() => setShareOpen(false)} survey={survey} onShare={onShare} />
+      <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} survey={survey} onInvite={onInvite} />
+      <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} survey={survey} onPublish={onPublish} />
+      <CloseModal open={closeOpen} onClose={() => setCloseOpen(false)} survey={survey} onCloseSurvey={onCloseSurvey} />
+      <BulkInviteModal open={bulkInviteOpen} onClose={() => setBulkInviteOpen(false)} survey={survey} onBulkInvite={onBulkInvite} />
+      <ParticipantsModal open={participantsOpen} onClose={() => setParticipantsOpen(false)} survey={survey} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant} />
+    </>
   );
 }
-const csf = StyleSheet.create({
-  wrap:    { backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(67,97,238,0.3)', padding: 16, marginBottom: 14 },
-  heading: { fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 12 },
-  input:   { borderWidth: 1, borderColor: C.border, borderRadius: 9, padding: 9, fontSize: 12, color: C.text, marginBottom: 8, backgroundColor: '#fff' },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
-});
 
-// ─────────────────────────────────────────────────────────────
-// MAIN: SurveysLayout
-// ─────────────────────────────────────────────────────────────
-export default function SurveysLayout({ navigation }) {
+/* ════════════════════════════════════════════════════════════════
+   MAIN PAGE
+════════════════════════════════════════════════════════════════ */
+const PUBLIC_TABS = [
+  { key: "all",     label: "Tất cả" },
+  { key: "pending", label: "Chưa làm" },
+  { key: "done",    label: "Đã hoàn thành" },
+];
+
+export default function SurveysLayout() {
+  const navigation = useNavigation();
   const {
-    mySurveys, publicSurveys: providerPublicSurveys,
-    loading: myLoading,
-    createSurvey, fetchMySurveys, updateSurvey, deleteSurvey,
-    closeSurvey, publishSurvey, shareLink, inviteSurvey, fetchPublicSurveys,
-    bulkInviteSurvey, getParticipants, deleteParticipant,
+    mySurveys, publicSurveys: providerPublicSurveys, loading: myLoading,
+    fetchMySurveys, updateSurvey, deleteSurvey,
+    closeSurvey, publishSurvey, shareLink, inviteSurvey,
+    fetchPublicSurveys, bulkInviteSurvey, getParticipants, deleteParticipant,
   } = useSurvey();
   const { getAllMyResponses } = useResponse();
 
-  const [mySearch,       setMySearch]       = useState('');
+  const [mySearch, setMySearch]           = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [submitting,     setSubmitting]     = useState(false);
-  const [myExpanded,     setMyExpanded]     = useState(false);
-
+  const [myExpanded, setMyExpanded]       = useState(false);
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
   const [publicLoading, setPublicLoading] = useState(true);
-  const [publicError,   setPublicError]   = useState(null);
-  const [modalSurvey,   setModalSurvey]   = useState(null);
-  const [publicSearch,  setPublicSearch]  = useState('');
-  const [activeTab,     setActiveTab]     = useState('all');
-  const [sortBy,        setSortBy]        = useState('newest');
-  const [viewMode,      setViewMode]      = useState('grid');
-  const [showFilter,    setShowFilter]    = useState(false);
-
-  const [globalSearch, setGlobalSearch] = useState('');
+  const [publicError, setPublicError]     = useState(null);
+  const [modalSurvey, setModalSurvey]     = useState(null);
+  const [publicSearch, setPublicSearch]   = useState("");
+  const [activeTab, setActiveTab]         = useState("all");
+  const [sortBy, setSortBy]               = useState("newest");
+  const [viewMode, setViewMode]           = useState("grid");
+  const [showFilter, setShowFilter]       = useState(false);
+  const [globalSearch, setGlobalSearch]   = useState("");
+  const [refreshing, setRefreshing]       = useState(false);
 
   useEffect(() => { fetchMySurveys(1, 20); }, []);
 
@@ -1194,437 +1137,609 @@ export default function SurveysLayout({ navigation }) {
         fetchPublicSurveys(),
         getAllMyResponses().catch(() => null),
       ]);
-      const resp = respResult.status === 'fulfilled' ? respResult.value : null;
-      const ids  = new Set((resp?.data ?? resp ?? []).map(r => r.survey_id ?? r.surveyId));
+      const resp = respResult.status === "fulfilled" ? respResult.value : null;
+      const ids = new Set((resp?.data ?? resp ?? []).map(r => r.survey_id ?? r.surveyId));
       setDoneSurveyIds(ids);
-    } catch {
-      setPublicError('Không thể tải danh sách khảo sát.');
-    } finally {
-      setPublicLoading(false);
-    }
+    } catch { setPublicError("Không thể tải danh sách khảo sát."); }
+    finally { setPublicLoading(false); }
   }, []);
 
   useEffect(() => { fetchPublicData(); }, []);
 
-  const handleGlobalSearch = (text) => {
-    setGlobalSearch(text);
-    setMySearch(text);
-    setPublicSearch(text);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.allSettled([fetchMySurveys(1, 20), fetchPublicData()]);
+    setRefreshing(false);
   };
 
-  const handleSubmitCreate = async (formData) => {
-    try {
-      setSubmitting(true);
-      await createSurvey({ title: formData.title, description: formData.description || null });
-      setShowCreateForm(false);
-      setMyExpanded(true);
-      fetchMySurveys(1, 20);
-    } catch (err) { console.error(err); }
-    finally { setSubmitting(false); }
+  const handleGlobalSearch = (v) => {
+    setGlobalSearch(v); setMySearch(v); setPublicSearch(v);
   };
 
-  const myFiltered    = mySurveys.filter(s => s.title?.toLowerCase().includes(mySearch.toLowerCase()));
+  const myFiltered = mySurveys.filter(s =>
+    s.title?.toLowerCase().includes(mySearch.toLowerCase())
+  );
   const publicSurveys = providerPublicSurveys;
 
   const displayed = useMemo(() => {
     let list = [...publicSurveys];
-    if (activeTab === 'pending') list = list.filter(s => !doneSurveyIds.has(s.id));
-    if (activeTab === 'done')    list = list.filter(s =>  doneSurveyIds.has(s.id));
+    if (activeTab === "pending") list = list.filter(s => !doneSurveyIds.has(s.id));
+    if (activeTab === "done")    list = list.filter(s => doneSurveyIds.has(s.id));
     if (publicSearch.trim()) {
       const q = publicSearch.toLowerCase();
       list = list.filter(s => s.title?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q));
     }
-    if (sortBy === 'newest') list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    if (sortBy === 'oldest') list.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-    if (sortBy === 'name')   list.sort((a,b) => (a.title ?? '').localeCompare(b.title ?? ''));
+    if (sortBy === "newest") list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (sortBy === "oldest") list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    if (sortBy === "name")   list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
     return list;
   }, [publicSurveys, doneSurveyIds, activeTab, publicSearch, sortBy]);
 
   const totalCount   = publicSurveys.length;
-  const doneCount    = publicSurveys.filter(s =>  doneSurveyIds.has(s.id)).length;
+  const doneCount    = publicSurveys.filter(s => doneSurveyIds.has(s.id)).length;
   const pendingCount = publicSurveys.filter(s => !doneSurveyIds.has(s.id)).length;
 
-  const visibleMySurveys = (myExpanded || showCreateForm) ? myFiltered : myFiltered.slice(0, MY_SURVEYS_PREVIEW);
+  const visibleMySurveys = (myExpanded || showCreateForm)
+    ? myFiltered
+    : myFiltered.slice(0, MY_SURVEYS_PREVIEW);
   const hasMoreMySurveys = myFiltered.length > MY_SURVEYS_PREVIEW;
 
-  const PUBLIC_TABS = [
-    { key: 'all',     label: 'Tất cả',        count: totalCount },
-    { key: 'pending', label: 'Chưa làm',      count: pendingCount },
-    { key: 'done',    label: 'Đã hoàn thành', count: doneCount },
-  ];
+  const tabCounts = { all: totalCount, pending: pendingCount, done: doneCount };
+
+  const numColumns = viewMode === "grid" ? (SW >= 640 ? 3 : 2) : 1;
 
   return (
-    <SafeAreaView style={ls.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* TOP BAR */}
-      <View style={ls.topBar}>
-        <View style={ls.topBarLeft}>
-          <Text style={ls.appIcon}>📄</Text>
-          <View>
-            <Text style={ls.appTitle}>Surveys</Text>
-            <Text style={ls.appSubtitle}>Quản lý và tham gia khảo sát</Text>
-          </View>
-        </View>
-        <View style={ls.topBarStats}>
-          <Text style={ls.statText}><Text style={ls.statNum}>{mySurveys.length}</Text> của tôi</Text>
-          <Text style={ls.statDot}>·</Text>
-          <Text style={ls.statText}><Text style={ls.statNum}>{totalCount}</Text> công khai</Text>
-        </View>
-      </View>
-
-      {/* GLOBAL SEARCH */}
-      <View style={ls.globalSearch}>
-        <Text style={ls.searchIcon}>🔍</Text>
-        <TextInput
-          value={globalSearch}
-          onChangeText={handleGlobalSearch}
-          placeholder="Tìm survey..."
-          placeholderTextColor={C.textDim}
-          style={ls.searchInput}
+    <View style={styles.screen}>
+      {modalSurvey && (
+        <SubmissionModal
+          surveyId={modalSurvey.id}
+          surveyTitle={modalSurvey.title}
+          onClose={() => setModalSurvey(null)}
         />
-        {globalSearch ? (
-          <TouchableOpacity onPress={() => handleGlobalSearch('')}>
-            <Text style={{ color: C.textDim }}>✕</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      )}
 
-      <ScrollView style={ls.scroll} contentContainerStyle={ls.scrollContent} showsVerticalScrollIndicator={false}>
-
-        {/* MY SURVEYS */}
-        <View style={ls.sectionHeader}>
-          <View style={ls.sectionHeaderLeft}>
-            <Text style={ls.sectionTitle}>My Surveys</Text>
-            <View style={ls.sectionBadge}>
-              <Text style={ls.sectionBadgeText}>{myFiltered.length}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.primary} />
+          }
+        >
+          {/* ── Hero ── */}
+          <View style={styles.hero}>
+            <View style={styles.heroInner}>
+              <View style={styles.heroIconRow}>
+                <View style={styles.heroIconBox}>
+                  <Text style={{ fontSize: 18 }}>🚀</Text>
+                </View>
+                <Text style={styles.heroLabel}>Survey studio</Text>
+              </View>
+              <Text style={styles.heroTitle}>Không gian khảo sát</Text>
+              <Text style={styles.heroSub}>
+                Tìm nhanh, tạo mới và tham gia khảo sát công khai.
+              </Text>
+              <View style={styles.heroBadgeRow}>
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>{mySurveys.length} của tôi</Text>
+                </View>
+                <View style={[styles.heroBadge, { backgroundColor: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.24)" }]}>
+                  <Text style={[styles.heroBadgeText, { color: "#047857" }]}>{totalCount} công khai</Text>
+                </View>
+              </View>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => setShowCreateForm(v => !v)}
-            style={[ls.createBtn, showCreateForm && ls.createBtnActive]}
-          >
-            <Text style={[ls.createBtnText, showCreateForm && ls.createBtnTextActive]}>
-              {showCreateForm ? '✕ Huỷ' : '+ Tạo mới'}
-            </Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={[ls.searchMini, { marginBottom: 12 }]}>
-          <TextInput
-            value={mySearch}
-            onChangeText={setMySearch}
-            placeholder="Tìm survey của tôi..."
-            placeholderTextColor={C.textDim}
-            style={ls.searchMiniInput}
-          />
-        </View>
-
-        {myLoading ? (
-          <View style={ss.centered}>
-            <ActivityIndicator color={C.primary} size="large" />
-          </View>
-        ) : (
-          <>
-            {showCreateForm && (
-              <CreateSurveyForm
-                onSubmit={handleSubmitCreate}
-                onCancel={() => setShowCreateForm(false)}
-                submitting={submitting}
-              />
+          {/* ── Global search ── */}
+          <View style={styles.globalSearchRow}>
+            <Text style={{ color: C.primary, marginRight: 8 }}>🔍</Text>
+            <TextInput
+              style={styles.globalSearchInput}
+              value={globalSearch}
+              onChangeText={handleGlobalSearch}
+              placeholder="Tìm nhanh toàn trang..."
+              placeholderTextColor={C.textDim}
+              returnKeyType="search"
+            />
+            {!!globalSearch && (
+              <TouchableOpacity onPress={() => handleGlobalSearch("")}>
+                <Text style={{ color: C.textDim }}>✕</Text>
+              </TouchableOpacity>
             )}
-            {myFiltered.length === 0 ? (
-              <View style={ss.centered}>
-                <Text style={ss.emptyEmoji}>📭</Text>
-                <Text style={ss.emptyTitle}>{mySearch ? `Không tìm thấy "${mySearch}"` : 'Chưa có survey nào'}</Text>
+          </View>
+
+          {/* ── Stats ── */}
+          <StatsStrip
+            mySurveys={mySurveys.length}
+            total={totalCount}
+            done={doneCount}
+            pending={pendingCount}
+            loading={myLoading || publicLoading}
+          />
+
+          {/* ════ MY SURVEYS ════ */}
+          <View style={styles.sectionHeader}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={styles.sectionTitle}>My Surveys</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{myFiltered.length}</Text>
               </View>
-            ) : (
-              <>
-                {visibleMySurveys.map((survey, index) => (
-                  <MySurveyCard
-                    key={survey.id}
-                    survey={survey}
-                    index={index}
-                    navigation={navigation}
-                    onDelete={deleteSurvey}
-                    onUpdate={updateSurvey}
-                    onShare={shareLink}
-                    onInvite={inviteSurvey}
-                    onPublish={publishSurvey}
-                    onCloseSurvey={closeSurvey}
-                    onBulkInvite={bulkInviteSurvey}
-                    onGetParticipants={getParticipants}
-                    onDeleteParticipant={deleteParticipant}
+            </View>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity
+                style={[styles.actionChip, showCreateForm && styles.actionChipActive]}
+                onPress={() => { setShowCreateForm(v => !v); if (!showCreateForm) setMyExpanded(true); }}
+              >
+                <Text style={[styles.actionChipText, !showCreateForm && { color: C.white }]}>
+                  {showCreateForm ? "✕ Huỷ" : "+ Tạo mới"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* My search */}
+          <View style={[styles.globalSearchRow, { marginBottom: 12, marginHorizontal: 16 }]}>
+            <Text style={{ color: C.textSub, marginRight: 6 }}>🔍</Text>
+            <TextInput
+              style={styles.globalSearchInput}
+              value={mySearch}
+              onChangeText={setMySearch}
+              placeholder="Tìm survey của tôi..."
+              placeholderTextColor={C.textDim}
+            />
+            {!!mySearch && (
+              <TouchableOpacity onPress={() => setMySearch("")}>
+                <Text style={{ color: C.textDim }}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {myLoading ? (
+            <View style={{ alignItems: "center", paddingVertical: 40 }}>
+              <ActivityIndicator color={C.primary} size="large" />
+            </View>
+          ) : (
+            <>
+              {showCreateForm && (
+                <View style={{ marginHorizontal: 16, marginBottom: 14 }}>
+                  <CreateSurveyComposer
+                    onCancel={() => setShowCreateForm(false)}
+                    onSuccess={() => { setShowCreateForm(false); setMyExpanded(true); fetchMySurveys(1, 20); }}
                   />
-                ))}
-                {hasMoreMySurveys && !showCreateForm && (
+                </View>
+              )}
+
+              {myFiltered.length === 0 ? (
+                <GlassCard style={{ alignItems: "center", padding: 40, marginHorizontal: 16 }}>
+                  <Text style={{ fontSize: 36, marginBottom: 10 }}>📭</Text>
+                  <Text style={styles.emptyTitle}>{mySearch ? `Không tìm thấy "${mySearch}"` : "Chưa có survey nào"}</Text>
+                  <Text style={styles.infoBoxSub}>{mySearch ? "Thử từ khoá khác" : "Hãy tạo survey đầu tiên"}</Text>
+                </GlassCard>
+              ) : (
+                <>
+                  <View style={styles.myGrid}>
+                    {visibleMySurveys.map((survey, index) => (
+                      <MySurveyCard
+                        key={survey.id}
+                        survey={survey}
+                        index={index}
+                        onDelete={deleteSurvey}
+                        onUpdate={updateSurvey}
+                        onShare={shareLink}
+                        onInvite={inviteSurvey}
+                        onPublish={publishSurvey}
+                        onCloseSurvey={closeSurvey}
+                        onBulkInvite={bulkInviteSurvey}
+                        onGetParticipants={getParticipants}
+                        onDeleteParticipant={deleteParticipant}
+                      />
+                    ))}
+                  </View>
+
+                  {hasMoreMySurveys && !showCreateForm && (
+                    <TouchableOpacity
+                      style={styles.expandBtn}
+                      onPress={() => setMyExpanded(v => !v)}
+                    >
+                      <Text style={styles.expandBtnText}>
+                        {myExpanded ? "△ Thu gọn" : `▽ Xem thêm ${myFiltered.length - MY_SURVEYS_PREVIEW} survey`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {/* ════ DIVIDER ════ */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <View style={styles.dividerPill}>
+              <Text style={styles.dividerPillText}>🌐 Khảo sát công khai</Text>
+            </View>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* ════ PUBLIC SURVEYS ════ */}
+          <View style={styles.sectionHeader}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={styles.sectionTitle}>Khảo Sát</Text>
+              {!publicLoading && (
+                <View style={[styles.countBadge, { backgroundColor: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.25)" }]}>
+                  <Text style={[styles.countBadgeText, { color: C.success }]}>{totalCount}</Text>
+                </View>
+              )}
+            </View>
+            <View style={{ flexDirection: "row", gap: 6 }}>
+              <TouchableOpacity
+                style={[styles.iconChip, viewMode === "grid" && styles.iconChipActive]}
+                onPress={() => setViewMode("grid")}
+              >
+                <Text style={{ fontSize: 13 }}>⊞</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconChip, viewMode === "list" && styles.iconChipActive]}
+                onPress={() => setViewMode("list")}
+              >
+                <Text style={{ fontSize: 13 }}>☰</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconChip, showFilter && styles.iconChipActive]}
+                onPress={() => setShowFilter(v => !v)}
+              >
+                <Text style={{ fontSize: 13 }}>⚙</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconChip} onPress={fetchPublicData}>
+                <Text style={{ fontSize: 13 }}>↻</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Tabs */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginHorizontal: 16, marginBottom: 10 }}
+          >
+            <View style={styles.tabRow}>
+              {PUBLIC_TABS.map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
                   <TouchableOpacity
-                    onPress={() => setMyExpanded(v => !v)}
-                    style={ls.expandBtn}
+                    key={tab.key}
+                    style={[styles.tab, isActive && styles.tabActive]}
+                    onPress={() => setActiveTab(tab.key)}
                   >
-                    <Text style={ls.expandBtnText}>
-                      {myExpanded
-                        ? '▲ Thu gọn'
-                        : `▼ Xem thêm ${myFiltered.length - MY_SURVEYS_PREVIEW} survey`}
+                    <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                      {tab.label}
+                      {!publicLoading && ` (${tabCounts[tab.key]})`}
                     </Text>
                   </TouchableOpacity>
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {/* Divider */}
-        <View style={ls.divider}>
-          <View style={ls.dividerLine} />
-          <View style={ls.dividerBadge}>
-            <Text style={ls.dividerText}>🌐 Khảo sát công khai</Text>
-          </View>
-          <View style={ls.dividerLine} />
-        </View>
-
-        {/* PUBLIC SURVEYS */}
-        <View style={ls.sectionHeader}>
-          <View style={ls.sectionHeaderLeft}>
-            <Text style={ls.sectionTitle}>Khảo Sát</Text>
-            {!publicLoading && (
-              <View style={[ls.sectionBadge, { backgroundColor: '#dcfce7', borderColor: '#a7f3d0' }]}>
-                <Text style={[ls.sectionBadgeText, { color: '#059669' }]}>{totalCount}</Text>
-              </View>
-            )}
-          </View>
-          <View style={ls.sectionHeaderRight}>
-            <TouchableOpacity
-              onPress={() => setShowFilter(v => !v)}
-              style={[ls.filterBtn, showFilter && ls.filterBtnActive]}
-            >
-              <Text style={[ls.filterBtnText, showFilter && ls.filterBtnTextActive]}>⚙ Lọc</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={fetchPublicData} style={ls.refreshBtn2}>
-              <Text style={ls.refreshBtn2Text}>⟳</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Public tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-          <View style={ls.tabsRow}>
-            {PUBLIC_TABS.map(tab => {
-              const isActive = activeTab === tab.key;
-              return (
-                <TouchableOpacity
-                  key={tab.key}
-                  onPress={() => setActiveTab(tab.key)}
-                  style={[ls.pubTab, isActive && ls.pubTabActive]}
-                >
-                  <Text style={[ls.pubTabText, isActive && ls.pubTabTextActive]}>{tab.label}</Text>
-                  {!publicLoading && (
-                    <Text style={[ls.pubTabCount, isActive && ls.pubTabCountActive]}>{tab.count}</Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        <View style={ls.searchMini}>
-          <TextInput
-            value={publicSearch}
-            onChangeText={setPublicSearch}
-            placeholder="Tìm khảo sát..."
-            placeholderTextColor={C.textDim}
-            style={ls.searchMiniInput}
-          />
-        </View>
-
-        <View style={[ls.viewToggle, { marginTop: 10 }]}>
-          <TouchableOpacity onPress={() => setViewMode('grid')} style={[ls.viewToggleBtn, viewMode === 'grid' && ls.viewToggleBtnActive]}>
-            <Text style={viewMode === 'grid' ? ls.viewToggleBtnTextActive : ls.viewToggleBtnText}>⊞</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setViewMode('list')} style={[ls.viewToggleBtn, viewMode === 'list' && ls.viewToggleBtnActive]}>
-            <Text style={viewMode === 'list' ? ls.viewToggleBtnTextActive : ls.viewToggleBtnText}>☰</Text>
-          </TouchableOpacity>
-        </View>
-
-        {showFilter && (
-          <View style={ls.filterPanel}>
-            <Text style={ls.filterPanelLabel}>Sắp xếp theo</Text>
-            <View style={ls.sortRow}>
-              {[{ key: 'newest', label: 'Mới nhất' }, { key: 'oldest', label: 'Cũ nhất' }, { key: 'name', label: 'Tên A-Z' }].map(item => (
-                <TouchableOpacity key={item.key} onPress={() => setSortBy(item.key)} style={[ls.sortBtn, sortBy === item.key && ls.sortBtnActive]}>
-                  <Text style={[ls.sortBtnText, sortBy === item.key && ls.sortBtnTextActive]}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
+                );
+              })}
             </View>
-            <TouchableOpacity onPress={() => { setPublicSearch(''); setSortBy('newest'); setActiveTab('all'); setShowFilter(false); }} style={ls.resetBtn}>
-              <Text style={ls.resetBtnText}>Reset</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          </ScrollView>
 
-        {modalSurvey && (
-          <SubmissionModal
-            surveyId={modalSurvey.id}
-            surveyTitle={modalSurvey.title}
-            onClose={() => setModalSurvey(null)}
-          />
-        )}
-
-        {publicLoading ? (
-          Array(4).fill(0).map((_, i) => (
-            <View key={i} style={[psc.card, { height: 140 }]}>
-              <View style={{ backgroundColor: '#f3f4f6', borderRadius: 8, height: 12, width: '70%', marginBottom: 8 }} />
-              <View style={{ backgroundColor: '#f3f4f6', borderRadius: 8, height: 10, width: '100%' }} />
-            </View>
-          ))
-        ) : publicError ? (
-          <View style={ss.centered}>
-            <Text style={{ fontSize: 36, marginBottom: 10 }}>⚠️</Text>
-            <Text style={ss.emptyText}>{publicError}</Text>
-            <TouchableOpacity onPress={fetchPublicData} style={{ marginTop: 8 }}>
-              <Text style={{ color: C.primary, fontWeight: '700' }}>Thử lại</Text>
-            </TouchableOpacity>
-          </View>
-        ) : displayed.length === 0 ? (
-          <View style={ss.centered}>
-            <Text style={ss.emptyEmoji}>📭</Text>
-            <Text style={ss.emptyTitle}>{publicSearch ? `Không tìm thấy "${publicSearch}"` : 'Không có khảo sát nào'}</Text>
-          </View>
-        ) : viewMode === 'grid' ? (
-          <View style={ls.publicGrid}>
-            {displayed.map(survey => (
-              <View key={survey.id} style={{ width: '48%' }}>
-                <PublicSurveyCard
-                  survey={survey}
-                  done={doneSurveyIds.has(survey.id)}
-                  onStart={id => navigation?.navigate('SurveyTake', { surveyId: id })}
-                  onViewSubmission={(id, title) => setModalSurvey({ id, title })}
-                />
-              </View>
-            ))}
-          </View>
-        ) : (
-          displayed.map(survey => (
-            <PublicSurveyCard
-              key={survey.id}
-              survey={survey}
-              done={doneSurveyIds.has(survey.id)}
-              onStart={id => navigation?.navigate('SurveyTake', { surveyId: id })}
-              onViewSubmission={(id, title) => setModalSurvey({ id, title })}
+          {/* Public search */}
+          <View style={[styles.globalSearchRow, { marginBottom: 10, marginHorizontal: 16 }]}>
+            <Text style={{ color: C.textSub, marginRight: 6 }}>🔍</Text>
+            <TextInput
+              style={styles.globalSearchInput}
+              value={publicSearch}
+              onChangeText={setPublicSearch}
+              placeholder="Tìm khảo sát..."
+              placeholderTextColor={C.textDim}
             />
-          ))
-        )}
+            {!!publicSearch && (
+              <TouchableOpacity onPress={() => setPublicSearch("")}>
+                <Text style={{ color: C.textDim }}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-      </ScrollView>
-    </SafeAreaView>
+          {/* Filter panel */}
+          {showFilter && (
+            <GlassCard style={{ marginHorizontal: 16, marginBottom: 12, padding: 14 }}>
+              <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>Sắp xếp theo</Text>
+              <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                {[
+                  { key: "newest", label: "Mới nhất" },
+                  { key: "oldest", label: "Cũ nhất" },
+                  { key: "name",   label: "Tên A-Z" },
+                ].map(item => (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[styles.sortBtn, sortBy === item.key && styles.sortBtnActive]}
+                    onPress={() => setSortBy(item.key)}
+                  >
+                    <Text style={[styles.sortBtnText, sortBy === item.key && styles.sortBtnTextActive]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => { setPublicSearch(""); setSortBy("newest"); setActiveTab("all"); setShowFilter(false); }}
+                >
+                  <Text style={styles.cancelBtnText}>Reset</Text>
+                </TouchableOpacity>
+              </View>
+            </GlassCard>
+          )}
+
+          {/* Public list */}
+          {publicLoading ? (
+            <View style={[styles.myGrid, { marginHorizontal: 16 }]}>
+              {Array(6).fill(0).map((_, i) => <PublicCardSkeleton key={i} />)}
+            </View>
+          ) : publicError ? (
+            <GlassCard style={{ alignItems: "center", padding: 40, marginHorizontal: 16 }}>
+              <Text style={{ fontSize: 36, marginBottom: 10 }}>⚠️</Text>
+              <Text style={styles.infoBoxSub}>{publicError}</Text>
+              <TouchableOpacity onPress={fetchPublicData} style={{ marginTop: 10 }}>
+                <Text style={{ color: C.primary, fontWeight: "700" }}>Thử lại</Text>
+              </TouchableOpacity>
+            </GlassCard>
+          ) : displayed.length === 0 ? (
+            <GlassCard style={{ alignItems: "center", padding: 40, marginHorizontal: 16 }}>
+              <Text style={{ fontSize: 36, marginBottom: 10 }}>📭</Text>
+              <Text style={styles.emptyTitle}>{publicSearch ? `Không tìm thấy "${publicSearch}"` : "Không có khảo sát nào"}</Text>
+            </GlassCard>
+          ) : (
+            <>
+              <Text style={styles.resultCount}>
+                {displayed.length} khảo sát
+                {!!publicSearch && ` · "${publicSearch}"`}
+                {doneCount > 0 && `  •  ${doneCount} đã hoàn thành`}
+              </Text>
+              <View style={[styles.myGrid, viewMode === "list" && { flexDirection: "column" }]}>
+                {displayed.map((survey, i) => (
+                  <PublicSurveyCard
+                    key={survey.id}
+                    survey={survey}
+                    index={i}
+                    done={doneSurveyIds.has(survey.id)}
+                    onStart={id => navigation.navigate("SurveyTake", { surveyId: id })}
+                    onViewSubmission={(id, title) => setModalSurvey({ id, title })}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// SHARED STYLES
-// ─────────────────────────────────────────────────────────────
-const ss = StyleSheet.create({
-  centered:           { alignItems: 'center', paddingVertical: 40, gap: 8 },
-  loadingText:        { fontSize: 13, color: C.primary, fontWeight: '600', marginTop: 6 },
-  emptyText:          { fontSize: 13, color: C.textSub },
-  emptyEmoji:         { fontSize: 40, marginBottom: 6 },
-  emptyTitle:         { fontSize: 15, fontWeight: '700', color: C.text },
-  errorText:          { fontSize: 12, color: C.error },
-  errorBox:           { backgroundColor: C.errorBg, padding: 12, borderRadius: 10, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  errorBoxText:       { fontSize: 12, color: C.error, flex: 1 },
-  retryText:          { fontSize: 12, color: C.error, fontWeight: '700', marginLeft: 8 },
-  successBox:         { backgroundColor: C.successBg, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: C.successBorder },
-  successText:        { fontSize: 12, fontWeight: '600', color: '#059669' },
-  fieldLabel:         { fontSize: 11, fontWeight: '700', color: C.textSub, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 7, marginTop: 4 },
-  textarea:           { borderWidth: 1, borderColor: C.border, borderRadius: 10, padding: 10, fontSize: 12, color: C.text, height: 100, textAlignVertical: 'top' },
-  actionRow:          { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 12 },
-  cancelBtn:          { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 9, borderWidth: 1, borderColor: C.border },
-  cancelBtnText:      { fontSize: 12, fontWeight: '600', color: C.textSub },
-  primaryBtn:         { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 9, backgroundColor: C.primary, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  primaryBtnDisabled: { backgroundColor: C.surfaceHigh },
-  primaryBtnText:     { fontSize: 12, fontWeight: '700', color: '#fff' },
-  emailCountText:     { fontSize: 11, color: C.primary, fontWeight: '700', marginBottom: 4 },
-  confirmBox:         { alignItems: 'center', padding: 20, borderRadius: 12, backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.primaryBorder, marginBottom: 14 },
-  confirmEmoji:       { fontSize: 32, marginBottom: 8 },
-  confirmText:        { fontSize: 13, fontWeight: '600', color: C.text, textAlign: 'center' },
-  roleRow:            { flexDirection: 'row', gap: 7, marginBottom: 12 },
-  roleBtn:            { flex: 1, padding: 8, borderRadius: 9, borderWidth: 1.5, borderColor: C.border, backgroundColor: '#fff', alignItems: 'center' },
-  roleBtnActive:      { borderColor: C.primary, backgroundColor: C.primaryLight },
-  roleBtnLabel:       { fontSize: 12, fontWeight: '700', color: C.text },
-  roleBtnLabelActive: { color: C.primary },
-  roleBtnDesc:        { fontSize: 10, color: C.textDim, marginTop: 2 },
-  linkContainer:      { gap: 10 },
-  linkBox:            { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: C.surfaceHigh, borderRadius: 10, borderWidth: 1, borderColor: C.primaryBorder },
-  linkText:           { flex: 1, fontSize: 12, color: C.text, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
-  copyBtn:            { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primaryLight, alignItems: 'center' },
-  copyBtnSuccess:     { borderColor: C.successBorder, backgroundColor: C.successBg },
-  copyBtnText:        { fontSize: 13, fontWeight: '700', color: C.primary },
-  copyBtnTextSuccess: { color: C.success },
-});
+/* ════════════════════════════════════════════════════════════════
+   STYLES
+════════════════════════════════════════════════════════════════ */
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  scrollContent: { paddingBottom: 48 },
 
-// ─────────────────────────────────────────────────────────────
-// LAYOUT STYLES
-// ─────────────────────────────────────────────────────────────
-const ls = StyleSheet.create({
-  safe:             { flex: 1, backgroundColor: C.bg },
-  topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
-  topBarLeft:       { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  appIcon:          { fontSize: 20 },
-  appTitle:         { fontSize: 15, fontWeight: '800', color: C.text },
-  appSubtitle:      { fontSize: 10, color: C.textSub },
-  topBarStats:      { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statText:         { fontSize: 11, color: C.textSub },
-  statNum:          { fontWeight: '700', color: C.text },
-  statDot:          { color: C.textDim },
-  globalSearch:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceHigh, borderBottomWidth: 1, borderBottomColor: C.border, paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
-  searchIcon:       { fontSize: 14 },
-  searchInput:      { flex: 1, fontSize: 13, color: C.text, padding: 0 },
-  scroll:           { flex: 1 },
-  scrollContent:    { padding: 16, paddingBottom: 60 },
-  sectionHeader:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  sectionHeaderLeft:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle:     { fontSize: 16, fontWeight: '800', color: C.text },
-  sectionBadge:     { paddingHorizontal: 9, paddingVertical: 2, borderRadius: 999, backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.primaryBorder },
-  sectionBadgeText: { fontSize: 11, fontWeight: '700', color: C.primary },
-  createBtn:        { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 9, backgroundColor: C.primary, shadowColor: C.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 3 },
-  createBtnActive:  { backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, shadowColor: 'transparent', elevation: 0 },
-  createBtnText:    { fontSize: 12, fontWeight: '700', color: '#fff' },
-  createBtnTextActive: { color: C.textSub },
-  searchMini:       { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: C.border, paddingHorizontal: 10, height: 36, marginBottom: 6 },
-  searchMiniInput:  { flex: 1, fontSize: 12, color: C.text, padding: 0 },
-  expandBtn:        { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: '#fff', marginTop: 8, marginBottom: 4 },
-  expandBtnText:    { fontSize: 12, fontWeight: '600', color: C.textSub },
-  divider:          { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 24 },
-  dividerLine:      { flex: 1, height: 1, backgroundColor: C.border },
-  dividerBadge:     { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: '#fff' },
-  dividerText:      { fontSize: 10, fontWeight: '700', color: C.textDim },
-  tabsRow:          { flexDirection: 'row', gap: 4, backgroundColor: C.surfaceHigh, padding: 4, borderRadius: 10, borderWidth: 1, borderColor: C.border },
-  pubTab:           { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 7, gap: 5 },
-  pubTabActive:     { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
-  pubTabText:       { fontSize: 12, fontWeight: '600', color: C.textSub },
-  pubTabTextActive: { color: C.primary },
-  pubTabCount:      { fontSize: 10, color: C.textDim },
-  pubTabCountActive:{ color: C.primary },
-  filterBtn:        { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.border, backgroundColor: '#fff' },
-  filterBtnActive:  { borderColor: C.primary, backgroundColor: C.primaryLight },
-  filterBtnText:    { fontSize: 11, fontWeight: '600', color: C.textSub },
-  filterBtnTextActive: { color: C.primary },
-  refreshBtn2:      { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: C.border, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  refreshBtn2Text:  { fontSize: 16, color: C.textSub },
-  viewToggle:       { flexDirection: 'row', alignSelf: 'flex-end', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: C.border, overflow: 'hidden', marginBottom: 10 },
-  viewToggleBtn:    { paddingHorizontal: 10, paddingVertical: 7 },
-  viewToggleBtnActive: { backgroundColor: C.primaryLight },
-  viewToggleBtnText: { fontSize: 16, color: C.textSub },
-  viewToggleBtnTextActive: { color: C.primary },
-  filterPanel:      { backgroundColor: '#fff', borderRadius: 11, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: C.border },
-  filterPanelLabel: { fontSize: 10, fontWeight: '700', color: C.textSub, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 },
-  sortRow:          { flexDirection: 'row', gap: 6, marginBottom: 10 },
-  sortBtn:          { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 7, borderWidth: 1, borderColor: C.border },
-  sortBtnActive:    { borderColor: C.primary, backgroundColor: C.primaryLight },
-  sortBtnText:      { fontSize: 11, fontWeight: '600', color: C.textSub },
-  sortBtnTextActive:{ color: C.primary },
-  resetBtn:         { alignSelf: 'flex-end', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 7, borderWidth: 1, borderColor: C.border },
-  resetBtnText:     { fontSize: 11, fontWeight: '600', color: C.textSub },
-  publicGrid:       { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-});
+  // ── Glass card ────────────────────────────────────────────────
+  glassCard: {
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.glassBorder,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+
+  // ── Badge ─────────────────────────────────────────────────────
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  badgeText: { fontSize: 10, fontWeight: "700" },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  hero: { margin: 16, borderRadius: 24, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: C.glassBorder, shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 4 },
+  heroInner: { padding: 24 },
+  heroIconRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  heroIconBox: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#6366f1", alignItems: "center", justifyContent: "center" },
+  heroLabel: { fontSize: 11, fontWeight: "800", color: C.primary, letterSpacing: 1.5, textTransform: "uppercase" },
+  heroTitle: { fontSize: 26, fontWeight: "900", color: C.text, marginBottom: 8 },
+  heroSub: { fontSize: 13, color: C.textSub, lineHeight: 20, marginBottom: 14 },
+  heroBadgeRow: { flexDirection: "row", gap: 8 },
+  heroBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: "rgba(99,102,241,0.12)", borderWidth: 1, borderColor: "rgba(99,102,241,0.28)" },
+  heroBadgeText: { fontSize: 11, fontWeight: "700", color: "#4338ca" },
+
+  // ── Global search ─────────────────────────────────────────────
+  globalSearchRow: { flexDirection: "row", alignItems: "center", marginHorizontal: 16, marginBottom: 16, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 999, borderWidth: 1, borderColor: C.glassBorder },
+  globalSearchInput: { flex: 1, fontSize: 14, color: C.text },
+
+  // ── Stats ─────────────────────────────────────────────────────
+  statsStrip: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginHorizontal: 16, marginBottom: 24 },
+  statCard: { flex: 1, minWidth: "44%", padding: 14, alignItems: "flex-start", gap: 4 },
+  statEmoji: { fontSize: 22 },
+  statValue: { fontSize: 24, fontWeight: "900" },
+  statLabel: { fontSize: 10, fontWeight: "700", color: C.textSub, letterSpacing: 0.5 },
+
+  // ── Section header ────────────────────────────────────────────
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginHorizontal: 16, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: C.text },
+  countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.primaryBorder },
+  countBadgeText: { fontSize: 11, fontWeight: "700", color: C.primary },
+  actionChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, backgroundColor: C.primary },
+  actionChipActive: { backgroundColor: "rgba(255,255,255,0.7)", borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" },
+  actionChipText: { fontSize: 12, fontWeight: "700", color: C.white },
+
+  // ── My survey grid ────────────────────────────────────────────
+  myGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginHorizontal: 16, marginBottom: 8 },
+  myCard: { flex: 1, minWidth: SW < 640 ? "44%" : "30%", backgroundColor: "rgba(255,255,255,0.88)", borderRadius: 18, borderWidth: 1, borderColor: C.glassBorder, overflow: "hidden", shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 10, elevation: 3 },
+  publicCard: { flex: 1, minWidth: SW < 640 ? "44%" : "30%", backgroundColor: "rgba(255,255,255,0.84)", borderRadius: 18, borderWidth: 1, borderColor: C.glassBorder, overflow: "hidden", shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 10, elevation: 3 },
+  publicCardDone: { borderColor: "rgba(16,185,129,0.28)" },
+
+  cardThumb: { height: 110, alignItems: "center", justifyContent: "center", position: "relative" },
+  cardThumbIcon: { fontSize: 36, opacity: 0.25 },
+  cardBody: { padding: 14 },
+  cardTitle: { fontSize: 13, fontWeight: "700", color: C.text, marginBottom: 4, lineHeight: 18 },
+  cardDesc: { fontSize: 12, color: C.textSub, lineHeight: 18, marginBottom: 12 },
+  cardFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardDate: { fontSize: 11, color: C.textDim },
+
+  // ── Thumb actions ─────────────────────────────────────────────
+  thumbActions: { position: "absolute", bottom: 6, left: 6, flexDirection: "row", gap: 4, flexWrap: "wrap" },
+  thumbActionBtn: { width: 26, height: 26, borderRadius: 7, backgroundColor: "rgba(255,255,255,0.8)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.6)" },
+  menuBtn: { position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: 8, backgroundColor: "rgba(255,255,255,0.8)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.6)" },
+
+  // ── Done pill / bar ───────────────────────────────────────────
+  donePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "rgba(220,252,231,0.9)", borderWidth: 1, borderColor: "#a7f3d0" },
+  donePillText: { fontSize: 10, fontWeight: "700", color: "#059669" },
+  doneBar: { position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundColor: "#10b981" },
+
+  // ── Start / result buttons ────────────────────────────────────
+  startBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.primary, shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 3 },
+  startBtnText: { fontSize: 11, fontWeight: "700", color: C.white },
+  viewResultBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: "rgba(220,252,231,0.9)", borderWidth: 1, borderColor: "#a7f3d0" },
+  viewResultBtnText: { fontSize: 11, fontWeight: "700", color: "#059669" },
+
+  // ── Expand button ─────────────────────────────────────────────
+  expandBtn: { alignSelf: "center", paddingHorizontal: 20, paddingVertical: 8, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.7)", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginTop: 6, marginBottom: 16 },
+  expandBtnText: { fontSize: 12, fontWeight: "600", color: C.textSub },
+
+  // ── Divider ───────────────────────────────────────────────────
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 16, marginVertical: 28 },
+  dividerLine: { flex: 1, height: 1.5, backgroundColor: "rgba(99,102,241,0.15)", borderRadius: 1 },
+  dividerPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.9)", borderWidth: 1, borderColor: "rgba(255,255,255,0.85)" },
+  dividerPillText: { fontSize: 10, fontWeight: "800", color: C.text, letterSpacing: 1 },
+
+  // ── Tabs ──────────────────────────────────────────────────────
+  tabRow: { flexDirection: "row", gap: 4, backgroundColor: "rgba(255,255,255,0.6)", padding: 3, borderRadius: 11, borderWidth: 1, borderColor: "rgba(0,0,0,0.07)" },
+  tab: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
+  tabActive: { backgroundColor: "rgba(255,255,255,0.95)", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
+  tabText: { fontSize: 11, fontWeight: "700", color: C.textSub },
+  tabTextActive: { color: C.primary },
+
+  // ── Icon chips ────────────────────────────────────────────────
+  iconChip: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.7)", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
+  iconChipActive: { backgroundColor: C.primaryLight, borderColor: C.primaryBorder },
+
+  // ── Sort ──────────────────────────────────────────────────────
+  sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", backgroundColor: "rgba(255,255,255,0.7)" },
+  sortBtnActive: { borderColor: C.primaryBorder, backgroundColor: C.primaryLight },
+  sortBtnText: { fontSize: 11, fontWeight: "600", color: C.textSub },
+  sortBtnTextActive: { color: C.primary },
+
+  // ── Result count ──────────────────────────────────────────────
+  resultCount: { fontSize: 11, color: C.textSub, marginHorizontal: 16, marginBottom: 10 },
+
+  // ── Skeleton ──────────────────────────────────────────────────
+  skeletonLine: { height: 11, backgroundColor: "rgba(0,0,0,0.06)", borderRadius: 5 },
+
+  // ── Modal ─────────────────────────────────────────────────────
+  modalOverlay: { flex: 1, backgroundColor: "rgba(15,17,23,0.55)", alignItems: "center", justifyContent: "center", padding: 20 },
+  modalBox: { width: "100%", maxWidth: 460, backgroundColor: "rgba(255,255,255,0.96)", borderRadius: 22, overflow: "hidden", borderWidth: 1, borderColor: C.glassBorder, shadowColor: "#000", shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.18, shadowRadius: 32, elevation: 10 },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: "rgba(0,0,0,0.06)" },
+  modalTitle: { fontSize: 14, fontWeight: "800", color: C.text },
+  modalClose: { width: 28, height: 28, borderRadius: 8, backgroundColor: "rgba(0,0,0,0.04)", alignItems: "center", justifyContent: "center" },
+  modalCloseText: { fontSize: 13, color: C.textSub },
+  modalBody: { padding: 18, gap: 12 },
+  modalActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 4 },
+
+  // ── Info box ──────────────────────────────────────────────────
+  infoBox: { padding: 12, backgroundColor: "rgba(67,97,238,0.08)", borderRadius: 12, borderWidth: 1, borderColor: "rgba(67,97,238,0.2)" },
+  infoBoxTitle: { fontSize: 13, fontWeight: "700", color: C.text },
+  infoBoxSub: { fontSize: 12, color: C.textSub, marginTop: 2 },
+
+  // ── Error / success rows ──────────────────────────────────────
+  errorRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 10, borderRadius: 10, backgroundColor: C.errorBg, borderWidth: 1, borderColor: C.errorBorder },
+  errorText: { fontSize: 12, color: C.error, flex: 1 },
+  retryBtn: { fontSize: 11, fontWeight: "700", color: C.error, marginLeft: 8 },
+  successRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, backgroundColor: C.successBg, borderWidth: 1, borderColor: C.successBorder },
+  successText: { fontSize: 12, fontWeight: "600", color: "#059669", flex: 1 },
+
+  // ── Inputs ────────────────────────────────────────────────────
+  textarea: { width: "100%", padding: 10, backgroundColor: "rgba(255,255,255,0.8)", borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)", borderRadius: 10, fontSize: 13, color: C.text, minHeight: 90 },
+  inputError: { borderColor: C.error },
+  editInput: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: "rgba(255,255,255,0.8)", borderWidth: 1, borderColor: "rgba(0,0,0,0.1)", borderRadius: 9, fontSize: 12, color: C.text },
+  fieldLabel: { fontSize: 11, fontWeight: "700", color: C.textSub, textTransform: "uppercase", letterSpacing: 0.6 },
+
+  // ── Buttons ───────────────────────────────────────────────────
+  primaryBtn: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, backgroundColor: C.primary, alignItems: "center", justifyContent: "center", shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 4 },
+  primaryBtnSm: { paddingVertical: 9, paddingHorizontal: 16 },
+  primaryBtnText: { fontSize: 13, fontWeight: "700", color: C.white },
+  cancelBtn: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" },
+  cancelBtnText: { fontSize: 12, fontWeight: "600", color: C.textSub },
+  btnDisabled: { backgroundColor: "rgba(0,0,0,0.07)", shadowOpacity: 0, elevation: 0 },
+  iconBtn: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
+
+  // ── URL box ───────────────────────────────────────────────────
+  urlBox: { gap: 8 },
+  urlText: { fontSize: 12, color: C.text, padding: 10, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 10, borderWidth: 1, borderColor: "rgba(67,97,238,0.2)", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
+  copyBtn: { padding: 10, borderRadius: 10, backgroundColor: "rgba(67,97,238,0.08)", borderWidth: 1, borderColor: "rgba(67,97,238,0.3)", alignItems: "center" },
+  copyBtnDone: { backgroundColor: C.successBg, borderColor: C.successBorder },
+  copyBtnText: { fontSize: 12, fontWeight: "700", color: C.primary },
+
+  // ── Bulk invite ───────────────────────────────────────────────
+  bulkIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: C.primaryLight, alignItems: "center", justifyContent: "center" },
+  emailCountBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: C.primaryLight },
+  emailCountText: { fontSize: 11, fontWeight: "700", color: C.primary },
+  roleRow: { flexDirection: "row", gap: 6, marginTop: 4 },
+  roleBtn: { flex: 1, padding: 9, borderRadius: 10, borderWidth: 1.5, borderColor: "rgba(0,0,0,0.08)", alignItems: "center", backgroundColor: "rgba(255,255,255,0.6)" },
+  roleBtnActive: { borderColor: C.primary, backgroundColor: C.primaryLight },
+  roleBtnLabel: { fontSize: 12, fontWeight: "700", color: C.text },
+  roleBtnLabelActive: { color: C.primary },
+  roleBtnDesc: { fontSize: 10, color: C.textDim, marginTop: 2 },
+
+  // ── Participants ──────────────────────────────────────────────
+  searchRow: { flexDirection: "row", alignItems: "center", padding: 8, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.7)", borderWidth: 1, borderColor: "rgba(0,0,0,0.07)" },
+  searchInput: { flex: 1, fontSize: 12, color: C.text },
+  participantRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: "rgba(0,0,0,0.05)" },
+  avatar: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 12, fontWeight: "700" },
+  participantName: { fontSize: 12, fontWeight: "600", color: C.text },
+  participantEmail: { fontSize: 11, color: C.textSub },
+  rolePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  rolePillText: { fontSize: 10, fontWeight: "700" },
+  reloadBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", backgroundColor: "rgba(255,255,255,0.7)", alignItems: "center", justifyContent: "center" },
+  reloadBtnText: { fontSize: 12, fontWeight: "600", color: C.textSub },
+
+  // ── Publish/Close confirm ─────────────────────────────────────
+  confirmBox: { borderRadius: 14, padding: 20, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
+  confirmEmoji: { fontSize: 36, marginBottom: 10 },
+  confirmText: { fontSize: 13, fontWeight: "600", color: C.text, textAlign: "center", lineHeight: 20 },
+
+  // ── Submission modal ──────────────────────────────────────────
+  submissionModal: { flex: 1, backgroundColor: "rgba(245,247,250,0.98)" },
+  submissionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14, backgroundColor: "rgba(255,255,255,0.9)", borderBottomWidth: 1, borderBottomColor: "rgba(0,0,0,0.06)" },
+  submissionBack: { paddingHorizontal: 10, paddingVertical: 4 },
+  submissionBackText: { fontSize: 13, fontWeight: "600", color: C.textSub },
+  submissionBrand: { fontSize: 12, fontWeight: "700", color: C.textSub },
+  submissionTitle: { fontSize: 18, fontWeight: "800", color: C.text, marginBottom: 4, textAlign: "center" },
+  doneBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: "rgba(220,252,231,0.9)", borderWidth: 1, borderColor: "#86efac", marginBottom: 10 },
+  doneBadgeText: { fontSize: 11, fontWeight: "700", color: "#15803d", letterSpacing: 0.6 },
+
+  // ── Answer card ───────────────────────────────────────────────
+  answerCard: { backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 14, borderWidth: 1, borderColor: C.glassBorder, overflow: "hidden", marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  answerCardHeader: { flexDirection: "row", justifyContent: "space-between", padding: 14, paddingBottom: 6 },
+  answerCardIdx: { fontSize: 11, color: C.textSub },
+  answerCardQ: { fontSize: 13, fontWeight: "700", color: C.text, marginHorizontal: 14, marginBottom: 10, lineHeight: 20 },
+  answerTextBox: { margin: 14, marginTop: 0, padding: 11, backgroundColor: "rgba(248,250,255,0.8)", borderWidth: 1, borderColor: C.gray200, borderRadius: 10 },
+  answerTextContent: { fontSize: 12, color: C.gray700, lineHeight: 20 },
+  noAnswerText: { fontSize: 12, color: C.textDim, fontStyle: "italic", marginHorizontal: 14, marginBottom: 14 },
+  answerOption: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 14, marginBottom: 6, padding: 9, borderRadius: 10, borderWidth: 1, borderColor: C.gray200, backgroundColor: "rgba(250,250,250,0.8)" },
+  answerOptionSel: { borderColor: "#bfdbfe", backgroundColor: "rgba(239,246,255,0.9)" },
+  answerOptionText: { fontSize: 12, color: C.gray500, flex: 1 },
+  answerOptionTextSel: { color: "#1e40af", fontWeight: "600" },
+  radio: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: C.gray200, alignItems: "center", justifyContent: "center" },
+  radioSel: { borderColor: "#2563eb" },
+  checkbox: { width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: C.gray200, alignItems: "center", justifyContent: "center" },
+  checkboxSel: { borderColor: "#2563eb", backgroundColor: "#2563eb" },
+
+  // ── Context menu ──────────────────────────────────────────────
+  menuItem: { paddingVertical: 12, paddingHorizontal: 16 },
+  menuItemText: { fontSize: 13, color: C.text },
+
+  // ── Empty ─────────────────────────────────────────────────────
+  emptyTitle: { fontSize: 14, fontWeight: "700", color: C.text, marginBottom: 4 },
+}); 

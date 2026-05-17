@@ -33,8 +33,8 @@ import {
   ArrowRight,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useResponse } from "../../providers/Responseprovider";
-import { useSurvey }   from "../../providers/Surveyprovider";
+import { useResponse } from "../../providers/ResponseProvider";
+import { useSurvey }   from "../../providers/SurveyProvider";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = (SCREEN_W - 16 * 2 - 12) / 2;

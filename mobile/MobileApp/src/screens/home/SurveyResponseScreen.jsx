@@ -1,359 +1,639 @@
-﻿// SurveyResponseScreen.jsx - Xem kết quả câu trả lời khảo sát
-import React, { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import {
-  ChevronLeft, CheckCircle2, AlertCircle,
-  AlignLeft, FileText, Mail, Calendar, Hash, Star, CheckSquare
-} from 'lucide-react-native';
-import { useSurvey } from '../../providers/Surveyprovider';
-import { useResponse } from '../../providers/Responseprovider';
+﻿// ─── SurveyResponsePage.native.jsx ────────────────────────────────────────
+// React Native version
+// Deps: lucide-react-native, @react-navigation/native, react-native-safe-area-context
 
-const TYPE_CONFIG = {
-  TEXT: { label: 'Văn bản', Icon: AlignLeft, color: '#4f6ef7', bg: '#eef2ff' },
-  PARAGRAPH: { label: 'Đoạn văn', Icon: FileText, color: '#7c3aed', bg: '#f5f3ff' },
-  EMAIL: { label: 'Email', Icon: Mail, color: '#0891b2', bg: '#ecfeff' },
-  DATE: { label: 'Ngày tháng', Icon: Calendar, color: '#b45309', bg: '#fffbeb' },
-  NUMBER: { label: 'Số', Icon: Hash, color: '#059669', bg: '#ecfdf5' },
-  RATING: { label: 'Đánh giá', Icon: Star, color: '#d97706', bg: '#fffbeb' },
-  SINGLE_CHOICE: { label: 'Một lựa chọn', Icon: CheckSquare, color: '#ea580c', bg: '#fff7ed' },
-  MULTIPLE_CHOICE: { label: 'Nhiều lựa chọn', Icon: CheckSquare, color: '#16a34a', bg: '#f0fdf4' },
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  Animated,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  Dimensions,
+} from "react-native";
+// import { useNavigation, useRoute } from "@react-navigation/native";
+// import { useSurvey } from "@/providers/SurveyProvider";
+// import { useResponse } from "@/providers/ResponseProvider";
+
+/* ─── Lucide icons ─────────────────────────────────────────── */
+let IconSet = {};
+try { IconSet = require("lucide-react-native"); } catch {}
+const Icon = ({ name, size = 16, color = "#64748b" }) => {
+  const Comp = IconSet[name];
+  if (!Comp) return <Text style={{ fontSize: size * 0.75, color }}>■</Text>;
+  return <Comp size={size} color={color} />;
 };
 
+const { width: SW } = Dimensions.get("window");
+
+/* ─── Colors ───────────────────────────────────────────────── */
 const C = {
-  primary: '#4f46e5',
-  primaryLight: '#eef2ff',
-  text: '#0f172a',
-  textSub: '#64748b',
-  textDim: '#94a3b8',
-  success: '#10b981',
-  successBg: '#d1fae5',
-  border: '#e2e8f0',
-  surface: '#ffffff',
-  bg: '#f7f8fc',
+  bg:       "#f1f5fb",
+  surface:  "#ffffff",
+  primary:  "#4f46e5",
+  text:     "#0f172a",
+  textSub:  "#64748b",
+  textDim:  "#94a3b8",
+  success:  "#059669",
+  successBg:"#d1fae5",
+  error:    "#b91c1c",
+  errorBg:  "#fee2e2",
+  gold:     "#d97706",
 };
 
-export default function SurveyResponseScreen() {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { surveyId } = route.params || {};
+/* ─── Question type config ─────────────────────────────────── */
+const TYPE_CONFIG = {
+  TEXT:            { label: "Văn bản ngắn",    icon: "AlignLeft",    color: "#4f6ef7", bg: "#eef2ff" },
+  PARAGRAPH:       { label: "Đoạn văn",         icon: "FileText",     color: "#7c3aed", bg: "#f5f3ff" },
+  EMAIL:           { label: "Email",             icon: "Mail",         color: "#0891b2", bg: "#ecfeff" },
+  DATE:            { label: "Ngày tháng",        icon: "Calendar",     color: "#b45309", bg: "#fffbeb" },
+  NUMBER:          { label: "Số",                icon: "Hash",         color: "#059669", bg: "#ecfdf5" },
+  RATING:          { label: "Đánh giá",          icon: "Star",         color: "#d97706", bg: "#fffbeb" },
+  SINGLE_CHOICE:   { label: "Một lựa chọn",      icon: "CheckSquare",  color: "#ea580c", bg: "#fff7ed" },
+  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn",    icon: "CheckSquare",  color: "#16a34a", bg: "#f0fdf4" },
+  DROPDOWN:        { label: "Danh sách thả",     icon: "ChevronDown",  color: "#6d28d9", bg: "#f5f3ff" },
+};
 
-  const { fetchSurveyById } = useSurvey();
-  const { getMySubmission } = useResponse();
+/* ─── Mock data (xoá khi kết nối provider thật) ────────────── */
+const MOCK_SURVEY = {
+  id: "s1",
+  title: "Khảo sát sự hài lòng khách hàng Q2",
+  description: "Đánh giá mức độ hài lòng của khách hàng về sản phẩm và dịch vụ trong quý 2 năm 2024.",
+};
 
-  const [loading, setLoading] = useState(true);
-  const [survey, setSurvey] = useState(null);
+const MOCK_RESPONSE = {
+  submitted_at: "2024-05-15T10:30:00Z",
+  answers: [
+    { type: "TEXT",            question: "Tên của bạn là gì?",              answer: "Nguyễn Văn A" },
+    { type: "EMAIL",           question: "Địa chỉ email của bạn?",          answer: "nguyenvana@email.com" },
+    { type: "RATING",          question: "Bạn đánh giá sản phẩm thế nào?",  answer: "4/5" },
+    { type: "MULTIPLE_CHOICE", question: "Tính năng nào bạn thích nhất?",   answer: ["Giao diện đẹp", "Dễ sử dụng", "Tốc độ nhanh"] },
+    { type: "PARAGRAPH",       question: "Góp ý thêm của bạn?",             answer: "Sản phẩm rất tốt, tuy nhiên cần cải thiện thêm về tính năng báo cáo." },
+    { type: "SINGLE_CHOICE",   question: "Bạn sẽ giới thiệu cho bạn bè?",   answer: "Có" },
+  ],
+};
+
+/* ─── Animated background blobs ───────────────────────────── */
+function AnimatedBackdrop() {
+  const anim1 = useRef(new Animated.Value(0)).current;
+  const anim2 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = (anim, duration, reverse = false) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, { toValue: 1, duration, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration, useNativeDriver: true }),
+        ])
+      ).start();
+    loop(anim1, 3000);
+    loop(anim2, 4000, true);
+  }, []);
+
+  const ty1 = anim1.interpolate({ inputRange: [0, 1], outputRange: [0, -18] });
+  const ty2 = anim2.interpolate({ inputRange: [0, 1], outputRange: [0, 14] });
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View style={[ss.blob, { top: -60, right: -60, width: 220, height: 220, backgroundColor: "rgba(79,70,229,0.08)", transform: [{ translateY: ty1 }] }]} />
+      <Animated.View style={[ss.blob, { bottom: 40, left: -40, width: 160, height: 160, backgroundColor: "rgba(16,185,129,0.07)", transform: [{ translateY: ty2 }] }]} />
+      <Animated.View style={[ss.blob, { top: "40%", right: -20, width: 100, height: 100, backgroundColor: "rgba(217,119,6,0.07)", transform: [{ translateY: ty1 }] }]} />
+    </View>
+  );
+}
+
+/* ─── FadeIn wrapper ───────────────────────────────────────── */
+function FadeIn({ children, delay = 0, style }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity,     { toValue: 1, duration: 480, delay: delay * 1000, useNativeDriver: true }),
+      Animated.timing(translateY,  { toValue: 0, duration: 480, delay: delay * 1000, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/* ─── Glass card ───────────────────────────────────────────── */
+function GlassCard({ children, style, delay = 0 }) {
+  return (
+    <FadeIn delay={delay}>
+      <View style={[ss.glassCard, style]}>{children}</View>
+    </FadeIn>
+  );
+}
+
+/* ─── Answer card ──────────────────────────────────────────── */
+function AnswerCard({ answer, index }) {
+  const cfg = TYPE_CONFIG[answer.type] || TYPE_CONFIG.TEXT;
+
+  return (
+    <GlassCard delay={0.1 + index * 0.05} style={ss.answerCard}>
+      {/* Header */}
+      <View style={ss.answerHeader}>
+        <View style={[ss.typeIcon, { backgroundColor: cfg.bg }]}>
+          <Icon name={cfg.icon} size={22} color={cfg.color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={ss.questionText}>{answer.question}</Text>
+          <Text style={ss.typeLabel}>{cfg.label}</Text>
+        </View>
+      </View>
+
+      {/* Answer body */}
+      <View style={[ss.answerBody, { backgroundColor: cfg.bg, borderLeftColor: cfg.color }]}>
+        {Array.isArray(answer.answer) ? (
+          answer.answer.length > 0 ? (
+            <View style={ss.tagsWrap}>
+              {answer.answer.map((item, i) => (
+                <View key={i} style={[ss.tag, { borderColor: cfg.color }]}>
+                  <Text style={[ss.tagText, { color: cfg.color }]}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={ss.emptyAnswer}>(Không chọn)</Text>
+          )
+        ) : (
+          <Text style={ss.answerValue}>{answer.answer || "(Trống)"}</Text>
+        )}
+      </View>
+    </GlassCard>
+  );
+}
+
+/* ─── Loading screen ───────────────────────────────────────── */
+function LoadingScreen() {
+  const spin = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spin, { toValue: 1, duration: 1000, useNativeDriver: true })
+    ).start();
+  }, []);
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+
+  return (
+    <SafeAreaView style={ss.centerScreen}>
+      <AnimatedBackdrop />
+      <Animated.View style={{ transform: [{ rotate }] }}>
+        <Icon name="Loader2" size={44} color={C.primary} />
+      </Animated.View>
+      <Text style={ss.loadingText}>Đang tải dữ liệu...</Text>
+    </SafeAreaView>
+  );
+}
+
+/* ─── Error screen ─────────────────────────────────────────── */
+function ErrorScreen({ message, onBack }) {
+  return (
+    <SafeAreaView style={[ss.centerScreen, { justifyContent: "flex-start", padding: 20 }]}>
+      <AnimatedBackdrop />
+      <TouchableOpacity onPress={onBack} style={ss.backBtn}>
+        <Icon name="ChevronLeft" size={16} color={C.primary} />
+        <Text style={ss.backBtnText}>Quay lại</Text>
+      </TouchableOpacity>
+      <GlassCard style={{ marginTop: 16 }}>
+        <View style={ss.errorRow}>
+          <View style={ss.errorIcon}>
+            <Icon name="AlertCircle" size={28} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={ss.errorTitle}>Không tải được</Text>
+            <Text style={ss.errorMsg}>{message || "Không thể tải được câu trả lời của bạn"}</Text>
+          </View>
+        </View>
+      </GlassCard>
+    </SafeAreaView>
+  );
+}
+
+/* ─── Main page ────────────────────────────────────────────── */
+export default function SurveyResponsePage() {
+  // Thay bằng provider thật khi tích hợp:
+  // const route = useRoute();
+  // const { surveyId } = route.params;
+  // const navigation = useNavigation();
+  // const { fetchSurveyById } = useSurvey();
+  // const { getMySubmission } = useResponse();
+
+  const surveyId = "s1"; // mock
+  const [loading,  setLoading]  = useState(true);
+  const [survey,   setSurvey]   = useState(null);
   const [response, setResponse] = useState(null);
-  const [error, setError] = useState(null);
+  const [error,    setError]    = useState(null);
+
+  const handleBack = () => {
+    // navigation.navigate("Home");
+    console.log("Navigate to home");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!surveyId) {
-        setError('Không có ID khảo sát');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        const surveyRes = await fetchSurveyById(surveyId);
-        setSurvey(surveyRes);
-
-        const responseRes = await getMySubmission(surveyId);
-        setResponse(responseRes);
+        // Thật: const surveyRes  = await fetchSurveyById(surveyId);
+        // Thật: const responseRes = await getMySubmission(surveyId);
+        await new Promise(r => setTimeout(r, 800)); // giả lập delay
+        setSurvey(MOCK_SURVEY);
+        setResponse(MOCK_RESPONSE);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message || 'Không thể tải dữ liệu');
+        setError(err.message || "Không thể tải dữ liệu");
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [surveyId]);
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color={C.primary} />
-          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  if (loading)                        return <LoadingScreen />;
+  if (error || !survey || !response)  return <ErrorScreen message={error} onBack={handleBack} />;
 
-  if (error || !survey || !response) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <ChevronLeft size={24} color={C.text} />
-            <Text style={styles.backText}>Quay lại</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.errorContainer}>
-          <AlertCircle size={48} color='#ef4444' />
-          <Text style={styles.errorTitle}>Không tải được</Text>
-          <Text style={styles.errorText}>{error || 'Không thể tải được câu trả lời của bạn'}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.retryText}>Quay lại</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Build answers map: questionId -> answer
-  const answersMap = {};
-  const responseData = Array.isArray(response?.data) ? response.data :
-                      Array.isArray(response) ? response : [];
-  responseData.forEach(r => {
-    if (r.answers) {
-      r.answers.forEach(a => {
-        answersMap[a.question_id] = a;
-      });
-    }
-  });
-
-  const completedAt = response?.created_at ? new Date(response.created_at) : null;
-  const answerCount = Object.keys(answersMap).length;
-  const questionCount = survey?.questions?.length || 0;
+  const submittedDate = response.submitted_at
+    ? new Date(response.submitted_at).toLocaleDateString("vi-VN")
+    : "Không rõ";
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ChevronLeft size={24} color={C.text} />
-          <Text style={styles.backText}>Quay lại</Text>
+    <SafeAreaView style={ss.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <AnimatedBackdrop />
+
+      <ScrollView
+        style={ss.scroll}
+        contentContainerStyle={ss.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back button */}
+        <TouchableOpacity onPress={handleBack} style={ss.backBtn}>
+          <Icon name="ChevronLeft" size={16} color={C.primary} />
+          <Text style={ss.backBtnText}>Quay lại</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Kết quả khảo sát</Text>
-        <View style={styles.headerRight} />
-      </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Success Banner */}
-        <View style={styles.successBanner}>
-          <View style={styles.successIcon}>
-            <CheckCircle2 size={28} color={C.success} />
-          </View>
-          <View style={styles.successInfo}>
-            <Text style={styles.successTitle}>Đã hoàn thành!</Text>
-            <Text style={styles.successSub}>
-              {completedAt ? completedAt.toLocaleDateString('vi-VN', {
-                day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-              }) : 'N/A'}
-            </Text>
-          </View>
-        </View>
+        {/* ── Survey hero card ── */}
+        <FadeIn delay={0}>
+          <View style={ss.heroCard}>
+            {/* Decorative blob inside card */}
+            <View style={ss.heroBlobTR} />
+            <View style={ss.heroBlobBL} />
 
-        {/* Survey Info */}
-        <View style={styles.surveyInfo}>
-          <Text style={styles.surveyTitle}>{survey.title}</Text>
-          <Text style={styles.surveyDesc}>{survey.description}</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{answerCount}</Text>
-              <Text style={styles.statLabel}>Câu trả lời</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{questionCount}</Text>
-              <Text style={styles.statLabel}>Câu hỏi</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Questions & Answers */}
-        <Text style={styles.sectionTitle}>Câu trả lời của bạn</Text>
-
-        {survey.questions && survey.questions.map((question, index) => {
-          const answer = answersMap[question.id];
-          const config = TYPE_CONFIG[question.type] || TYPE_CONFIG.TEXT;
-          const IconComp = config.Icon;
-
-          // Parse answer value
-          let answerDisplay = 'Chưa trả lời';
-          let selectedOptions = [];
-
-          if (answer) {
-            if (question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE') {
-              const rawAnswer = answer.answer;
-              const answerIds = Array.isArray(rawAnswer)
-                ? rawAnswer
-                : String(rawAnswer || '').split(',').map(s => s.trim());
-
-              selectedOptions = question.options.filter(opt =>
-                answerIds.includes(String(opt.id)) || answerIds.includes(opt.label)
-              );
-            } else {
-              answerDisplay = String(answer.answer || 'Chưa trả lời');
-            }
-          }
-
-          return (
-            <View key={question.id} style={styles.questionCard}>
-              <View style={styles.questionHeader}>
-                <View style={[styles.questionIcon, { backgroundColor: config.bg }]}>
-                  <IconComp size={16} color={config.color} />
+            <View style={{ position: "relative" }}>
+              {/* Completed badge */}
+              <View style={ss.completedRow}>
+                <View style={ss.completedIcon}>
+                  <Icon name="CheckCircle2" size={24} color={C.primary} />
                 </View>
-                <View style={styles.questionMeta}>
-                  <Text style={styles.questionNum}>Câu {index + 1}</Text>
-                  <View style={[styles.typeBadge, { backgroundColor: config.bg }]}>
-                    <Text style={[styles.typeBadgeText, { color: config.color }]}>{config.label}</Text>
-                  </View>
-                </View>
-                {question.required && (
-                  <Text style={styles.requiredBadge}>Bắt buộc</Text>
-                )}
+                <Text style={ss.completedLabel}>ĐÃ HOÀN THÀNH</Text>
               </View>
 
-              <Text style={styles.questionText}>{question.content}</Text>
+              {/* Title */}
+              <Text style={ss.heroTitle}>{survey.title}</Text>
 
-              <View style={styles.answerSection}>
-                {question.type === 'TEXT' || question.type === 'PARAGRAPH' || question.type === 'EMAIL' || question.type === 'NUMBER' ? (
-                  <View style={styles.textAnswer}>
-                    <Text style={styles.answerText}>{answerDisplay}</Text>
-                  </View>
-                ) : question.type === 'DATE' ? (
-                  <View style={styles.textAnswer}>
-                    <Text style={styles.answerText}>
-                      {answer?.answer ? new Date(answer.answer).toLocaleDateString('vi-VN') : 'Chưa trả lời'}
-                    </Text>
-                  </View>
-                ) : question.type === 'RATING' ? (
-                  <View style={styles.ratingAnswer}>
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <View
-                        key={star}
-                        style={[
-                          styles.star,
-                          star <= (answer?.answer || 0) && styles.starActive
-                        ]}
-                      >
-                        <Star size={24} color={star <= (answer?.answer || 0) ? '#f59e0b' : '#e2e8f0'} />
-                      </View>
-                    ))}
-                    <Text style={styles.ratingValue}>{answer?.answer || 0}/5</Text>
-                  </View>
-                ) : (
-                  // Choices
-                  <View style={styles.choicesAnswer}>
-                    {(question.options || []).map((opt, optIndex) => {
-                      const isSelected = selectedOptions.some(s => s.id === opt.id);
-                      return (
-                        <View
-                          key={opt.id || optIndex}
-                          style={[
-                            styles.choiceItem,
-                            isSelected && styles.choiceItemSelected
-                          ]}
-                        >
-                          <View style={[
-                            question.type === 'MULTIPLE_CHOICE' ? styles.checkbox : styles.radio,
-                            isSelected && (question.type === 'MULTIPLE_CHOICE' ? styles.checkboxSelected : styles.radioSelected)
-                          ]}>
-                            {isSelected && (
-                              question.type === 'MULTIPLE_CHOICE'
-                                ? <Text style={styles.checkmark}>✓</Text>
-                                : <View style={styles.radioDot} />
-                            )}
-                          </View>
-                          <Text style={[
-                            styles.choiceLabel,
-                            isSelected && styles.choiceLabelSelected
-                          ]}>
-                            {opt.label}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
+              {/* Description */}
+              {!!survey.description && (
+                <Text style={ss.heroDesc}>{survey.description}</Text>
+              )}
+
+              {/* Meta row */}
+              <View style={ss.metaRow}>
+                <View style={ss.metaItem}>
+                  <Icon name="Clock" size={16} color={C.primary} />
+                  <Text style={ss.metaText}>{submittedDate}</Text>
+                </View>
+                <View style={ss.metaItem}>
+                  <Icon name="Trophy" size={16} color={C.gold} />
+                  <Text style={[ss.metaText, { color: C.gold, fontWeight: "700" }]}>+250 XP</Text>
+                </View>
               </View>
             </View>
-          );
-        })}
+          </View>
+        </FadeIn>
 
-        <View style={styles.bottomPadding} />
+        {/* ── Answers section ── */}
+        <FadeIn delay={0.1}>
+          <Text style={ss.sectionTitle}>Câu trả lời của bạn</Text>
+        </FadeIn>
+
+        {response.answers?.map((answer, idx) => (
+          <AnswerCard key={idx} answer={answer} index={idx} />
+        ))}
+
+        {/* ── Success footer ── */}
+        <GlassCard
+          delay={0.3}
+          style={ss.successCard}
+        >
+          <View style={ss.successIconWrap}>
+            <View style={ss.successIconCircle}>
+              <Icon name="CheckCircle2" size={32} color={C.success} />
+            </View>
+          </View>
+          <Text style={ss.successTitle}>Cảm ơn bạn đã hoàn thành khảo sát!</Text>
+          <Text style={ss.successSub}>Câu trả lời của bạn đã được lưu vào hệ thống.</Text>
+        </GlassCard>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-  loadingText: { fontSize: 14, color: C.textSub, fontWeight: '600' },
-  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
-  errorTitle: { fontSize: 18, fontWeight: '700', color: '#ef4444' },
-  errorText: { fontSize: 14, color: C.textSub, textAlign: 'center' },
-  retryBtn: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: C.primary, borderRadius: 12 },
-  retryText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 14, backgroundColor: C.surface,
-    borderBottomWidth: 1, borderBottomColor: C.border
+/* ─── Styles ───────────────────────────────────────────────── */
+const ss = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: C.bg,
   },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  backText: { fontSize: 15, fontWeight: '600', color: C.text },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: C.text },
-  headerRight: { width: 60 },
-
-  content: { flex: 1 },
-  successBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    backgroundColor: C.successBg, margin: 16, padding: 20, borderRadius: 16
+  scroll: {
+    flex: 1,
   },
-  successIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-  successInfo: { flex: 1 },
-  successTitle: { fontSize: 20, fontWeight: '800', color: C.success },
-  successSub: { fontSize: 13, color: '#059669', marginTop: 4 },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 48,
+  },
+  centerScreen: {
+    flex: 1,
+    backgroundColor: C.bg,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 14,
+    fontSize: 14,
+    fontWeight: "600",
+    color: C.textSub,
+  },
 
-  surveyInfo: { backgroundColor: C.surface, margin: 16, marginTop: 0, padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  surveyTitle: { fontSize: 18, fontWeight: '800', color: C.text, marginBottom: 6 },
-  surveyDesc: { fontSize: 14, color: C.textSub, lineHeight: 20, marginBottom: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: '800', color: C.primary },
-  statLabel: { fontSize: 12, color: C.textSub, marginTop: 4 },
-  statDivider: { width: 1, height: 40, backgroundColor: C.border },
+  // Back button
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 11,
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  backBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.primary,
+  },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginHorizontal: 16, marginTop: 8, marginBottom: 12 },
-  questionCard: { backgroundColor: C.surface, marginHorizontal: 16, marginBottom: 12, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  questionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  questionIcon: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  questionMeta: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  questionNum: { fontSize: 12, fontWeight: '700', color: C.textSub },
-  typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  typeBadgeText: { fontSize: 10, fontWeight: '700' },
-  requiredBadge: { fontSize: 10, fontWeight: '700', color: '#ef4444', backgroundColor: '#fee2e2', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  questionText: { fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 22, marginBottom: 14 },
+  // Hero card
+  heroCard: {
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderRadius: 20,
+    padding: 22,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.85)",
+    overflow: "hidden",
+    shadowColor: "#4f46e5",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 6,
+    position: "relative",
+  },
+  heroBlobTR: {
+    position: "absolute",
+    top: -40,
+    right: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(79,70,229,0.07)",
+  },
+  heroBlobBL: {
+    position: "absolute",
+    bottom: -24,
+    left: -24,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "rgba(79,70,229,0.05)",
+  },
+  completedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+  },
+  completedIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(79,70,229,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(79,70,229,0.18)",
+  },
+  completedLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    color: C.textSub,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: C.text,
+    lineHeight: 30,
+    marginBottom: 10,
+  },
+  heroDesc: {
+    fontSize: 14,
+    color: C.textSub,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  metaRow: {
+    flexDirection: "row",
+    gap: 20,
+    flexWrap: "wrap",
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  metaText: {
+    fontSize: 13,
+    color: C.textSub,
+  },
 
-  answerSection: { },
-  textAnswer: { backgroundColor: '#f8fafc', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: C.border },
-  answerText: { fontSize: 14, color: C.text, lineHeight: 20 },
-  ratingAnswer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  star: { },
-  starActive: { },
-  ratingValue: { marginLeft: 12, fontSize: 14, fontWeight: '700', color: '#f59e0b' },
-  choicesAnswer: { gap: 8 },
-  choiceItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#f8fafc', borderRadius: 10, borderWidth: 1, borderColor: C.border },
-  choiceItemSelected: { backgroundColor: C.primaryLight, borderColor: C.primary },
-  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 2, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
-  checkboxSelected: { backgroundColor: C.primary, borderColor: C.primary },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
-  radioSelected: { borderColor: C.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.primary },
-  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  choiceLabel: { flex: 1, fontSize: 14, color: C.textSub },
-  choiceLabelSelected: { color: C.primary, fontWeight: '600' },
+  // Section title
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: C.text,
+    marginBottom: 14,
+    letterSpacing: 0.3,
+  },
 
-  bottomPadding: { height: 100 },
+  // Glass card
+  glassCard: {
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.6)",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+
+  // Answer card
+  answerCard: {
+    padding: 16,
+  },
+  answerHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 14,
+  },
+  typeIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  questionText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: C.text,
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  typeLabel: {
+    fontSize: 12,
+    color: C.textDim,
+  },
+  answerBody: {
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+  },
+  answerValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: C.text,
+    lineHeight: 22,
+  },
+  emptyAnswer: {
+    fontSize: 13,
+    color: C.textDim,
+    fontStyle: "italic",
+  },
+  tagsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  tag: {
+    paddingVertical: 7,
+    paddingHorizontal: 13,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  tagText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  // Success footer
+  successCard: {
+    backgroundColor: "rgba(236,253,245,0.9)",
+    borderColor: "rgba(16,185,129,0.3)",
+    borderWidth: 1,
+    alignItems: "center",
+    paddingVertical: 24,
+    marginTop: 6,
+  },
+  successIconWrap: {
+    marginBottom: 14,
+  },
+  successIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: C.successBg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: C.success,
+    textAlign: "center",
+  },
+  successSub: {
+    fontSize: 13,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 20,
+  },
+
+  // Error
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+  },
+  errorIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#ef4444",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: C.error,
+    marginBottom: 6,
+  },
+  errorMsg: {
+    fontSize: 13,
+    color: C.textSub,
+    lineHeight: 20,
+  },
+
+  // Backdrop blob
+  blob: {
+    position: "absolute",
+    borderRadius: 999,
+  },
 });
