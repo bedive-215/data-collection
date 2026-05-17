@@ -1,32 +1,37 @@
 // src/services/questionService.js
-// React Native — giữ nguyên interface, chỉ đổi import path cho RN project
-import apiClient from "../api/apiClient"; // axios instance của bạn (hoạt động bình thường trong RN)
+import apiClient from "../api/apiClient";
 
-const questionService = {
-  // 🟢 Tạo 1 question (kèm options nếu có)
+export const questionService = {
+  // Tạo 1 question (kèm options nếu có)
   createQuestions: (surveyId, payload) =>
     apiClient.post(`/api/v1/questions/survey/${surveyId}`, payload),
 
-  // 🟢 Lấy tất cả question theo survey
+  // Lấy tất cả question theo survey
   getQuestionsBySurvey: (surveyId) =>
     apiClient.get(`/api/v1/questions/survey/${surveyId}`),
 
-  // 🟡 Update 1 question
+  // Update 1 question
   updateQuestion: (questionId, surveyId, payload) =>
     apiClient.patch(`/api/v1/questions/${questionId}/survey/${surveyId}`, payload),
 
-  // 🔴 Xóa question
+  // Xóa question
   deleteQuestion: (questionId, surveyId) =>
     apiClient.delete(`/api/v1/questions/${questionId}/survey/${surveyId}`),
 
-  // 🔵 Reorder questions — payload: [{ id, order_index }]
+  // Reorder questions — payload: [{ id, order_index }]
   reorderQuestions: (surveyId, payload) =>
-    apiClient.patch(`/api/v1/questions/survey/${surveyId}/reorder`, { questions: payload }),
+    apiClient.patch(`/api/v1/questions/survey/${surveyId}/reorder`, payload),
 
-  // 🟣 Bulk CREATE questions
-  // payload: [{ content, type, required, order_index, settings, options }]
+  // Bulk create — chấp nhận array hoặc { questions }
   bulkCreateQuestions: (surveyId, payload) =>
-    apiClient.post(`/api/v1/questions/survey/${surveyId}/bulk`, { questions: payload }),
+    apiClient.post(
+      `/api/v1/questions/survey/${surveyId}/bulk`,
+      Array.isArray(payload) ? { questions: payload } : payload
+    ),
+
+  /** AI suggest: { mode: 'parse'|'generate', rawText?, surveyTitle?, surveyDescription?, count? } */
+  aiSuggestQuestions: (surveyId, body) =>
+    apiClient.post(`/api/v1/questions/${surveyId}/ai/suggest`, body),
 };
 
 export default questionService;

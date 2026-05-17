@@ -4,9 +4,9 @@ import Toast from "react-native-toast-message";
 
 import RootNavigator from "./src/navigation/RootNavigator";
 import { AuthProvider }     from "./src/providers/AuthProvider";
-import ResponseProvider     from "./src/providers/Responseprovider";
-import SurveyProvider       from "./src/providers/Surveyprovider";
-import QuestionProvider     from "./src/providers/Questionprovider";
+import ResponseProvider     from "./src/providers/ResponseProvider";
+import SurveyProvider       from "./src/providers/SurveyProvider";
+import QuestionProvider     from "./src/providers/QuestionProvider";
 import OptionProvider from "./src/providers/OptionProvider";
 import UserProvider  from "./src/providers/UserProvider";
 import NotificationProvider from "./src/providers/NotificationProvider";

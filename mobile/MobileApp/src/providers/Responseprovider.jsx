@@ -1,15 +1,6 @@
-// src/providers/ResponseProvider.jsx  (React Native)
-//
-// Thay đổi so với web:
-//   - import từ "react-toastify" → Alert từ "react-native"
-//   - @/ alias → relative imports
-//   - toast.error() / toast.success() → Alert.alert() + showToast helper
-//
-// Nếu bạn dùng thư viện toast cho RN (react-native-toast-message, sonner-native…)
-// thì thay Alert.alert() trong showToast bằng Toast.show() tương ứng.
-
+// src/providers/ResponseProvider.jsx
 import React, { createContext, useContext, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform, ToastAndroid } from "react-native";
 import responseService from "../services/responseService";
 
 export const ResponseContext = createContext();
@@ -22,56 +13,60 @@ export const useResponse = () => {
   return context;
 };
 
-// ── Toast helper ─────────────────────────────────────────────────────────────
-// Đổi thành Toast.show() nếu bạn cài react-native-toast-message
-const showToast = (type, message) => {
-  if (type === "error") {
-    Alert.alert("Lỗi", message);
+// ─── Helper thay thế toast ───────────────────────────────────────────
+const showToast = (message, type = "success") => {
+  if (Platform.OS === "android") {
+    ToastAndroid.show(message, ToastAndroid.SHORT);
   } else {
-    Alert.alert("Thành công", message);
+    Alert.alert(type === "error" ? "Lỗi" : "Thông báo", message);
   }
 };
 
 const ResponseProvider = ({ children }) => {
-  // 🔹 states
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading]       = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [myResponses, setMyResponses]       = useState([]);
-  const [mySubmission, setMySubmission]     = useState(null);
-  const [userResponses, setUserResponses]   = useState([]);
+  const [myResponses, setMyResponses] = useState([]);
+  const [mySubmission, setMySubmission] = useState(null);
+  const [userResponses, setUserResponses] = useState([]);
   const [userSubmission, setUserSubmission] = useState(null);
 
   const [error, setError] = useState(null);
 
-  // 🔹 helper handle error
-  const handleError = (err, defaultMsg) => {
-    const msg =
-      err.response?.data?.message ||
-      err.message ||
-      defaultMsg;
+  const unwrap = (res) => res?.data ?? res;
 
+  const handleError = (err, defaultMsg) => {
+    const msg = err.response?.data?.message || err.message || defaultMsg;
     setError(msg);
-    showToast("error", msg);
+    showToast(msg, "error");
     throw err;
   };
 
-  // =========================================
-  // 🟢 SUBMIT SURVEY
-  // =========================================
+  // ─── START SURVEY SESSION ────────────────────────────────────────
+  const startSurvey = async (surveyId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await responseService.startSurvey(surveyId);
+      return unwrap(res);
+    } catch (err) {
+      handleError(err, "Không thể bắt đầu khảo sát");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── SUBMIT SURVEY ───────────────────────────────────────────────
   const submitSurvey = async (surveyId, payload) => {
     setSubmitting(true);
     setError(null);
-
     try {
       if (!payload || !Array.isArray(payload.answers)) {
         throw new Error("Payload không hợp lệ");
       }
-
-      const data = await responseService.submitSurvey(surveyId, payload);
-
-      showToast("success", "Gửi khảo sát thành công!");
-      return data;
+      const res = await responseService.submitSurvey(surveyId, payload);
+      showToast("Gửi khảo sát thành công!");
+      return unwrap(res);
     } catch (err) {
       handleError(err, "Gửi khảo sát thất bại");
     } finally {
@@ -79,15 +74,13 @@ const ResponseProvider = ({ children }) => {
     }
   };
 
-  // =========================================
-  // 🟢 GET MY SUBMISSION (1 survey)
-  // =========================================
+  // ─── GET MY SUBMISSION ───────────────────────────────────────────
   const getMySubmission = async (surveyId) => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await responseService.getMySubmission(surveyId);
+      const res = await responseService.getMySubmission(surveyId);
+      const data = unwrap(res);
       setMySubmission(data);
       return data;
     } catch (err) {
@@ -97,15 +90,13 @@ const ResponseProvider = ({ children }) => {
     }
   };
 
-  // =========================================
-  // 🟢 GET ALL MY RESPONSES
-  // =========================================
+  // ─── GET ALL MY RESPONSES ────────────────────────────────────────
   const getAllMyResponses = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await responseService.getAllMyResponses();
+      const res = await responseService.getAllMyResponses();
+      const data = unwrap(res);
       setMyResponses(data);
       return data;
     } catch (err) {
@@ -115,15 +106,13 @@ const ResponseProvider = ({ children }) => {
     }
   };
 
-  // =========================================
-  // 🔴 ADMIN - GET USER SUBMISSION
-  // =========================================
+  // ─── ADMIN: GET USER SUBMISSION ──────────────────────────────────
   const getUserSubmission = async (surveyId, userId) => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await responseService.getUserSubmission(surveyId, userId);
+      const res = await responseService.getUserSubmission(surveyId, userId);
+      const data = unwrap(res);
       setUserSubmission(data);
       return data;
     } catch (err) {
@@ -133,15 +122,13 @@ const ResponseProvider = ({ children }) => {
     }
   };
 
-  // =========================================
-  // 🔴 ADMIN - GET ALL USER RESPONSES
-  // =========================================
+  // ─── ADMIN: GET ALL USER RESPONSES ──────────────────────────────
   const getAllUserResponses = async (userId) => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await responseService.getAllUserResponses(userId);
+      const res = await responseService.getAllUserResponses(userId);
+      const data = unwrap(res);
       setUserResponses(data);
       return data;
     } catch (err) {
@@ -151,25 +138,19 @@ const ResponseProvider = ({ children }) => {
     }
   };
 
-  // =========================================
-  // 🧹 CLEAR ERROR
-  // =========================================
   const clearError = () => setError(null);
 
   return (
     <ResponseContext.Provider
       value={{
-        // states
         submitting,
         loading,
         error,
-
         myResponses,
         mySubmission,
         userResponses,
         userSubmission,
-
-        // actions
+        startSurvey,
         submitSurvey,
         getMySubmission,
         getAllMyResponses,

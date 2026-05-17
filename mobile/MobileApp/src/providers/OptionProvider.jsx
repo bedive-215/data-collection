@@ -1,15 +1,6 @@
-// src/providers/OptionProvider.jsx  (React Native)
-//
-// Thay đổi so với web:
-//   - import từ "react-toastify" → Alert từ "react-native"
-//   - @/ alias → relative imports
-//   - toast.error() / toast.success() → Alert.alert() + showToast helper
-//
-// Nếu bạn dùng thư viện toast cho RN (react-native-toast-message, sonner-native…)
-// thì thay Alert.alert() trong showToast bằng Toast.show() tương ứng.
-
+// src/providers/OptionProvider.jsx
 import React, { createContext, useState, useContext } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform, ToastAndroid } from "react-native";
 import optionService from "../services/optionService";
 
 export const OptionContext = createContext();
@@ -20,13 +11,13 @@ export const useOption = () => {
   return ctx;
 };
 
-// ── Toast helper ─────────────────────────────────────────────────────────────
-// Đổi thành Toast.show() nếu bạn cài react-native-toast-message
-const showToast = (type, message) => {
-  if (type === "error") {
-    Alert.alert("Lỗi", message);
+// ─── Helper thay thế toast ───────────────────────────────────────────
+const showToast = (message, type = "success") => {
+  if (Platform.OS === "android") {
+    ToastAndroid.show(message, ToastAndroid.SHORT);
   } else {
-    Alert.alert("Thành công", message);
+    // iOS: dùng Alert đơn giản (có thể thay bằng react-native-toast-message)
+    Alert.alert(type === "error" ? "Lỗi" : "Thông báo", message);
   }
 };
 
@@ -34,81 +25,69 @@ const OptionProvider = ({ children }) => {
   const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(false);
 
-  /* ──────────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────────────────────────
    * GET BY QUESTION
-   * GET /api/v1/options/questions/:question_id/survey/:survey_id
-   * BE trả về: { message, count, data: [...] }
-   *   Mỗi option: { id, question_id, content, createdAt, updatedAt }
-   * ────────────────────────────────────────────────────────────────────────── */
+   * ───────────────────────────────────────────── */
   const fetchOptions = async (questionId, surveyId) => {
     setLoading(true);
     try {
       const res = await optionService.getOptionsByQuestion(questionId, surveyId);
-
-      // axios bọc response trong res.data, hoặc có thể trả trực tiếp
       const body = res.data ?? res;
-
-      // BE trả về { message, count, data: [...] }
       const list = body.data ?? body.options ?? [];
-
       setOptions((prev) => ({ ...prev, [questionId]: list }));
       return list;
     } catch (err) {
       const msg = err.response?.data?.message || "Lấy option thất bại";
-      showToast("error", msg);
+      showToast(msg, "error");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  /* ──────────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────────────────────────
    * CREATE
-   * POST /api/v1/options/questions/:question_id/survey/:survey_id
-   * BE nhận: content (string)
-   * BE trả về: { message, option: { id, question_id, content, ... } }
-   * ────────────────────────────────────────────────────────────────────────── */
+   * ───────────────────────────────────────────── */
   const createOption = async (questionId, surveyId, content) => {
     if (!content || !content.trim()) {
-      showToast("error", "Content không được để trống");
+      showToast("Content không được để trống", "error");
       return;
     }
 
     try {
-      const res = await optionService.createOption(questionId, surveyId, content.trim());
+      const res = await optionService.createOption(questionId, surveyId, {
+        label: content.trim(),
+      });
       const data = res.data ?? res;
-      const newOpt = data.option;
+      const newOpt = data.data ?? data.option;
 
       setOptions((prev) => ({
         ...prev,
         [questionId]: [...(prev[questionId] || []), newOpt],
       }));
 
-      showToast("success", "Thêm option thành công!");
+      showToast("Thêm option thành công!");
       return newOpt;
     } catch (err) {
       const msg = err.response?.data?.message || "Thêm option thất bại";
-      showToast("error", msg);
+      showToast(msg, "error");
       throw err;
     }
   };
 
-  /* ──────────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────────────────────────
    * UPDATE
-   * PATCH /api/v1/options/:option_id/survey/:survey_id
-   * BE nhận: content (string)
-   * BE trả về: { message, option: { id, question_id, content, ... } }
-   * ────────────────────────────────────────────────────────────────────────── */
-  const updateOption = async (optionId, surveyId, questionId, content) => {
-    if (!content || !content.trim()) {
-      showToast("error", "Content không được để trống");
+   * ───────────────────────────────────────────── */
+  const updateOption = async (optionId, questionId, surveyId, payload) => {
+    if (!payload || Object.keys(payload).length === 0) {
+      showToast("Không có dữ liệu để cập nhật", "error");
       return;
     }
 
     try {
-      const res = await optionService.updateOption(optionId, surveyId, content.trim());
+      const res = await optionService.updateOption(optionId, surveyId, payload);
       const data = res.data ?? res;
-      const updated = data.option;
+      const updated = data.data ?? data.option;
 
       setOptions((prev) => ({
         ...prev,
@@ -117,21 +96,19 @@ const OptionProvider = ({ children }) => {
         ),
       }));
 
-      showToast("success", "Cập nhật option thành công!");
+      showToast("Cập nhật option thành công!");
       return updated;
     } catch (err) {
       const msg = err.response?.data?.message || "Cập nhật option thất bại";
-      showToast("error", msg);
+      showToast(msg, "error");
       throw err;
     }
   };
 
-  /* ──────────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────────────────────────
    * DELETE
-   * DELETE /api/v1/options/:option_id/survey/:survey_id
-   * BE trả về: { message }
-   * ────────────────────────────────────────────────────────────────────────── */
-  const deleteOption = async (optionId, surveyId, questionId) => {
+   * ───────────────────────────────────────────── */
+  const deleteOption = async (optionId, questionId, surveyId) => {
     try {
       await optionService.deleteOption(optionId, surveyId);
 
@@ -142,47 +119,46 @@ const OptionProvider = ({ children }) => {
         ),
       }));
 
-      showToast("success", "Xóa option thành công!");
+      showToast("Xóa option thành công!");
     } catch (err) {
       const msg = err.response?.data?.message || "Xóa option thất bại";
-      showToast("error", msg);
+      showToast(msg, "error");
       throw err;
     }
   };
 
-  /* ──────────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────────────────────────
    * BULK CREATE
-   * POST /api/v1/options/questions/:question_id/survey/:survey_id/bulk
-   * BE nhận: options (string[])
-   * BE trả về: { message, count, options[] }
-   * ────────────────────────────────────────────────────────────────────────── */
+   * ───────────────────────────────────────────── */
   const bulkCreateOptions = async (questionId, surveyId, contentArray) => {
     if (!Array.isArray(contentArray) || contentArray.length === 0) {
-      showToast("error", "Danh sách option không hợp lệ");
+      showToast("Danh sách option không hợp lệ", "error");
       return;
     }
 
     const cleaned = contentArray.map((c) => c?.trim()).filter(Boolean);
     if (cleaned.length === 0) {
-      showToast("error", "Tất cả option đều rỗng");
+      showToast("Tất cả option đều rỗng", "error");
       return;
     }
 
     try {
-      const res = await optionService.bulkCreateOptions(questionId, surveyId, cleaned);
+      const res = await optionService.bulkCreateOptions(questionId, surveyId, {
+        options: cleaned,
+      });
       const data = res.data ?? res;
-      const newOptions = data.options ?? data.data ?? [];
+      const newOptions = data.data ?? data.options ?? [];
 
       setOptions((prev) => ({
         ...prev,
         [questionId]: [...(prev[questionId] || []), ...newOptions],
       }));
 
-      showToast("success", `Đã thêm ${newOptions.length} option thành công!`);
+      showToast(`Đã thêm ${newOptions.length} option thành công!`);
       return newOptions;
     } catch (err) {
       const msg = err.response?.data?.message || "Bulk create option thất bại";
-      showToast("error", msg);
+      showToast(msg, "error");
       throw err;
     }
   };
