@@ -189,17 +189,17 @@ export class authMiddleware {
 
                     // nếu có truyền role → check role
                     if (allowedRoles.length > 0) {
-    const role = participant.role?.toLowerCase();
+                        const role = participant.role?.toLowerCase();
 
-    const normalizedRoles = allowedRoles.map(r => r.toLowerCase());
+                        const normalizedRoles = allowedRoles.map(r => r.toLowerCase());
 
-    if (!normalizedRoles.includes(role)) {
-        throw new AppError(
-            "Insufficient permission in this survey",
-            403
-        );
-    }
-}
+                        if (!normalizedRoles.includes(role)) {
+                            throw new AppError(
+                                "Insufficient permission in this survey",
+                                403
+                            );
+                        }
+                    }
 
                     req.participant = participant;
                     req.survey = survey;
@@ -229,7 +229,7 @@ export class authMiddleware {
                 throw new AppError("Survey not found", 404);
             }
 
-            if(!_checkOwnerOrAdmin(user, survey)) {
+            if (!_checkOwnerOrAdmin(user, survey)) {
                 throw new AppError("Forbidden", 403);
             }
 

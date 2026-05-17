@@ -1,3 +1,4 @@
+import { type } from "os";
 import { DataTypes} from "sequelize";
 
 export default (sequelize) => {
@@ -10,6 +11,10 @@ export default (sequelize) => {
         full_name: {
             type: DataTypes.STRING(255),
             allowNull: false,
+        },
+        gender: {
+            type: DataTypes.ENUM("MALE", "FEMALE", "OTHER"),
+            allowNull: false
         },
         email: {
             type: DataTypes.STRING(255),

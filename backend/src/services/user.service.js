@@ -29,7 +29,7 @@ class UserService {
         const user = await this.User.findByPk(id);
         if (!user) throw new AppError('User not found', 404);
 
-        const { full_name, phone_number, date_of_birth } = data;
+        const { full_name, phone_number, date_of_birth, gender } = data;
 
         if (full_name !== undefined) user.full_name = full_name;
         if (phone_number !== undefined) user.phone_number = phone_number;
@@ -39,6 +39,7 @@ class UserService {
                 user.date_of_birth = dob.toISOString().split('T')[0];
             }
         }
+        if (gender !== undefined) user.gender = gender;
 
         await user.save();
 
@@ -49,6 +50,7 @@ class UserService {
                 full_name: user.full_name,
                 phone_number: user.phone_number,
                 date_of_birth: user.date_of_birth,
+                gender: user.gender,
                 avatar: user.avatar,
             }
         };
@@ -92,6 +94,7 @@ class UserService {
                 full_name: user.full_name,
                 phone_number: user.phone_number,
                 date_of_birth: user.date_of_birth,
+                gender: user.gender,
                 avatar: user.avatar,
             }
         };
@@ -121,6 +124,7 @@ class UserService {
                 "email",
                 "phone_number",
                 "date_of_birth",
+                "gender",
                 "avatar",
                 "role",
                 "created_at",
