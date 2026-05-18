@@ -112,7 +112,15 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
             where: { survey_id },
             order: [["order_index", "ASC"]],
         });
-        if (!questions.length) throw new AppError("No questions found for this survey", 404);
+        if (!questions.length) {
+            return {
+                survey_id,
+                total_responses: 0,
+                generated_at: new Date().toISOString(),
+                filters_applied: filters,
+                questions: [],
+            };
+        }
 
         const totalResponses = await this.Response.count({
             where: this._buildResponseWhere(survey_id, filters),
