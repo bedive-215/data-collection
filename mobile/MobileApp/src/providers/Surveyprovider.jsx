@@ -377,6 +377,7 @@ const SurveyProvider = ({ children }) => {
       const update = (prev) => prev.map((s) => (s.id === id ? updated : s));
       setMySurveys(update);
       setSurveys(update);
+      setCurrentSurvey(updated);
       showToast("Cập nhật thành công");
       return updated;
     } catch (err) {
@@ -426,9 +427,10 @@ const SurveyProvider = ({ children }) => {
       startLoading();
       await surveyService.closeSurvey(id);
       const endAt = new Date().toISOString();
-      const patch = (prev) => prev.map((s) => (s.id === id ? { ...s, end_at: endAt } : s));
+      const patch = (prev) => prev.map((s) => (s.id === id ? { ...s, end_at: endAt, status: "CLOSED" } : s));
       setSurveys(patch);
       setMySurveys(patch);
+      setCurrentSurvey(prev => prev?.id === id ? { ...prev, end_at: endAt, status: "CLOSED" } : prev);
       showToast("Đã đóng khảo sát");
       return true;
     } catch (err) {
@@ -448,6 +450,7 @@ const SurveyProvider = ({ children }) => {
       const update = (prev) => prev.map((s) => (s.id === id ? updated : s));
       setSurveys(update);
       setMySurveys(update);
+      setCurrentSurvey(updated);
       return updated;
     } catch (err) {
       handleError(err, "Publish thất bại");
