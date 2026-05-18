@@ -2,11 +2,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Plus, X, FileText, Calendar, Loader2, Inbox, Search,
-  MoreVertical, Trash2, Pencil, Check, Share2, Mail,
+  Trash2, Pencil, Check, Share2, Mail,
   Lock, Globe, Copy, ExternalLink, Power, PowerOff,
   Users, ChevronRight, Link as LinkIcon, Send,
-  UserPlus, UserMinus, ChevronDown, RefreshCw,
-  BarChart3,
+  UserPlus, UserMinus,   ChevronDown, RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
@@ -1026,9 +1025,7 @@ function SurveyCard({
 }) {
   const navigate = useNavigate();
   const thumb    = C.thumbColors[index % C.thumbColors.length];
-  const menuRef  = useRef(null);
 
-  const [menuOpen,    setMenuOpen]    = useState(false);
   const [editing,     setEditing]     = useState(false);
   const [title,       setTitle]       = useState(survey.title);
   const [description, setDescription] = useState(survey.description || "");
@@ -1046,21 +1043,6 @@ function SurveyCard({
   const [publishOpen,      setPublishOpen]      = useState(false);
   const [closeOpen,        setCloseOpen]        = useState(false);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen]);
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setRotateX((e.clientY - rect.top - rect.height / 2) / 10);
-    setRotateY((e.clientX - rect.left - rect.width / 2) / 10);
-  };
-
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -1075,60 +1057,14 @@ function SurveyCard({
     finally { setDeleting(false); }
   };
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRotateX((e.clientY - rect.top - rect.height / 2) / 10);
+    setRotateY((e.clientX - rect.left - rect.width / 2) / 10);
+  };
+
   const isClosed    = survey.status === "CLOSED";
   const isPublished = survey.is_published;
-
-  const menuItems = [
-    {
-      icon: <Pencil size={14}/>,
-      label: "Chỉnh sửa",
-      action: () => { setEditing(true); setMenuOpen(false); },
-    },
-    {
-      icon: <BarChart3 size={14}/>,
-      label: "Phân tích",
-      action: () => { navigate(`/user/surveys/${survey.id}/analytics`); setMenuOpen(false); },
-    },
-    {
-      icon: <Share2 size={14}/>,
-      label: "Tạo link chia sẻ",
-      action: () => { setShareOpen(true); setMenuOpen(false); },
-    },
-    {
-      icon: <Mail size={14}/>,
-      label: "Mời người dùng",
-      action: () => { setInviteOpen(true); setMenuOpen(false); },
-    },
-    {
-      icon: <UserPlus size={14}/>,
-      label: "Mời hàng loạt",
-      action: () => { setBulkInviteOpen(true); setMenuOpen(false); },
-      color: C.primary,
-    },
-    {
-      icon: <Users size={14}/>,
-      label: "Xem participants",
-      action: () => { setParticipantsOpen(true); setMenuOpen(false); },
-    },
-    {
-      icon: isPublished ? <Lock size={14}/> : <Globe size={14}/>,
-      label: isPublished ? "Ẩn survey" : "Publish",
-      action: () => { setPublishOpen(true); setMenuOpen(false); },
-      color: isPublished ? C.warning : C.primary,
-    },
-    !isClosed && {
-      icon: <PowerOff size={14}/>,
-      label: "Đóng survey",
-      action: () => { setCloseOpen(true); setMenuOpen(false); },
-      color: "#6b7280",
-    },
-    {
-      icon: <Trash2 size={14}/>,
-      label: "Xóa",
-      action: handleDelete,
-      color: C.error,
-    },
-  ].filter(Boolean);
 
   return (
     <>
@@ -1150,7 +1086,7 @@ function SurveyCard({
         onMouseMove={handleMouseMove}
         onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 30px 80px rgba(0,0,0,0.25)"; }}
-        onClick={() => !editing && navigate(`/user/my-surveys/${survey.id}`)}
+        onClick={() => !editing && navigate(`/user/my-surveys/${survey.id}/studio`)}
       >
         {/* Thumbnail */}
         <div style={{
@@ -1226,50 +1162,6 @@ function SurveyCard({
               )}
             </div>
           )}
-
-          {/* MENU */}
-          <div ref={menuRef} style={{position:"absolute", top:10, right:10, zIndex:100}} onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              style={{
-                width:34, height:34, borderRadius:"50%",
-                border:"none", background:"rgba(255,255,255,.85)",
-                cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,1)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,.85)"; e.currentTarget.style.boxShadow = "none"; }}
-            >
-              <MoreVertical size={16}/>
-            </button>
-
-            {menuOpen && (
-              <div style={{
-                position:"absolute", top:40, right:0, width:196,
-                background:C.surface, border:`1px solid ${C.border}`,
-                borderRadius:14, overflow:"visible",
-                boxShadow:"0 10px 30px rgba(0,0,0,.1)",
-                animation: "slideInUp 0.2s ease-out",
-              }}>
-                {menuItems.map((item, i) => (
-                  <button key={i} onClick={item.action} style={{
-                    width:"100%", border:"none", background:"transparent",
-                    padding:"10px 14px", display:"flex", alignItems:"center", gap:10,
-                    cursor:"pointer", fontSize:13, color: item.color || C.text,
-                    fontFamily:C.font,
-                    borderBottom: i < menuItems.length - 1 ? `1px solid ${C.border}` : "none",
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    {item.icon}
-                    {item.label}
-                    {deleting && item.label === "Xóa" && <Loader2 size={12} style={{marginLeft:"auto", animation:"spin 1s linear infinite"}}/>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* CONTENT */}

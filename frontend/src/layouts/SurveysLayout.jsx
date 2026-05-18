@@ -1,16 +1,16 @@
 // ─── SurveysLayout.jsx ─── Redesigned to match Dashboard aesthetic ──
 import React, {
-  useEffect, useState, useRef, useMemo, useCallback,
+  useEffect, useState, useMemo, useCallback,
 } from "react";
 import { createPortal } from "react-dom";
 import {
   Plus, X, FileText, Calendar, Loader2, Inbox, Search,
-  MoreVertical, Trash2, Pencil, Check, Share2, Mail,
+  Trash2, Check,
   Lock, Globe, Copy, ExternalLink, PowerOff,
   Users, Link as LinkIcon, Send, CheckCircle2, Clock,
   LayoutGrid, List, SlidersHorizontal, RefreshCw, ArrowLeft,
   ChevronDown, ChevronUp, Sparkles,
-  UserPlus, UserMinus, Rocket, TrendingUp, Zap, BarChart3,
+  UserPlus, UserMinus, Rocket, TrendingUp, Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey }    from "@/providers/SurveyProvider";
@@ -784,9 +784,7 @@ function MySurveyCard({
 }) {
   const navigate=useNavigate();
   const thumb=C.thumbGrads[index%C.thumbGrads.length];
-  const menuRef=useRef(null);
 
-  const [menuOpen,setMenuOpen]=useState(false);
   const [editing,setEditing]=useState(false);
   const [title,setTitle]=useState(survey.title);
   const [description,setDescription]=useState(survey.description||"");
@@ -802,12 +800,6 @@ function MySurveyCard({
   const [bulkInviteOpen,setBulkInviteOpen]=useState(false);
   const [participantsOpen,setParticipantsOpen]=useState(false);
 
-  useEffect(()=>{
-    if(!menuOpen) return;
-    const h=e=>{if(menuRef.current&&!menuRef.current.contains(e.target))setMenuOpen(false);};
-    document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);
-  },[menuOpen]);
-
   const handleSave=async()=>{
     try{setSaving(true);await onUpdate(survey.id,{title,description,start_at:startAt||null,end_at:endAt||null});setEditing(false);}
     catch(err){console.error(err);}finally{setSaving(false);}
@@ -815,18 +807,6 @@ function MySurveyCard({
   const handleDelete=async()=>{try{setDeleting(true);await onDelete(survey.id);}finally{setDeleting(false);}};
   const isClosed=survey.status==="CLOSED";
   const isPublished=survey.is_published;
-
-  const menuItems=[
-    {icon:<Pencil size={13}/>,label:"Mở Studio",action:()=>{navigate(`/user/my-surveys/${survey.id}/studio`);setMenuOpen(false);}},
-    {icon:<BarChart3 size={13}/>,label:"Phân tích",action:()=>{navigate(`/user/surveys/${survey.id}/analytics`);setMenuOpen(false);}},
-    {icon:<Share2 size={13}/>,label:"Tạo link chia sẻ",action:()=>{setShareOpen(true);setMenuOpen(false);}},
-    {icon:<Mail size={13}/>,label:"Mời người dùng",action:()=>{setInviteOpen(true);setMenuOpen(false);}},
-    {icon:<UserPlus size={13}/>,label:"Mời hàng loạt",action:()=>{setBulkInviteOpen(true);setMenuOpen(false);},color:C.primary},
-    {icon:<Users size={13}/>,label:"Xem participants",action:()=>{setParticipantsOpen(true);setMenuOpen(false);}},
-    {icon:isPublished?<Lock size={13}/>:<Globe size={13}/>,label:isPublished?"Ẩn survey":"Publish",action:()=>{setPublishOpen(true);setMenuOpen(false);},color:isPublished?"#f59e0b":C.primary},
-    !isClosed&&{icon:<PowerOff size={13}/>,label:"Đóng survey",action:()=>{setCloseOpen(true);setMenuOpen(false);},color:"#6b7280"},
-    {icon:<Trash2 size={13}/>,label:"Xóa",action:handleDelete,color:C.error},
-  ].filter(Boolean);
 
   const inputBase={
     width:"100%",boxSizing:"border-box",padding:"8px 11px",
@@ -852,9 +832,8 @@ function MySurveyCard({
         }}
         style={{
           position:"relative",
-          zIndex:menuOpen?60:1,
           background:"rgba(255,255,255,0.85)",backdropFilter:"blur(18px)",
-          border:`1px solid ${C.glassBorder}`,borderRadius:20,overflow:menuOpen?"visible":"hidden",
+          border:`1px solid ${C.glassBorder}`,borderRadius:20,overflow:"hidden",
           cursor:"pointer",transition:"transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease",
           boxShadow:"0 4px 18px rgba(15,23,42,0.08)",
           opacity:isClosed?0.7:1,display:"flex",flexDirection:"column",height:"100%",
@@ -868,22 +847,6 @@ function MySurveyCard({
           <div style={{position:"absolute",top:10,left:10,display:"flex",flexDirection:"column",gap:4}}>
             <StatusBadge status={survey.status}/>
             {isPublished&&<span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:999,color:"#4361ee",background:"rgba(67,97,238,0.15)",display:"flex",alignItems:"center",gap:3,fontFamily:C.font}}><Globe size={8}/> Live</span>}
-          </div>
-          <div ref={menuRef} style={{position:"absolute",top:8,right:8}} onClick={e=>e.stopPropagation()}>
-            <button onClick={()=>setMenuOpen(!menuOpen)} style={{width:28,height:28,borderRadius:8,border:`1px solid rgba(255,255,255,0.6)`,background:"rgba(255,255,255,0.75)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",transition:"all .12s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.95)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.75)";}}
-            ><MoreVertical size={13} color={C.textSub}/></button>
-            {menuOpen&&(
-              <div style={{position:"absolute",top:34,right:0,width:192,background:"rgba(255,255,255,0.96)",backdropFilter:"blur(20px)",border:`1px solid ${C.glassBorder}`,borderRadius:14,overflow:"hidden",boxShadow:"0 16px 48px rgba(0,0,0,.15)",zIndex:500,animation:"slideUp .12s ease"}}>
-                {menuItems.map((item,i)=>(
-                  <button key={i} onClick={item.action} style={{width:"100%",border:"none",background:"transparent",padding:"9px 13px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",fontSize:12,color:item.color||C.text,fontFamily:C.font,borderBottom:i<menuItems.length-1?`1px solid rgba(0,0,0,0.05)`:"none"}}
-                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(67,97,238,0.06)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
-                  >{item.icon}{item.label}{deleting&&item.label==="Xóa"&&<Loader2 size={11} style={{marginLeft:"auto",animation:"spin 1s linear infinite"}}/>}</button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 

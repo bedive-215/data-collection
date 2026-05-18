@@ -707,7 +707,6 @@ export default function DashboardPage() {
 
   const surveyPath = (id) => ROUTERS.USER.SURVEY_TAKE.replace(":surveyId", id);
   const responsePath = (id) => ROUTERS.USER.SURVEY_RESPONSE.replace(":surveyId", id);
-  const myDetailPath = (id) => ROUTERS.USER.MY_SURVEY_DETAIL.replace(":surveyId", id);
 
   const handleStart = (id) => navigate(surveyPath(id));
   const pendingCount = publicSurveys.filter((s) => !doneSurveyIds.has(s.id)).length;
@@ -810,7 +809,7 @@ export default function DashboardPage() {
                   key={survey.id}
                   survey={survey}
                   index={i}
-                  onClick={() => navigate(myDetailPath(survey.id))}
+                  onClick={() => navigate(`/user/my-surveys/${survey.id}/studio`)}
                   type="my"
                 />
               ))}
