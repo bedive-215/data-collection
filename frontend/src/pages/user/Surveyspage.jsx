@@ -17,7 +17,7 @@ import {
 
 import { useSurvey } from "@/providers/SurveyProvider";
 import { useResponse } from "@/providers/ResponseProvider";
-import SurveyCard, { STATUS_CONFIG } from "@/components/survey/SurveyCard";
+import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 
 // ─────────────────────────────────────────────────────────────
 // Tabs
@@ -552,7 +552,7 @@ function CardSkeleton() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// SurveyCardWrapper — adapts new SurveyCard to SurveysPage needs
+// SurveyCardWrapper — adapts SurveyCardHome for SurveysPage
 // ─────────────────────────────────────────────────────────────
 function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index }) {
   const handleClick = () => {
@@ -564,11 +564,12 @@ function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index }) {
   };
 
   return (
-    <SurveyCard
+    <SurveyCardHome
       survey={survey}
       index={index}
-      variant="user"
+      overrideStatus={done ? "COMPLETED" : null}
       onClick={handleClick}
+      type="public"
     />
   );
 }
@@ -915,16 +916,18 @@ export default function SurveysPage() {
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
               : "flex flex-col gap-3"
           }
         >
           {displayed.map((survey, index) => (
-            <SurveyCard
+            <SurveyCardWrapper
               key={survey.id}
               survey={survey}
+              done={doneSurveyIds.has(survey.id)}
+              onStart={handleStart}
+              onViewSubmission={handleViewSubmission}
               index={index}
-              variant="user"
             />
           ))}
         </div>

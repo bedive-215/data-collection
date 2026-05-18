@@ -11,9 +11,7 @@ import { useResponse } from "@/providers/ResponseProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS } from "@/utils/constants";
-import { SurveyCardHome, STATUS_MAP, SC } from "@/components/survey/SurveyCardHome";
-
-const C = SC; // alias for existing components that use C
+import { SurveyCardHome, STATUS_MAP, C } from "@/components/survey/SurveyCardHome";
 
 /* ── Share Modal ──────────────────────────────────────────────────── */
 function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, error, onGenerate }) {
@@ -841,14 +839,14 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
-              {[1, 2, 3].map((i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   style={{
                     background: C.surface,
-                    borderRadius: 20,
-                    height: 280,
+                    borderRadius: 40,
+                    height: 240,
                     animation: "pulse 2s ease-in-out infinite",
                     border: `1px solid ${C.glassBorder}`,
                   }}
@@ -863,7 +861,7 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
               {mySurveys.slice(0, 5).map((survey, i) => (
                 <SurveyCardHome
                   key={survey.id}
@@ -900,14 +898,14 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
-              {[1, 2, 3].map((i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   style={{
                     background: C.surface,
-                    borderRadius: 20,
-                    height: 280,
+                    borderRadius: 40,
+                    height: 240,
                     animation: "pulse 2s ease-in-out infinite",
                     border: `1px solid ${C.glassBorder}`,
                   }}
@@ -922,7 +920,7 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
               {publicSurveys.slice(0, 5).map((survey, i) => {
                 const done = doneSurveyIds.has(survey.id);
                 return (

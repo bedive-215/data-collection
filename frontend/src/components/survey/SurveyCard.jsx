@@ -15,6 +15,8 @@ import {
   Trash2,
   Globe,
   Clock,
+  Mail,
+  UserPlus,
 } from "lucide-react";
 
 /* ── Color Token ───────────────────────────────────────────────────── */
@@ -111,7 +113,7 @@ function PulseDot({ color }) {
       <span style={{
         position: "absolute", inset: 0, borderRadius: "50%",
         background: color, opacity: 0.75,
-        animation: "surveyPulse 2s ease-out infinite",
+        animation: "pulseDot 2s infinite",
       }} />
       <span style={{
         position: "relative", display: "inline-block",
@@ -119,17 +121,17 @@ function PulseDot({ color }) {
         background: color,
       }} />
       <style>{`
-        @keyframes surveyPulse {
-          0%   { transform: scale(0.8); opacity: 0.75; }
-          70%  { transform: scale(1.6); opacity: 0; }
-          100% { transform: scale(0.8); opacity: 0; }
+        @keyframes pulseDot {
+          0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+          70%  { transform: scale(1);    box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34,197,94,0); }
         }
       `}</style>
     </span>
   );
 }
 
-/* ── Status Badge (glass style) ──────────────────────────────────── */
+/* ── Status Badge — glass style ──────────────────────────────────── */
 function StatusBadge({ status }) {
   const cfg = getStatusConfig(status);
   return (
@@ -156,36 +158,13 @@ function StatusBadge({ status }) {
   );
 }
 
-/* ── IconButton (glass style, top-right) ────────────────────────── */
-function ActionButton({ onClick, title, children }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      style={{
-        width: 36, height: 36,
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.4)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        border: "1px solid rgba(255,255,255,0.5)",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#374151",
-        transition: "all 0.3s ease",
-        boxShadow: "0 8px 32px rgba(31,38,135,0.07)",
-        flexShrink: 0,
-      }}
-      onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.75)"; }}
-      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}
-    >
-      {children}
-    </button>
-  );
-}
+/* ── Shared button styles ─────────────────────────────────────── */
+const chipBtn = {
+  width: 24, height: 24, borderRadius: 6,
+  border: `1px solid ${C.border}`, background: "transparent",
+  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+  color: C.textDim, transition: "all 0.15s",
+};
 
 /* ── Participants Avatars ──────────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -267,6 +246,22 @@ function formatRelativeTime(dateStr) {
   return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "short" });
 }
 
+/* ── Survey time formatter (matches mobile card) ─────────────────── */
+function formatSurveyTime(survey) {
+  if (!survey) return "Không rõ";
+  const now = new Date();
+  if (survey.end_at) {
+    const end = new Date(survey.end_at);
+    if (end < now) return `Hết hạn · ${end.toLocaleDateString("vi-VN", { day: "2-digit", month: "short" })}`;
+    return `Còn · ${end.toLocaleDateString("vi-VN", { day: "2-digit", month: "short" })}`;
+  }
+  if (survey.start_at) {
+    const start = new Date(survey.start_at);
+    if (start > now) return `Sắp tới · ${start.toLocaleDateString("vi-VN", { day: "2-digit", month: "short" })}`;
+  }
+  return "Không giới hạn";
+}
+
 /* ──────────────────────────────────────────────────────────────────── */
 /* Main SurveyCard
 /* Variants:
@@ -288,6 +283,11 @@ export default function SurveyCard({
   onViewAnalytics,
   onClick,
   onLock,
+  // New callbacks to match MySurveysPage
+  onInvite,
+  onBulkInvite,
+  onGetParticipants,
+  onDeleteParticipant,
   // Selection
   selected = false,
   checked = false,
@@ -426,7 +426,7 @@ export default function SurveyCard({
       style={{
         background: "#fff",
         borderRadius: 40,
-        border: `1px solid rgba(0,0,0,0.05)`,
+        border: "1px solid #f1f5f9",
         overflow: "hidden",
         boxShadow: "0 32px 64px -16px rgba(0,0,0,0.1)",
         cursor: "pointer",
@@ -446,89 +446,60 @@ export default function SurveyCard({
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
-      {/* ── Top Section: Mesh Gradient Header ── */}
-      <section style={{
+      {/* ── Header: mesh gradient ── */}
+      <div style={{
+        height: 144,
+        background: cfg.meshGrad,
         position: "relative",
+        overflow: "hidden",
+        flexShrink: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        overflow: "hidden",
-        height: 144,   // h-36
-        background: cfg.meshGrad,
-        flexShrink: 0,
       }}>
         {/* Status Badge — top left */}
-        <div style={{
-          position: "absolute", top: 16, left: 20, zIndex: 10,
-        }}>
-          <StatusBadge status={status} />
+        <div style={{position:"absolute", top:16, left:24, zIndex:10}}>
+          <StatusBadge status={status}/>
         </div>
 
         {/* Action Buttons — top right */}
-        <div style={{
-          position: "absolute", top: 16, right: 20, zIndex: 10,
-          display: "flex", gap: 8,
-        }}>
-          {/* Lock button — only for owner/admin pages */}
+        <div style={{position:"absolute", top:16, right:24, display:"flex", gap:8, zIndex:10}}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Lock */}
           {(isOwner || isAdmin) && onLock && (
-            <ActionButton onClick={e => { e.stopPropagation(); onLock(survey.id); }} title="Khóa khảo sát">
-              <Lock size={16} />
-            </ActionButton>
+            <button onClick={() => onLock(survey.id)} title="Khóa / Đóng khảo sát"
+              style={{width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.5)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#374151",transition:"all .3s ease",boxShadow:"0 8px 32px rgba(31,38,135,0.07)"}}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.8)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}>
+              <Lock size={18}/>
+            </button>
           )}
-          {/* Share button */}
+          {/* Share */}
           {onShare && (
-            <ActionButton onClick={e => { e.stopPropagation(); onShare(survey.id); }} title="Chia sẻ">
-              <Share size={16} />
-            </ActionButton>
-          )}
-          {/* Analytics button — owner/admin */}
-          {(isOwner || isAdmin) && onViewAnalytics && (
-            <ActionButton onClick={e => { e.stopPropagation(); onViewAnalytics(survey.id); }} title="Phân tích">
-              <BarChart3 size={16} />
-            </ActionButton>
-          )}
-          {/* Edit button — owner/admin */}
-          {(isOwner || isAdmin) && onEdit && (
-            <ActionButton onClick={e => { e.stopPropagation(); onEdit(survey.id); }} title="Chỉnh sửa">
-              <Edit size={16} />
-            </ActionButton>
-          )}
-          {/* Publish toggle — owner/admin */}
-          {(isOwner || isAdmin) && onPublish && (
-            <ActionButton onClick={e => { e.stopPropagation(); onPublish(survey.id); }} title={isPublished ? "Bỏ công khai" : "Công khai"}>
-              {isPublished ? <Lock size={16} /> : <Globe size={16} />}
-            </ActionButton>
-          )}
-          {/* Delete button — owner/admin */}
-          {(isOwner || isAdmin) && onDelete && (
-            <ActionButton onClick={e => { e.stopPropagation(); onDelete(survey.id); }} title="Xóa">
-              <Trash2 size={16} />
-            </ActionButton>
+            <button onClick={() => onShare(survey.id)} title="Chia sẻ"
+              style={{width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.5)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#374151",transition:"all .3s ease",boxShadow:"0 8px 32px rgba(31,38,135,0.07)"}}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.8)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}>
+              <Share size={18}/>
+            </button>
           )}
         </div>
 
         {/* Central Document Icon */}
         <div style={{
-          width: 80, height: 80,
-          borderRadius: 28,
-          background: cfg.iconBg,
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          width: 80, height: 80, borderRadius: 28,
+          background: "rgba(255,255,255,0.25)",
+          backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           border: "1px solid rgba(255,255,255,0.5)",
           boxShadow: "0 8px 32px rgba(31,38,135,0.15)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "transform 0.5s ease",
+          display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative", zIndex: 5,
         }}>
           <div style={{
-            width: 40, height: 40,
-            borderRadius: 12,
-            background: cfg.iconInner,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 40, height: 40, borderRadius: 12,
+            background: "rgba(255,255,255,0.35)",
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <FileText size={28} color="rgba(255,255,255,0.95)" strokeWidth={1.5} />
           </div>
@@ -537,84 +508,82 @@ export default function SurveyCard({
         {/* Bottom Blur Edge */}
         <div style={{
           position: "absolute", bottom: 0, left: 0, right: 0,
-          height: 32,
-          background: "linear-gradient(to top, #fff, transparent)",
+          height: 32, background: "linear-gradient(to top, white, transparent)",
           pointerEvents: "none",
         }} />
-      </section>
+      </div>
 
-      {/* ── Bottom Section: Content ── */}
-      <section style={{
+      {/* ── Content (pixel-perfect match) ── */}
+      <div style={{
         background: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        padding: "20px 32px 16px",
-        gap: 12,
-        flex: 1,
+        display: "flex", flexDirection: "column",
+        padding: "16px 32px 16px",
+        gap: 12, flex: 1,
       }}>
         {/* Title */}
         <div>
-          <h2 style={{
-            margin: 0,
-            fontSize: 22,
-            fontWeight: 800,
-            color: C.text,
-            lineHeight: 1.25,
-            letterSpacing: "-0.02em",
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            transition: "transform 0.3s ease",
-          }}>
+          <h2 style={{margin:0, fontSize:26, fontWeight:700, color:C.text, lineHeight:1.25, letterSpacing:"-0.025em", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", transition:"transform 0.3s ease"}}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateX(4px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; }}
+          >
             {survey.title}
           </h2>
-          <p style={{
-            margin: "8px 0 0",
-            fontSize: 14,
-            color: C.textSub,
-            lineHeight: 1.6,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            opacity: 0.85,
-          }}>
+          <p style={{margin:"8px 0 0", fontSize:15, fontWeight:500, color:C.textSub, lineHeight:1.625, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", opacity:0.8}}>
             {survey.description || "Không có mô tả"}
           </p>
         </div>
 
-        {/* Footer Info */}
-        <div style={{
-          borderTop: "1px solid #f1f5f9",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingTop: 14,
-          marginTop: 4,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 36, height: 36,
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e8ecf5",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Calendar size={16} color={C.textDim} />
+        {/* Footer */}
+        <div style={{borderTop:"1px solid #f1f5f9", display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:14, marginTop:2}}>
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <div style={{width:40,height:40,borderRadius:12,background:"#f8fafc",border:"1px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Calendar size={18} color={C.textDim}/>
             </div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Cập nhật
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.textSub }}>
-                {formatRelativeTime(survey.updated_at || survey.created_at)}
+              <div style={{fontSize:11,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:"0.1em"}}>Cập nhật</div>
+              <div style={{fontSize:14,fontWeight:600,color:C.textSub}}>
+                {formatSurveyTime(survey)}
               </div>
             </div>
           </div>
-          <ParticipantsAvatars participants={surveyParts} />
+          {/* Quick actions */}
+          <div style={{display:"flex", gap:6}} onClick={e => e.stopPropagation()}>
+            {onInvite && (
+              <button onClick={() => onInvite(survey.id)} style={chipBtn} title="Mời"
+                onMouseEnter={e => { e.currentTarget.style.background = C.primaryLight; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                <Mail size={11}/>
+              </button>
+            )}
+            {onBulkInvite && (
+              <button onClick={() => onBulkInvite(survey.id)} style={chipBtn} title="Mời hàng loạt"
+                onMouseEnter={e => { e.currentTarget.style.background = C.primaryLight; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                <UserPlus size={11}/>
+              </button>
+            )}
+            {onGetParticipants && (
+              <button onClick={() => onGetParticipants(survey.id)} style={chipBtn} title="Người tham gia"
+                onMouseEnter={e => { e.currentTarget.style.background = C.primaryLight; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                <Users size={11}/>
+              </button>
+            )}
+            {onPublish && (
+              <button onClick={() => onPublish(survey.id)} style={{
+                ...chipBtn,
+                background: isPublished ? "rgba(245,158,11,0.12)" : "transparent",
+                color: isPublished ? C.warning : C.textDim,
+                borderColor: isPublished ? "rgba(245,158,11,0.25)" : C.border,
+              }} title={isPublished ? "Bỏ công khai" : "Công khai"}
+                onMouseEnter={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.2)" : C.primaryLight; e.currentTarget.style.color = isPublished ? C.warning : C.primary; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.35)" : C.primaryBorder; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.12)" : "transparent"; e.currentTarget.style.color = isPublished ? C.warning : C.textDim; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.25)" : C.border; }}>
+                {isPublished ? <Lock size={11}/> : <Globe size={11}/>}
+              </button>
+            )}
+          </div>
         </div>
-      </section>
+      </div>
     </article>
   );
 }
