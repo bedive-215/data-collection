@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
+import { SurveyCardHome, ShareModal } from "@/components/survey/SurveyCardHome";
 
 /* ────────────────────────────────────────────────────────────────
    COLORS
@@ -1016,7 +1017,7 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   CARD
+   CARD (premium mesh design, keeps inline edit + all modals)
 ──────────────────────────────────────────────────────────────── */
 function SurveyCard({
   survey, index,
@@ -1032,9 +1033,6 @@ function SurveyCard({
   const [startAt,     setStartAt]     = useState(survey.start_at ? survey.start_at.slice(0,16) : "");
   const [endAt,       setEndAt]       = useState(survey.end_at   ? survey.end_at.slice(0,16)   : "");
   const [saving,      setSaving]      = useState(false);
-  const [deleting,    setDeleting]    = useState(false);
-  const [rotateX,     setRotateX]     = useState(0);
-  const [rotateY,     setRotateY]     = useState(0);
 
   const [shareOpen,        setShareOpen]        = useState(false);
   const [inviteOpen,       setInviteOpen]       = useState(false);
@@ -1052,123 +1050,146 @@ function SurveyCard({
     finally { setSaving(false); }
   };
 
-  const handleDelete = async () => {
-    try { setDeleting(true); await onDelete(survey.id); }
-    finally { setDeleting(false); }
-  };
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setRotateX((e.clientY - rect.top - rect.height / 2) / 10);
-    setRotateY((e.clientX - rect.left - rect.width / 2) / 10);
-  };
-
   const isClosed    = survey.status === "CLOSED";
   const isPublished = survey.is_published;
 
+  // Map status to mesh gradient
+  const STATUS_MESH = {
+    ACTIVE:    "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)",
+    DRAFT:     "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 50%, #d1d5db 100%)",
+    EXPIRED:   "linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fca5a5 100%)",
+    CLOSED:    "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 50%, #d1d5db 100%)",
+    SCHEDULED: "linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%)",
+    COMPLETED: "linear-gradient(135deg, #cffafe 0%, #a5f3fc 50%, #67e8f9 100%)",
+  };
+  const meshGrad = STATUS_MESH[survey.status] || STATUS_MESH.DRAFT;
+
   return (
     <>
-      <div
+      <article
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
-          borderRadius: 20,
-          overflow: "visible",
-          transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          background: "#fff",
+          borderRadius: 40,
+          border: "1px solid rgba(0,0,0,0.05)",
+          overflow: "hidden",
+          transition: "all 0.7s cubic-bezier(0.34,1.56,0.64,1)",
           cursor: "pointer",
           display: "flex",
           flexDirection: "column",
-          height: "100%",
-          animation: `slideInUp 0.8s ease-out ${0.1 + index * 0.1}s both`,
-          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          position: "relative",
+          animation: `slideInUp 0.8s ease-out ${0.1 + index * 0.06}s both`,
+          boxShadow: "0 32px 64px -16px rgba(0,0,0,0.1)",
+          opacity: isClosed ? 0.75 : 1,
+          maxWidth: 420,
+          width: "100%",
         }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
-        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 30px 80px rgba(0,0,0,0.25)"; }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 48px 80px -24px rgba(0,0,0,0.15)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 32px 64px -16px rgba(0,0,0,0.1)";
+        }}
         onClick={() => !editing && navigate(`/user/my-surveys/${survey.id}/studio`)}
       >
-        {/* Thumbnail */}
+        {/* ── Header: mesh gradient + icon ── */}
         <div style={{
-          height:140, background: isClosed ? "linear-gradient(135deg,#f1f5f9,#e2e8f0)" : thumb,
-          position:"relative", borderBottom:`1px solid ${C.border}`,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          opacity: isClosed ? 0.7 : 1,
-          overflow: "hidden", flexShrink: 0,
+          height: 144,
+          background: meshGrad,
+          position: "relative",
+          overflow: "hidden",
+          flexShrink: 0,
         }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(45deg, rgba(255,255,255,0.1), transparent 50%, rgba(0,0,0,0.05))" }} />
-          <FileText size={56} color={isClosed ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.2)"} strokeWidth={0.8} />
+          {/* Shimmer */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.04) 100%)",
+            pointerEvents: "none",
+          }} />
+          {/* Bottom fade */}
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            height: 32,
+            background: "linear-gradient(to top, white, transparent)",
+          }} />
+          {/* Center icon */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 80, height: 80,
+            borderRadius: 28,
+            background: "rgba(255,255,255,0.25)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.5)",
+            boxShadow: "0 8px 32px rgba(31,38,135,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <div style={{
+              width: 40, height: 40,
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <FileText size={28} color="rgba(255,255,255,0.95)" strokeWidth={1.5} />
+            </div>
+          </div>
 
-          {/* Badges top-left */}
-          <div style={{position:"absolute", top:10, left:10, display:"flex", flexDirection:"column", gap:4}}>
+          {/* Status badge — top left */}
+          <div style={{position:"absolute", top:16, left:20, zIndex:10}}>
             <StatusBadge status={survey.status}/>
             {isPublished && (
-              <span style={{
-                fontSize:10, fontWeight:700, padding:"3px 8px",
-                borderRadius:999, color:C.primary, background:"rgba(79,110,247,0.12)",
-                display:"flex", alignItems:"center", gap:4,
+              <div style={{
+                marginTop: 6,
+                display:"inline-flex", alignItems:"center", gap:4,
+                padding:"4px 10px", borderRadius:999,
+                background:"rgba(255,255,255,0.4)", backdropFilter:"blur(8px)",
+                WebkitBackdropFilter:"blur(8px)",
+                border:"1px solid rgba(255,255,255,0.5)",
+                fontSize:10, fontWeight:700, color:C.primary, letterSpacing:"0.03em",
               }}>
-                <Globe size={9}/> Published
-              </span>
+                <Globe size={10} /> Công khai
+              </div>
             )}
           </div>
 
-          {/* Quick action buttons */}
+          {/* Action buttons — top right: Lock + Share (reference style) */}
           {!editing && (
             <div
-              style={{position:"absolute", bottom:10, left:10, display:"flex", gap:6}}
+              style={{position:"absolute", top:16, right:20, display:"flex", gap:8, zIndex:10}}
               onClick={e => e.stopPropagation()}
             >
-              <button onClick={() => setShareOpen(true)} title="Chia sẻ" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
-                <Share2 size={13}/>
+              {/* Lock — unique to MySurveys */}
+              <button onClick={() => setCloseOpen(true)} title="Khóa / Đóng khảo sát"
+                style={{width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.5)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#374151",transition:"all .3s ease",boxShadow:"0 8px 32px rgba(31,38,135,0.07)"}}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.75)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}>
+                <Lock size={16}/>
               </button>
-              <button onClick={() => setInviteOpen(true)} title="Mời người dùng" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
-                <Mail size={13}/>
+              <button onClick={() => setShareOpen(true)} title="Chia sẻ"
+                style={{width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.5)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#374151",transition:"all .3s ease",boxShadow:"0 8px 32px rgba(31,38,135,0.07)"}}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.75)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}>
+                <Share2 size={16}/>
               </button>
-              <button onClick={() => setBulkInviteOpen(true)} title="Mời hàng loạt" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
-                <UserPlus size={13}/>
-              </button>
-              <button onClick={() => setParticipantsOpen(true)} title="Xem participants" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(79,110,247,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
-                <Users size={13}/>
-              </button>
-              <button
-                onClick={() => setPublishOpen(true)} title={isPublished ? "Ẩn survey" : "Publish"}
-                style={{
-                  ...quickBtn,
-                  background: isPublished ? "rgba(245,158,11,0.85)" : "rgba(255,255,255,0.85)",
-                  color: isPublished ? "#fff" : C.textSub,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.85)" : "rgba(255,255,255,0.85)";
-                  e.currentTarget.style.color = isPublished ? "#fff" : C.textSub;
-                }}>
-                {isPublished ? <Lock size={13}/> : <Globe size={13}/>}
-              </button>
-              {!isClosed && (
-                <button onClick={() => setCloseOpen(true)} title="Đóng survey" style={quickBtn}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(107,114,128,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.85)"; e.currentTarget.style.color = C.textSub; }}>
-                  <PowerOff size={13}/>
-                </button>
-              )}
             </div>
           )}
         </div>
 
-        {/* CONTENT */}
-        <div style={{padding:16}} onClick={e => editing && e.stopPropagation()}>
+        {/* ── Content (reference style) ── */}
+        <div style={{
+          background: "#fff",
+          display: "flex", flexDirection: "column",
+          padding: "20px 32px 16px",
+          gap: 12, flex: 1,
+        }} onClick={e => editing && e.stopPropagation()}>
           {editing ? (
             <div style={{display:"flex", flexDirection:"column", gap:10}}>
-              <input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="Tiêu đề"/>
+              <input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="Tiêu đề" autoFocus/>
               <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} style={textareaStyle} placeholder="Mô tả"/>
               <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
                 <input type="datetime-local" value={startAt} onChange={e => setStartAt(e.target.value)} style={inputStyle}/>
@@ -1184,56 +1205,61 @@ function SurveyCard({
             </div>
           ) : (
             <>
-              <h3 style={{fontSize:16, fontWeight:700, color:C.text, marginBottom:8, lineHeight:1.4, marginTop: 0}}>
+              {/* Title */}
+              <h2 style={{margin:0, fontSize:22, fontWeight:800, color:C.text, lineHeight:1.25, letterSpacing:"-0.02em", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                 {survey.title}
-              </h3>
-              <p style={{fontSize:13, color:C.textSub, lineHeight:1.6, minHeight:60, marginBottom: 12, marginTop: 0}}>
+              </h2>
+              {/* Description */}
+              <p style={{margin:0, fontSize:14, color:C.textSub, lineHeight:1.6, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", opacity:0.85}}>
                 {survey.description || "Không có mô tả"}
               </p>
 
               {/* Footer */}
-              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:"auto"}}>
-                <div style={{display:"flex", alignItems:"center", gap:6, fontSize:12, color:C.textDim}}>
-                  <Calendar size={14}/>
-                  {survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : ""}
+              <div style={{borderTop:"1px solid #f1f5f9", display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:14, marginTop:4}}>
+                <div style={{display:"flex", alignItems:"center", gap:10}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:"#f8fafc",border:"1px solid #e8ecf5",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Calendar size={16} color={C.textDim}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:"0.08em"}}>Cập nhật</div>
+                    <div style={{fontSize:13,fontWeight:600,color:C.textSub}}>
+                      {survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN",{day:"2-digit",month:"short"}) : ""}
+                    </div>
+                  </div>
                 </div>
-
-                {/* Quick chip actions */}
-                <div style={{display:"flex", gap:5}} onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => setShareOpen(true)} style={chipBtn}
-                    title="Link chia sẻ"
-                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
-                    <LinkIcon size={11}/>
-                  </button>
-                  <button
-                    onClick={() => setInviteOpen(true)} style={chipBtn}
-                    title="Mời email"
+                {/* Quick actions */}
+                <div style={{display:"flex", gap:6}} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => setInviteOpen(true)} style={chipBtn} title="Mời"
                     onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
                     <Mail size={11}/>
                   </button>
-                  <button
-                    onClick={() => setBulkInviteOpen(true)} style={chipBtn}
-                    title="Mời hàng loạt"
+                  <button onClick={() => setBulkInviteOpen(true)} style={chipBtn} title="Mời hàng loạt"
                     onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
                     <UserPlus size={11}/>
                   </button>
-                  <button
-                    onClick={() => setParticipantsOpen(true)} style={chipBtn}
-                    title="Participants"
+                  <button onClick={() => setParticipantsOpen(true)} style={chipBtn} title="Người tham gia"
                     onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
                     <Users size={11}/>
+                  </button>
+                  <button onClick={() => setPublishOpen(true)} style={{
+                    ...chipBtn,
+                    background: isPublished ? "rgba(245,158,11,0.12)" : "transparent",
+                    color: isPublished ? C.warning : C.textDim,
+                    borderColor: isPublished ? "rgba(245,158,11,0.25)" : C.border,
+                  }} title={isPublished ? "Bỏ công khai" : "Công khai"}
+                    onMouseEnter={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.2)" : C.primaryDim; e.currentTarget.style.color = isPublished ? C.warning : C.primary; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.35)" : C.primaryBorder; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.12)" : "transparent"; e.currentTarget.style.color = isPublished ? C.warning : C.textDim; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.25)" : C.border; }}>
+                    {isPublished ? <Lock size={11}/> : <Globe size={11}/>}
                   </button>
                 </div>
               </div>
             </>
           )}
         </div>
-      </div>
+      </article>
 
       {/* Modals */}
       <ShareLinkModal
@@ -1354,6 +1380,29 @@ export default function MySurveysPage() {
   const filtered = surveys.filter(s =>
     s.title?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
+
+  const handleShare = useCallback((surveyId) => {
+    const s = surveys.find(x => x.id === surveyId);
+    setShareModal({ open: true, surveyId, surveyTitle: s?.title || "", shareUrl: "", loading: false, error: "" });
+  }, [surveys]);
+
+  const handleGenerateLink = async () => {
+    setShareModal(p => ({ ...p, loading: true, error: "" }));
+    try {
+      const result = await shareLink(shareModal.surveyId);
+      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+    } catch {
+      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+    }
+  };
+
+  const handleClose = useCallback(async (surveyId) => {
+    try { await closeSurvey(surveyId); await fetchMySurveys(1, 20); }
+    catch (err) { console.error(err); }
+  }, [closeSurvey, fetchMySurveys]);
 
   return (
     <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow:"visible", position:"relative", zIndex:1 }}>
@@ -1515,31 +1564,36 @@ export default function MySurveysPage() {
             </div>
             <div style={{
               display:"grid",
-              gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",
+              gridTemplateColumns:"repeat(5, 1fr)",
               gap:20,
               overflow:"visible",
               position:"relative",
             }}>
               {filtered.map((survey, index) => (
-                <SurveyCard
+                <SurveyCardHome
                   key={survey.id}
                   survey={survey}
                   index={index}
-                  onDelete={deleteSurvey}
-                  onUpdate={updateSurvey}
-                  onShare={shareLink}
-                  onInvite={inviteSurvey}
-                  onPublish={publishSurvey}
-                  onCloseSurvey={closeSurvey}
-                  onBulkInvite={bulkInviteSurvey}
-                  onGetParticipants={getParticipants}
-                  onDeleteParticipant={deleteParticipant}
+                  onClick={() => navigate(`/user/my-surveys/${survey.id}/studio`)}
+                  type="my"
+                  onShare={handleShare}
+                  onLock={handleClose}
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      <ShareModal
+        open={shareModal.open}
+        onClose={() => setShareModal(p => ({ ...p, open: false }))}
+        surveyTitle={shareModal.surveyTitle}
+        shareUrl={shareModal.shareUrl}
+        loading={shareModal.loading}
+        error={shareModal.error}
+        onGenerate={handleGenerateLink}
+      />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');

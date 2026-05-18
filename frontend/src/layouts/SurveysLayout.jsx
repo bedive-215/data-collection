@@ -17,6 +17,8 @@ import { useSurvey }    from "@/providers/SurveyProvider";
 import { useResponse }  from "@/providers/ResponseProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import CreateSurveyComposer from "@/components/survey/CreateSurveyComposer";
+import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
+import { ShareModal } from "@/components/survey/SurveyCardHome";
 
 /* ════════════════════════════════════════════════════════════════
    DESIGN TOKENS — matching Dashboard
@@ -934,7 +936,7 @@ function StatsStrip({ mySurveys, total, done, pending, loading }) {
 /* ════════════════════════════════════════════════════════════════
    MAIN PAGE
 ════════════════════════════════════════════════════════════════ */
-const MY_SURVEYS_PREVIEW=4;
+const MY_SURVEYS_PREVIEW=5;
 
 export default function SurveysLayout() {
   const navigate=useNavigate();
@@ -959,6 +961,7 @@ export default function SurveysLayout() {
   const [viewMode,setViewMode]=useState("grid");
   const [showFilter,setShowFilter]=useState(false);
   const [globalSearch,setGlobalSearch]=useState("");
+  const [shareModal,setShareModal]=useState({open:false,surveyId:null,surveyTitle:"",shareUrl:"",loading:false,error:""});
 
   useEffect(()=>{fetchMySurveys(1,20);},[]);
 
@@ -975,6 +978,25 @@ export default function SurveysLayout() {
   useEffect(()=>{fetchPublicData();},[]);
 
   const handleGlobalSearch=v=>{setGlobalSearch(v);setMySearch(v);setPublicSearch(v);};
+
+  const handleShareLayout=useCallback((surveyId)=>{
+    const s=mySurveys.find(x=>x.id===surveyId);
+    setShareModal({open:true,surveyId,surveyTitle:s?.title||"",shareUrl:"",loading:false,error:""});
+  },[mySurveys]);
+
+  const handleGenerateLink=async()=>{
+    setShareModal(p=>({...p,loading:true,error:""}));
+    try{
+      const result=await shareLink(shareModal.surveyId);
+      const url=typeof result==="string"?result:result?.url??result?.data?.url??"";
+      setShareModal(p=>({...p,shareUrl:url,loading:false}));
+    }catch{setShareModal(p=>({...p,loading:false,error:"Tạo link thất bại. Vui lòng thử lại."}));}
+  };
+
+  const handleCloseLayout=useCallback(async(surveyId)=>{
+    try{await closeSurvey(surveyId);setDoneSurveyIds(prev=>{const n=new Set(prev);n.add(surveyId);return n;});await fetchMySurveys(1,20);}
+    catch(err){console.error("Lock error:",err);}
+  },[closeSurvey,fetchMySurveys]);
 
   const myFiltered=mySurveys.filter(s=>s.title?.toLowerCase().includes(mySearch.toLowerCase()));
   const publicSurveys=providerPublicSurveys;
@@ -1127,9 +1149,17 @@ export default function SurveysLayout() {
                 </GlassCard>
               ):(
                 <>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:18}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:18}}>
                     {visibleMySurveys.map((survey,index)=>(
-                      <MySurveyCard key={survey.id} survey={survey} index={index} onDelete={deleteSurvey} onUpdate={updateSurvey} onShare={shareLink} onInvite={inviteSurvey} onPublish={publishSurvey} onCloseSurvey={closeSurvey} onBulkInvite={bulkInviteSurvey} onGetParticipants={getParticipants} onDeleteParticipant={deleteParticipant}/>
+                      <SurveyCardHome
+                        key={survey.id}
+                        survey={survey}
+                        index={index}
+                        onClick={() => navigate(`/user/my-surveys/${survey.id}/studio`)}
+                        type="my"
+                        onShare={handleShareLayout}
+                        onLock={handleCloseLayout}
+                      />
                     ))}
                   </div>
                   {hasMoreMySurveys&&!showCreateForm&&(
@@ -1250,15 +1280,32 @@ export default function SurveysLayout() {
                 {displayed.length} khảo sát{publicSearch?` · "${publicSearch}"`:""}
                 {doneCount>0&&<span style={{marginLeft:8,color:C.success,fontWeight:600}}>· {doneCount} đã hoàn thành</span>}
               </div>
-              <div style={{display:"grid",gridTemplateColumns:viewMode==="grid"?"repeat(auto-fill,minmax(240px,1fr))":"1fr",gap:18}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:18}}>
                 {displayed.map((survey,i)=>(
-                  <PublicSurveyCard key={survey.id} survey={survey} index={i} done={doneSurveyIds.has(survey.id)} onStart={id=>navigate(`/user/survey/${id}`)} onViewSubmission={(id,title)=>setModalSurvey({id,title})}/>
+                  <SurveyCardHome
+                    key={survey.id}
+                    survey={survey}
+                    index={i}
+                    overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
+                    onClick={() => doneSurveyIds.has(survey.id) ? navigate(`/user/my-survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
+                    type="public"
+                  />
                 ))}
               </div>
             </>
           )}
         </section>
       </div>
+
+      <ShareModal
+        open={shareModal.open}
+        onClose={() => setShareModal(p => ({ ...p, open: false }))}
+        surveyTitle={shareModal.surveyTitle}
+        shareUrl={shareModal.shareUrl}
+        loading={shareModal.loading}
+        error={shareModal.error}
+        onGenerate={handleGenerateLink}
+      />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
