@@ -13,6 +13,7 @@ import {
   Send, UserPlus, UserMinus, RefreshCw, ChevronDown,
   BarChart3, Settings,
 } from "lucide-react";
+import { SurveyCardHome, ShareModal } from "@/components/survey/SurveyCardHome";
 
 /* ─── Token ──────────────────────────────────────────────────────── */
 const C = {
@@ -1453,22 +1454,42 @@ function SurveyCard({
         }}
         onClick={() => !editing && onOpen(s.id)}
       >
-        {/* Thumbnail */}
+        {/* Thumbnail — premium mesh design */}
         <div style={{
-          height:140, background: isClosed ? "linear-gradient(135deg,#0d1120,#111827)" : thumb,
+          height:148,
+          background: isClosed
+            ? "linear-gradient(135deg,#1a1a2e,#16213e)"
+            : `linear-gradient(135deg, ${C.primaryDim.replace("0.10","0.35")}, ${C.surfaceHigh})`,
           position:"relative", borderBottom:`1px solid ${C.border}`,
           display:"flex", alignItems:"center", justifyContent:"center",
-          opacity: isClosed ? 0.6 : 1,
+          opacity: isClosed ? 0.65 : 1,
           overflow: "hidden", flexShrink: 0,
         }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(45deg, rgba(255,255,255,0.05), transparent 50%, rgba(0,0,0,0.1))" }} />
-          <div style={{width:110, display:"flex", flexDirection:"column", gap:7}}>
-            <div style={{height:6,  borderRadius:3, background:"rgba(108,126,247,0.5)", width:"80%"}}/>
-            <div style={{height:4,  borderRadius:3, background:"rgba(255,255,255,0.10)", width:"100%"}}/>
-            <div style={{height:4,  borderRadius:3, background:"rgba(255,255,255,0.07)", width:"65%"}}/>
-            <div style={{height:1,  background:"rgba(255,255,255,0.10)", marginTop:4}}/>
-            <div style={{height:4,  borderRadius:3, background:"rgba(255,255,255,0.08)", width:"90%"}}/>
-            <div style={{height:4,  borderRadius:3, background:"rgba(255,255,255,0.06)", width:"75%"}}/>
+          {/* Shimmer */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)" }} />
+          {/* Bottom fade */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 28, background: "linear-gradient(to top, #0d1120, transparent)" }} />
+          {/* Central document icon */}
+          <div style={{
+            position:"absolute", top:"50%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            width:68, height:68,
+            borderRadius:18,
+            background:"rgba(255,255,255,0.06)",
+            backdropFilter:"blur(10px)",
+            WebkitBackdropFilter:"blur(10px)",
+            border:"1px solid rgba(255,255,255,0.1)",
+            boxShadow:"0 8px 32px rgba(0,0,0,0.4)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+          }}>
+            <div style={{
+              width:36, height:36,
+              borderRadius:10,
+              background:"rgba(255,255,255,0.08)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>
+              <FileText size={22} color="rgba(255,255,255,0.6)" strokeWidth={1.5} />
+            </div>
           </div>
 
           {/* Badges */}
@@ -1931,6 +1952,29 @@ export default function SurveyPage() {
     s.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
+
+  const handleShare = useCallback((surveyId) => {
+    const s = surveys.find(x => x.id === surveyId);
+    setShareModal({ open: true, surveyId, surveyTitle: s?.title || "", shareUrl: "", loading: false, error: "" });
+  }, [surveys]);
+
+  const handleGenerateLink = async () => {
+    setShareModal(p => ({ ...p, loading: true, error: "" }));
+    try {
+      const result = await shareLink(shareModal.surveyId);
+      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+    } catch {
+      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+    }
+  };
+
+  const handleClose = useCallback(async (surveyId) => {
+    try { await closeSurvey(surveyId); await fetchAll(); }
+    catch (err) { console.error(err); }
+  }, [closeSurvey, fetchAll]);
+
   const dateInp = {
     width:"100%", boxSizing:"border-box", padding:"9px 12px",
     background:C.bg, border:`1.5px solid ${C.border}`,
@@ -2168,23 +2212,16 @@ export default function SurveyPage() {
 
         {/* Grid */}
         {filtered.length > 0 && (
-          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:16}}>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:16}}>
             {filtered.map((s, i) => (
-              <SurveyCard
-                key={s.id} s={s} index={i}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onOpen={(id) => navigate(`/admin/surveys/${id}`)}
-                onShare={shareLink}
-                onInvite={inviteSurvey}
-                onBulkInvite={bulkInviteSurvey}
-                onPublish={publishSurvey}
-                onCloseSurvey={closeSurvey}
-                onGetParticipants={getParticipants}
-                onDeleteParticipant={deleteParticipant}
-                deletingId={deletingId}
-                updatingId={updatingId}
-                navigate={navigate}
+              <SurveyCardHome
+                key={s.id}
+                survey={s}
+                index={i}
+                onClick={() => navigate(`/admin/surveys/${s.id}`)}
+                type="my"
+                onShare={handleShare}
+                onLock={handleClose}
               />
             ))}
           </div>
@@ -2200,6 +2237,16 @@ export default function SurveyPage() {
           </div>
         )}
       </div>
+
+      <ShareModal
+        open={shareModal.open}
+        onClose={() => setShareModal(p => ({ ...p, open: false }))}
+        surveyTitle={shareModal.surveyTitle}
+        shareUrl={shareModal.shareUrl}
+        loading={shareModal.loading}
+        error={shareModal.error}
+        onGenerate={handleGenerateLink}
+      />
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

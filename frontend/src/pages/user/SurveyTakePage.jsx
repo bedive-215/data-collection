@@ -5,6 +5,7 @@ import { useQuestion } from "@/providers/QuestionProvider";
 import { useResponse } from "@/providers/ResponseProvider";
 import { useOption } from "@/providers/OptionProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
+import { toast } from "react-toastify";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, CircleDot,
   AlignLeft, CheckSquare, Loader2, Send, Home,
@@ -552,10 +553,18 @@ export default function SurveyTakePage() {
 
   const handleSubmit = async () => {
     if (!canProceed() || submitting) return;
+    const payload = buildPayload();
+    if (!payload.length) {
+      toast.error("Vui lòng trả lời ít nhất một câu hỏi trước khi gửi.");
+      return;
+    }
     try {
-      await submitSurvey(surveyId, { answers: buildPayload() });
+      await submitSurvey(surveyId, { answers: payload });
       setSubmitted(true);
-    } catch (err) { console.error("[Submit]", err); }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Gửi khảo sát thất bại. Vui lòng thử lại.";
+      toast.error(msg);
+    }
   };
 
   const handleStart = async () => {
