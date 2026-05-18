@@ -21,12 +21,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  SafeAreaView,
   Pressable,
   Linking,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useSurvey } from "../../providers/SurveyProvider";
+import { SurveyCardHome } from "../../components/survey/SurveyCardHome";
 
 // ─── Lucide icons (thay bằng react-native-vector-icons nếu cần) ────
 // Nếu chưa cài lucide-react-native, thay bằng text/emoji placeholder
@@ -1168,12 +1169,16 @@ export default function MySurveysPage() {
     await closeSurvey(id);
   };
 
+  const handleShare = async (surveyId) => {
+    try { await shareLink(surveyId); } catch (err) { console.error(err); }
+  };
+
   const filtered = (mySurveys || []).filter(s =>
     s.title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleNavigate = (route, params) => {
-    navigation.navigate(route, params);
+  const handleNavigate = (surveyId) => {
+    navigation.navigate("SurveyStudio", { surveyId });
   };
 
   return (
@@ -1242,28 +1247,19 @@ export default function MySurveysPage() {
           )}
         </View>
       ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 16 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <SurveyCard
-              survey={item}
+        <View style={{ paddingHorizontal: 14, paddingBottom: 40, gap: 10 }}>
+          {filtered.map((survey, index) => (
+            <SurveyCardHome
+              key={survey.id}
+              survey={survey}
               index={index}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-              onShare={shareLink}
-              onInvite={inviteSurvey}
-              onPublish={handlePublish}
-              onCloseSurvey={handleClose}
-              onBulkInvite={bulkInviteSurvey}
-              onGetParticipants={getParticipants}
-              onDeleteParticipant={deleteParticipant}
-              onNavigate={handleNavigate}
+              onClick={() => handleNavigate(survey.id)}
+              type="my"
+              onShare={handleShare}
+              onLock={handleClose}
             />
-          )}
-        />
+          ))}
+        </View>
       )}
 
       {/* Create modal */}
