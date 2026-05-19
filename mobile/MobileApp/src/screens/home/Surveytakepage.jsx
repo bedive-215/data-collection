@@ -925,11 +925,17 @@ export default function SurveyTakePage() {
 
   const handleSubmit = async () => {
     if (!canProceed() || submitting) return;
+    const payload = buildPayload(answers);
+    if (!payload.length) {
+      Alert.alert("Chưa có câu trả lời", "Vui lòng trả lời ít nhất một câu hỏi trước khi gửi.");
+      return;
+    }
     try {
-      await submitSurvey(surveyId, { answers: buildPayload(answers) });
+      await submitSurvey(surveyId, { answers: payload });
       setSubmitted(true);
     } catch (err) {
-      console.error("[Submit]", err);
+      const msg = err?.response?.data?.message || err?.message || "Gửi khảo sát thất bại. Vui lòng thử lại.";
+      Alert.alert("Lỗi", msg);
     }
   };
 

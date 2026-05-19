@@ -14,12 +14,12 @@ import {
   ActivityIndicator,
   StyleSheet,
   Animated,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Platform,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 // import { useNavigation } from "@react-navigation/native";
 // import { useSurvey } from "@/providers/SurveyProvider";
 // import { useResponse } from "@/providers/ResponseProvider";

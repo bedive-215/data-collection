@@ -1,44 +1,235 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, ClipboardList, Clock, Zap,
   Trophy, Inbox, ArrowRight, Globe, Flame, Target,
-  Sparkles, TrendingUp, Rocket, LayoutGrid,
+  Sparkles, TrendingUp, Rocket, LayoutGrid, Calendar,
+  Lock, Share, Link as LinkIcon, X, ExternalLink, Copy, Loader2,
+  Users,
 } from "lucide-react";
 import { useResponse } from "@/providers/ResponseProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS } from "@/utils/constants";
+import { SurveyCardHome, STATUS_MAP, C } from "@/components/survey/SurveyCardHome";
 
-const STATUS_MAP = {
-  ACTIVE: { label: "Đang mở", color: "#10b981", bg: "#d1fae5" },
-  DRAFT: { label: "Nháp", color: "#6b7280", bg: "#f3f4f6" },
-  EXPIRED: { label: "Hết hạn", color: "#dc2626", bg: "#fee2e2" },
-  SCHEDULED: { label: "Lên lịch", color: "#d97706", bg: "#fef3c7" },
-  CLOSED: { label: "Đã đóng", color: "#6b7280", bg: "#f3f4f6" },
-  COMPLETED: { label: "Đã hoàn thành", color: "#06b6d4", bg: "#cffafe" },
-};
+/* ── Share Modal ──────────────────────────────────────────────────── */
+function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, error, onGenerate }) {
+  const [copied, setCopied] = useState(false);
 
-/* Đồng bộ SurveysLayout — C */
-const C = {
-  surface: "rgba(255,255,255,0.78)",
-  surfaceHigh: "rgba(255,255,255,0.92)",
-  glassBorder: "rgba(255,255,255,0.55)",
-  primary: "#4f46e5",
-  text: "#0f172a",
-  textSub: "#64748b",
-  textDim: "#94a3b8",
-  success: "#10b981",
-  font: "'DM Sans','Inter',sans-serif",
-  thumbGrads: [
-    "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
-    "conic-gradient(from 0deg at 50% 50%, #a8edea, #fed6e3, #ff9999, #a8edea)",
-    "conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #f093fb, #667eea)",
-    "conic-gradient(from 0deg at 50% 50%, #f5af19, #f12711, #fa709a, #f5af19)",
-    "conic-gradient(from 0deg at 50% 50%, #4facfe, #00f2fe, #43e97b, #4facfe)",
-    "conic-gradient(from 0deg at 50% 50%, #30cfd0, #330867, #a8edea, #30cfd0)",
-  ],
-};
+  useEffect(() => {
+    if (!open) setCopied(false);
+  }, [open]);
+
+  const handleCopy = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).catch(() => {
+      const el = document.createElement("textarea");
+      el.value = shareUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    });
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(15,23,42,0.55)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20,
+        animation: "fadeIn .16s ease",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRadius: 24,
+          border: "1px solid rgba(255,255,255,0.55)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5)",
+          width: "100%", maxWidth: 440, overflow: "hidden",
+          animation: "slideUp .22s cubic-bezier(.16,1,.3,1)",
+          fontFamily: C.font,
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9,
+              background: "linear-gradient(135deg, #4361ee, #6c7ef7)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Share size={15} color="#fff" />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Chia sẻ khảo sát</div>
+              <div style={{ fontSize: 11, color: C.textSub, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {surveyTitle}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 30, height: 30, borderRadius: 8,
+              border: "1px solid rgba(0,0,0,0.08)",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: C.textSub, transition: "all .15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "#ef4444"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textSub; }}
+          >
+            <X size={13} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "20px" }}>
+          {error && (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 14px", borderRadius: 10,
+              background: "rgba(239,68,68,0.08)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              marginBottom: 14,
+            }}>
+              <span style={{ fontSize: 12, color: "#ef4444" }}>{error}</span>
+              <button
+                type="button"
+                onClick={onGenerate}
+                style={{
+                  padding: "4px 10px", borderRadius: 6,
+                  border: "1px solid rgba(239,68,68,0.25)",
+                  background: "rgba(255,255,255,0.8)",
+                  color: "#ef4444", fontSize: 11, fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {shareUrl ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "slideUp .2s ease" }}>
+              {/* URL display */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "10px 12px",
+                background: "rgba(67,97,238,0.06)",
+                borderRadius: 12,
+                border: "1px solid rgba(67,97,238,0.18)",
+                backdropFilter: "blur(8px)",
+              }}>
+                <LinkIcon size={13} color="#4f46e5" style={{ flexShrink: 0 }} />
+                <span style={{
+                  flex: 1, fontSize: 12, color: C.text,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  fontFamily: "'SF Mono','Fira Code',monospace",
+                }}>
+                  {shareUrl}
+                </span>
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  style={{
+                    flex: 1,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    padding: "10px 0",
+                    borderRadius: 11,
+                    border: `1px solid ${copied ? "rgba(16,185,129,0.35)" : "rgba(67,97,238,0.3)"}`,
+                    background: copied ? "rgba(16,185,129,0.08)" : "rgba(67,97,238,0.06)",
+                    color: copied ? "#10b981" : "#4f46e5",
+                    fontSize: 12, fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all .2s",
+                  }}
+                >
+                  {copied ? (
+                    <><CheckCircle2 size={13} /> Đã sao chép!</>
+                  ) : (
+                    <><Copy size={13} /> Sao chép link</>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.open(shareUrl, "_blank")}
+                  style={{
+                    width: 42,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRadius: 11,
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    background: "transparent",
+                    color: C.textSub,
+                    cursor: "pointer",
+                    transition: "all .15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#4f46e5"; e.currentTarget.style.borderColor = "rgba(67,97,238,0.3)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = C.textSub; e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
+                >
+                  <ExternalLink size={14} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={loading}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                width: "100%", padding: "12px 0",
+                borderRadius: 12, border: "none",
+                background: loading ? "rgba(0,0,0,0.06)" : "linear-gradient(135deg,#4361ee,#6c7ef7)",
+                color: loading ? C.textSub : "#fff",
+                fontSize: 13, fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+                fontFamily: C.font,
+                boxShadow: loading ? "none" : "0 4px 14px rgba(67,97,238,0.35)",
+                transition: "all .2s",
+              }}
+            >
+              {loading ? (
+                <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang tạo link...</>
+              ) : (
+                <><LinkIcon size={15} /> Tạo link chia sẻ</>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+        @keyframes spin    { to { transform:rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+}
 
 function GlassmorphCard({ children, style = {}, delay = 0, hover = true }) {
   const base = {
@@ -348,177 +539,6 @@ function BentoStatCard({ icon: Icon, label, value, sub, color, delay }) {
   );
 }
 
-function SurveyCardHome({ survey, index, onClick, type = "my", overrideStatus = null }) {
-  const gradient = C.thumbGrads[index % C.thumbGrads.length];
-  const effectiveStatus = overrideStatus || survey.status;
-  const isCompleted = effectiveStatus === "COMPLETED";
-  const isClosed = effectiveStatus === "CLOSED";
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      style={{
-        background: C.surfaceHigh,
-        borderRadius: 20,
-        overflow: "hidden",
-        cursor: "pointer",
-        transition: "transform 0.28s ease, box-shadow 0.28s ease, border-color 0.22s ease",
-        opacity: isClosed ? 0.55 : 1,
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        animation: `slideInUp 0.8s ease-out ${0.1 + index * 0.08}s both`,
-        boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 12px 28px rgba(15,23,42,0.08)",
-        border: "1px solid rgba(255,255,255,0.75)",
-        fontFamily: C.font,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-5px)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.95) inset, 0 18px 40px rgba(79,70,229,0.14)";
-        e.currentTarget.style.borderColor = "rgba(129,140,248,0.3)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.9) inset, 0 12px 28px rgba(15,23,42,0.08)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.75)";
-      }}
-    >
-      <div
-        style={{
-          height: 132,
-          background: isClosed ? "linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)" : gradient,
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(45deg, rgba(255,255,255,0.12), transparent 50%, rgba(0,0,0,0.04))" }} />
-        <Sparkles size={48} color={isClosed ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.22)"} strokeWidth={0.8} />
-
-        <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 6 }}>
-          {effectiveStatus && (
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                padding: "4px 10px",
-                borderRadius: 999,
-                color: STATUS_MAP[effectiveStatus]?.color,
-                background: STATUS_MAP[effectiveStatus]?.bg,
-                border: `1px solid ${STATUS_MAP[effectiveStatus]?.color}35`,
-              }}
-            >
-              {STATUS_MAP[effectiveStatus]?.label}
-            </span>
-          )}
-        </div>
-
-        {survey.is_published && (
-          <div
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 9,
-              fontWeight: 700,
-              padding: "4px 10px",
-              borderRadius: 999,
-              color: "#059669",
-              background: "rgba(16,185,129,0.15)",
-              border: "1px solid rgba(16,185,129,0.28)",
-            }}
-          >
-            <Globe size={10} /> Live
-          </div>
-        )}
-      </div>
-
-      <div style={{ padding: "18px 18px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <h3
-          style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: C.text,
-            marginBottom: 8,
-            marginTop: 0,
-            lineHeight: 1.35,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 1,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {survey.title}
-        </h3>
-        <p
-          style={{
-            fontSize: 12,
-            color: C.textSub,
-            lineHeight: 1.5,
-            marginBottom: 12,
-            flex: 1,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {survey.description || "Không có mô tả"}
-        </p>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textDim }}>
-            <Clock size={12} />
-            {survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN") : ""}
-          </div>
-
-          {type === "public" && !isCompleted && (
-            <span
-              style={{
-                padding: "6px 12px",
-                borderRadius: 9,
-                fontSize: 11,
-                fontWeight: 700,
-                background: "linear-gradient(135deg,#4361ee,#6c7ef7)",
-                color: "#fff",
-                border: "none",
-                boxShadow: "0 3px 12px rgba(67,97,238,0.3)",
-              }}
-            >
-              Bắt đầu
-            </span>
-          )}
-
-          {type === "public" && isCompleted && (
-            <span
-              style={{
-                padding: "6px 12px",
-                borderRadius: 9,
-                fontSize: 11,
-                fontWeight: 700,
-                background: "rgba(14,165,233,0.12)",
-                color: "#0369a1",
-                border: "1px solid rgba(14,165,233,0.25)",
-              }}
-            >
-              Xem chi tiết
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ActivityBento({ activity, delay }) {
   return (
     <BentoCard delay={delay}>
@@ -680,10 +700,13 @@ const successBtn = {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { getAllMyResponses } = useResponse();
-  const { mySurveys, publicSurveys, fetchMySurveys, fetchPublicSurveys } = useSurvey();
+  const { mySurveys, publicSurveys, fetchMySurveys, fetchPublicSurveys, shareLink, closeSurvey } = useSurvey();
 
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
+
+  // Share modal state
+  const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
 
   const fetchData = async () => {
     try {
@@ -709,6 +732,41 @@ export default function DashboardPage() {
   const responsePath = (id) => ROUTERS.USER.SURVEY_RESPONSE.replace(":surveyId", id);
 
   const handleStart = (id) => navigate(surveyPath(id));
+
+  // Share: open modal (generate link on demand)
+  const handleShare = useCallback((surveyId) => {
+    const survey = mySurveys.find((s) => s.id === surveyId);
+    setShareModal({ open: true, surveyId, surveyTitle: survey?.title || "", shareUrl: "", loading: false, error: "" });
+  }, [mySurveys]);
+
+  const handleGenerateLink = async () => {
+    setShareModal((prev) => ({ ...prev, loading: true, error: "" }));
+    try {
+      const result = await shareLink(shareModal.surveyId);
+      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+      setShareModal((prev) => ({ ...prev, shareUrl: url, loading: false }));
+    } catch {
+      setShareModal((prev) => ({ ...prev, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+    }
+  };
+
+  // Lock: close survey and refresh immediately
+  const handleLock = useCallback(async (surveyId) => {
+    try {
+      await closeSurvey(surveyId);
+      // Update local state immediately
+      setDoneSurveyIds((prev) => {
+        const next = new Set(prev);
+        next.add(surveyId);
+        return next;
+      });
+      // Refresh surveys
+      await fetchMySurveys(1, 20);
+    } catch (err) {
+      console.error("Lock error:", err);
+    }
+  }, [closeSurvey, fetchMySurveys]);
+
   const pendingCount = publicSurveys.filter((s) => !doneSurveyIds.has(s.id)).length;
   const doneCount = publicSurveys.filter((s) => doneSurveyIds.has(s.id)).length;
 
@@ -781,14 +839,14 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-              {[1, 2, 3].map((i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   style={{
                     background: C.surface,
-                    borderRadius: 20,
-                    height: 300,
+                    borderRadius: 40,
+                    height: 240,
                     animation: "pulse 2s ease-in-out infinite",
                     border: `1px solid ${C.glassBorder}`,
                   }}
@@ -803,14 +861,16 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-              {mySurveys.slice(0, 4).map((survey, i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {mySurveys.slice(0, 5).map((survey, i) => (
                 <SurveyCardHome
                   key={survey.id}
                   survey={survey}
                   index={i}
                   onClick={() => navigate(`/user/my-surveys/${survey.id}/studio`)}
                   type="my"
+                  onShare={handleShare}
+                  onLock={handleLock}
                 />
               ))}
             </div>
@@ -838,14 +898,14 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-              {[1, 2, 3].map((i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   style={{
                     background: C.surface,
-                    borderRadius: 20,
-                    height: 300,
+                    borderRadius: 40,
+                    height: 240,
                     animation: "pulse 2s ease-in-out infinite",
                     border: `1px solid ${C.glassBorder}`,
                   }}
@@ -860,8 +920,8 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-              {publicSurveys.slice(0, 4).map((survey, i) => {
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {publicSurveys.slice(0, 5).map((survey, i) => {
                 const done = doneSurveyIds.has(survey.id);
                 return (
                   <SurveyCardHome
@@ -905,8 +965,18 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <ShareModal
+        open={shareModal.open}
+        onClose={() => setShareModal((p) => ({ ...p, open: false }))}
+        surveyTitle={shareModal.surveyTitle}
+        shareUrl={shareModal.shareUrl}
+        loading={shareModal.loading}
+        error={shareModal.error}
+        onGenerate={handleGenerateLink}
+      />
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes slideInUp   { from { opacity:0; transform:translateY(36px) } to { opacity:1; transform:translateY(0) } }
         @keyframes float       { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-14px) } }
         @keyframes pulse       { 0%,100% { opacity:.65 } 50% { opacity:1 } }
@@ -914,7 +984,7 @@ export default function DashboardPage() {
         @keyframes floatAccent{0%,100%{transform:rotate(-16deg) translate(0,0);}50%{transform:rotate(-12deg) translate(-6px,8px);}}
         @keyframes titleAurora{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
         * { box-sizing:border-box }
-        button { font-family:'DM Sans','Inter',sans-serif }
+        button { font-family:'Plus Jakarta Sans','DM Sans','Inter',sans-serif }
         @media (max-width: 960px) {
           .home-act-grid { grid-template-columns: 1fr !important; }
         }

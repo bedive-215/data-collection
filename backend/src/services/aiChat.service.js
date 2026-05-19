@@ -639,14 +639,14 @@ function detectIntent(msg) {
   // Analytics for a named survey
   const surveyMatch = lower.match(/(?:thống kê|xem|phân tích|xem thống kê|cStat)\b.*(?:khảo sát|survey)[s]?\s*(?:về |của |\"?|')?(.+)/);
   if (surveyMatch) {
-    return { tool: "search_surveys", args: { keyword: surveyMatch[2].trim() } };
+    return { tool: "search_surveys", args: { keyword: surveyMatch[1].trim() } };
   }
 
   // Create survey
   if (/^(tạo|mới|làm|mở)\b.*(khảo sát|survey)/.test(lower) ||
       /^tạo\s*(khảo|mới)\b/.test(lower)) {
     const titleMatch = lower.match(/(?:tạo|mới|làm)\b.*(?:khảo sát|survey)\s*(?:về |có tiêu đề |tên |\"?|')?(.+)/);
-    const title = titleMatch ? titleMatch[2].trim() : "Khảo sát mới";
+    const title = titleMatch ? titleMatch[1].trim() : "Khảo sát mới";
     return { tool: "create_survey", args: { title } };
   }
 

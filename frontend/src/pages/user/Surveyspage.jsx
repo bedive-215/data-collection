@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   Clock,
-  FileText,
   Inbox,
   Search,
   LayoutGrid,
@@ -18,6 +17,7 @@ import {
 
 import { useSurvey } from "@/providers/SurveyProvider";
 import { useResponse } from "@/providers/ResponseProvider";
+import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 
 // ─────────────────────────────────────────────────────────────
 // Tabs
@@ -528,107 +528,49 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Survey Card
+// CardSkeleton
 // ─────────────────────────────────────────────────────────────
-function SurveyCard({ survey, done, onStart, onViewSubmission }) {
-  const createdDate = survey?.created_at
-    ? new Date(survey.created_at).toLocaleDateString("vi-VN")
-    : "";
-
+function CardSkeleton() {
   return (
-    <div
-      onClick={() => done && onViewSubmission(survey.id, survey.title)}
-      className={`group rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-        done ? "bg-white hover:bg-[#f0fdf4]" : "bg-white hover:bg-[#f0f4ff]"
-      }`}
-      style={{
-        borderColor: done ? "#bbf7d0" : "#e8ecf5",
-        cursor: done ? "pointer" : "default",
-      }}
-    >
-      {/* top */}
-      <div className="flex justify-between items-start mb-5">
-        <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-            done
-              ? "bg-[#dcfce7] text-[#16a34a]"
-              : "bg-[#eef2ff] text-[#4f6ef7]"
-          }`}
-        >
-          {done ? (
-            <CheckCircle2 size={22} strokeWidth={1.6} />
-          ) : (
-            <FileText size={22} strokeWidth={1.6} />
-          )}
-        </div>
-
-        {done ? (
-          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#dcfce7] text-[#16a34a] border border-[#bbf7d0]">
-            Đã hoàn thành
-          </span>
-        ) : (
-          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#f4f5f7] text-gray-400 border border-[#e8ecf5]">
-            Survey
-          </span>
-        )}
+    <div className="bg-white border border-[#e8ecf5] rounded-2xl overflow-hidden animate-pulse">
+      {/* Header skeleton */}
+      <div className="h-[140px] bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
+        <div className="w-[72px] h-[72px] rounded-[20px] bg-white/40 backdrop-blur-sm border border-white/50" />
       </div>
-
-      {/* body */}
-      <h3 className="text-[15px] font-bold text-gray-800 mb-2 line-clamp-2">
-        {survey.title}
-      </h3>
-
-      <p className="text-sm text-gray-400 mb-5 line-clamp-2 leading-relaxed">
-        {survey.description}
-      </p>
-
-      {/* footer */}
-      <div className="flex items-center justify-between mt-auto">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Clock size={13} />
-          <span>{createdDate}</span>
+      {/* Content skeleton */}
+      <div className="p-5 space-y-3">
+        <div className="h-4 bg-slate-100 rounded w-3/4" />
+        <div className="h-3 bg-slate-50 rounded w-full" />
+        <div className="h-3 bg-slate-50 rounded w-2/3" />
+        <div className="flex justify-between items-center pt-3">
+          <div className="h-3 bg-slate-100 rounded w-20" />
+          <div className="h-8 bg-slate-100 rounded-xl w-24" />
         </div>
-
-        {done ? (
-          <span className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#dcfce7] text-[#16a34a] border border-[#bbf7d0]">
-            Xem kết quả →
-          </span>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onStart(survey.id);
-            }}
-            className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6a8fff] to-[#4f6ef7] hover:opacity-90 active:scale-95"
-          >
-            Bắt đầu →
-          </button>
-        )}
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Skeleton
+// SurveyCardWrapper — adapts SurveyCardHome for SurveysPage
 // ─────────────────────────────────────────────────────────────
-function CardSkeleton() {
+function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index }) {
+  const handleClick = () => {
+    if (done) {
+      onViewSubmission(survey.id, survey.title);
+    } else {
+      onStart(survey.id);
+    }
+  };
+
   return (
-    <div className="bg-white border border-[#e8ecf5] rounded-2xl p-6 animate-pulse">
-      <div className="flex justify-between mb-4">
-        <div className="w-11 h-11 rounded-xl bg-gray-100" />
-        <div className="w-20 h-5 rounded-full bg-gray-100" />
-      </div>
-
-      <div className="h-4 bg-gray-100 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-gray-100 rounded w-full mb-1" />
-      <div className="h-3 bg-gray-100 rounded w-2/3 mb-5" />
-
-      <div className="flex justify-between items-center">
-        <div className="h-3 bg-gray-100 rounded w-16" />
-        <div className="h-8 bg-gray-100 rounded-xl w-24" />
-      </div>
-    </div>
+    <SurveyCardHome
+      survey={survey}
+      index={index}
+      overrideStatus={done ? "COMPLETED" : null}
+      onClick={handleClick}
+      type="public"
+    />
   );
 }
 
@@ -929,7 +871,7 @@ export default function SurveysPage() {
 
       {/* Loading skeletons */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array(6)
             .fill(0)
             .map((_, i) => (
@@ -974,17 +916,18 @@ export default function SurveysPage() {
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
               : "flex flex-col gap-3"
           }
         >
-          {displayed.map((survey) => (
-            <SurveyCard
+          {displayed.map((survey, index) => (
+            <SurveyCardWrapper
               key={survey.id}
               survey={survey}
               done={doneSurveyIds.has(survey.id)}
               onStart={handleStart}
               onViewSubmission={handleViewSubmission}
+              index={index}
             />
           ))}
         </div>

@@ -21,13 +21,15 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   FlatList, Modal, StyleSheet, ActivityIndicator, Image,
   KeyboardAvoidingView, Platform, Animated, Dimensions,
-  Alert, RefreshControl,
+  Alert, RefreshControl, Pressable,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { useSurvey }   from "../providers/SurveyProvider";
 import { useResponse } from "../providers/ResponseProvider";
 import CreateSurveyComposer from "../components/survey/CreateSurveyComposer";
+import { SurveyCardHome } from "../components/survey/SurveyCardHome";
+import AiChatbox from "../components/common/AiChatbox";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -68,7 +70,7 @@ const C = {
   ],
 };
 
-const MY_SURVEYS_PREVIEW = 4;
+const MY_SURVEYS_PREVIEW = 10;
 
 /* ════════════════════════════════════════════════════════════════
    STATUS BADGE
@@ -143,8 +145,8 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={styles.modalBox} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Chia sẻ khảo sát</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -191,7 +193,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
             )}
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -223,8 +225,8 @@ function InviteModal({ open, onClose, survey, onInvite }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={styles.modalBox} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Mời người tham gia</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -265,7 +267,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -307,8 +309,8 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={[styles.modalBox, { maxWidth: 480 }]} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 480 }]} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Mời hàng loạt</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -381,7 +383,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -447,8 +449,8 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={[styles.modalBox, { maxWidth: 500, maxHeight: "90%" }]} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 500, maxHeight: "90%" }]} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Quản lý người tham gia</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -567,7 +569,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -585,8 +587,8 @@ function PublishModal({ open, onClose, survey, onPublish }) {
   };
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{isPublished ? "Ẩn khảo sát" : "Publish khảo sát"}</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -618,7 +620,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -635,8 +637,8 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
   };
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <TouchableOpacity style={[styles.modalBox, { maxWidth: 380 }]} activeOpacity={1} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Đóng khảo sát</Text>
             <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -664,7 +666,7 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 }
@@ -944,7 +946,7 @@ function MySurveyCard({
   };
 
   const menuItems = [
-    { label: "✏️ Chỉnh sửa",        action: () => { setEditing(true); setMenuOpen(false); } },
+    { label: "✏️ Chỉnh sửa",        action: () => { navigation.navigate("SurveyStudio", { surveyId: survey.id }); setMenuOpen(false); } },
     { label: "📊 Phân tích",         action: () => { navigation.navigate("SurveyAnalytics", { surveyId: survey.id }); setMenuOpen(false); } },
     { label: "🔗 Tạo link chia sẻ", action: () => { setShareOpen(true); setMenuOpen(false); } },
     { label: "✉️ Mời người dùng",   action: () => { setInviteOpen(true); setMenuOpen(false); } },
@@ -1127,8 +1129,33 @@ export default function SurveysLayout() {
   const [showFilter, setShowFilter]       = useState(false);
   const [globalSearch, setGlobalSearch]   = useState("");
   const [refreshing, setRefreshing]       = useState(false);
+  const [shareModal, setShareModal]       = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
 
   useEffect(() => { fetchMySurveys(1, 20); }, []);
+
+  const handleShare = useCallback((surveyId) => {
+    const s = mySurveys.find(x => x.id === surveyId);
+    setShareModal({ open: true, surveyId, surveyTitle: s?.title || "", shareUrl: "", loading: false, error: "" });
+  }, [mySurveys]);
+
+  const handleGenerateLink = useCallback(async () => {
+    setShareModal(p => ({ ...p, loading: true, error: "" }));
+    try {
+      const result = await shareLink(shareModal.surveyId);
+      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+    } catch {
+      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+    }
+  }, [shareModal.surveyId, shareLink]);
+
+  const handleCloseLayout = useCallback(async (surveyId) => {
+    try {
+      await closeSurvey(surveyId);
+      setDoneSurveyIds(prev => { const n = new Set(prev); n.add(surveyId); return n; });
+      await fetchMySurveys(1, 20);
+    } catch (err) { console.error("Lock error:", err); }
+  }, [closeSurvey, fetchMySurveys]);
 
   const fetchPublicData = useCallback(async () => {
     try {
@@ -1197,6 +1224,23 @@ export default function SurveysLayout() {
           onClose={() => setModalSurvey(null)}
         />
       )}
+
+      <ShareLinkModal
+        open={shareModal.open}
+        onClose={() => setShareModal(p => ({ ...p, open: false }))}
+        survey={{ id: shareModal.surveyId, title: shareModal.surveyTitle }}
+        onShare={async (surveyId) => {
+          setShareModal(p => ({ ...p, loading: true, error: "" }));
+          try {
+            const result = await shareLink(surveyId);
+            const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+            setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+            return url;
+          } catch {
+            setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+          }
+        }}
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -1322,21 +1366,16 @@ export default function SurveysLayout() {
                 </GlassCard>
               ) : (
                 <>
-                  <View style={styles.myGrid}>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 14 }}>
                     {visibleMySurveys.map((survey, index) => (
-                      <MySurveyCard
+                      <SurveyCardHome
                         key={survey.id}
                         survey={survey}
                         index={index}
-                        onDelete={deleteSurvey}
-                        onUpdate={updateSurvey}
-                        onShare={shareLink}
-                        onInvite={inviteSurvey}
-                        onPublish={publishSurvey}
-                        onCloseSurvey={closeSurvey}
-                        onBulkInvite={bulkInviteSurvey}
-                        onGetParticipants={getParticipants}
-                        onDeleteParticipant={deleteParticipant}
+                        onClick={() => navigation.navigate("SurveyStudio", { surveyId: survey.id })}
+                        type="my"
+                        onShare={handleShare}
+                        onLock={handleCloseLayout}
                       />
                     ))}
                   </View>
@@ -1497,15 +1536,19 @@ export default function SurveysLayout() {
                 {!!publicSearch && ` · "${publicSearch}"`}
                 {doneCount > 0 && `  •  ${doneCount} đã hoàn thành`}
               </Text>
-              <View style={[styles.myGrid, viewMode === "list" && { flexDirection: "column" }]}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 14 }}>
                 {displayed.map((survey, i) => (
-                  <PublicSurveyCard
+                  <SurveyCardHome
                     key={survey.id}
                     survey={survey}
                     index={i}
-                    done={doneSurveyIds.has(survey.id)}
-                    onStart={id => navigation.navigate("SurveyTake", { surveyId: id })}
-                    onViewSubmission={(id, title) => setModalSurvey({ id, title })}
+                    overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
+                    onClick={() =>
+                      doneSurveyIds.has(survey.id)
+                        ? navigation.navigate("SurveyResponse", { surveyId: survey.id })
+                        : navigation.navigate("SurveyTake", { surveyId: survey.id })
+                    }
+                    type="public"
                   />
                 ))}
               </View>
@@ -1513,6 +1556,9 @@ export default function SurveysLayout() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ── EchoAI Chatbox ── */}
+      <AiChatbox navigation={navigation} />
     </View>
   );
 }

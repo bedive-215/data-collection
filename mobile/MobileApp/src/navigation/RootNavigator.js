@@ -1,4 +1,4 @@
-﻿// File: src/navigation/RootNavigator.jsx
+// File: src/navigation/RootNavigator.jsx
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -14,6 +14,9 @@ import BottomTabNavigator from './BottomTabNavigator';
 import UserSurveyScreen from '../screens/home/Surveytakepage';
 import MySurveyDetailScreen from '../screens/home/Mysurveysscreen';
 import QuestionScreen from '../screens/home/Questionscreen';
+import SurveyStudioScreen from '../screens/home/SurveyStudioScreen';
+import SurveyAnalyticsScreen from '../screens/home/SurveyAnalyticsScreen';
+import PublicSurveyDetailScreen from '../screens/home/PublicSurveyDetailScreen';
 
 // Notifications
 import NotificationsScreen from '../screens/home/NotificationsScreen';
@@ -51,6 +54,27 @@ export default function RootNavigator() {
       <Stack.Screen
         name='QuestionScreen'
         component={QuestionScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* ── NEW: Survey Studio (3-tab: Design / Send / Analyze) ── */}
+      <Stack.Screen
+        name='SurveyStudio'
+        component={SurveyStudioScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* ── NEW: Analytics full screen ── */}
+      <Stack.Screen
+        name='SurveyAnalytics'
+        component={SurveyAnalyticsScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* ── NEW: Public survey detail / preview ── */}
+      <Stack.Screen
+        name='PublicSurveyDetail'
+        component={PublicSurveyDetailScreen}
         options={{ headerShown: false }}
       />
 

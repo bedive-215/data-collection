@@ -1,5 +1,5 @@
-﻿// ─── SurveyResponsePage.native.jsx ────────────────────────────────────────
-// React Native version
+// ─── SurveyResponsePage.native.jsx ────────────────────────────────────────
+// React Native version — Real API integration
 // Deps: lucide-react-native, @react-navigation/native, react-native-safe-area-context
 
 import React, { useEffect, useState, useRef } from "react";
@@ -11,14 +11,14 @@ import {
   ActivityIndicator,
   StyleSheet,
   Animated,
-  SafeAreaView,
   StatusBar,
   Platform,
   Dimensions,
 } from "react-native";
-// import { useNavigation, useRoute } from "@react-navigation/native";
-// import { useSurvey } from "@/providers/SurveyProvider";
-// import { useResponse } from "@/providers/ResponseProvider";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSurvey } from "../../providers/SurveyProvider";
+import { useResponse } from "../../providers/ResponseProvider";
 
 /* ─── Lucide icons ─────────────────────────────────────────── */
 let IconSet = {};
@@ -221,40 +221,44 @@ function ErrorScreen({ message, onBack }) {
 
 /* ─── Main page ────────────────────────────────────────────── */
 export default function SurveyResponsePage() {
-  // Thay bằng provider thật khi tích hợp:
-  // const route = useRoute();
-  // const { surveyId } = route.params;
-  // const navigation = useNavigation();
-  // const { fetchSurveyById } = useSurvey();
-  // const { getMySubmission } = useResponse();
+  const route = useRoute();
+  const navigation = useNavigation();
+  const surveyId = route.params?.surveyId;
+  const { fetchSurveyById } = useSurvey();
+  const { getMySubmission } = useResponse();
 
-  const surveyId = "s1"; // mock
   const [loading,  setLoading]  = useState(true);
   const [survey,   setSurvey]   = useState(null);
   const [response, setResponse] = useState(null);
   const [error,    setError]    = useState(null);
 
   const handleBack = () => {
-    // navigation.navigate("Home");
-    console.log("Navigate to home");
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.navigate("MainApp");
   };
 
   useEffect(() => {
+    if (!surveyId) return;
+    let cancelled = false;
     const fetchData = async () => {
       try {
-        setLoading(true);
-        // Thật: const surveyRes  = await fetchSurveyById(surveyId);
-        // Thật: const responseRes = await getMySubmission(surveyId);
-        await new Promise(r => setTimeout(r, 800)); // giả lập delay
-        setSurvey(MOCK_SURVEY);
-        setResponse(MOCK_RESPONSE);
+        setLoading(true); setError(null);
+        const [surveyRes, responseRes] = await Promise.all([
+          fetchSurveyById(surveyId),
+          getMySubmission(surveyId).catch(() => null),
+        ]);
+        if (cancelled) return;
+        setSurvey(surveyRes?.data ?? surveyRes ?? null);
+        const rawResponse = responseRes?.data ?? responseRes ?? null;
+        setResponse(rawResponse);
       } catch (err) {
-        setError(err.message || "Không thể tải dữ liệu");
+        if (!cancelled) setError(err?.message || "Không thể tải dữ liệu");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
+    return () => { cancelled = true; };
   }, [surveyId]);
 
   if (loading)                        return <LoadingScreen />;

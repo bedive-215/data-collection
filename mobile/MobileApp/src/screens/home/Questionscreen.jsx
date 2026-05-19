@@ -27,16 +27,19 @@ import React, {
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, ActivityIndicator, Alert, Modal, FlatList,
-  KeyboardAvoidingView, Platform, SafeAreaView, Pressable,
+  KeyboardAvoidingView, Platform, Pressable,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
 import {
   launchImageLibrary,
 } from "react-native-image-picker";
+import { Sparkles } from "lucide-react-native";
 
 import { useQuestion }  from "../../providers/QuestionProvider";
 import { useSurvey }    from "../../providers/SurveyProvider";
 import surveyService    from "../../services/surveyService";
+import AiQuestionAssistant from "../../components/survey/AiQuestionAssistant";
 
 /* ─── Design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -1163,9 +1166,16 @@ export default function QuestionPage({ route, navigation }) {
 
   const [activeId,    setActiveId]    = useState(null);
   const [showForm,    setShowForm]    = useState(false);
+  const [showAi,      setShowAi]      = useState(false);
   const [deletingId,  setDeletingId]  = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const pendingIdRef = useRef(null);
+
+  /* ── AI Assistant ── */
+  const handleAiApplied = async (payload) => {
+    await bulkCreateQuestions(surveyId, payload);
+    await fetchQuestionsBySurvey(surveyId);
+  };
 
   /* ── Sections ── */
   const [sections,       setSections]       = useState([]);
@@ -1312,8 +1322,15 @@ export default function QuestionPage({ route, navigation }) {
         <TouchableOpacity onPress={() => navigation?.goBack()} style={s.backBtn}>
           <Text style={s.backBtnText}>‹ Danh sách</Text>
         </TouchableOpacity>
-        <View style={{ flexDirection:"row", alignItems:"center", gap:10 }}>
+        <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
           {formLoading && <ActivityIndicator size="small" color={C.primary} />}
+          <TouchableOpacity
+            style={[s.aiBtn, showAi && s.aiBtnActive]}
+            onPress={() => setShowAi(v => !v)}
+          >
+            <Sparkles size={13} color={showAi ? "#fff" : C.primary} />
+            <Text style={[s.aiBtnText, showAi && s.aiBtnTextActive]}>AI</Text>
+          </TouchableOpacity>
           <Text style={{ fontSize:13, color:C.textSub }}>{questions.length} câu hỏi</Text>
           <TouchableOpacity
             style={[s.btn, showForm && s.btnOutline]}
@@ -1406,6 +1423,18 @@ export default function QuestionPage({ route, navigation }) {
           </View>
         )}
       </ScrollView>
+
+      {/* AI Assistant Modal */}
+      <AiQuestionAssistant
+        open={showAi}
+        onClose={() => setShowAi(false)}
+        surveyId={surveyId}
+        surveyTitle={surveyTitle}
+        surveyDescription={surveyDescription}
+        existingCount={questions.length}
+        onApplied={handleAiApplied}
+        C={C}
+      />
     </SafeAreaView>
   );
 }
@@ -1441,6 +1470,24 @@ const s = StyleSheet.create({
     alignItems:"center", justifyContent:"center",
   },
   btnOutlineText: { color: C.textSub, fontWeight:"600", fontSize:13 },
+
+  /* AI Button */
+  aiBtn: {
+    flexDirection:"row", alignItems:"center", gap:5,
+    paddingHorizontal:10, paddingVertical:7,
+    borderRadius:9, borderWidth:1, borderColor: C.primaryBorder,
+    backgroundColor: C.primaryDim,
+  },
+  aiBtnActive: {
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+  },
+  aiBtnText: {
+    fontSize:12, fontWeight:"700", color: C.primary,
+  },
+  aiBtnTextActive: {
+    color: "#fff",
+  },
 
   /* Row helpers */
   row2: { flexDirection:"row", gap:10, alignItems:"flex-start" },

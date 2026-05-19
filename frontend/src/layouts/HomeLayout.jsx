@@ -5,7 +5,7 @@ import AiChatbox from "@/components/common/AiChatbox";
 
 const HomeLayout = ({ children }) => {
     return (
-        <div className="min-h-screen text-gray-900 font-body" style={{ backgroundColor: "#f4f5f7" }}>
+        <div className="min-h-screen text-gray-900 font-body" style={{ backgroundColor: "#F8FAFC" }}>
             <Navbar />
             <main className="w-full" style={{ backgroundColor: "transparent", overflow: "visible" }}>
                 {children}
