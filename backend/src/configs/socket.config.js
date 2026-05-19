@@ -200,7 +200,7 @@ const setupSocket = (server) => {
         }
     };
 
-    setInterval(checkExpiredSurveys, 30 * 1000);
+    setInterval(checkExpiredSurveys, 30 * 60 * 1000);
 
     // Check immediately on startup
     checkExpiredSurveys();

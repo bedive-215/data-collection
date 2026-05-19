@@ -1,8 +1,10 @@
 import { fn, col, literal, Op } from "sequelize";
 import { AppError } from "../../middlewares/handleException.middlware.js";
 import models from "../../models/index.js";
-import { formatDuration, calculateAge, ageGroup, normalizeGender } from "./helpers.js";
-import QuestionAnalyticsService from "./question.service.js";
+import { formatDuration, calculateAge, ageGroup, normalizeGender, cleanSurveyAnalytics } from "./helpers.js";
+import QuestionAnalyticsService from "./questionAnalytics.service.js";
+import { buildAnalyticsPrompt } from "../../utils/buildPrompt.js";
+import { generateGeminiContent } from "../../utils/genAI.js";
 
 class SurveyAnalyticsService extends QuestionAnalyticsService {
     constructor() {
@@ -107,7 +109,7 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
 
     // ─── Survey-level ────────────────────────────────────────────────────────
 
-    async getSurveyAnalytics(survey_id, filters = {}) {
+    async getSurveyAnalytics(survey_id, filters = {}, options = {}) {
         const questions = await this.Question.findAll({
             where: { survey_id },
             order: [["order_index", "ASC"]],
@@ -127,7 +129,7 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         });
 
         const analytics = await Promise.all(
-            questions.map((q) => this.getQuestionAnalytics(q.id, { ...filters, survey_id }))
+            questions.map((q) => this.getQuestionAnalytics(q.id, { ...filters, survey_id }, {...options}))
         );
 
         return {
@@ -809,6 +811,20 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         ].join("\n");
 
         return { csv, filename: `survey-${survey_id}-export-${Date.now()}.csv`, row_count: rows.length };
+    }
+
+    async getAiAnalytics(survey_id, filters = {},) {
+        const data = await this.getSurveyAnalytics(survey_id, filters, {ai_mode: true});
+        const cleaned = cleanSurveyAnalytics(data);
+
+        const prompt = buildAnalyticsPrompt(cleaned);
+        const aiResponse = await generateGeminiContent(prompt);
+
+        return {
+            survey_id,
+            generated_at: new Date().toISOString(),
+            ai_insights: aiResponse,
+        };
     }
 }
 

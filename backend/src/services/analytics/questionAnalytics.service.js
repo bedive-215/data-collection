@@ -1,6 +1,6 @@
 import { fn, col, literal, Op } from "sequelize";
 import { AppError } from "../../middlewares/handleException.middlware.js";
-import { toPercent, computeWordFrequency } from "./helpers.js";
+import { toPercent, computeWordFrequency, STOP_WORDS } from "./helpers.js";
 import BaseAnalyticsService from "./base.service.js";
 
 class QuestionAnalyticsService extends BaseAnalyticsService {
@@ -19,14 +19,14 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
 
         const handlers = {
             SINGLE_CHOICE: () => this._singleChoiceAnalytics(question, answerWhere, totalResponses),
-            DROPDOWN:      () => this._singleChoiceAnalytics(question, answerWhere, totalResponses),
+            DROPDOWN: () => this._singleChoiceAnalytics(question, answerWhere, totalResponses),
             MULTIPLE_CHOICE: () => this._multipleChoiceAnalytics(question, answerWhere, totalResponses),
-            RATING:  () => this._ratingAnalytics(question, answerWhere, totalResponses),
-            NUMBER:  () => this._numberAnalytics(question, answerWhere, totalResponses),
-            DATE:    () => this._dateAnalytics(question, answerWhere, totalResponses),
-            TEXT:      () => this._textAnalytics(question, answerWhere, totalResponses, textOpts),
+            RATING: () => this._ratingAnalytics(question, answerWhere, totalResponses),
+            NUMBER: () => this._numberAnalytics(question, answerWhere, totalResponses),
+            DATE: () => this._dateAnalytics(question, answerWhere, totalResponses),
+            TEXT: () => this._textAnalytics(question, answerWhere, totalResponses, textOpts),
             PARAGRAPH: () => this._textAnalytics(question, answerWhere, totalResponses, textOpts),
-            EMAIL:     () => this._textAnalytics(question, answerWhere, totalResponses, textOpts),
+            EMAIL: () => this._textAnalytics(question, answerWhere, totalResponses, textOpts),
         };
 
         const handler = handlers[question.type];
@@ -101,9 +101,9 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
         const stats = await this.Answer.findOne({
             where: answerWhere,
             attributes: [
-                [fn("AVG",    col("answer_number")), "avg"],
-                [fn("MIN",    col("answer_number")), "min"],
-                [fn("MAX",    col("answer_number")), "max"],
+                [fn("AVG", col("answer_number")), "avg"],
+                [fn("MIN", col("answer_number")), "min"],
+                [fn("MAX", col("answer_number")), "max"],
                 [fn("STDDEV", col("answer_number")), "stddev"],
             ],
             raw: true,
@@ -124,13 +124,13 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
             ...this._baseResult(question),
             scale: { min: scaleMin, max: scaleMax },
             total_responses: totalResponses,
-            avg:    parseFloat(stats?.avg)    || 0,
-            min:    parseFloat(stats?.min)    || 0,
-            max:    parseFloat(stats?.max)    || 0,
+            avg: parseFloat(stats?.avg) || 0,
+            min: parseFloat(stats?.min) || 0,
+            max: parseFloat(stats?.max) || 0,
             stddev: parseFloat(stats?.stddev) || 0,
             distribution: distribution.map((d) => ({
-                rating:  parseFloat(d.rating),
-                count:   parseInt(d.count),
+                rating: parseFloat(d.rating),
+                count: parseInt(d.count),
                 percent: toPercent(d.count, totalResponses),
             })),
         };
@@ -141,11 +141,11 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
         const stats = await this.Answer.findOne({
             where: answerWhere,
             attributes: [
-                [fn("AVG",    col("answer_number")), "avg"],
-                [fn("MIN",    col("answer_number")), "min"],
-                [fn("MAX",    col("answer_number")), "max"],
+                [fn("AVG", col("answer_number")), "avg"],
+                [fn("MIN", col("answer_number")), "min"],
+                [fn("MAX", col("answer_number")), "max"],
                 [fn("STDDEV", col("answer_number")), "stddev"],
-                [fn("SUM",    col("answer_number")), "sum"],
+                [fn("SUM", col("answer_number")), "sum"],
             ],
             raw: true,
         });
@@ -153,10 +153,10 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
         return {
             ...this._baseResult(question),
             total_responses: totalResponses,
-            avg:    parseFloat(stats?.avg)    || 0,
-            min:    parseFloat(stats?.min)    || 0,
-            max:    parseFloat(stats?.max)    || 0,
-            sum:    parseFloat(stats?.sum)    || 0,
+            avg: parseFloat(stats?.avg) || 0,
+            min: parseFloat(stats?.min) || 0,
+            max: parseFloat(stats?.max) || 0,
+            sum: parseFloat(stats?.sum) || 0,
             stddev: parseFloat(stats?.stddev) || 0,
         };
     }
@@ -182,27 +182,129 @@ class QuestionAnalyticsService extends BaseAnalyticsService {
     }
 
     // TEXT / PARAGRAPH / EMAIL
-    async _textAnalytics(question, answerWhere, totalResponses, { page = 1, limit = 50 } = {}) {
+    _normalizeText(text) {
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    _similarity(a, b) {
+        const setA = new Set(a.split(" "));
+        const setB = new Set(b.split(" "));
+
+        const intersection = [...setA].filter(x => setB.has(x)).length;
+        const union = new Set([...setA, ...setB]).size;
+
+        return union === 0 ? 0 : intersection / union;
+    }
+
+    async _textAnalytics(
+        question,
+        answerWhere,
+        totalResponses,
+        {
+            page = 1,
+            limit = 50,
+            ai_mode = false,
+            minLength = 5,
+            minWords = 2,
+            similarityThreshold = 0.6
+        } = {}
+    ) {
         const offset = (page - 1) * limit;
 
-        const { count, rows } = await this.Answer.findAndCountAll({
-            where: answerWhere,
-            attributes: ["id", "answer_text", "created_at"],
-            order: [["created_at", "DESC"]],
-            limit,
-            offset,
-        });
+        const queryOptions = ai_mode
+            ? {
+                where: answerWhere,
+                attributes: ["answer_text"],
+            }
+            : {
+                where: answerWhere,
+                attributes: ["id", "answer_text", "created_at"],
+                order: [["created_at", "DESC"]],
+                limit,
+                offset,
+            };
 
-        const wordFrequency = ["TEXT", "PARAGRAPH"].includes(question.type)
-            ? computeWordFrequency(rows.map((a) => a.answer_text).filter(Boolean))
-            : [];
+        const { rows, count } = await this.Answer.findAndCountAll(queryOptions);
+
+        if (!ai_mode) {
+            const wordFrequency = ["TEXT", "PARAGRAPH"].includes(question.type)
+                ? computeWordFrequency(rows.map((a) => a.answer_text).filter(Boolean))
+                : [];
+
+            return {
+                ...this._baseResult(question),
+                total_responses: totalResponses,
+                pagination: {
+                    page,
+                    limit,
+                    total_pages: Math.ceil(count / limit),
+                    total_answers: count,
+                },
+                answers: rows.map((a) => ({
+                    id: a.id,
+                    text: a.answer_text,
+                    submitted_at: a.created_at,
+                })),
+                ...(wordFrequency.length && {
+                    word_frequency: wordFrequency.slice(0, 30),
+                }),
+            };
+        }
+
+        const clusters = [];
+
+        for (let row of rows) {
+            const raw = row.answer_text;
+            if (!raw) continue;
+
+            const normalized = this._normalizeText(raw);
+
+            if (normalized.length < minLength) continue;
+
+            const words = normalized.split(" ");
+            if (words.length < minWords) continue;
+
+            let matched = false;
+
+            for (let cluster of clusters) {
+                const score = this._similarity(normalized, cluster.text);
+
+                if (score >= similarityThreshold) {
+                    cluster.count += 1;
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                clusters.push({
+                    text: normalized,
+                    count: 1,
+                });
+            }
+        }
+
+        const totalCleaned =
+            clusters.reduce((sum, c) => sum + c.count, 0) || 1;
+
+        const cleanedAnswers = clusters
+            .map((c) => ({
+                text: c.text,
+                count: c.count,
+                percent: toPercent(c.count, totalCleaned),
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 20);
 
         return {
             ...this._baseResult(question),
             total_responses: totalResponses,
-            pagination: { page, limit, total_pages: Math.ceil(count / limit), total_answers: count },
-            answers: rows.map((a) => ({ id: a.id, text: a.answer_text, submitted_at: a.created_at })),
-            ...(wordFrequency.length && { word_frequency: wordFrequency.slice(0, 30) }),
+
+            cleaned_answers: cleanedAnswers,
         };
     }
 }

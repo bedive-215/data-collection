@@ -58,3 +58,35 @@ export function normalizeGender(g) {
     if (val === "MALE" || val === "FEMALE" || val === "OTHER") return val;
     return "UNKNOWN";
 }
+
+export function cleanSurveyAnalytics(data) {
+    return {
+        survey_id: data.survey_id, // nếu muốn giữ, không thì xoá luôn
+        total_responses: data.total_responses,
+
+        questions: data.questions.map((q) => ({
+            question_content: q.question_content,
+            type: q.type,
+            total_responses: q.total_responses,
+
+            // choice question
+            ...(q.options && {
+                options: q.options.map((opt) => ({
+                    label: opt.label,
+                    value: opt.value,
+                    count: opt.count,
+                    percent: opt.percent,
+                })),
+            }),
+
+            // text question
+            ...(q.cleaned_answers && {
+                cleaned_answers: q.cleaned_answers,
+            }),
+
+            ...(q.word_frequency && {
+                word_frequency: q.word_frequency,
+            }),
+        })),
+    };
+}

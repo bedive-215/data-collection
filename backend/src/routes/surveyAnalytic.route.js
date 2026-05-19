@@ -141,4 +141,11 @@ route.get(
     surveyAnalyticController.exportCSV
 );
 
+route.get(
+    "/surveys/:survey_id/ai-insights",
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
+    surveyAnalyticController.getAiInsights
+);
+
 export default route;

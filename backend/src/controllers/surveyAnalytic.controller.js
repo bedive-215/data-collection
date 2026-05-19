@@ -215,6 +215,19 @@ class SurveyAnalyticController {
             next(err);
         }
     }
+
+    // GET /api/analytics/surveys/:survey_id/ai-insights
+    // Get AI-generated insights based on survey analytics
+    async getAiInsights(req, res, next) {
+        try {
+            const { survey_id } = req.params;
+            const filters = parseFilters(req.query);
+            const data = await SurveyAnalyticsService.getAiAnalytics(survey_id, filters);
+            return res.status(200).json({ success: true, data });
+        } catch (err) {
+            next(err);
+        }
+    }
 };
 
 export default new SurveyAnalyticController();

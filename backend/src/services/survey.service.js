@@ -378,7 +378,7 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        survey.destroy();
+        await survey.destroy();
 
         return {
             message: "Deleted survey successfully"
