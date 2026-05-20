@@ -1176,3 +1176,366 @@ classDiagram
 │   └─────────────────────────────────────────────┘            │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 3.7. Biểu đồ Lớp - Hệ thống Gamification (Mini Game)
+
+### 3.7.1. Biểu đồ Lớp tổng hợp Gamification
+
+```mermaid
+classDiagram
+    direction TB
+    fontSize 14
+
+    %% ============================================================
+    %% ENUMERATIONS
+    %% ============================================================
+
+    class TransactionType {
+        <<Enumeration>>
+        DAILY_CHECKIN
+        CREATE_SURVEY
+        RESPOND_SURVEY
+        FIRST_RESPONDER
+        SECOND_RESPONDER
+        THIRD_RESPONDER
+        LATER_RESPONDER
+        SURVEY_CREATOR_BONUS
+        STREAK_BONUS
+        ACHIEVEMENT_REWARD
+        RANK_UP_BONUS
+        PENALTY
+        ADMIN_ADJUST
+    }
+
+    class AchievementCategory {
+        <<Enumeration>>
+        STREAK
+        SURVEY_CREATION
+        PARTICIPATION
+        SOCIAL
+        SPECIAL
+        RANK
+    }
+
+    class AchievementTier {
+        <<Enumeration>>
+        BRONZE
+        SILVER
+        GOLD
+        PLATINUM
+        DIAMOND
+    }
+
+    class LeaderboardPeriod {
+        <<Enumeration>>
+        WEEKLY
+        MONTHLY
+        ALL_TIME
+    }
+
+    %% ============================================================
+    %% ENTITIES
+    %% ============================================================
+
+    class StarTransaction {
+        <<Entity>>
+        -UUID id
+        -UUID user_id
+        -Integer amount
+        -Enum type: TransactionType
+        -String description
+        -JSON metadata
+        -Integer balance_after
+        -UUID ref_id
+        -String ref_type
+        -Boolean is_reversed
+        -DateTime created_at
+        +create() StarTransaction
+        +reverse() Boolean
+    }
+
+    class Achievement {
+        <<Entity>>
+        -UUID id
+        -String code
+        -String name
+        -Text description
+        -String icon
+        -Enum category: AchievementCategory
+        -Integer star_reward
+        -Enum tier: AchievementTier
+        -String condition_type
+        -Integer condition_value
+        -Boolean is_active
+        +checkAndUnlock() List~UserAchievement~
+        +seedAchievements() List~Achievement~
+    }
+
+    class UserAchievement {
+        <<Entity>>
+        -UUID id
+        -UUID user_id
+        -UUID achievement_id
+        -Integer progress
+        -Boolean is_unlocked
+        -DateTime unlocked_at
+        -Boolean notification_sent
+        +unlock() UserAchievement
+        +updateProgress() Boolean
+    }
+
+    class DailyCheckin {
+        <<Entity>>
+        -UUID id
+        -UUID user_id
+        -Date checkin_date
+        -Integer stars_earned
+        -Integer streak_count
+        -Decimal multiplier
+        -String ip_address
+        -String device_info
+        +checkin() CheckinResult
+        +hasCheckedInToday() Boolean
+    }
+
+    class Rank {
+        <<Entity>>
+        -UUID id
+        -String name
+        -String icon
+        -String color
+        -Integer min_stars
+        -Integer max_stars
+        -Decimal bonus_multiplier
+        -String description
+        -Integer order_index
+        -Boolean is_active
+    }
+
+    class User~Gamification {
+        <<Entity>>
+        -UUID id
+        -Integer star_balance
+        -Integer total_stars_earned
+        -String current_rank
+        -Integer streak_count
+        -Date last_checkin_date
+        -Integer highest_streak
+        -Integer weekly_stars
+        -Integer monthly_stars
+        +addStars() StarResult
+        +deductStars() StarResult
+        +getBalance() Balance
+        +getRankInfo() RankInfo
+    }
+
+    class StarService {
+        <<Service>>
+        +addStars() StarResult
+        +deductStars() StarResult
+        +reverseTransaction() Boolean
+        +rewardCreateSurvey() StarResult
+        +rewardSubmitSurvey() StarResult
+        +rewardCreatorForRespondent() StarResult
+        +rewardDailyCheckin() StarResult
+        +rewardAchievement() StarResult
+        +getBalance() Balance
+        +getRankInfo() RankInfo
+    }
+
+    class DailyCheckinService {
+        <<Service>>
+        +checkin() CheckinResult
+        +hasCheckedInToday() Status
+        +getHistory() List~DailyCheckin~
+        +getCurrentStreak() StreakInfo
+    }
+
+    class AchievementService {
+        <<Service>>
+        +seedAchievements() List~Achievement~
+        +checkAndUnlock() List~Achievement~
+        +getUserAchievements() AchievementData
+        +getRecentUnlocks() List~Achievement~
+    }
+
+    class LeaderboardService {
+        <<Service>>
+        +getLeaderboard() List~LeaderboardEntry~
+        +getUserRank() RankInfo
+        +getTop5WithPrizes() List~PrizeEntry~
+        +getUserComparison() ComparisonData
+        +resetWeeklyStars() Boolean
+        +resetMonthlyStars() Boolean
+        +updatePeriodicStars() Boolean
+    }
+
+    class StarController {
+        <<Controller>>
+        +getBalance()
+        +getTransactionHistory()
+        +getRankInfo()
+        +adminAdjustStars()
+    }
+
+    class DailyCheckinController {
+        <<Controller>>
+        +checkin()
+        +getCheckinStatus()
+        +getHistory()
+        +getCurrentStreak()
+    }
+
+    class AchievementController {
+        <<Controller>>
+        +getUserAchievements()
+        +getRecentUnlocks()
+        +seedAchievements()
+    }
+
+    class LeaderboardController {
+        <<Controller>>
+        +getLeaderboard()
+        +getUserRank()
+        +getTop5WithPrizes()
+        +getUserComparison()
+        +adminResetWeekly()
+        +adminResetMonthly()
+    }
+
+    %% ============================================================
+    %% RELATIONSHIPS
+    %% ============================================================
+
+    StarTransaction "N" --> "1" User~Gamification : belongs to
+    User~Gamification "1" o-- "0..*" DailyCheckin : checks in daily
+    User~Gamification "1" o-- "0..*" StarTransaction : earns stars
+    User~Gamification "1" o-- "0..*" UserAchievement : unlocks achievements
+
+    Achievement "1" o-- "0..*" UserAchievement : unlocked by users
+    UserAchievement "N" --> "1" User~Gamification : belongs to
+
+    StarService ..> StarTransaction : creates
+    StarService ..> User~Gamification : updates balance
+    DailyCheckinService ..> StarService : calls to add stars
+    DailyCheckinService ..> DailyCheckin : creates records
+    AchievementService ..> UserAchievement : creates records
+    AchievementService ..> StarService : calls to reward
+    LeaderboardService ..> User~Gamification : reads ranks
+
+    StarController ..> StarService : calls
+    DailyCheckinController ..> DailyCheckinService : calls
+    AchievementController ..> AchievementService : calls
+    LeaderboardController ..> LeaderboardService : calls
+
+    StarTransaction .. TransactionType : uses
+    Achievement .. AchievementCategory : uses
+    Achievement .. AchievementTier : uses
+    LeaderboardService .. LeaderboardPeriod : uses
+```
+
+---
+
+### 3.7.2. Mô tả chi tiết các lớp Gamification
+
+#### 3.7.2.1. Các lớp Entity
+
+| Lớp | Mô tả | Thuộc tính chính | Phương thức chính |
+|------|--------|------------------|-------------------|
+| **StarTransaction** | Lịch sử giao dịch sao | id, user_id, amount, type, balance_after, is_reversed | create(), reverse() |
+| **Achievement** | Định nghĩa huy hiệu | code, name, icon, category, star_reward, tier, condition | checkAndUnlock(), seedAchievements() |
+| **UserAchievement** | Huy hiệu của user | user_id, achievement_id, progress, is_unlocked, unlocked_at | unlock(), updateProgress() |
+| **DailyCheckin** | Bản ghi điểm danh | user_id, checkin_date, stars_earned, streak_count, multiplier | checkin(), hasCheckedInToday() |
+| **Rank** | Cấp bậc (Bronze → Diamond) | name, min_stars, max_stars, bonus_multiplier, icon, color | - |
+
+#### 3.7.2.2. Bảng cấu hình sao
+
+| Hành động | Số sao |
+|-----------|--------|
+| Điểm danh hằng ngày | +50–100 sao (base 50 × multiplier) |
+| Tạo khảo sát | +50 sao |
+| Người tham gia #1 | +100 sao |
+| Người tham gia #2 | +50 sao |
+| Người tham gia #3 | +30 sao |
+| Người tham gia #4+ | +20 sao |
+| Người tạo nhận bonus/người | +10 sao/người |
+| Huy hiệu (tùy loại) | +15–500 sao |
+
+#### 3.7.2.3. Bảng cấu hình Rank
+
+| Rank | Icon | Màu | Min sao | Max sao | Bonus |
+|------|------|------|---------|---------|-------|
+| Bronze 🥉 | 🥉 | #CD7F32 | 0 | 499 | x1.0 |
+| Silver 🥈 | 🥈 | #C0C0C0 | 500 | 1999 | x1.1 |
+| Gold 🥇 | 🥇 | #FFD700 | 2000 | 4999 | x1.2 |
+| Platinum 💎 | 💎 | #E5E4E2 | 5000 | 9999 | x1.3 |
+| Diamond 💠 | 💠 | #B9F2FF | 10000+ | ∞ | x1.5 |
+
+#### 3.7.2.4. Bảng cấu hình phần thưởng Leaderboard (Top 5 tuần)
+
+| Rank | Phần thưởng |
+|------|------------|
+| 🥇 Top 1 | Thẻ điện thoại **500.000đ** |
+| 🥈 Top 2 | Thẻ điện thoại **300.000đ** |
+| 🥉 Top 3 | Thẻ điện thoại **150.000đ** |
+| 4️⃣ Top 4 | Thẻ điện thoại **70.000đ** |
+| 5️⃣ Top 5 | Thẻ điện thoại **30.000đ** |
+
+#### 3.7.2.5. Bảng mô tả Achievement
+
+| Code | Tên | Danh mục | Tier | Điều kiện | Sao thưởng |
+|------|------|---------|------|-----------|-----------|
+| STREAK_3 | Kiên trì | STREAK | Bronze | 3 ngày liên tiếp | +15 |
+| STREAK_7 | Cam kết | STREAK | Silver | 7 ngày liên tiếp | +40 |
+| FIRST_SURVEY | Người mới | SURVEY_CREATION | Bronze | 1 survey | +20 |
+| FIVE_SURVEYS | Khảo sát viên | SURVEY_CREATION | Silver | 5 surveys | +50 |
+| TEN_SURVEYS | Chuyên gia | SURVEY_CREATION | Gold | 10 surveys | +100 |
+| FIRST_RESPONSE | Người tham gia | PARTICIPATION | Bronze | 1 response | +20 |
+| VIRAL_SURVEY | Khảo sát viral | SOCIAL | Gold | 100 responders | +200 |
+| RANK_GOLD | Vàng rực rỡ | RANK | Gold | 2000 sao tổng | +100 |
+| RANK_DIAMOND | Kim cương | RANK | Diamond | 10000 sao tổng | +500 |
+
+#### 3.7.2.6. Kiến trúc Gamification tổng thể
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    GAMIFICATION FLOW                           │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────┐       ┌──────────────────────┐           │
+│  │ Survey       │       │ Response             │           │
+│  │ Service      │       │ Service              │           │
+│  │ (create)     │       │ (submit)             │           │
+│  └──────┬───────┘       └──────┬───────────────┘           │
+│         │                       │                             │
+│         ▼                       ▼                             │
+│  ┌─────────────────────────────────────────────┐           │
+│  │              STAR SERVICE                     │           │
+│  │  • addStars()  • rewardCreateSurvey()       │           │
+│  │  • deductStars() • rewardSubmitSurvey()     │           │
+│  │  • rewardDailyCheckin()                    │           │
+│  │  • rewardAchievement()                     │           │
+│  └──────┬────────────────────┬─────────────────┘           │
+│         │                    │                             │
+│         ▼                    ▼                             │
+│  ┌─────────────┐   ┌──────────────────┐                  │
+│  │ StarTrans-  │   │ User Model       │                  │
+│  │ action      │   │ (star_balance,   │                  │
+│  │ (log)       │   │  current_rank,   │                  │
+│  └─────────────┘   │  weekly_stars,   │                  │
+│                    │  monthly_stars,   │                  │
+│                    │  streak_count)    │                  │
+│                    └────────┬─────────┘                  │
+│                             │                             │
+│         ┌──────────────────┼──────────────────┐           │
+│         ▼                  ▼                  ▼           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
+│  │ Achievement  │  │ Leaderboard │  │DailyCheckin │   │
+│  │ Service     │  │ Service     │  │Service     │   │
+│  │(check&unlock)│  │(getTop5)   │  │(streak)    │   │
+│  └──────────────┘  └──────────────┘  └──────────────┘   │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+```

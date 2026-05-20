@@ -16,6 +16,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useResponse } from "../../providers/ResponseProvider";
 import { useSurvey } from "../../providers/SurveyProvider";
+import { CheckinBanner } from "../../components/gamification/CheckinBanner";
+import { GamificationDashboard } from "../../components/gamification/GamificationDashboard";
 import { SurveyCard } from "../../components/survey/SurveyCard";
 import { SurveyCardHome, CARD_W } from "../../components/survey/SurveyCardHome";
 import { COLORS } from "../../utils/constants";
@@ -519,6 +521,17 @@ export default function HomeScreen() {
             color="#f59e0b"
             bg="#fef3c7"
           />
+        </View>
+
+        {/* ── Checkin Banner ── */}
+        <CheckinBanner />
+
+        {/* ── Gamification Quick Stats ── */}
+        <GamificationDashboard compact />
+
+        {/* ── Gamification Dashboard ── */}
+        <View style={styles.section}>
+          <GamificationDashboard />
         </View>
 
         {/* ── My Surveys ── */}

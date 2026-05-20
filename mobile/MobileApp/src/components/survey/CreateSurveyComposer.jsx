@@ -13,7 +13,7 @@
  *
  * Hooks / providers used (same as web):
  *   useSurvey()  →  { createSurveyFlow }
- *   ROUTERS.USER.MY_SURVEY_DETAIL  (string with :surveyId)
+ *   ROUTERS.MY_SURVEY_DETAIL  (string with :surveyId)
  */
 
 import React, { useState, useMemo, useCallback } from "react";
@@ -29,6 +29,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 // ─── swap these for your actual project imports ───────────────────────────────
 import { useSurvey } from "../../providers/SurveyProvider";
@@ -49,8 +50,8 @@ import {
   ListChecks,
   ChevronDown,
 } from "lucide-react-native";
-// react-native-toast-message
-import Toast from "react-native-toast-message";
+// Toast — custom provider
+import { useToast } from "../../components/common/Toast";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -294,11 +295,14 @@ function QuestionCard({ draft, idx, totalCount, onUpdate, onSetType, onRemove, o
 export default function CreateSurveyComposer({ onCancel, onSuccess }) {
   const navigation = useNavigation();
   const { createSurveyFlow } = useSurvey();
+  const toast = useToast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
+  const [startAt, setStartAt] = useState(null);   // Date | null
+  const [endAt, setEndAt]   = useState(null);     // Date | null
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker,   setShowEndPicker]   = useState(false);
   const [drafts, setDrafts] = useState([emptyDraft()]);
   const [emailsRaw, setEmailsRaw] = useState("");
   const [inviteRole, setInviteRole] = useState("respondent");
@@ -315,8 +319,10 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
   const resetForm = useCallback(() => {
     setTitle("");
     setDescription("");
-    setStartAt("");
-    setEndAt("");
+    setStartAt(null);
+    setEndAt(null);
+    setShowStartPicker(false);
+    setShowEndPicker(false);
     setDrafts([emptyDraft()]);
     setEmailsRaw("");
     setInviteRole("respondent");
@@ -392,14 +398,14 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
           .filter((o) => o.label && o.value);
         const values = new Set(opts.map((o) => o.value));
         if (opts.length < 2 || values.size < opts.length) {
-          Toast.show({ type: "error", text1: `Câu "${(q.content || "").slice(0, 40)}…" cần ít nhất 2 lựa chọn (value không trùng).` });
+          toast.error(`Câu "${(q.content || "").slice(0, 40)}…" cần ít nhất 2 lựa chọn (value không trùng).`);
           return false;
         }
       }
       if (q.type === "NUMBER" && q.settings) {
         const { min, max } = q.settings;
         if (min !== "" && max !== "" && Number(min) > Number(max)) {
-          Toast.show({ type: "error", text1: "Câu số: min phải ≤ max." });
+          toast.error("Câu số: min phải ≤ max.");
           return false;
         }
       }
@@ -407,7 +413,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
         const min = Number(q.settings.min ?? 1);
         const max = Number(q.settings.max ?? 5);
         if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) {
-          Toast.show({ type: "error", text1: "Thang đánh giá: min phải < max." });
+          toast.error("Thang đánh giá: min phải < max.");
           return false;
         }
       }
@@ -419,11 +425,16 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
   const handleSubmit = async () => {
     const t = title.trim();
     if (!t) {
-      Toast.show({ type: "error", text1: "Nhập tiêu đề khảo sát." });
+      toast.error("Nhập tiêu đề khảo sát.");
       return;
     }
-    if (startAt && endAt && new Date(endAt) <= new Date(startAt)) {
-      Toast.show({ type: "error", text1: "Thời gian kết thúc phải sau thời gian bắt đầu." });
+    const toISO = (d) => {
+      if (!d || isNaN(d.getTime())) return null;
+      try { return d.toISOString(); } catch { return null; }
+    };
+
+    if (startAt && endAt && endAt <= startAt) {
+      toast.error("Thời gian kết thúc phải sau thời gian bắt đầu.");
       return;
     }
 
@@ -439,12 +450,11 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
 
     if (!validateDrafts(filled)) return;
 
-    const payload = {
-      title: t,
-      description: description.trim() || null,
-      start_at: startAt ? new Date(startAt).toISOString() : null,
-      end_at: endAt ? new Date(endAt).toISOString() : null,
-    };
+    const payload = { title: t, description: description.trim() || null };
+    const s = toISO(startAt);
+    const e = toISO(endAt);
+    if (s) payload.start_at = s;
+    if (e) payload.end_at = e;
 
     const extras = {
       draftQuestions: filled,
@@ -479,7 +489,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (_) {
-      Toast.show({ type: "info", text1: "Không thể copy tự động. Hãy copy thủ công." });
+      toast.info("Không thể copy tự động. Hãy copy thủ công.");
     }
   };
 
@@ -492,7 +502,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
   // Done screen
   // ────────────────────────────────────────────────────────────────────────────
   if (done?.survey) {
-    const editRoute = ROUTERS.USER.MY_SURVEY_DETAIL.replace(":surveyId", done.survey.id);
+    const editRoute = ROUTERS.MY_SURVEY_DETAIL.replace(":surveyId", done.survey.id);
     return (
       <Card style={styles.doneCard}>
         <View style={[styles.row, { marginBottom: 12 }]}>
@@ -584,25 +594,61 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
             style={[styles.input, { minHeight: 64, textAlignVertical: "top", marginBottom: 12 }]}
           />
           <View style={[styles.row, { gap: 10 }]}>
+            {/* Start date */}
             <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Bắt đầu (ISO / text)</Text>
-              <TextInput
-                value={startAt}
-                onChangeText={setStartAt}
-                placeholder="2025-01-01T08:00"
-                placeholderTextColor={C.textDim}
-                style={styles.input}
-              />
+              <Text style={styles.fieldLabel}>Bắt đầu</Text>
+              <TouchableOpacity
+                onPress={() => setShowStartPicker(true)}
+                style={[styles.input, { justifyContent: "center" }]}
+              >
+                <Text style={[
+                  styles.pickerText,
+                  !startAt && { color: C.textDim },
+                ]}>
+                  {startAt
+                    ? `${String(startAt.getDate()).padStart(2,"0")}/${String(startAt.getMonth()+1).padStart(2,"0")}/${startAt.getFullYear()} ${String(startAt.getHours()).padStart(2,"0")}:${String(startAt.getMinutes()).padStart(2,"0")}`
+                    : "Chọn ngày giờ"}
+                </Text>
+              </TouchableOpacity>
+              {showStartPicker && (
+                <DateTimePicker
+                  value={startAt || new Date()}
+                  mode="datetime"
+                  display="default"
+                  onChange={(_, date) => {
+                    setShowStartPicker(false);
+                    if (date) setStartAt(date);
+                  }}
+                />
+              )}
             </View>
+            {/* End date */}
             <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Kết thúc (ISO / text)</Text>
-              <TextInput
-                value={endAt}
-                onChangeText={setEndAt}
-                placeholder="2025-12-31T23:59"
-                placeholderTextColor={C.textDim}
-                style={styles.input}
-              />
+              <Text style={styles.fieldLabel}>Kết thúc</Text>
+              <TouchableOpacity
+                onPress={() => setShowEndPicker(true)}
+                style={[styles.input, { justifyContent: "center" }]}
+              >
+                <Text style={[
+                  styles.pickerText,
+                  !endAt && { color: C.textDim },
+                ]}>
+                  {endAt
+                    ? `${String(endAt.getDate()).padStart(2,"0")}/${String(endAt.getMonth()+1).padStart(2,"0")}/${endAt.getFullYear()} ${String(endAt.getHours()).padStart(2,"0")}:${String(endAt.getMinutes()).padStart(2,"0")}`
+                    : "Chọn ngày giờ"}
+                </Text>
+              </TouchableOpacity>
+              {showEndPicker && (
+                <DateTimePicker
+                  value={endAt || new Date()}
+                  mode="datetime"
+                  display="default"
+                  onChange={(_, date) => {
+                    setShowEndPicker(false);
+                    if (date) setEndAt(date);
+                  }}
+                />
+              )}
             </View>
           </View>
         </Card>
@@ -809,6 +855,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: C.textSub,
     marginBottom: 4,
+  },
+
+  pickerText: {
+    fontSize: 13,
+    color: C.text,
   },
 
   pageTitle: {

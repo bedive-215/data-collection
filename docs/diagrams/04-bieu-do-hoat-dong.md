@@ -687,3 +687,193 @@ endif
 stop
 
 @enduml
+
+' ============================================================
+' 3.4.13. Chức năng Điểm danh hằng ngày
+' ============================================================
+@startuml 3-4-13-diem-danh
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+  ArrowColor #D97706
+  DiamondBackgroundColor #FFF9C4
+  DiamondBorderColor #F57F17
+  StartColor #4CAF50
+  StopColor #F44336
+}
+
+|#FEFEFE **Người dùng**|
+start
+:Truy cập trang chính;
+|#FFF9C4 **Hệ thống**|
+:Kiểm tra đã điểm danh hôm nay chưa;
+|Lấy thông tin streak từ CSDL;
+if (Đã điểm danh?) then (Có)
+  :Hiển thị trạng thái đã điểm danh;
+  |#FEFEFE **Người dùng**|
+  :Xem streak & bonus;
+  stop
+else (Chưa)
+  |#FFF9C4 **Hệ thống**|
+  :Tính multiplier (x1.0 / x1.5 / x2.0);
+  :Tính số sao nhận được;
+  |#FEFEFE **Người dùng**|
+  :Nhấn **Điểm danh ngay**;
+  |#FFF9C4 **Hệ thống**|
+  :Lưu bản ghi DailyCheckin;
+  :Cập nhật streak_count;
+  :Cộng sao (StarService.addStars);
+  :Cập nhật weekly_stars & monthly_stars;
+  :Kiểm tra achievement;
+  |#FEFEFE **Người dùng**|
+  :Hiển thị thông báo thành công;
+  stop
+endif
+
+@enduml
+
+' ============================================================
+' 3.4.14. Chức năng Xem Bảng xếp hạng
+' ============================================================
+@startuml 3-4-14-bang-xep-hang
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #EDE7F6
+  BorderColor #7C3AED
+  ArrowColor #7C3AED
+  DiamondBackgroundColor #FFF9C4
+  DiamondBorderColor #F57F17
+  StartColor #4CAF50
+  StopColor #F44336
+}
+
+|#FEFEFE **Người dùng**|
+start
+:Truy cập trang **Bảng xếp hạng**;
+|#FFF9C4 **Hệ thống**|
+:Hiển thị Top 5 phần thưởng;
+|Lấy rank của user hiện tại;
+| **Người dùng**|
+:Chọn tab (Tuần / Tháng / All-time);
+|#FFF9C4 **Hệ thống**|
+if (Tab?) then (Tuần)
+  :Lấy weekly_stars;
+else (Tháng)
+  :Lấy monthly_stars;
+else (All-time)
+  :Lấy total_stars_earned;
+endif
+:Hiển thị danh sách mới;
+stop
+
+@enduml
+
+' ============================================================
+' 3.4.15. Chức năng Mở khóa Achievement
+' ============================================================
+@startuml 3-4-15-mo-khoa-achievement
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #F0FDF4
+  BorderColor #16A34A
+  ArrowColor #16A34A
+  DiamondBackgroundColor #FFF9C4
+  DiamondBorderColor #F57F17
+  StartColor #4CAF50
+  StopColor #F44336
+}
+
+|#FFF9C4 **Hệ thống**|
+start
+:Khi trigger xảy ra (tạo survey, hoàn thành, điểm danh);
+|Lấy tất cả achievement chưa unlock;
+while (Còn achievement?) is (Có)
+  :Kiểm tra điều kiện;
+  if (Thỏa mãn?) then (Có)
+    :Tạo UserAchievement (is_unlocked=true);
+    :Cộng sao reward (StarService);
+    :Thông báo user;
+  else (Chưa)
+    :Cập nhật progress;
+  endif
+endwhile (Hết achievement)
+stop
+
+@enduml
+
+' ============================================================
+' 3.4.16. Trigger Cộng Sao khi Tạo Survey
+' ============================================================
+@startuml 3-4-16-trigger-tao-survey
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #FDF4FF
+  BorderColor #9333EA
+  ArrowColor #9333EA
+  DiamondBackgroundColor #FFF9C4
+  DiamondBorderColor #F57F17
+  StartColor #4CAF50
+  StopColor #F44336
+}
+
+|#FFF9C4 **SurveyService**|
+start
+:Tạo bản ghi Survey;
+|#FFF9C4 **StarService**|
+:Cộng +50 sao (type=CREATE_SURVEY);
+|Ghi StarTransaction log;
+|#FFF9C4 **AchievementService**|
+:Kiểm tra FIRST_SURVEY, FIVE_SURVEYS, TEN_SURVEYS;
+if (Unlock achievement?) then (Có)
+  :Cộng sao reward + Thông báo;
+endif
+|#FFF9C4 **SurveyService**|
+:Trả về survey + gamification info;
+| **Người dùng**|
+:Xem thông báo +50 sao;
+stop
+
+@enduml
+
+' ============================================================
+' 3.4.17. Trigger Cộng Sao khi Submit Survey
+' ============================================================
+@startuml 3-4-17-trigger-submit-survey
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #FFF1F2
+  BorderColor #E11D48
+  ArrowColor #E11D48
+  DiamondBackgroundColor #FFF9C4
+  DiamondBorderColor #F57F17
+  StartColor #4CAF50
+  StopColor #F44336
+}
+
+|#FFF9C4 **ResponseService**|
+start
+:Cập nhật trạng thái COMPLETED;
+|#FFF9C4 **StarService**|
+:Đếm số người hoàn thành;
+if (Người #1?) then (100 sao)
+else (Người #2?) then (50 sao)
+else (Người #3?) then (30 sao)
+else (20 sao)
+endif
+:Phân loại & cộng sao;
+if (Có người tạo ≠ user?) then (Có)
+  :Cộng +10 sao cho người tạo;
+endif
+:Cập nhật weekly/monthly stars;
+|#FFF9C4 **AchievementService**|
+:Kiểm tra PARTICIPATION, SOCIAL, FIRST_RESPONSE;
+|#FFF9C4 **NotificationService**|
+:Thông báo cho người tạo;
+|#FFF9C4 **ResponseService**|
+:Trả về kết quả + sao;
+| **Người dùng**|
+:Xem thông báo sao nhận được;
+stop
+
+@enduml

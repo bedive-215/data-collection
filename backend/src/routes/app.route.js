@@ -12,6 +12,7 @@ import routerSection from './section.route.js';
 import routerMedia from './media.route.js';
 import routerOptionMedia from './optionMedia.route.js';
 import routerAiChat from './aiChat.route.js';
+import routerGamification from './gamification.route.js';
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -54,5 +55,9 @@ router.use('/option-media', routerOptionMedia);
 
 // AI Chat route (public - no auth required)
 router.use('/ai', routerAiChat);
+
+// Gamification routes (stars, checkin, achievements, leaderboard)
+router.use('/gamification', authMiddleware.auth.bind(authMiddleware));
+router.use('/gamification', routerGamification);
 
 export default router;

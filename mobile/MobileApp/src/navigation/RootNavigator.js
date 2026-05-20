@@ -24,6 +24,11 @@ import NotificationsScreen from '../screens/home/NotificationsScreen';
 // Survey Response
 import SurveyResponseScreen from '../screens/home/SurveyResponseScreen';
 
+// Gamification screens
+import LeaderboardScreen from '../screens/home/LeaderboardScreen';
+import AchievementsScreen from '../screens/home/AchievementsScreen';
+import StarWalletScreen from '../screens/home/StarWalletScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -89,6 +94,23 @@ export default function RootNavigator() {
       <Stack.Screen
         name='SurveyResponse'
         component={SurveyResponseScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* ─── GAMIFICATION ──────────────────── */}
+      <Stack.Screen
+        name='Leaderboard'
+        component={LeaderboardScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name='Achievements'
+        component={AchievementsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name='StarWallet'
+        component={StarWalletScreen}
         options={{ headerShown: false }}
       />
 

@@ -1,4 +1,4 @@
-﻿// File: src/navigation/BottomTabNavigator.jsx
+// File: src/navigation/BottomTabNavigator.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
@@ -10,6 +10,7 @@ import { useNotification } from '../providers/NotificationProvider';
 // Screens
 import HomeScreen from '../screens/home/HomeScreen';
 import SurveysLayout from '../layouts/Surveyslayout';
+import GamificationHomeScreen from '../screens/home/GamificationHomeScreen';
 import ProfileScreen from '../screens/home/ProfileScreen';
 import NotificationsScreen from '../screens/home/NotificationsScreen';
 
@@ -146,6 +147,17 @@ export default function BottomTabNavigator() {
           tabBarLabel: 'Khảo sát',
           tabBarButton: (props) => <CustomTabButton {...props} />,
           tabBarIcon: ({ focused }) => <TabBarIcon emoji='📋' focused={focused} />,
+        }}
+      />
+
+      {/* Phần thưởng */}
+      <Tab.Screen
+        name='GamificationTab'
+        component={GamificationHomeScreen}
+        options={{
+          tabBarLabel: 'Phần thưởng',
+          tabBarButton: (props) => <CustomTabButton {...props} />,
+          tabBarIcon: ({ focused }) => <TabBarIcon emoji='🏆' focused={focused} />,
         }}
       />
 
