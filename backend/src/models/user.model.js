@@ -79,6 +79,47 @@ export default (sequelize) => {
             type: DataTypes.DATE,
             allowNull: true,
         },
+        // ── Gamification fields ──────────────────────────────────
+        star_balance: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        total_stars_earned: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        current_rank: {
+            type: DataTypes.STRING(50),
+            defaultValue: "BRONZE",
+        },
+        streak_count: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        last_checkin_date: {
+            type: DataTypes.DATEONLY,
+            allowNull: true,
+        },
+        highest_streak: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        weekly_stars: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        monthly_stars: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        weekly_stars_updated_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        monthly_stars_updated_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     }, {
         tableName: "users",
         timestamps: true,
