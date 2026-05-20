@@ -1,6 +1,9 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import notificationService from "./notification.service.js";
+import starService from "./star.service.js";
+import achievementService from "./achievement.service.js";
+import leaderboardService from "./leaderboard.service.js";
 
 class ResponseService {
     constructor() {
@@ -278,12 +281,46 @@ class ResponseService {
 
             await transaction.commit();
 
-            // Send notification to survey owner
+            // ── GAMIFICATION: Cộng sao cho người tham gia ──────────
             const survey = await this.Survey.findByPk(survey_id);
-            const responder = await this.User.findByPk(user_id);
+            const isCreator = survey.created_by === user_id;
+
+            const starReward = await starService.rewardSubmitSurvey(
+                user_id,
+                survey_id,
+                response.id,
+                isCreator
+            );
+
+            // Cộng sao cho người tạo survey
+            if (!isCreator && survey.created_by) {
+                await starService.rewardCreatorForRespondent(
+                    survey.created_by,
+                    survey_id,
+                    user_id
+                );
+            }
+
+            // Cập nhật weekly/monthly stars
+            await leaderboardService.updatePeriodicStars(user_id, starReward.amount_added);
+
+            // Kiểm tra achievements
+            const unlockedAchievements = await achievementService.checkAndUnlock(
+                user_id,
+                "survey_completed",
+                {
+                    survey_id,
+                    is_creator: isCreator,
+                    is_first_responder: starReward.order === 1,
+                }
+            );
+
+            // ── GAMIFICATION END ───────────────────────────────────
+
+            // Send notification to survey owner
             await notificationService.notifySurveyResponse({
                 survey,
-                responder,
+                responder: { id: user_id, full_name: (await this.User.findByPk(user_id))?.full_name },
                 responseId: response.id
             });
 
@@ -300,7 +337,10 @@ class ResponseService {
 
             return {
                 message: "Submit survey successfully",
-                response_id: response.id
+                response_id: response.id,
+                stars_earned: starReward.amount_added ?? 0,
+                reward_type: starReward.reward_type || "LATER_RESPONDER",
+                reward_order: starReward.order || 0,
             };
 
         } catch (err) {

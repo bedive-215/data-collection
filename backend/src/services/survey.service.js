@@ -5,6 +5,8 @@ import { sendInviteEmail } from "../utils/sendMail.js";
 import sequelize from "../configs/db.config.js";
 import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
 import notificationService from "./notification.service.js";
+import starService from "./star.service.js";
+import achievementService from "./achievement.service.js";
 
 const ALLOWED_EDITOR_ROLES = ['respondent', 'viewer'];
 
@@ -114,9 +116,15 @@ class SurveyService {
             show_correct_answers: show_correct_answers ?? false,
         });
 
+        // ── GAMIFICATION: Cộng sao khi tạo survey ─────────────────
+        const starResult = await starService.rewardCreateSurvey(user.id, survey.id);
+        await achievementService.checkAndUnlock(user.id, "survey_created", { survey_id: survey.id });
+        // ── GAMIFICATION END ───────────────────────────────────────
+
         return {
             message: "Created survey successfully",
             survey: this._mapSurvey(survey),
+            gamification: starResult,
         };
     }
 
@@ -377,6 +385,16 @@ class SurveyService {
         if (!survey) {
             throw new AppError("Survey not found", 404);
         }
+
+        // ── GAMIFICATION: Thu hồi sao khi xóa survey ───────────────
+        if (survey.created_by === user.id) {
+            await starService.penalizeSurveyDeleted(survey.created_by, survey.id);
+            notificationService.notifySurveyDeleted({
+                userId: survey.created_by,
+                surveyTitle: survey.title,
+            }).catch(err => console.error("notifySurveyDeleted error:", err));
+        }
+        // ── GAMIFICATION END ───────────────────────────────────────
 
         survey.destroy();
 

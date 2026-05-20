@@ -399,6 +399,148 @@ class NotificationService {
             createdAt: notification.created_at
         };
     }
+
+    // ============================================================
+    // GAMIFICATION NOTIFICATIONS
+    // ============================================================
+
+    async notifyStarEarned({ userId, amount, type, description, balanceAfter, multiplier = 1 }) {
+        const typeLabels = {
+            DAILY_CHECKIN: "Điểm danh hằng ngày",
+            STREAK_BONUS: "Bonus streak điểm danh",
+            CREATE_SURVEY: "Tạo khảo sát mới",
+            FIRST_RESPONDER: "Người đầu tiên hoàn thành",
+            SECOND_RESPONDER: "Người thứ hai hoàn thành",
+            THIRD_RESPONDER: "Người thứ ba hoàn thành",
+            LATER_RESPONDER: "Hoàn thành khảo sát",
+            SURVEY_CREATOR_BONUS: "Có người tham gia khảo sát",
+            ACHIEVEMENT_REWARD: "Mở khóa huy hiệu",
+            RANK_UP_BONUS: "Thăng cấp rank",
+        };
+
+        const actionLabel = typeLabels[type] || "Nhận sao";
+        const multiplierText = multiplier > 1 ? ` (x${multiplier})` : "";
+
+        await this.createNotification({
+            userId,
+            type: "STAR_EARNED",
+            title: `⭐ +${amount} sao${multiplierText}!`,
+            message: `${actionLabel}: +${amount} sao. Số dư: ${balanceAfter} sao. ${description || ""}`,
+            data: {
+                amount,
+                type,
+                balance_after: balanceAfter,
+                multiplier,
+                description,
+            },
+        });
+    }
+
+    async notifyStreakMilestone({ userId, streakCount, multiplier, starsEarned, isNewRecord }) {
+        const tierMessages = {
+            7: "🔥 Bạn đã đạt streak 7 ngày! Nhận bonus x2!",
+            30: "💪 Wow! 30 ngày liên tiếp - Bạn là người kiên trì!",
+            100: "🌟 Siêu streak 100 ngày! Bạn là huyền thoại!",
+        };
+        const message = tierMessages[streakCount] || `🔥 Streak ${streakCount} ngày - Bonus x${multiplier}!`;
+
+        await this.createNotification({
+            userId,
+            type: "STREAK_MILESTONE",
+            title: streakCount >= 7 ? `🔥 Streak ${streakCount} ngày - Bonus x2!` : `🔥 Streak ${streakCount} ngày!`,
+            message: `${message} +${starsEarned} sao${streakCount >= 7 ? " (x2 multiplier)" : ""}${isNewRecord ? " 🏆 Kỷ lục mới!" : ""}`,
+            data: {
+                streak_count: streakCount,
+                multiplier,
+                stars_earned: starsEarned,
+                is_new_record: isNewRecord,
+            },
+        });
+    }
+
+    async notifyAchievementUnlocked({ userId, achievement }) {
+        await this.createNotification({
+            userId,
+            type: "ACHIEVEMENT_UNLOCKED",
+            title: `🏅 Mở khóa: ${achievement.name}!`,
+            message: `Bạn đã đạt được huy hiệu "${achievement.name}" - ${achievement.description}. Nhận +${achievement.star_reward} sao!`,
+            data: {
+                achievement_code: achievement.code,
+                achievement_name: achievement.name,
+                achievement_icon: achievement.icon,
+                achievement_tier: achievement.tier,
+                star_reward: achievement.star_reward,
+            },
+        });
+    }
+
+    async notifyRankUp({ userId, oldRank, newRank, starsNeeded, totalStars }) {
+        const rankEmojis = {
+            BRONZE: "🥉", SILVER: "🥈", GOLD: "🥇",
+            PLATINUM: "💎", DIAMOND: "💠",
+        };
+        const rankNames = {
+            BRONZE: "Đồng", SILVER: "Bạc", GOLD: "Vàng",
+            PLATINUM: "Bạch Kim", DIAMOND: "Kim Cương",
+        };
+
+        await this.createNotification({
+            userId,
+            type: "RANK_UP",
+            title: `${rankEmojis[newRank]} Thăng rank: ${rankNames[newRank]}!`,
+            message: `Chúc mừng bạn đã thăng lên ${rankNames[newRank]}! Tổng sao: ${totalStars.toLocaleString("vi-VN")}. Keep it up!`,
+            data: {
+                old_rank: oldRank,
+                new_rank: newRank,
+                rank_emoji: rankEmojis[newRank],
+                rank_name: rankNames[newRank],
+                stars_needed,
+                total_stars: totalStars,
+            },
+        });
+    }
+
+    async notifySurveyDeleted({ userId, surveyTitle }) {
+        await this.createNotification({
+            userId,
+            type: "SURVEY_DELETED_PENALTY",
+            title: "⚠️ Sao đã bị thu hồi",
+            message: `Khảo sát "${surveyTitle}" đã bị xóa. -30 sao đã được thu hồi.`,
+            data: {
+                survey_title: surveyTitle,
+                penalty_amount: 30,
+            },
+        });
+    }
+
+    async notifyLeaderboardUpdate({ userId, newRank, period, stars, percentile }) {
+        await this.createNotification({
+            userId,
+            type: "LEADERBOARD_UPDATE",
+            title: `🏆 Top ${newRank} - ${period === "WEEKLY" ? "Tuần này" : period === "MONTHLY" ? "Tháng này" : "All-time"}!`,
+            message: `Bạn đang đứng ở vị trí #${newRank} với ${stars?.toLocaleString("vi-VN")} sao. Top ${percentile}% người chơi!`,
+            data: {
+                rank: newRank,
+                period,
+                stars,
+                percentile,
+            },
+        });
+    }
+
+    async notifyTop5Prize({ userId, rank, prize, period }) {
+        await this.createNotification({
+            userId,
+            type: "TOP_PRIZE",
+            title: `🎉 Chúc mừng! Top ${rank}!`,
+            message: `Bạn đã đạt Top ${rank} ${period === "WEEKLY" ? "tuần này" : "tháng này"}! Phần thưởng: ${prize}`,
+            data: {
+                rank,
+                prize,
+                period,
+            },
+        });
+    }
 }
 
 export default new NotificationService();
