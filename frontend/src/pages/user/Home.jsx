@@ -5,13 +5,15 @@ import {
   Trophy, Inbox, ArrowRight, Globe, Flame, Target,
   Sparkles, TrendingUp, Rocket, LayoutGrid, Calendar,
   Lock, Share, Link as LinkIcon, X, ExternalLink, Copy, Loader2,
-  Users,
+  Users, Star,
 } from "lucide-react";
 import { useResponse } from "@/providers/ResponseProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS } from "@/utils/constants";
 import { SurveyCardHome, STATUS_MAP, C } from "@/components/survey/SurveyCardHome";
+import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
+import { useGamification } from "@/contexts/GamificationContext";
 
 /* ── Share Modal ──────────────────────────────────────────────────── */
 function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, error, onGenerate }) {
@@ -539,6 +541,249 @@ function BentoStatCard({ icon: Icon, label, value, sub, color, delay }) {
   );
 }
 
+function GamificationQuickStatsCard() {
+  const { balance, loading } = useGamification();
+
+  const stars = balance?.star_balance ?? 0;
+  const streak = balance?.streak_count ?? 0;
+  const rankIcon = balance?.rank_info?.icon || "🥉";
+  const rankName = balance?.rank_info?.name;
+  const rankLabel = rankName === "SILVER" ? "Bạc" : rankName === "GOLD" ? "Vàng" : rankName === "PLATINUM" ? "Bạch Kim" : rankName === "DIAMOND" ? "Kim Cương" : "Đồng";
+
+  return (
+    <BentoCard delay={0.2}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between", fontFamily: C.font }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Star size={18} color="#f59e0b" fill="#f59e0b" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: C.textSub }}>Ví Sao</div>
+            <div style={{ fontSize: 20, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {loading ? "—" : stars.toLocaleString("vi-VN")}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1, textAlign: "center", padding: "6px 8px", background: "rgba(245,158,11,0.08)", borderRadius: 10, border: "1px solid rgba(245,158,11,0.15)" }}>
+            <div style={{ fontSize: 14, fontWeight: 900 }}>{rankIcon}</div>
+            <div style={{ fontSize: 10, color: C.textSub, fontWeight: 600, marginTop: 2 }}>{rankLabel}</div>
+          </div>
+          <div style={{ flex: 1, textAlign: "center", padding: "6px 8px", background: "rgba(239,68,68,0.08)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.15)" }}>
+            <div style={{ fontSize: 14, fontWeight: 900 }}>🔥</div>
+            <div style={{ fontSize: 10, color: C.textSub, fontWeight: 600, marginTop: 2 }}>{streak} ngày</div>
+          </div>
+        </div>
+      </div>
+    </BentoCard>
+  );
+}
+
+// ── CHECKIN BANNER ─────────────────────────────────────────────────────
+// Full-width, prominent banner at top of Home page for quick daily check-in
+function CheckinBanner() {
+  const { balance, checkinStatus, loading, checkinLoading, doCheckin } = useGamification();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const streak = balance?.streak_count ?? 0;
+  const canCheckin = checkinStatus?.can_checkin ?? false;
+  const multiplier = checkinStatus?.current_multiplier ?? 1;
+  const nextBonusTier = checkinStatus?.next_bonus_tier;
+
+  const streakEmoji = streak >= 7 ? "🔥🔥" : streak >= 4 ? "🔥" : streak > 0 ? "✨" : "";
+  const starsToEarn = streak >= 7 ? 100 : streak >= 4 ? 75 : 50;
+
+  const handleCheckin = async () => {
+    try {
+      const res = await doCheckin();
+      setResult(res);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+    } catch (_) {}
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        borderRadius: 20, padding: "20px 24px", marginBottom: 20,
+        background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+        border: "1px solid rgba(245,158,11,0.25)",
+        height: 96, animation: "pulse 2s ease-in-out infinite",
+      }} />
+    );
+  }
+
+  if (showSuccess && result) {
+    return (
+      <div style={{
+        borderRadius: 20, padding: "20px 24px", marginBottom: 20,
+        background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
+        border: "1.5px solid #34d399",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 16,
+        animation: "slideInUp 0.4s cubic-bezier(.16,1,.3,1)",
+        boxShadow: "0 8px 32px rgba(16,185,129,0.2)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ fontSize: 40 }}>🎉</div>
+          <div>
+            <div style={{ fontFamily: C.font, fontWeight: 800, fontSize: 18, color: "#065f46" }}>
+              Điểm danh thành công!
+            </div>
+            <div style={{ fontFamily: C.font, fontSize: 14, color: "#059669", marginTop: 2 }}>
+              Streak {result.streak_count} ngày {streakEmoji}
+            </div>
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontFamily: C.font, fontWeight: 900, fontSize: 36, color: "#065f46", lineHeight: 1 }}>
+            +{result.stars_earned}
+          </div>
+          <div style={{ fontFamily: C.font, fontSize: 13, color: "#059669", fontWeight: 600 }}>sao ⭐</div>
+          {result.is_new_streak_record && (
+            <div style={{ fontFamily: C.font, fontSize: 12, fontWeight: 800, color: "#dc2626", marginTop: 4 }}>
+              🏆 Kỷ lục mới!
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!canCheckin) {
+    return (
+      <div style={{
+        borderRadius: 20, padding: "18px 24px", marginBottom: 20,
+        background: "linear-gradient(135deg, #d1fae5, #ecfdf5)",
+        border: "1.5px solid #6ee7b7",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 12,
+        fontFamily: C.font,
+        boxShadow: "0 4px 20px rgba(16,185,129,0.12)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontSize: 32 }}>✅</div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 17, color: "#065f46" }}>Đã điểm danh hôm nay!</div>
+            <div style={{ fontSize: 13, color: "#059669", marginTop: 2 }}>
+              Streak {streak} ngày {streakEmoji} · Hẹn gặp bạn ngày mai
+            </div>
+          </div>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          background: "rgba(16,185,129,0.12)",
+          border: "1px solid rgba(16,185,129,0.3)",
+          borderRadius: 12, padding: "10px 16px",
+        }}>
+          <span style={{ fontSize: 24, fontWeight: 900, color: "#065f46" }}>
+            {streak}
+          </span>
+          <span style={{ fontSize: 14, color: "#059669", fontWeight: 600 }}>ngày</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      borderRadius: 20, padding: "18px 24px", marginBottom: 20,
+      background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%)",
+      border: "1.5px solid rgba(245,158,11,0.4)",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      flexWrap: "wrap", gap: 14,
+      fontFamily: C.font,
+      boxShadow: "0 8px 32px rgba(245,158,11,0.18)",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Background decoration */}
+      <div style={{
+        position: "absolute", top: -20, right: -20,
+        width: 120, height: 120, borderRadius: "50%",
+        background: "rgba(255,255,255,0.25)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ fontSize: 36 }}>📅</div>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 17, color: "#92400e" }}>Điểm danh hôm nay</div>
+          <div style={{ fontSize: 13, color: "#b45309", marginTop: 2 }}>
+            {streak > 0
+              ? `Streak ${streak} ngày → nhận +${starsToEarn} sao`
+              : "Nhận ngay +50 sao khi điểm danh!"
+            }
+            {multiplier > 1 && (
+              <span style={{ marginLeft: 6, fontWeight: 800, color: "#dc2626" }}>
+                x{multiplier}
+              </span>
+            )}
+          </div>
+          {nextBonusTier && (
+            <div style={{ fontSize: 11, color: "#d97706", marginTop: 3, fontWeight: 600 }}>
+              Còn {nextBonusTier.days_needed} ngày nữa để đạt x{nextBonusTier.next_multiplier}!
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleCheckin}
+        disabled={checkinLoading}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "12px 24px", borderRadius: 14,
+          border: "none",
+          background: checkinLoading
+            ? "#9ca3af"
+            : "linear-gradient(135deg, #f59e0b, #ea580c)",
+          color: "#fff", fontFamily: C.font,
+          fontSize: 14, fontWeight: 800, fontWeight: 700,
+          cursor: checkinLoading ? "not-allowed" : "pointer",
+          opacity: checkinLoading ? 0.8 : 1,
+          boxShadow: checkinLoading ? "none" : "0 6px 20px rgba(245,158,11,0.45)",
+          transition: "all 0.2s",
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          if (!checkinLoading) {
+            e.currentTarget.style.transform = "translateY(-2px) scale(1.03)";
+            e.currentTarget.style.boxShadow = "0 10px 28px rgba(245,158,11,0.5)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0) scale(1)";
+          e.currentTarget.style.boxShadow = "0 6px 20px rgba(245,158,11,0.45)";
+        }}
+        onMouseDown={(e) => {
+          if (!checkinLoading) e.currentTarget.style.transform = "translateY(0) scale(0.97)";
+        }}
+        onMouseUp={(e) => {
+          if (!checkinLoading) e.currentTarget.style.transform = "translateY(-2px) scale(1.03)";
+        }}
+      >
+        {checkinLoading ? (
+          <>
+            <div style={{
+              width: 16, height: 16, borderRadius: "50%",
+              border: "2px solid rgba(255,255,255,0.4)",
+              borderTopColor: "#fff",
+              animation: "spin 0.7s linear infinite",
+            }} />
+            Đang xử lý...
+          </>
+        ) : (
+          <>✊ Nhận +{starsToEarn} sao</>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ── STAT CARD COMPONENTS ────────────────────────────────────────────────
 function ActivityBento({ activity, delay }) {
   return (
     <BentoCard delay={delay}>
@@ -784,6 +1029,9 @@ export default function DashboardPage() {
       <AnimatedSurveyBackdrop />
 
       <div style={{ maxWidth: 1260, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        {/* ── CHECKIN BANNER: always visible at top ──────────────────── */}
+        <CheckinBanner />
+
         <div
           style={{
             display: "flex",
@@ -813,9 +1061,21 @@ export default function DashboardPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 18 }}>
             <BentoStatCard icon={ClipboardList} label="Đã hoàn thành" value={loading ? "—" : String(doneCount)} sub={`trên ${publicSurveys.length} khảo sát`} color="#4f46e5" delay={0.1} />
             <BentoStatCard icon={Zap} label="Chưa làm" value={loading ? "—" : String(pendingCount)} sub="Đang chờ bạn" color="#f59e0b" delay={0.15} />
-            <BentoStatCard icon={Trophy} label="Điểm thưởng" value="12.450" sub="+250 hôm nay" color="#10b981" delay={0.2} />
+            <GamificationQuickStatsCard />
             <BentoStatCard icon={TrendingUp} label="Cấp độ" value="12" sub="Nâng cao" color="#a855f7" delay={0.25} />
           </div>
+        </div>
+
+        {/* ── GAMIFICATION SECTION ─────────────────────────────────── */}
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
+            <SectionHeading>🎮 Phần thưởng & Xếp hạng</SectionHeading>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={() => navigate("/user/wallet")} style={{ ...primaryBtn, padding: "8px 16px", fontSize: 12 }}>💰 Ví Sao</button>
+              <button type="button" onClick={() => navigate("/user/leaderboard")} style={{ ...primaryBtn, padding: "8px 16px", fontSize: 12 }}>🏆 Xếp hạng</button>
+            </div>
+          </div>
+          <GamificationDashboard compact={false} />
         </div>
 
         <div style={{ marginBottom: 36 }}>

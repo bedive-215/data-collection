@@ -13,9 +13,13 @@ import {
   Menu,
   UserRound,
   X,
+  Trophy,
+  Star,
+  Award,
 } from "lucide-react";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
 import { NotificationPanel } from "../../common/Notification";
+import { useGamification } from "@/contexts/GamificationContext";
 
 const font = "'DM Sans', 'Inter', system-ui, sans-serif";
 
@@ -116,6 +120,18 @@ function UserDropdown({ user, displayName, onLogout, onClose }) {
           <ClipboardList size={17} className="text-slate-400 shrink-0" strokeWidth={2} />
           Khảo sát của tôi
         </Link>
+        <Link to="/user/wallet" onClick={onClose} className={row}>
+          <Star size={17} className="text-amber-500 shrink-0" strokeWidth={2} />
+          💰 Ví Sao
+        </Link>
+        <Link to="/user/leaderboard" onClick={onClose} className={row}>
+          <Trophy size={17} className="text-indigo-500 shrink-0" strokeWidth={2} />
+          🏆 Xếp hạng
+        </Link>
+        <Link to="/user/achievements" onClick={onClose} className={row}>
+          <Award size={17} className="text-purple-500 shrink-0" strokeWidth={2} />
+          🏅 Huy hiệu
+        </Link>
       </div>
 
       <div className="h-px bg-slate-100 my-1.5 mx-2" />
@@ -139,6 +155,9 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
     { label: "Trang chủ", to: ROUTERS.USER.HOME, icon: Home },
     { label: "Khảo sát công khai", to: ROUTERS.USER.SURVEYS, icon: Compass },
     { label: "Khảo sát của tôi", to: ROUTERS.USER.MY_SURVEYS, icon: ClipboardList },
+    { label: "💰 Ví Sao", to: "/user/wallet", icon: Star },
+    { label: "🏆 Xếp hạng", to: "/user/leaderboard", icon: Trophy },
+    { label: "🏅 Huy hiệu", to: "/user/achievements", icon: Award },
   ];
 
   return (
@@ -328,6 +347,9 @@ export default function Navbar() {
               <NavLink to={ROUTERS.USER.MY_SURVEYS} matchPrefix>
                 Của tôi
               </NavLink>
+              <NavLink to="/user/wallet">💰 Ví Sao</NavLink>
+              <NavLink to="/user/leaderboard">🏆 Xếp hạng</NavLink>
+              <NavLink to="/user/achievements">🏅 Huy hiệu</NavLink>
             </div>
           </div>
 

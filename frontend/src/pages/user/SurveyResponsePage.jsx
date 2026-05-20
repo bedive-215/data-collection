@@ -281,7 +281,7 @@ function SurveyResponsePage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Trophy size={18} color="#d97706" />
-                <span style={{ fontSize: 13 }}>+250 XP</span>
+                <span style={{ fontSize: 13 }}>Cảm ơn bạn đã hoàn thành!</span>
               </div>
             </div>
           </div>

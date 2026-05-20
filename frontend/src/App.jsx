@@ -1,11 +1,11 @@
 import AppRouter from "@/routes/AppRouter";
-import { NotificationProvider } from "@/contexts/NotificationContext";
+import { GamificationProvider } from "@/contexts/GamificationContext";
 import "@/i18n";
 
 const App = () => (
-  <NotificationProvider>
+  <GamificationProvider>
     <AppRouter />
-  </NotificationProvider>
+  </GamificationProvider>
 );
 
 export default App;

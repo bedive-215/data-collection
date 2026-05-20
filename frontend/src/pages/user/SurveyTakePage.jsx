@@ -38,7 +38,7 @@ const inputStyle = {
 };
 
 /* ── SuccessScreen ────────────────────────────────────────────────── */
-function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl }) {
+function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl, rewardInfo }) {
   const [countdown, setCountdown] = useState(5);
   const navigate = useNavigate();
 
@@ -53,6 +53,16 @@ function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl }) {
   }, [redirectUrl]);
 
   const message = thankYouMessage || "Câu trả lời của bạn đã được ghi nhận. Cảm ơn bạn đã dành thời gian hoàn thành khảo sát này.";
+
+  const stars = rewardInfo?.stars ?? 0;
+  const rewardType = rewardInfo?.reward_type || "";
+  const typeLabel = rewardType === "FIRST_RESPONDER" ? "Người đầu tiên"
+    : rewardType === "SECOND_RESPONDER" ? "Người thứ 2"
+    : rewardType === "THIRD_RESPONDER" ? "Người thứ 3"
+    : rewardType === "STREAK_BONUS" ? "Streak Bonus"
+    : "Tham gia khảo sát";
+  const emoji = stars >= 100 ? "💠" : stars >= 50 ? "⭐" : "✨";
+
   return (
     <div style={{ minHeight: "100vh", background: "transparent", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans','Inter',sans-serif", padding: "2rem" }}>
       <AnimatedSurveyBackdrop />
@@ -62,7 +72,16 @@ function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl }) {
           <CheckCircle2 size={40} color="#16a34a" />
         </div>
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 10px" }}>Gửi thành công! 🎉</h2>
-        <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 2rem", lineHeight: 1.7 }}>{message}</p>
+        <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 1.5rem", lineHeight: 1.7 }}>{message}</p>
+        {stars > 0 && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "linear-gradient(135deg,#fef3c7,#fde68a)", border: "1px solid #f59e0b", borderRadius: 16, marginBottom: "1.5rem" }}>
+            <span style={{ fontSize: 24 }}>{emoji}</span>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#92400e" }}>+{stars} sao</div>
+              <div style={{ fontSize: 11, color: "#b45309" }}>{typeLabel}</div>
+            </div>
+          </div>
+        )}
         {redirectUrl && (
           <div style={{ marginBottom: "1.5rem", padding: "10px 16px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10 }}>
             <p style={{ fontSize: 12, color: "#2563eb", margin: "0 0 4px" }}>Đang chuyển hướng đến trang đích...</p>
@@ -362,6 +381,7 @@ export default function SurveyTakePage() {
   const [answers, setAnswers] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [rewardInfo, setRewardInfo] = useState(null);
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const [timeUp, setTimeUp] = useState(false);
@@ -559,7 +579,9 @@ export default function SurveyTakePage() {
       return;
     }
     try {
-      await submitSurvey(surveyId, { answers: payload });
+      const result = await submitSurvey(surveyId, { answers: payload });
+      const stars = result?.stars_earned ?? 0;
+      setRewardInfo({ stars, reward_type: result?.reward_type || "" });
       setSubmitted(true);
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Gửi khảo sát thất bại. Vui lòng thử lại.";
@@ -648,6 +670,7 @@ export default function SurveyTakePage() {
       thankYouMessage={currentSurvey?.thank_you_message}
       logoUrl={currentSurvey?.logo_url}
       redirectUrl={currentSurvey?.thank_you_redirect_url}
+      rewardInfo={rewardInfo}
     />;
   }
 

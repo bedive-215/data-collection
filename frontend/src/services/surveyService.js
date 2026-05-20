@@ -119,7 +119,7 @@ const surveyService = {
   // MEDIA UPLOAD
   // ─────────────────────────────
   uploadQuestionMedia: (formData) =>
-    apiClient.post("/media/question-media", formData, {
+    apiClient.post("/api/v1/media/question-media", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 

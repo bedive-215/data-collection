@@ -41,6 +41,9 @@ import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
 import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
 import NotificationsPage from "@/pages/user/NotificationsPage";
 import SurveyStudio from "@/pages/user/SurveyStudio";
+import LeaderboardPage from "@/pages/user/LeaderboardPage";
+import AchievementsPage from "@/pages/user/AchievementsPage";
+import StarWalletPage from "@/pages/user/StarWalletPage";
 
 // Errors
 import NotFound from "@/pages/error/NotFound";
@@ -127,6 +130,21 @@ const routeConfig = [
   {
     path: ROUTERS.USER.NOTIFICATIONS,
     element: NotificationsPage,
+    layout: HomeLayout,
+  },
+  {
+    path: "/user/leaderboard",
+    element: LeaderboardPage,
+    layout: HomeLayout,
+  },
+  {
+    path: "/user/achievements",
+    element: AchievementsPage,
+    layout: HomeLayout,
+  },
+  {
+    path: "/user/wallet",
+    element: StarWalletPage,
     layout: HomeLayout,
   },
 

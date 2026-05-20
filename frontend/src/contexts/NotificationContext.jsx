@@ -169,17 +169,50 @@ export const NotificationProvider = ({ children }) => {
             setIsConnected(false);
         });
 
+        // Helper: tạo toast element đơn giản (tránh JSX syntax error)
+        const makeToast = (content, type) => {
+            toast[type || 'info'](content, {
+                position: 'bottom-right',
+                autoClose: 5000,
+            });
+        };
+
         socketInstance.on('notification', (notification) => {
             console.log('[Socket] New notification:', notification);
-            console.log('[Socket] Current user:', user.user_id);
             addNotification(notification);
 
             const normalized = normalizeNotification(notification);
-            const toastMessage = normalized.message || normalized.title || 'Có thông báo mới';
-            toast.info(toastMessage, {
-                position: 'bottom-right',
-                autoClose: 4000,
-            });
+            const type = normalized.type?.toUpperCase() || '';
+            const data = normalized.data || {};
+
+            if (type === 'STAR_EARNED') {
+                const amount = data.amount || 0;
+                const multiplier = data.multiplier || 1;
+                const isBig = amount >= 100;
+                const emoji = isBig ? '💠' : amount >= 50 ? '⭐' : '✨';
+                const msg = `+${amount} sao${multiplier > 1 ? ` (x${multiplier})` : ''} — ${normalized.message || ''}`;
+                const balance = `💰 Số dư: ${(data.balance_after || 0).toLocaleString('vi-VN')} sao`;
+                makeToast(`${emoji} ${msg}\n${balance}`, isBig ? 'success' : 'info');
+            } else if (type === 'STREAK_MILESTONE') {
+                const streak = data.streak_count || 0;
+                const record = data.is_new_record ? ' 🏆 Kỷ lục mới!' : '';
+                makeToast(`🔥 Streak ${streak} ngày! ${data.multiplier ? `(x${data.multiplier})` : ''}${record}\n${normalized.message}`, 'success');
+            } else if (type === 'ACHIEVEMENT_UNLOCKED') {
+                const icon = data.achievement_icon || '🏅';
+                const name = data.achievement_name || 'Huy hiệu mới';
+                const reward = data.star_reward || 0;
+                makeToast(`${icon} Mở khóa: ${name}!\n+${reward} ⭐`, 'success');
+            } else if (type === 'RANK_UP') {
+                const emoji = data.rank_emoji || '🏅';
+                const name = data.rank_name || '';
+                makeToast(`${emoji} Thăng rank: ${name}!\n${normalized.message}`, 'success');
+            } else if (type === 'STAR_PENALTY') {
+                makeToast(`⚠️ ${normalized.title}\n${normalized.message}`, 'warn');
+            } else if (type === 'TOP_PRIZE') {
+                makeToast(`🎉 ${normalized.title}\n${normalized.message}`, 'success');
+            } else {
+                makeToast(normalized.message || normalized.title || 'Có thông báo mới', 'info');
+            }
 
             if (toastCallbackRef.current) {
                 toastCallbackRef.current(normalized);
