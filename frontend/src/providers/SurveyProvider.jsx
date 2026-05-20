@@ -9,6 +9,7 @@ import React, {
 import surveyService from "@/services/surveyService";
 import questionService from "@/services/questionService";
 import { toast } from "react-toastify";
+import { emitGamificationRefresh } from "@/contexts/GamificationContext";
 
 export const SurveyContext = createContext(null);
 
@@ -207,6 +208,18 @@ const SurveyProvider = ({ children }) => {
       }
       setMySurveys((p) => [survey, ...p.filter((s) => s.id !== survey.id)]);
       setSurveys((p) => [survey, ...p.filter((s) => s.id !== survey.id)]);
+
+      // Show star reward notification from gamification
+      const gamification = data?.gamification;
+      if (gamification?.amount_added > 0) {
+        toast.success(
+          `⭐ Tạo khảo sát thành công! Bạn nhận được +${gamification.amount_added} sao`,
+          { position: "bottom-right", autoClose: 5000, theme: "light" }
+        );
+      }
+
+      // Refresh gamification balance in header/dashboard
+      emitGamificationRefresh();
     } catch (err) {
       handleError(err, "Tạo khảo sát thất bại");
       onProgress?.("done");

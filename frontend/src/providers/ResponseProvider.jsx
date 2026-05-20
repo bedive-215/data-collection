@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import responseService from "@/services/responseService";
 import { toast } from "react-toastify";
+import { emitGamificationRefresh } from "@/contexts/GamificationContext";
 
 export const ResponseContext = createContext();
 
@@ -69,8 +70,29 @@ const ResponseProvider = ({ children }) => {
       }
 
       const res = await responseService.submitSurvey(surveyId, payload);
-      toast.success("Gửi khảo sát thành công!");
-      return unwrap(res);
+      const data = unwrap(res);
+
+      // Show gamification notification
+      const stars = data?.stars_earned ?? 0;
+      const rewardType = data?.reward_type || "";
+      if (stars > 0) {
+        const emoji = stars >= 100 ? "💠" : stars >= 50 ? "⭐" : "✨";
+        const typeLabel = rewardType === "FIRST_RESPONDER" ? "Người đầu tiên"
+          : rewardType === "SECOND_RESPONDER" ? "Người thứ 2"
+          : rewardType === "THIRD_RESPONDER" ? "Người thứ 3"
+          : "Tham gia khảo sát";
+        toast.success(
+          `${emoji} Hoàn thành khảo sát! Bạn nhận được +${stars} sao (${typeLabel})`,
+          { position: "bottom-right", autoClose: 5000, theme: "light" }
+        );
+      } else {
+        toast.success("Gửi khảo sát thành công!");
+      }
+
+      // Refresh gamification balance in header/dashboard
+      emitGamificationRefresh();
+
+      return data;
     } catch (err) {
       handleError(err, "Gửi khảo sát thất bại");
     } finally {
