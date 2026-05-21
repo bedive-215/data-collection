@@ -33,6 +33,8 @@ import DashboardSuser from "@/pages/user/Dashboard";
 import Profile from "@/pages/user/Profile";
 import SurveyTakePage from "@/pages/user/SurveyTakePage";
 import SurveysPage from "@/pages/user/SurveysPage";
+import GenderSetup from "@/pages/user/GenderSetup";
+import GenderGuard from "@/components/common/GenderGuard";
 
 // USER SURVEY
 import MySurveysPage from "@/pages/user/MySurveysPage";
@@ -78,35 +80,45 @@ const routeConfig = [
     layout: HomeLayout,
   },
   {
+    path: ROUTERS.USER.GENDER_SETUP,
+    element: GenderSetup,
+    layout: HomeLayout,
+  },
+  {
     path: ROUTERS.USER.DASHBOARD,
     element: DashboardSuser,
     layout: UserLayout,
+    guard: GenderGuard,
   },
   {
     path: ROUTERS.USER.PROFILE,
     element: Profile,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
-  {
-    path:
-      ROUTERS.USER.SURVEY_TAKE,
+{
+  path: ROUTERS.USER.SURVEY_TAKE,
     element: SurveyTakePage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path: ROUTERS.USER.SURVEY_RESPONSE,
     element: SurveyResponsePage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
- {
+{
   path: ROUTERS.USER.SURVEYS,
   element: SurveysLayout,
   layout: HomeLayout,
+  guard: GenderGuard,
 },
 {
   path: ROUTERS.USER.MY_SURVEYS,
   element: SurveysLayout,
   layout: HomeLayout,
+  guard: GenderGuard,
 },
 
   {
@@ -114,38 +126,45 @@ const routeConfig = [
       ROUTERS.USER.MY_SURVEY_DETAIL,
     element: MySurveyQuestionPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path:
       "/user/my-surveys/:surveyId/studio",
     element: SurveyStudio,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path:
       "/user/surveys/:surveyId/analytics",
     element: UserAnalyticsPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path: ROUTERS.USER.NOTIFICATIONS,
     element: NotificationsPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path: "/user/leaderboard",
     element: LeaderboardPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path: "/user/achievements",
     element: AchievementsPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
   {
     path: "/user/wallet",
     element: StarWalletPage,
     layout: HomeLayout,
+    guard: GenderGuard,
   },
 
   // ADMIN
@@ -197,12 +216,24 @@ const AppRouter = () => {
         const Page = route.element;
 
         const Wrapped = route.layout
-          ? () => (
-              <route.layout>
+        ? () => (
+            <route.layout>
+              {route.guard ? (
+                <route.guard>
+                  <Page />
+                </route.guard>
+              ) : (
                 <Page />
-              </route.layout>
-            )
-          : Page;
+              )}
+            </route.layout>
+          )
+        : route.guard
+        ? () => (
+            <route.guard>
+              <Page />
+            </route.guard>
+          )
+        : Page;
 
         return (
           <Route

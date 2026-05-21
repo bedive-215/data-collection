@@ -14,6 +14,7 @@ const schemaStep1 = yup.object({
   phone_number: yup.string().required("auth.required"),
   email: yup.string().required("auth.required").email("auth.invalidEmail"),
   password: yup.string().required("auth.required").min(6, "auth.minPassword"),
+  gender: yup.string().required("auth.required").oneOf(["MALE", "FEMALE", "OTHER"], "auth.required"),
 });
 
 export default function RegisterPage() {
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({ resolver: yupResolver(schemaStep1) });
 
@@ -47,6 +49,7 @@ export default function RegisterPage() {
         phone_number: data.phone_number,
         email: data.email,
         password: data.password,
+        gender: data.gender,
       });
 
       setEmail(data.email);
@@ -202,6 +205,51 @@ export default function RegisterPage() {
                     </div>
                     {errors.phone_number && (
                       <p className="text-red-400 text-xs mt-1">{t(errors.phone_number.message)}</p>
+                    )}
+                  </div>
+
+                  {/* Gender */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-300">Giới tính</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "MALE", label: "Nam", icon: (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        ) },
+                        { value: "FEMALE", label: "Nữ", icon: (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        ) },
+                        { value: "OTHER", label: "Khác", icon: (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4a2 2 0 100 4 2 2 0 000-4zM4.93 4.93l1.41 1.41M19.07 4.93l-1.41 1.41M12 12a4 4 0 100 8 4 4 0 000-8zM12 20v2M12 2v2" />
+                          </svg>
+                        ) },
+                      ].map((opt) => (
+                        <label
+                          key={opt.value}
+                          className={`flex-1 flex items-center justify-center gap-2 rounded-lg cursor-pointer transition-all py-2.5 border text-sm font-medium select-none
+                            ${watch("gender") === opt.value
+                              ? "bg-[#0f83f0]/20 border-[#0f83f0]/60 text-white shadow-[0_0_10px_-2px_rgba(15,131,240,0.4)]"
+                              : "bg-black/30 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-200"
+                            }`}
+                        >
+                          <input
+                            type="radio"
+                            value={opt.value}
+                            {...register("gender")}
+                            className="sr-only"
+                          />
+                          {opt.icon}
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                    {errors.gender && (
+                      <p className="text-red-400 text-xs mt-1">{t(errors.gender.message)}</p>
                     )}
                   </div>
 

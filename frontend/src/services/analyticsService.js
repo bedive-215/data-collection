@@ -97,6 +97,42 @@ const analyticsService = {
     const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
     return { url: `${API_BASE}${BASE_URL}/surveys/${surveyId}/export?${query}`, token };
   },
+
+  // Gender comparison for a question
+  getCompareByGender: (questionId, surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`${BASE_URL}/questions/${questionId}/surveys/${surveyId}/gender`, {
+      params: { ...params, _t: ts },
+      headers: getNoCacheHeaders(),
+    });
+  },
+
+  // Age comparison for a question
+  getCompareByAge: (questionId, surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`${BASE_URL}/questions/${questionId}/surveys/${surveyId}/age`, {
+      params: { ...params, _t: ts },
+      headers: getNoCacheHeaders(),
+    });
+  },
+
+  // Insight: combined age + gender for a question
+  getInsightAgeGender: (questionId, surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`${BASE_URL}/questions/${questionId}/surveys/${surveyId}/insight`, {
+      params: { ...params, _t: ts },
+      headers: getNoCacheHeaders(),
+    });
+  },
+
+  // AI Insights for a survey
+  getAiInsights: (surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`${BASE_URL}/surveys/${surveyId}/ai-insights`, {
+      params: { ...params, _t: ts },
+      headers: getNoCacheHeaders(),
+    });
+  },
 };
 
 export default analyticsService;

@@ -12,7 +12,11 @@ export const registerSchema = Joi.object({
       .pattern(/^[0-9]{10}$/)
       .required(),
 
-    date_of_birth: Joi.date().iso().required()
+    date_of_birth: Joi.date().iso().required(),
+
+    gender: Joi.string()
+      .valid("MALE", "FEMALE", "OTHER")
+      .required(),
   })
     .required()
     .options({ allowUnknown: false })

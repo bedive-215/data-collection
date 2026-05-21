@@ -484,7 +484,7 @@ export function SurveyCardHome({
               </div>
             </div>
 
-            {/* Right: avatars — <div class="flex -space-x-3"> */}
+            {/* Right: avatars */}
             <ParticipantsAvatars participants={survey?.participants} />
           </div>
         </section>

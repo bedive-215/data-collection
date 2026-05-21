@@ -21,6 +21,7 @@ import {
   Zap, Sparkles, BarChart3, Activity, Award, Eye, X,
   Search, ThumbsUp, Minus,
   TrendingDown, Calendar, ChevronRight, Copy, FileSpreadsheet,
+  Brain,
 } from "lucide-react";
 import analyticsService from "@/services/analyticsService";
 import { toast } from "react-toastify";
@@ -39,6 +40,7 @@ const TABS = [
   { id: "questions",  label: "Chi tiết câu hỏi",   icon: Target },
   { id: "responses",  label: "Danh sách phản hồi", icon: Users },
   { id: "crosstab",   label: "Cross Tab",           icon: Table },
+  { id: "ai",         label: "AI Insights",          icon: Brain },
   { id: "export",     label: "Xuất dữ liệu",        icon: FileSpreadsheet },
 ];
 
@@ -705,6 +707,11 @@ export default function AnalyticsPage() {
   const [selectedQ2, setSelectedQ2] = useState(null);
   const [chiResult, setChiResult]   = useState(null);
 
+  // AI Insights
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiLoad, setAiLoad]        = useState(false);
+  const [aiErr, setAiErr]          = useState(null);
+
   // Real-time
   const [liveResponseCount, setLiveResponseCount] = useState(null);
   const socketRef = useRef(null);
@@ -883,6 +890,21 @@ export default function AnalyticsPage() {
     }
   }, [surveyId, selectedQ1, selectedQ2, buildParams]);
 
+  // ─── AI INSIGHTS ─────────────────────────────────────────────────────────────
+  const fetchAiInsights = useCallback(async () => {
+    setAiLoad(true); setAiErr(null);
+    try {
+      const response = await analyticsService.getAiInsights(surveyId, buildParams());
+      const payload = response.data?.data?.ai_insights ?? response.data?.data ?? null;
+      setAiInsights(payload);
+    } catch (e) {
+      console.error("AI Insights error:", e);
+      setAiErr(e?.response?.data?.message || e?.message || "Lỗi tải AI Insights");
+    } finally {
+      setAiLoad(false);
+    }
+  }, [surveyId, buildParams]);
+
   // ─── EFFECTS ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchDashboard();
@@ -901,6 +923,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (selectedQ1 && selectedQ2) fetchCrossTab();
   }, [fetchCrossTab]);
+
+  useEffect(() => {
+    if (activeTab === "ai") fetchAiInsights();
+  }, [activeTab, fetchAiInsights]);
 
   // ─── SOCKET ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -949,6 +975,7 @@ export default function AnalyticsPage() {
     fetchSurvey();
     fetchHeatmap();
     if (activeTab === "responses") fetchResponses(rPage);
+    if (activeTab === "ai") fetchAiInsights();
   };
 
   // ─── EXPORT ───────────────────────────────────────────────────────────────────
@@ -1402,6 +1429,100 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════ AI INSIGHTS ══ */}
+        {activeTab === "ai" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ ...chartCard }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.1))", border: "1px solid rgba(99,102,241,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Brain size={17} color="#6366f1" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>AI Insights</h3>
+                  <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>Phân tích thông minh được tạo bởi AI</p>
+                </div>
+                <button
+                  onClick={fetchAiInsights}
+                  disabled={aiLoad}
+                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.1)", color: "#818cf8", fontSize: 12, fontWeight: 700, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
+                >
+                  <RefreshCw size={13} style={aiLoad ? { animation: "spin 1s linear infinite" } : {}} />
+                  Tải lại
+                </button>
+              </div>
+
+              {aiLoad ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: 20, minHeight: 120 }}>
+                      <Shimmer height={16} />
+                      <div style={{ marginTop: 10 }}><Shimmer height={12} /></div>
+                      <div style={{ marginTop: 6 }}><Shimmer height={12} /></div>
+                    </div>
+                  ))}
+                </div>
+              ) : aiErr ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <p style={{ color: "#ef4444", marginBottom: 12 }}>{aiErr}</p>
+                  <button onClick={fetchAiInsights} style={{ padding: "8px 20px", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 10, color: "#818cf8", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                    Thử lại
+                  </button>
+                </div>
+              ) : aiInsights ? (
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(99,102,241,0.15)",
+                    borderRadius: 16,
+                    padding: "24px",
+                    fontSize: 13,
+                    color: "#cbd5e1",
+                    lineHeight: 1.8,
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "'DM Sans', sans-serif",
+                    maxHeight: 600,
+                    overflowY: "auto",
+                  }}
+                >
+                  {aiInsights.split("\n").map((line, i) => {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", margin: "20px 0 8px", borderBottom: "1px solid rgba(99,102,241,0.2)", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
+                    if (trimmed.startsWith("## ")) return <h3 key={i} style={{ fontSize: 17, fontWeight: 700, color: "#f1f5f9", margin: "24px 0 10px" }}>{trimmed.slice(3)}</h3>;
+                    if (trimmed.startsWith("* **")) {
+                      const match = trimmed.match(/^\* \*\*(.+?)\*\*[:—]?\s*(.*)$/);
+                      if (match) return (
+                        <div key={i} style={{ margin: "10px 0 8px", paddingLeft: 8 }}>
+                          <strong style={{ color: "#818cf8" }}>{match[1]}</strong>
+                          {match[2] && <span style={{ color: "#94a3b8" }}>{match[2]}</span>}
+                        </div>
+                      );
+                    }
+                    if (trimmed.startsWith("*   ")) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, color: "#94a3b8" }}>{trimmed.slice(4).replace(/\*\*(.+?)\*\*/g, "$1")}</li>;
+                    if (trimmed.startsWith("- **")) {
+                      const m = trimmed.match(/^- \*\*(.+?)\*\*[:—]?\s*(.*)$/);
+                      if (m) return (
+                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid rgba(99,102,241,0.2)" }}>
+                          <strong style={{ color: "#e2e8f0" }}>{m[1]}</strong>
+                          {m[2] && <span style={{ color: "#64748b" }}> — {m[2]}</span>}
+                        </div>
+                      );
+                    }
+                    if (trimmed === "---") return <hr key={i} style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "16px 0" }} />;
+                    if (!trimmed) return <div key={i} style={{ height: 6 }} />;
+                    return <p key={i} style={{ margin: "4px 0", color: "#94a3b8" }}>{trimmed.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")}</p>;
+                  })}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Brain}
+                  title="Nhấn 'Tải lại' để bắt đầu"
+                  desc="AI sẽ phân tích dữ liệu khảo sát và đưa ra các insights."
+                />
+              )}
+            </div>
           </div>
         )}
 

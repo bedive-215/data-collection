@@ -18,6 +18,7 @@ class UserController {
                 full_name: req.body.full_name,
                 phone_number: req.body.phone_number,
                 date_of_birth: req.body.date_of_birth,
+                gender: req.body.gender,
             };
     
             const result = await UserService.updateUserProfile(req.user.id, data);

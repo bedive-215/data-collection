@@ -140,6 +140,7 @@ const SurveyProvider = ({ children }) => {
   const [publicSurveys, setPublicSurveys] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [currentSurvey, setCurrentSurvey] = useState(null);
+  const [invitedSurveys, setInvitedSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -378,6 +379,33 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchInvitedSurveys = useCallback(async (page = 1, limit = 20) => {
+    try {
+      const res = await surveyService.getInvitedSurveys({ page, limit });
+      const data = res?.data ?? res;
+      const now = new Date();
+      const list = (data?.data?.data || []).map((s) => {
+        let computedStatus = null;
+        if (s.end_at && new Date(s.end_at) < now) computedStatus = "EXPIRED";
+        return {
+          id: s.id,
+          title: s.title || "",
+          description: s.description || "",
+          start_at: s.start_at || null,
+          end_at: s.end_at || null,
+          created_at: s.created_at || null,
+          status: computedStatus || s.status || null,
+          access_type: "PRIVATE",
+          created_by: s.created_by || null,
+        };
+      });
+      setInvitedSurveys(list);
+      return list;
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   const fetchSurveyById = useCallback(async (id, token = null) => {
     try {
       startLoading();
@@ -542,6 +570,7 @@ const SurveyProvider = ({ children }) => {
       surveys,
       mySurveys,
       publicSurveys,
+      invitedSurveys,
       currentSurvey,
       loading,
       error,
@@ -549,6 +578,7 @@ const SurveyProvider = ({ children }) => {
       createSurveyFlow,
       fetchMySurveys,
       fetchPublicSurveys,
+      fetchInvitedSurveys,
       fetchSurveyById,
       updateSurvey,
       deleteSurvey,
@@ -566,6 +596,7 @@ const SurveyProvider = ({ children }) => {
       surveys,
       mySurveys,
       publicSurveys,
+      invitedSurveys,
       currentSurvey,
       loading,
       error,
@@ -573,6 +604,7 @@ const SurveyProvider = ({ children }) => {
       createSurveyFlow,
       fetchMySurveys,
       fetchPublicSurveys,
+      fetchInvitedSurveys,
       fetchSurveyById,
       updateSurvey,
       deleteSurvey,

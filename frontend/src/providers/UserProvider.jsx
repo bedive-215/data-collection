@@ -57,6 +57,7 @@ const UserProvider = ({ children }) => {
         email: serverUser.email ?? "",
         phone_number: serverUser.phone_number ?? serverUser.phone ?? "",
         date_of_birth: serverUser.date_of_birth ?? "",
+        gender: serverUser.gender ?? null,
 
         avatar:
           serverUser.avatar
@@ -98,16 +99,10 @@ const UserProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await userService.updateUserInfo(payload);
-      const updatedUser = response.data.data ?? response.data?.user ?? response.data;
-      // Nếu server trả về object user, normalize cơ bản (giữ nguyên key UI)
-      const normalized = {
-        ...user,
-        ...updatedUser,
-      };
-      setUser(normalized);
+      await userService.updateUserInfo(payload);
+      const updated = await fetchMyInfo();
       toast.success("Cập nhật thông tin thành công!");
-      return normalized;
+      return updated;
     } catch (err) {
       const msg = err.response?.data?.message || "Cập nhật thất bại";
       setError(msg);

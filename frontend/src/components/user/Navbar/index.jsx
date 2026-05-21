@@ -153,8 +153,8 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
 
   const links = [
     { label: "Trang chủ", to: ROUTERS.USER.HOME, icon: Home },
-    { label: "Khảo sát công khai", to: ROUTERS.USER.SURVEYS, icon: Compass },
-    { label: "Khảo sát của tôi", to: ROUTERS.USER.MY_SURVEYS, icon: ClipboardList },
+    { label: "Khám phá", to: ROUTERS.USER.SURVEYS, icon: Compass },
+    { label: "MySurvey", to: ROUTERS.USER.MY_SURVEYS, icon: ClipboardList },
     { label: "💰 Ví Sao", to: "/user/wallet", icon: Star },
     { label: "🏆 Xếp hạng", to: "/user/leaderboard", icon: Trophy },
     { label: "🏅 Huy hiệu", to: "/user/achievements", icon: Award },
@@ -345,7 +345,7 @@ export default function Navbar() {
               <NavLink to={ROUTERS.USER.HOME}>Trang chủ</NavLink>
               <NavLink to={ROUTERS.USER.SURVEYS}>Khám phá</NavLink>
               <NavLink to={ROUTERS.USER.MY_SURVEYS} matchPrefix>
-                Của tôi
+                MySurvey
               </NavLink>
               <NavLink to="/user/wallet">💰 Ví Sao</NavLink>
               <NavLink to="/user/leaderboard">🏆 Xếp hạng</NavLink>

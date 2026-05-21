@@ -85,6 +85,12 @@ const surveyService = {
     apiClient.post(`${BASE_URL}/${surveyId}/invite/bulk`, payload),
 
   // ─────────────────────────────
+  // INVITED SURVEYS
+  // ─────────────────────────────
+  getInvitedSurveys: (params = {}) =>
+    apiClient.get(`${BASE_URL}/invited`, { params }),
+
+  // ─────────────────────────────
   // PARTICIPANTS
   // ─────────────────────────────
   getParticipants: (surveyId, params = {}) =>

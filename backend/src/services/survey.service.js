@@ -771,7 +771,7 @@ const participant = await this.SurveyParticipant.create({
                 model: this.Survey,
                 as: "survey",
                 where: { access_type: "PRIVATE" },
-                attributes: ["id", "title", "description", "created_at", "created_by", "start_at", "end_at"]
+                attributes: ["id", "title", "description", "created_at", "created_by", "start_at", "end_at", "status"]
             }
         ],
         limit,
@@ -785,10 +785,11 @@ const participant = await this.SurveyParticipant.create({
             id: s.id,
             title: s.title,
             description: s.description,
-            createdAt: s.created_at,
-            createdBy: s.created_by,
-            startAt: s.start_at,
-            endAt: s.end_at,
+            created_at: s.created_at,
+            created_by: s.created_by,
+            start_at: s.start_at,
+            end_at: s.end_at,
+            status: s.status || null,
             invitedAt: row.created_at
         };
     });

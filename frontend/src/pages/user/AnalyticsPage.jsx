@@ -16,6 +16,7 @@ import {
   Zap, Sparkles, BarChart3, Activity, Award, Eye, AlertTriangle, X,
   Search, SlidersHorizontal, ThumbsUp, ThumbsDown, Minus,
   TrendingDown, Calendar, ChevronRight, Copy, FileSpreadsheet, EyeOff,
+  Venus, Brain,
 } from "lucide-react";
 import analyticsService from "@/services/analyticsService";
 import { toast } from "react-toastify";
@@ -34,8 +35,10 @@ const TABS = [
   { id: "overview",    label: "Tổng quan",          icon: BarChart3 },
   { id: "questions",   label: "Chi tiết câu hỏi",   icon: Target },
   { id: "responses",   label: "Danh sách phản hồi", icon: Users },
-  { id: "crosstab",  label: "Cross Tab",           icon: Table },
-  { id: "export",   label: "Xuất dữ liệu",        icon: FileSpreadsheet },
+  { id: "gender",     label: "Giới tính",           icon: Venus },
+  { id: "crosstab",    label: "Cross Tab",            icon: Table },
+  { id: "ai",          label: "AI Insights",          icon: Brain },
+  { id: "export",      label: "Xuất dữ liệu",        icon: FileSpreadsheet },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -671,6 +674,15 @@ export default function UserAnalyticsPage() {
   const [selectedQ2, setSelectedQ2] = useState(null);
   const [chiResult, setChiResult] = useState(null);
 
+  // Gender / Age analytics
+  const [genderTabQuestion, setGenderTabQuestion] = useState(null);
+  const [genderData, setGenderData] = useState(null); const [gLoad, setGLoad] = useState(false); const [gErr, setGErr] = useState(null);
+  const [ageData, setAgeData] = useState(null); const [aLoad, setALoad] = useState(false); const [aErr, setAErr] = useState(null);
+  const [insightData, setInsightData] = useState(null); const [iLoad, setILoad] = useState(false); const [iErr, setIErr] = useState(null);
+
+  // AI Insights
+  const [aiInsights, setAiInsights] = useState(null); const [aiLoad, setAiLoad] = useState(false); const [aiErr, setAiErr] = useState(null);
+
   const applyPreset = useCallback((preset) => {
     setDatePreset(preset);
     if (preset === "custom") return;
@@ -728,6 +740,58 @@ export default function UserAnalyticsPage() {
   useEffect(() => { fetchHeatmap(); }, [fetchHeatmap]);
   useEffect(() => { if (activeTab === "responses") fetchResponses(rPage); }, [activeTab, rPage, fetchResponses]);
 
+  const fetchGenderData = useCallback(async () => {
+    if (!genderTabQuestion || !surveyId) return;
+    setGLoad(true); setGErr(null);
+    try {
+      const r = await analyticsService.getCompareByGender(genderTabQuestion, surveyId, getParams());
+      setGenderData(r.data?.data);
+    } catch (e) { setGErr(e?.message); }
+    finally { setGLoad(false); }
+  }, [genderTabQuestion, surveyId, dateFrom, dateTo]);
+
+  const fetchAgeData = useCallback(async () => {
+    if (!genderTabQuestion || !surveyId) return;
+    setALoad(true); setAErr(null);
+    try {
+      const r = await analyticsService.getCompareByAge(genderTabQuestion, surveyId, getParams());
+      setAgeData(r.data?.data);
+    } catch (e) { setAErr(e?.message); }
+    finally { setALoad(false); }
+  }, [genderTabQuestion, surveyId, dateFrom, dateTo]);
+
+  const fetchInsightData = useCallback(async () => {
+    if (!genderTabQuestion || !surveyId) return;
+    setILoad(true); setIErr(null);
+    try {
+      const r = await analyticsService.getInsightAgeGender(genderTabQuestion, surveyId, getParams());
+      setInsightData(r.data?.data);
+    } catch (e) { setIErr(e?.message); }
+    finally { setILoad(false); }
+  }, [genderTabQuestion, surveyId, dateFrom, dateTo]);
+
+  const fetchAiInsights = useCallback(async () => {
+    if (!surveyId) return;
+    setAiLoad(true); setAiErr(null);
+    try {
+      const r = await analyticsService.getAiInsights(surveyId, getParams());
+      setAiInsights(r.data?.data?.ai_insights || null);
+    } catch (e) { setAiErr(e?.message); }
+    finally { setAiLoad(false); }
+  }, [surveyId, dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (activeTab === "gender" && genderTabQuestion) {
+      fetchGenderData();
+      fetchAgeData();
+      fetchInsightData();
+    }
+  }, [activeTab, genderTabQuestion, fetchGenderData, fetchAgeData, fetchInsightData]);
+
+  useEffect(() => {
+    if (activeTab === "ai") fetchAiInsights();
+  }, [activeTab, fetchAiInsights]);
+
   const fetchCrossTab = useCallback(async () => {
     if (!surveyId || !selectedQ1 || !selectedQ2) return;
     setCtLoad(true);
@@ -765,6 +829,7 @@ export default function UserAnalyticsPage() {
   const handleRefreshAll = () => {
     fetchStats(); fetchTrend(); fetchComp(); fetchSurvey(); fetchHeatmap();
     if (activeTab === "responses") fetchResponses(rPage);
+    if (activeTab === "ai") fetchAiInsights();
   };
 
   const questions = survey?.questions || [];
@@ -1092,6 +1157,255 @@ export default function UserAnalyticsPage() {
         )}
 
         {/* ══════════════════════════════════════════════ */}
+        {/* GENDER ANALYTICS */}
+        {/* ══════════════════════════════════════════════ */}
+        {activeTab === "gender" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Question selector */}
+            <div style={{ ...chartCard }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                <Venus size={17} color="#ec4899" />
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>Phân tích theo Giới tính & Độ tuổi</h3>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 8 }}>
+                  Chọn câu hỏi lựa chọn để phân tích:
+                </label>
+                <select
+                  value={genderTabQuestion || ""}
+                  onChange={e => setGenderTabQuestion(e.target.value || null)}
+                  style={{
+                    width: "100%", padding: "11px 14px",
+                    background: "rgba(0,0,0,0.04)",
+                    border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12,
+                    fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none",
+                    color: "#334155", cursor: "pointer",
+                  }}
+                >
+                  <option value="">— Chọn câu hỏi —</option>
+                  {choiceQs.map(q => (
+                    <option key={q.question_id} value={q.question_id}>
+                      {q.question_content?.slice(0, 80)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {!genderTabQuestion && (
+                <div style={{ marginTop: 20, padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                  Vui lòng chọn câu hỏi lựa chọn để xem phân tích theo giới tính và độ tuổi.
+                </div>
+              )}
+            </div>
+
+            {genderTabQuestion && (
+              <>
+                {/* Gender comparison */}
+                <RetrySection error={gErr} onRetry={fetchGenderData} isLoading={gLoad}>
+                  <div style={{ ...chartCard }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #fce7f3, #fdf2f8)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Venus size={17} color="#ec4899" />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>So sánh theo Giới tính</h3>
+                        <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>Phân bố câu trả lời theo Nam / Nữ / Khác</p>
+                      </div>
+                    </div>
+
+                    {gLoad ? <Shimmer height={260} /> : genderData && Object.keys(genderData).length > 0 ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                        {Object.entries(genderData).map(([gender, genderInfo], gi) => {
+                          const genderColors = { MALE: "#3b82f6", FEMALE: "#ec4899", OTHER: "#a855f7", UNKNOWN: "#94a3b8" };
+                          const genderLabels = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác", UNKNOWN: "Chưa cập nhật" };
+                          const color = genderColors[gender] || "#6366f1";
+                          const label = genderLabels[gender] || gender;
+                          const data = Object.entries(genderInfo.data || {}).map(([opt, pct]) => ({ name: opt, value: pct }));
+
+                          return (
+                            <div key={gender}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                                <div style={{ width: 10, height: 10, borderRadius: "50%", background: color }} />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>{label}</span>
+                                <span style={{ fontSize: 12, color: "#94a3b8" }}>({genderInfo.total} phản hồi)</span>
+                              </div>
+                              <div style={{ height: 160 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={data} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
+                                    <YAxis stroke="#94a3b8" fontSize={11} unit="%" />
+                                    <Tooltip content={<ChartTooltip />} />
+                                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                                      <Cell fill={color} style={{ filter: `drop-shadow(0 2px 6px ${color}40)` }} />
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                              {/* Legend table */}
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                                {Object.entries(genderInfo.data || {}).map(([opt, pct]) => (
+                                  <div key={opt} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                                    <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>{opt}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color }}>{pct}%</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <EmptyState icon={Venus} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào cho câu hỏi này" />
+                    )}
+                  </div>
+                </RetrySection>
+
+                {/* Age comparison */}
+                <RetrySection error={aErr} onRetry={fetchAgeData} isLoading={aLoad}>
+                  <div style={{ ...chartCard }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #fef3c7, #fffbeb)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Clock size={17} color="#f59e0b" />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>So sánh theo Độ tuổi</h3>
+                        <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>Phân bố câu trả lời theo nhóm tuổi</p>
+                      </div>
+                    </div>
+
+                    {aLoad ? <Shimmer height={260} /> : ageData && Object.keys(ageData).length > 0 ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                        {Object.entries(ageData).map(([ageGroup, ageInfo], gi) => {
+                          const groupColors = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#a855f7"];
+                          const color = groupColors[gi % groupColors.length];
+                          const data = Object.entries(ageInfo.data || {}).map(([opt, cnt]) => ({ name: opt, value: cnt }));
+
+                          return (
+                            <div key={ageGroup}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                                <div style={{ width: 10, height: 10, borderRadius: "50%", background: color }} />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>{ageGroup}</span>
+                                <span style={{ fontSize: 12, color: "#94a3b8" }}>({ageInfo.total} phản hồi)</span>
+                              </div>
+                              <div style={{ height: 140 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={data} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} />
+                                    <YAxis stroke="#94a3b8" fontSize={10} unit="%" />
+                                    <Tooltip content={<ChartTooltip />} />
+                                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={36}>
+                                      <Cell fill={color} style={{ filter: `drop-shadow(0 2px 6px ${color}40)` }} />
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <EmptyState icon={Clock} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào" />
+                    )}
+                  </div>
+                </RetrySection>
+
+                {/* Combined Age + Gender heatmap */}
+                <RetrySection error={iErr} onRetry={fetchInsightData} isLoading={iLoad}>
+                  <div style={{ ...chartCard }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #e0e7ff, #ede9fe)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Activity size={17} color="#6366f1" />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>Heatmap: Tuổi × Giới tính</h3>
+                        <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>Tương quan chi tiết giữa nhóm tuổi và giới tính</p>
+                      </div>
+                    </div>
+
+                    {iLoad ? <Shimmer height={300} /> : insightData?.insight && Object.keys(insightData.insight).length > 0 ? (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+                          <thead>
+                            <tr style={{ background: "rgba(0,0,0,0.02)" }}>
+                              <th style={{ padding: "11px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", borderBottom: "2px solid rgba(0,0,0,0.08)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                                Nhóm tuổi
+                              </th>
+                              {["Nam", "Nữ", "Khác", "Chưa cập nhật"].map(g => (
+                                <th key={g} style={{ padding: "11px 14px", textAlign: "center", fontSize: 11, fontWeight: 700, color: "#64748b", borderBottom: "2px solid rgba(0,0,0,0.08)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                                  {g}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(insightData.insight).map(([ageGroup, genders]) => (
+                              <tr key={ageGroup}
+                                onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.03)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                              >
+                                <td style={{ padding: "11px 14px", fontSize: 13, fontWeight: 700, color: "#334155", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>{ageGroup}</td>
+                                {[
+                                  { key: "MALE", label: "Nam" },
+                                  { key: "FEMALE", label: "Nữ" },
+                                  { key: "OTHER", label: "Khác" },
+                                  { key: "UNKNOWN", label: "Chưa cập nhật" },
+                                ].map(({ key, label }) => {
+                                  const cell = genders[key];
+                                  const maxPct = Math.max(...Object.values(insightData.insight).flatMap(g =>
+                                    Object.values(g).map(c => c?.total || 0)
+                                  ), 1);
+                                  const intensity = cell?.total ? Math.min(cell.total / maxPct, 1) : 0;
+                                  const color = key === "MALE" ? "#3b82f6" : key === "FEMALE" ? "#ec4899" : key === "OTHER" ? "#a855f7" : "#94a3b8";
+
+                                  return (
+                                    <td key={key} style={{ padding: "11px 14px", textAlign: "center", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                                      {cell?.total ? (
+                                        <div>
+                                          <span style={{
+                                            display: "inline-block",
+                                            padding: "5px 12px",
+                                            borderRadius: 10,
+                                            fontSize: 13,
+                                            fontWeight: 800,
+                                            background: `rgba(${key === "MALE" ? "59,130,246" : key === "FEMALE" ? "236,72,153" : key === "OTHER" ? "168,85,247" : "148,163,184"},${0.08 + intensity * 0.2})`,
+                                            color: color,
+                                            boxShadow: intensity > 0.5 ? `0 2px 8px ${color}30` : "none",
+                                          }}>
+                                            {cell.total}%
+                                          </span>
+                                          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                                            ({cell.total} lượt)
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 12, textAlign: "right" }}>
+                          * % = tỷ lệ phản hồi trong nhóm tuổi × giới tính tương ứng
+                        </p>
+                      </div>
+                    ) : (
+                      <EmptyState icon={Activity} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào" />
+                    )}
+                  </div>
+                </RetrySection>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════ */}
         {/* CROSSTAB */}
         {/* ══════════════════════════════════════════════ */}
         {activeTab === "crosstab" && (
@@ -1219,6 +1533,102 @@ export default function UserAnalyticsPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════ */}
+        {/* AI INSIGHTS */}
+        {/* ══════════════════════════════════════════════ */}
+        {activeTab === "ai" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ ...chartCard }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #e0e7ff, #ede9fe)", border: "1px solid rgba(99,102,241,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Brain size={17} color="#6366f1" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>AI Insights</h3>
+                  <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>Phân tích thông minh được tạo bởi AI</p>
+                </div>
+                <button
+                  onClick={fetchAiInsights}
+                  disabled={aiLoad}
+                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.08)", color: "#6366f1", fontSize: 12, fontWeight: 700, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
+                >
+                  <RefreshCw size={13} style={aiLoad ? { animation: "spin 1s linear infinite" } : {}} />
+                  Tải lại
+                </button>
+              </div>
+
+              {aiLoad ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 16, padding: 20, minHeight: 120 }}>
+                      <Shimmer height={16} />
+                      <div style={{ marginTop: 10 }}><Shimmer height={12} /></div>
+                      <div style={{ marginTop: 6 }}><Shimmer height={12} /></div>
+                    </div>
+                  ))}
+                </div>
+              ) : aiErr ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <p style={{ color: "#ef4444", marginBottom: 12 }}>{aiErr}</p>
+                  <button onClick={fetchAiInsights} style={{ padding: "8px 20px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 10, color: "#6366f1", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                    Thử lại
+                  </button>
+                </div>
+              ) : aiInsights ? (
+                <div
+                  style={{
+                    background: "#fafafa",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    borderRadius: 16,
+                    padding: "24px",
+                    fontSize: 13,
+                    color: "#1e293b",
+                    lineHeight: 1.8,
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "'DM Sans', sans-serif",
+                    maxHeight: 600,
+                    overflowY: "auto",
+                  }}
+                >
+                  {aiInsights.split("\n").map((line, i) => {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: "20px 0 8px", borderBottom: "1px solid rgba(99,102,241,0.2)", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
+                    if (trimmed.startsWith("## ")) return <h3 key={i} style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "24px 0 10px" }}>{trimmed.slice(3)}</h3>;
+                    if (trimmed.startsWith("* **")) {
+                      const match = trimmed.match(/^\* \*\*(.+?)\*\*[:—]?\s*(.*)$/);
+                      if (match) return (
+                        <div key={i} style={{ margin: "10px 0 8px", paddingLeft: 8 }}>
+                          <strong style={{ color: "#6366f1" }}>{match[1]}</strong>
+                          {match[2] && <span style={{ color: "#334155" }}>{match[2]}</span>}
+                        </div>
+                      );
+                    }
+                    if (trimmed.startsWith("*   ")) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, color: "#334155" }}>{trimmed.slice(4).replace(/\*\*(.+?)\*\*/g, "$1")}</li>;
+                    if (trimmed.startsWith("- **")) {
+                      const m = trimmed.match(/^- \*\*(.+?)\*\*[:—]?\s*(.*)$/);
+                      if (m) return (
+                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid #e0e7ff" }}>
+                          <strong style={{ color: "#1e293b" }}>{m[1]}</strong>
+                          {m[2] && <span style={{ color: "#475569" }}> — {m[2]}</span>}
+                        </div>
+                      );
+                    }
+                    if (trimmed === "---") return <hr key={i} style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.08)", margin: "16px 0" }} />;
+                    if (!trimmed) return <div key={i} style={{ height: 6 }} />;
+                    return <p key={i} style={{ margin: "4px 0", color: "#334155" }}>{trimmed.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")}</p>;
+                  })}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Brain}
+                  title="Nhấn 'Tải lại' để bắt đầu"
+                  desc="AI sẽ phân tích dữ liệu khảo sát và đưa ra các insights."
+                />
+              )}
+            </div>
           </div>
         )}
 

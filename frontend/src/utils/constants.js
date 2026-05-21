@@ -10,6 +10,7 @@ export const ROUTERS = {
     DASHBOARD: "/user/dashboard",
     PROFILE: "/user/profile",
     NOTIFICATIONS: "/user/notifications",
+    GENDER_SETUP: "/user/gender-setup",
 
     SURVEY_TAKE: "/user/survey/:surveyId",
     SURVEY_RESPONSE: "/user/survey/:surveyId/response",

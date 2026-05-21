@@ -7,7 +7,10 @@ export const updateUserProfileRequest = Joi.object({
     phone_number: Joi.string()
       .pattern(/^[0-9]{10}$/),
 
-    date_of_birth: Joi.date().iso()
+    date_of_birth: Joi.date().iso(),
+
+    gender: Joi.string()
+      .valid("MALE", "FEMALE", "OTHER"),
   })
     .min(1)
     .required()

@@ -12,13 +12,14 @@ import {
   ChevronDown, ChevronUp, Sparkles,
   UserPlus, UserMinus, Rocket, TrendingUp, Zap,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSurvey }    from "@/providers/SurveyProvider";
 import { useResponse }  from "@/providers/ResponseProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import CreateSurveyComposer from "@/components/survey/CreateSurveyComposer";
 import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 import { ShareModal } from "@/components/survey/SurveyCardHome";
+import { ROUTERS } from "@/utils/constants";
 
 /* ════════════════════════════════════════════════════════════════
    DESIGN TOKENS — matching Dashboard
@@ -940,11 +941,14 @@ const MY_SURVEYS_PREVIEW=5;
 
 export default function SurveysLayout() {
   const navigate=useNavigate();
+  const { pathname } = useLocation();
+  const isMySurveysRoute = pathname.startsWith(ROUTERS.USER.MY_SURVEYS);
   const {
     mySurveys, publicSurveys:providerPublicSurveys, loading:myLoading,
     fetchMySurveys, updateSurvey, deleteSurvey,
     closeSurvey, publishSurvey, shareLink, inviteSurvey,
     fetchPublicSurveys, bulkInviteSurvey, getParticipants, deleteParticipant,
+    invitedSurveys, fetchInvitedSurveys,
   }=useSurvey();
   const { getAllMyResponses }=useResponse();
 
@@ -963,19 +967,25 @@ export default function SurveysLayout() {
   const [globalSearch,setGlobalSearch]=useState("");
   const [shareModal,setShareModal]=useState({open:false,surveyId:null,surveyTitle:"",shareUrl:"",loading:false,error:""});
 
-  useEffect(()=>{fetchMySurveys(1,20);},[]);
-
-  const fetchPublicData=useCallback(async()=>{
-    try{
-      setPublicLoading(true);setPublicError(null);
-      const [,respResult]=await Promise.allSettled([fetchPublicSurveys(),getAllMyResponses().catch(()=>null)]);
-      const resp=respResult.status==="fulfilled"?respResult.value:null;
-      const ids=new Set((resp?.data??resp??[]).map(r=>r.survey_id??r.surveyId));
+  const fetchAllData = useCallback(async () => {
+    try {
+      setPublicLoading(true);
+      setPublicError(null);
+      const [pubResult, respResult] = await Promise.allSettled([
+        fetchPublicSurveys(),
+        getAllMyResponses().catch(() => null),
+      ]);
+      const resp = respResult.status === "fulfilled" ? respResult.value : null;
+      const ids = new Set((resp?.data ?? resp ?? []).map(r => r.survey_id ?? r.surveyId));
       setDoneSurveyIds(ids);
-    }catch{setPublicError("Không thể tải danh sách khảo sát.");}
-    finally{setPublicLoading(false);}
-  },[]);
-  useEffect(()=>{fetchPublicData();},[]);
+    } catch {
+      setPublicError("Không thể tải danh sách khảo sát.");
+    } finally {
+      setPublicLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchMySurveys(1, 20); fetchInvitedSurveys(1, 20); fetchAllData(); }, []);
 
   const handleGlobalSearch=v=>{setGlobalSearch(v);setMySearch(v);setPublicSearch(v);};
 
@@ -1178,7 +1188,36 @@ export default function SurveysLayout() {
           )}
         </section>
 
+        {/* ── INVITED SURVEYS SECTION ── */}
+        {invitedSurveys.length > 0 && (
+          <section style={{marginBottom:40}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <h2 style={{fontSize:16,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>Khảo sát được mời</h2>
+                <span style={{fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:999,background:"rgba(245,158,11,0.12)",color:C.warning,border:"1px solid rgba(245,158,11,0.25)",fontFamily:C.font}}>{invitedSurveys.length}</span>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:18}}>
+              {invitedSurveys.map((survey,index)=>{
+                const isDone = doneSurveyIds.has(survey.id);
+                const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+                const computedStatus = isExpired ? "EXPIRED" : (survey.status || "ACTIVE");
+                return (
+                  <SurveyCardHome
+                    key={survey.id}
+                    survey={{ ...survey, status: computedStatus }}
+                    index={index}
+                    overrideStatus={isDone ? "COMPLETED" : null}
+                    onClick={() => navigate(`/user/survey/${survey.id}`)}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Divider */}
+        {!isMySurveysRoute && (
         <div style={{display:"flex",alignItems:"center",gap:18,marginBottom:32}}>
           <div style={{flex:1,height:2,borderRadius:2,background:"linear-gradient(to right,transparent,rgba(99,102,241,0.2),rgba(99,102,241,0.08))"}}/>
           <div style={{
@@ -1192,12 +1231,14 @@ export default function SurveysLayout() {
           </div>
           <div style={{flex:1,height:2,borderRadius:2,background:"linear-gradient(to left,transparent,rgba(99,102,241,0.2),rgba(99,102,241,0.08))"}}/>
         </div>
+        )}
 
         {/* ── PUBLIC SURVEYS SECTION ── */}
-        <section>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <h2 style={{fontSize:16,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>Khảo Sát</h2>
+        {!isMySurveysRoute && (
+          <section>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <h2 style={{fontSize:16,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>Khảo Sát</h2>
               {!publicLoading&&<span style={{fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:999,background:"rgba(16,185,129,0.12)",color:C.success,border:"1px solid rgba(16,185,129,0.25)",fontFamily:C.font}}>{totalCount}</span>}
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1221,15 +1262,12 @@ export default function SurveysLayout() {
                 <div style={{width:1,background:"rgba(0,0,0,0.06)",height:16}}/>
                 <button onClick={()=>setViewMode("list")} style={{padding:"6px 10px",border:"none",cursor:"pointer",background:viewMode==="list"?"rgba(67,97,238,0.1)":"transparent",color:viewMode==="list"?C.primary:C.textSub,transition:"all .1s"}}><List size={13}/></button>
               </div>
-              <button onClick={fetchPublicData} style={{display:"flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:9,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,transition:"all .15s"}}
+              <button onClick={fetchAllData} style={{display:"flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:9,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,transition:"all .15s"}}
                 onMouseEnter={e=>{e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.primaryBorder;}}
                 onMouseLeave={e=>{e.currentTarget.style.color=C.textSub;e.currentTarget.style.borderColor="rgba(0,0,0,0.08)";}}
               ><RefreshCw size={12}/></button>
             </div>
-          </div>
-
           {/* Search & Filter */}
-          <div style={{marginBottom:14}}>
             <div style={{maxWidth:380,height:38,borderRadius:11,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",border:`1px solid rgba(0,0,0,0.08)`,display:"flex",alignItems:"center",gap:8,padding:"0 12px"}}>
               <Search size={13} color={C.textSub}/>
               <input value={publicSearch} onChange={e=>setPublicSearch(e.target.value)} placeholder="Tìm khảo sát..." style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:12,fontFamily:C.font,color:C.text}}/>
@@ -1264,7 +1302,7 @@ export default function SurveysLayout() {
             <GlassCard style={{textAlign:"center",padding:"48px 20px"}}>
               <div style={{fontSize:36,marginBottom:12}}>⚠️</div>
               <div style={{fontSize:13,fontFamily:C.font,color:C.textSub}}>{publicError}</div>
-              <button onClick={fetchPublicData} style={{marginTop:12,color:C.primary,fontWeight:700,background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:C.font}}>Thử lại</button>
+              <button onClick={fetchAllData} style={{marginTop:12,color:C.primary,fontWeight:700,background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:C.font}}>Thử lại</button>
             </GlassCard>
           )}
           {!publicLoading&&!publicError&&displayed.length===0&&(
@@ -1295,6 +1333,7 @@ export default function SurveysLayout() {
             </>
           )}
         </section>
+        )}
       </div>
 
       <ShareModal

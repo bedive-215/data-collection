@@ -16,6 +16,7 @@ import {
   Mail,
   Phone,
   Cake,
+  Venus,
 } from "lucide-react";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
@@ -106,6 +107,7 @@ export default function Profile() {
     email: "",
     phone_number: "",
     date_of_birth: "",
+    gender: "",
     avatar: null,
   });
 
@@ -125,6 +127,7 @@ export default function Profile() {
         email: user.email || "",
         phone_number: user.phone_number || "",
         date_of_birth: user.date_of_birth || "",
+        gender: user.gender || "",
         avatar: null,
       });
     }
@@ -155,6 +158,7 @@ export default function Profile() {
         full_name: form.full_name.trim(),
         phone_number: form.phone_number.trim(),
         date_of_birth: form.date_of_birth,
+        gender: form.gender,
       };
       await updateMyInfo(payload);
       await fetchMyInfo();
@@ -175,6 +179,7 @@ export default function Profile() {
         email: user.email || "",
         phone_number: user.phone_number || "",
         date_of_birth: user.date_of_birth || "",
+        gender: user.gender || "",
         avatar: null,
       });
       setPreviewAvatar(user.avatar || "/default-avatar.png");
@@ -361,6 +366,12 @@ export default function Profile() {
           <p style={{ margin: 0, fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: C.textDim, textTransform: "uppercase" }}>
             {APP_BRAND.name} · Thành viên
           </p>
+          {user?.gender && (
+            <p style={{ margin: "6px 0 0", fontSize: 12, fontWeight: 600, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              <Venus size={13} strokeWidth={2} />
+              {user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác"}
+            </p>
+          )}
         </header>
 
         {/* Edit modal */}
@@ -485,6 +496,50 @@ export default function Profile() {
                   onBlur={() => setFocusedField(null)}
                   style={inputStyle(focusedField === "date_of_birth")}
                 />
+              </label>
+
+              <label style={{ display: "block", marginBottom: 14 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: C.textSub, marginBottom: 6 }}>
+                  <Venus size={14} /> Giới tính
+                </span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[
+                    { value: "MALE", label: "Nam" },
+                    { value: "FEMALE", label: "Nữ" },
+                    { value: "OTHER", label: "Khác" },
+                  ].map((opt) => (
+                    <label
+                      key={opt.value}
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        padding: "10px 8px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        border: `1px solid ${form.gender === opt.value ? "rgba(99,102,241,0.5)" : "rgba(15,23,42,0.08)"}`,
+                        background: form.gender === opt.value ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.5)",
+                        color: form.gender === opt.value ? "#6366f1" : C.textSub,
+                        fontWeight: form.gender === opt.value ? 700 : 500,
+                        fontSize: 13,
+                        transition: "all 0.15s",
+                        userSelect: "none",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={opt.value}
+                        checked={form.gender === opt.value}
+                        onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value }))}
+                        style={{ display: "none" }}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
               </label>
 
               <label
