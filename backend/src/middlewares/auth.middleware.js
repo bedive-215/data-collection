@@ -23,6 +23,9 @@ export class authMiddleware {
             if (!user) {
                 throw new AppError('User not found', 404);
             }
+            if (!user.is_active) {
+                throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
+            }
             req.user = {
                 id: decoded.user_id,
                 email: decoded.email,
@@ -65,6 +68,10 @@ export class authMiddleware {
 
             if (!user) {
                 throw new AppError('Invalid refresh token', 403);
+            }
+
+            if (!user.is_active) {
+                throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
             }
 
             // Kiểm tra refresh token hết hạn chưa

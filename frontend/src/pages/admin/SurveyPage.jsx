@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import surveyService from "@/services/surveyService";
 import { useSurvey } from "@/providers/SurveyProvider";
 import { useAdminStats } from "@/providers/AdminStatsProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Trash2, FileText, ClipboardList,
@@ -1408,11 +1409,14 @@ function SurveyCard({
   const isSaving    = updatingId === s.id;
   const isClosed    = s.status === "CLOSED";
   const isPublished = s.is_published;
+  const isOwner     = s.isOwner;
+
+  const ownerBorderColor = "#6c7ef7";
 
   const menuItems = [
-    { icon:<Pencil size={13}/>,    label:"Chỉnh sửa",       action:startEdit },
-    { icon:<Settings size={13}/>,   label:"Cài đặt nâng cao", action:() => { startEdit(); setShowSettings(true); setMenuOpen(false); } },
-    { icon:<BarChart3 size={13}/>,  label:"Phân tích",        action:() => { navigate(`/admin/surveys/${s.id}/analytics`); setMenuOpen(false); } },
+    { icon:<Pencil size={13}/>,    label:"Thiết kế",         action:() => { navigate(`/admin/surveys/${s.id}/studio`); setMenuOpen(false); } },
+    { icon:<Settings size={13}/>,   label:"Cài đặt nâng cao", action:() => { startEdit(); setMenuOpen(false); } },
+    { icon:<BarChart3 size={13}/>,  label:"Phân tích",        action:() => { navigate(`/admin/surveys/${s.id}/studio?tab=analyze`); setMenuOpen(false); } },
     { icon:<Share2 size={13}/>,    label:"Tạo link chia sẻ", action:() => { setShareOpen(true); setMenuOpen(false); } },
     { icon:<Mail size={13}/>,      label:"Mời người dùng",   action:() => { setInviteOpen(true); setMenuOpen(false); } },
     { icon:<UserPlus size={13}/>,  label:"Mời hàng loạt",    action:() => { setBulkInviteOpen(true); setMenuOpen(false); }, color:C.primary },
@@ -1440,11 +1444,18 @@ function SurveyCard({
         style={{
           background:    C.surface,
           border:        `1px solid ${hovered ? C.borderHover : C.border}`,
+          borderTop:     isOwner ? `3px solid ${ownerBorderColor}` : `1px solid ${hovered ? C.borderHover : C.border}`,
           borderRadius:  12,
           overflow:      "hidden",
           cursor:        "pointer",
           transition:    "border-color .15s, box-shadow .15s, transform .6s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          boxShadow:     hovered ? "0 8px 32px rgba(108, 126, 247, 0.25)" : "0 4px 12px rgba(0,0,0,0.3)",
+          boxShadow:     hovered
+            ? isOwner
+              ? "0 8px 32px rgba(108, 126, 247, 0.35)"
+              : "0 8px 24px rgba(0,0,0,0.3)"
+            : isOwner
+              ? "0 4px 16px rgba(108, 126, 247, 0.15)"
+              : "0 4px 12px rgba(0,0,0,0.3)",
           transform:     `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
           display:       "flex",
           flexDirection: "column",
@@ -1459,7 +1470,9 @@ function SurveyCard({
           height:148,
           background: isClosed
             ? "linear-gradient(135deg,#1a1a2e,#16213e)"
-            : `linear-gradient(135deg, ${C.primaryDim.replace("0.10","0.35")}, ${C.surfaceHigh})`,
+            : isOwner
+              ? "linear-gradient(135deg, rgba(108,126,247,0.30), rgba(79,110,247,0.15), #111827)"
+              : `linear-gradient(135deg, ${C.primaryDim.replace("0.10","0.35")}, ${C.surfaceHigh})`,
           position:"relative", borderBottom:`1px solid ${C.border}`,
           display:"flex", alignItems:"center", justifyContent:"center",
           opacity: isClosed ? 0.65 : 1,
@@ -1494,6 +1507,17 @@ function SurveyCard({
 
           {/* Badges */}
           <div style={{position:"absolute", top:8, left:8, display:"flex", flexDirection:"column", gap:4}}>
+            {isOwner && (
+              <span style={{
+                fontSize:10, fontWeight:700, padding:"3px 8px",
+                borderRadius:999, color:"#fff",
+                background:"linear-gradient(90deg, #6c7ef7, #4f6ef7)",
+                boxShadow:"0 2px 8px rgba(108,126,247,0.4)",
+                display:"flex", alignItems:"center", gap:4,
+              }}>
+                <span style={{fontSize:8}}>★</span> Biểu mẫu của bạn
+              </span>
+            )}
             {s.status && <StatusBadge status={s.status}/>}
             {isPublished && (
               <span style={{
@@ -1791,6 +1815,22 @@ function SurveyCard({
                 {s.created_at ? new Date(s.created_at).toLocaleDateString("vi-VN", {day:"2-digit", month:"2-digit", year:"numeric"}) : ""}
               </div>
 
+              {s.creator && !isOwner && (
+                <div style={{display:"flex", alignItems:"center", gap:5, marginTop:4}}>
+                  <div style={{
+                    width:18, height:18, borderRadius:"50%",
+                    background:"rgba(100,116,139,0.15)", color:"#64748b",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:9, fontWeight:700, flexShrink:0,
+                  }}>
+                    {(s.creator.full_name || s.creator.email || "?")[0].toUpperCase()}
+                  </div>
+                  <span style={{fontSize:11, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                    {s.creator.full_name || s.creator.email}
+                  </span>
+                </div>
+              )}
+
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:6}}>
                 <ParticipantBadge surveyId={s.id}/>
 
@@ -1846,6 +1886,7 @@ export default function SurveyPage() {
     getParticipants, deleteParticipant,
   } = useSurvey();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const [surveys,     setSurveys]     = useState([]);
   const [fetchError,  setFetchError]  = useState(null);
@@ -1863,7 +1904,11 @@ export default function SurveyPage() {
   const [deletingId,  setDeletingId]  = useState(null);
   const [updatingId,  setUpdatingId]  = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [search,      setSearch]      = useState("");
+  const [search,          setSearch]          = useState("");
+  const [creatorFilter,   setCreatorFilter]   = useState(""); // filter by creator name
+  const [selectedCreator, setSelectedCreator]  = useState(""); // filter by creator id
+
+  const currentUserId = currentUser?.user_id || currentUser?.id || null;
 
   const htmlToText = (html) => {
     const div = document.createElement("div");
@@ -1880,6 +1925,9 @@ export default function SurveyPage() {
     end_at:       s.end_at     ?? null,
     status:       s.status     ?? null,
     created_at:   s.created_at ?? null,
+    created_by:   s.created_by ?? null,
+    creator:      s.creator ?? null,
+    isOwner:      (s.created_by === currentUserId) || (s.creator?.id === currentUserId),
   });
 
   const fetchAll = async () => {
@@ -1949,8 +1997,30 @@ export default function SurveyPage() {
   };
 
   const filtered = surveys.filter(s =>
-    s.title.toLowerCase().includes(search.toLowerCase())
+    s.title.toLowerCase().includes(search.toLowerCase()) &&
+    (!selectedCreator || s.created_by === selectedCreator)
   );
+
+  // Derived: unique creators from all surveys (for dropdown)
+  const creatorMap2 = new Map();
+  surveys.forEach(s => {
+    if (s.creator && !creatorMap2.has(s.creator.id)) {
+      creatorMap2.set(s.creator.id, s.creator);
+    }
+  });
+  const allCreators = Array.from(creatorMap2.values()).sort((a, b) =>
+    (a.full_name || "").localeCompare(b.full_name || "")
+  );
+
+  // Sort: admin's surveys first (isOwner), then by creator name, then by created_at desc
+  const sortedSurveys = [...filtered].sort((a, b) => {
+    if (a.isOwner && !b.isOwner) return -1;
+    if (!a.isOwner && b.isOwner) return 1;
+    const nameA = a.creator?.full_name || a.creator?.email || "";
+    const nameB = b.creator?.full_name || b.creator?.email || "";
+    if (nameA !== nameB) return nameA.localeCompare(nameB);
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
 
   const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
 
@@ -1974,6 +2044,19 @@ export default function SurveyPage() {
     try { await closeSurvey(surveyId); await fetchAll(); }
     catch (err) { console.error(err); }
   }, [closeSurvey, fetchAll]);
+
+  const handleOpen = useCallback((surveyId) => {
+    navigate(`/admin/surveys/${surveyId}/studio`);
+  }, [navigate]);
+
+  const handlePublish = useCallback(async (surveyId) => {
+    setUpdatingId(surveyId);
+    try {
+      await publishSurvey(surveyId, {});
+      await fetchAll();
+    } catch (err) { console.error(err); }
+    finally { setUpdatingId(null); }
+  }, [publishSurvey, fetchAll]);
 
   const dateInp = {
     width:"100%", boxSizing:"border-box", padding:"9px 12px",
@@ -2005,26 +2088,49 @@ export default function SurveyPage() {
           </span>
         </div>
 
-        {/* Search */}
-        <div style={{
-          flex:1, maxWidth:520,
-          display:"flex", alignItems:"center", gap:10,
-          background:C.surfaceHigh, border:`1px solid ${C.border}`,
-          borderRadius:24, padding:"0 16px", height:40,
-        }}>
-          <Search size={15} color={C.textSub}/>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm kiếm"
-            style={{
-              flex:1, background:"transparent", border:"none",
-              outline:"none", fontSize:14, color:C.text, fontFamily:C.font,
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
-              <X size={14}/>
-            </button>
+        {/* Search + Creator filter */}
+        <div style={{display:"flex", alignItems:"center", gap:10, flex:1, maxWidth:600}}>
+          <div style={{
+            flex:1, maxWidth:360,
+            display:"flex", alignItems:"center", gap:10,
+            background:C.surfaceHigh, border:`1px solid ${C.border}`,
+            borderRadius:24, padding:"0 16px", height:40,
+          }}>
+            <Search size={15} color={C.textSub}/>
+            <input
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm kiếm"
+              style={{
+                flex:1, background:"transparent", border:"none",
+                outline:"none", fontSize:14, color:C.text, fontFamily:C.font,
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
+                <X size={14}/>
+              </button>
+            )}
+          </div>
+
+          {/* Creator filter dropdown */}
+          {allCreators.length > 0 && (
+            <select
+              value={selectedCreator}
+              onChange={e => setSelectedCreator(e.target.value)}
+              style={{
+                height:40, padding:"0 12px",
+                background:C.surfaceHigh, border:`1px solid ${C.border}`,
+                borderRadius:10, color:C.text, fontSize:13,
+                fontFamily:C.font, outline:"none", cursor:"pointer",
+              }}
+            >
+              <option value="">Tất cả người tạo</option>
+              {allCreators.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.id === currentUserId ? "Biểu mẫu của bạn" : (c.full_name || c.email)}
+                </option>
+              ))}
+            </select>
           )}
         </div>
 
@@ -2160,6 +2266,37 @@ export default function SurveyPage() {
           </div>
         )}
 
+        {/* Grid */}
+        {surveys.length > 0 && !fetching && sortedSurveys.length > 0 && (
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))",
+            gap:16,
+            marginBottom:32,
+          }}>
+            {sortedSurveys.map((s, i) => (
+              <SurveyCard
+                key={s.id}
+                s={s}
+                index={i}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                onOpen={handleOpen}
+                onShare={handleShare}
+                onInvite={inviteSurvey}
+                onBulkInvite={bulkInviteSurvey}
+                onPublish={handlePublish}
+                onCloseSurvey={handleClose}
+                onGetParticipants={getParticipants}
+                onDeleteParticipant={deleteParticipant}
+                deletingId={deletingId}
+                updatingId={updatingId}
+                navigate={navigate}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Error */}
         {fetchError && (
           <div style={{
@@ -2210,29 +2347,12 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* Grid */}
-        {filtered.length > 0 && (
-          <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:16}}>
-            {filtered.map((s, i) => (
-              <SurveyCardHome
-                key={s.id}
-                survey={s}
-                index={i}
-                onClick={() => navigate(`/admin/surveys/${s.id}`)}
-                type="my"
-                onShare={handleShare}
-                onLock={handleClose}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* No search results */}
-        {search && filtered.length === 0 && (
+        {/* No search/filter results */}
+        {surveys.length > 0 && !fetching && sortedSurveys.length === 0 && (
           <div style={{textAlign:"center", padding:"4rem 0", color:C.textSub}}>
             <Search size={32} style={{opacity:0.3, marginBottom:12}}/>
             <p style={{margin:0}}>
-              Không tìm thấy biểu mẫu nào cho "<strong>{search}</strong>"
+              Không tìm thấy biểu mẫu nào cho "<strong>{search || selectedCreator ? "bộ lọc hiện tại" : ""}</strong>"
             </p>
           </div>
         )}

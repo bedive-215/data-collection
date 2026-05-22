@@ -120,6 +120,19 @@ export default (sequelize) => {
             type: DataTypes.DATE,
             allowNull: true,
         },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            allowNull: false,
+        },
+        blocked_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        block_reason: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
     }, {
         tableName: "users",
         timestamps: true,

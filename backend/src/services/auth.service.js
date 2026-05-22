@@ -60,6 +60,7 @@ class AuthService {
   async login(email, password) {
     const user = await this.User.findOne({ where: { email } });
     if (!user) throw new AppError('Invalid email or password', 400);
+    if (!user.is_active) throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
     if (!user.email_verified) throw new AppError('Email not verified', 403);
 
     const valid = await bcrypt.compare(password, user.password_hash);
@@ -248,16 +249,22 @@ class AuthService {
         gender,
         phone_number: phone_number || null,
         date_of_birth: date_of_birth || null,
+        is_active: true,
       });
     }
 
-    // 3. OAuth mapping
+    // 3. CHECK IF BLOCKED
+    if (!user.is_active) {
+      throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
+    }
+
+    // 4. OAuth mapping
     const [oauth] = await this.UserOAuth.findOrCreate({
       where: { provider_uid },
       defaults: { user_id: user.id }
     });
 
-    // 4. Update missing profile fields (if client sends)
+    // 5. Update missing profile fields (if client sends)
     let updated = false;
 
     if (!user.phone_number && phone_number) {
@@ -272,7 +279,7 @@ class AuthService {
 
     if (updated) await user.save();
 
-    // 5. CHECK PROFILE COMPLETENESS
+    // 6. CHECK PROFILE COMPLETENESS
     const missingFields = {
       phone_number: !user.phone_number,
       date_of_birth: !user.date_of_birth,
@@ -290,7 +297,7 @@ class AuthService {
       };
     }
 
-    // 6. PROFILE OK → ISSUE TOKENS
+    // 7. PROFILE OK → ISSUE TOKENS
     const payload = {
       user_id: user.id,
       email: user.email,

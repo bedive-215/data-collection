@@ -21,6 +21,7 @@ import ForgotPassword from "@/pages/auth/ForgotPassword";
 // Admin pages
 import DashboardAdmin from "@/pages/admin/Dashboard";
 import AdminUsers from "@/pages/admin/Users";
+import AdminSurveyStudio from "@/pages/admin/SurveyStudio";
 import SurveyPage from "@/pages/admin/SurveyPage";
 import QuestionPage from "@/pages/admin/QuestionPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
@@ -183,6 +184,12 @@ const routeConfig = [
     path:
       ROUTERS.ADMIN.SURVEYS,
     element: SurveyPage,
+    layout: AdminLayout,
+  },
+  {
+    path:
+      "/admin/surveys/:surveyId/studio",
+    element: AdminSurveyStudio,
     layout: AdminLayout,
   },
   {

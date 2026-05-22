@@ -101,13 +101,17 @@ class UserService {
         };
     }
 
-    async getListOfUser(page = 1, limit = 20, role = 'user', search) {
+    async getListOfUser(page = 1, limit = 20, role = null, search, isActive = null) {
         const offset = (page - 1) * limit;
 
         const whereClause = {};
 
         if (role) {
             whereClause.role = role;
+        }
+
+        if (isActive !== null && isActive !== undefined) {
+            whereClause.is_active = isActive;
         }
 
         if (search) {
@@ -128,6 +132,9 @@ class UserService {
                 "gender",
                 "avatar",
                 "role",
+                "is_active",
+                "blocked_at",
+                "block_reason",
                 "created_at",
             ],
             limit,
@@ -141,6 +148,7 @@ class UserService {
             currentPage: page,
             limit,
             role: role || null,
+            isActive: isActive,
             search: search || null,
             data: rows,
         };
@@ -155,6 +163,111 @@ class UserService {
         return {
             message: 'Delete user successfully',
             user_id: id
+        };
+    }
+
+    async updateUserRole(id, newRole) {
+        const user = await this.User.findByPk(id);
+        if (!user) throw new AppError('User not found', 404);
+
+        if (!['user', 'admin'].includes(newRole)) {
+            throw new AppError('Invalid role. Must be "user" or "admin"', 400);
+        }
+
+        user.role = newRole;
+        await user.save();
+
+        return {
+            message: 'User role updated successfully',
+            user: {
+                user_id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                role: user.role,
+                is_active: user.is_active
+            }
+        };
+    }
+
+    async blockUser(id, reason = null) {
+        const user = await this.User.findByPk(id);
+        if (!user) throw new AppError('User not found', 404);
+
+        if (!user.is_active) {
+            throw new AppError('User is already blocked', 400);
+        }
+
+        user.is_active = false;
+        user.blocked_at = new Date();
+        user.block_reason = reason || null;
+        user.refresh_token = null;
+        user.refresh_token_expires_at = null;
+        await user.save();
+
+        return {
+            message: 'User blocked successfully',
+            user: {
+                user_id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                is_active: user.is_active,
+                blocked_at: user.blocked_at,
+                block_reason: user.block_reason
+            }
+        };
+    }
+
+    async unblockUser(id) {
+        const user = await this.User.findByPk(id);
+        if (!user) throw new AppError('User not found', 404);
+
+        if (user.is_active) {
+            throw new AppError('User is already active', 400);
+        }
+
+        user.is_active = true;
+        user.blocked_at = null;
+        user.block_reason = null;
+        await user.save();
+
+        return {
+            message: 'User unblocked successfully',
+            user: {
+                user_id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                is_active: user.is_active
+            }
+        };
+    }
+
+    async getUserStats(id) {
+        const user = await this.User.findByPk(id, {
+            attributes: [
+                "id",
+                "full_name",
+                "email",
+                "phone_number",
+                "avatar",
+                "gender",
+                "date_of_birth",
+                "role",
+                "is_active",
+                "blocked_at",
+                "block_reason",
+                "email_verified",
+                "created_at",
+                "star_balance",
+                "total_stars_earned",
+                "current_rank",
+                "streak_count",
+            ]
+        });
+        if (!user) throw new AppError('User not found', 404);
+
+        return {
+            message: 'Get user stats successfully',
+            user
         };
     }
 }

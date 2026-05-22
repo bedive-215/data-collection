@@ -97,6 +97,12 @@ const normalizeSurvey = (survey = {}) => ({
   background_url: survey.background_url ?? null,
   accent_color: survey.accent_color ?? "#6366f1",
   show_correct_answers: survey.show_correct_answers ?? false,
+  // ── Participants ──────────────────────────────────────
+  participants: (survey.participants || []).map((p) => ({
+    id: p.id ?? null,
+    name: p.name ?? p.full_name ?? null,
+    email: p.email ?? null,
+  })),
   // ── Sections ─────────────────────────────────────────
   sections: (survey.sections || []).map(s => ({
     id: s.id,

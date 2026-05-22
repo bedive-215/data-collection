@@ -3,66 +3,61 @@ import apiClient from "@/api/apiClient";
 
 export const userService = {
   getUserInfo: () => apiClient.get("/api/v1/users/me"),
-  // GET /me - Lấy thông tin user hiện tại
 
-  // PATCH /me - Cập nhật thông tin user hiện tại (có upload avatar)
   updateUserInfo: (payload) => {
-  // ❗ Loại bỏ avatar ra khỏi payload
-  const { avatar, ...rest } = payload;
+    const { avatar, ...rest } = payload;
+    return apiClient.patch("/api/v1/users/me", rest);
+  },
 
-  return apiClient.patch("/api/v1/users/me", rest); // 👈 gửi JSON
-},
-// PATCH /me/avatar - Upload avatar riêng
-updateAvatar: (file) => {
-  const formData = new FormData();
-  formData.append("avatar", file);
+  updateAvatar: (file) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    return apiClient.patch("/api/v1/users/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 
-  return apiClient.patch("/api/v1/users/me/avatar", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-},
-
-  // GET /:id - Lấy thông tin user theo ID
   getUserById: (id) => apiClient.get(`/api/v1/users/${id}`),
 
-  // GET / - Lấy danh sách user (chỉ admin)
+  getUserStats: (id, token) =>
+    apiClient.get(`/api/v1/users/${id}/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   getListOfUser: (params, token) =>
     apiClient.get("/api/v1/users", {
       params,
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  // DELETE /:id - Xóa user (admin)
+  updateUserRole: (id, role, token) =>
+    apiClient.patch(`/api/v1/users/${id}/role`, { role }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  blockUser: (id, reason, token) =>
+    apiClient.patch(`/api/v1/users/${id}/block`, { reason }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  unblockUser: (id, token) =>
+    apiClient.patch(`/api/v1/users/${id}/unblock`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   deleteUser: (id, token) =>
     apiClient.delete(`/api/v1/users/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  /**
-   * Reviews endpoints (router:
-   *  router.get('/product/:product_id', getReviewsByProduct);
-   *  router.post('/', authMiddleware.auth, addReview);
-   *  router.delete('/:id', authMiddleware.auth, deleteUserReview);
-   * )
-   * Giả định base path trên server là /api/v1/reviews
-   */
-
-  // GET /product/:product_id - Lấy danh sách review theo product
   getReviewsByProduct: (productId, params) =>
-    apiClient.get(`/api/v1/reviews/product/${productId}`, {
-      params,
-    }),
+    apiClient.get(`/api/v1/reviews/product/${productId}`, { params }),
 
-  // POST / - Thêm review (yêu cầu auth)
-  // payload: { product_id, rating, comment, ... }
   addReview: (payload, token) =>
     apiClient.post("/api/v1/reviews", payload, {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  // DELETE /:id - Xóa review của user (yêu cầu auth)
   deleteUserReview: (id, token) =>
     apiClient.delete(`/api/v1/reviews/${id}`, {
       headers: { Authorization: `Bearer ${token}` },

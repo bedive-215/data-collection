@@ -129,13 +129,6 @@ const navItems = [
   },
 
   {
-    id: "analytics",
-    label: "Analytics",
-    icon: "bar_chart",
-    path: ROUTERS.ADMIN.SURVEYS,
-  },
-
-  {
     id: "notifications",
     label: "Notifications",
     icon: "bell",

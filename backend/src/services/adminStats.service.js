@@ -14,11 +14,15 @@ class AdminStatsService {
     async getOverviewStats() {
         const [
             totalUsers,
+            totalActiveUsers,
+            totalBlockedUsers,
             totalSurveys,
             totalQuestions,
             totalOptions
         ] = await Promise.all([
             this.User.count(),
+            this.User.count({ where: { is_active: true } }),
+            this.User.count({ where: { is_active: false } }),
             this.Survey.count(),
             this.Question.count(),
             this.QuestionOption.count()
@@ -28,6 +32,8 @@ class AdminStatsService {
             message: "Get overview stats successfully!",
             data: {
                 totalUsers,
+                totalActiveUsers,
+                totalBlockedUsers,
                 totalSurveys,
                 totalQuestions,
                 totalOptions

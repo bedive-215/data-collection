@@ -1,90 +1,57 @@
-// ─── SurveyStudio.jsx ─── SurveyMonkey-style studio page ──
-// Flow: click card → SurveyStudio → 3 tabs: Design / Send / Analyze
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useParams, useNavigate } from "react-router-dom";
+// ─── AdminSurveyStudio.jsx ─── Admin version of SurveyStudio ───
+// 3 tabs: Design (QuestionPage) / Send (share, invite, publish) / Analyze (AnalyticsPage)
+// Dark theme, embedded sub-pages, no layout shell (used inside AdminLayout)
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Send, LayoutTemplate, BarChart3, Loader2,
-  Plus, Trash2, Pencil, Check, GripVertical, PlusCircle,
-  Image, ChevronLeft, ChevronRight, ChevronDown, Copy,
-  ExternalLink, Link as LinkIcon, CheckCircle2, Users,
-  Share2, Mail, UserPlus, Lock, Globe, PowerOff, RefreshCw,
-  Search, X, FileText, Loader, Eye, EyeOff, Trash,
+  Share2, Mail, Users, Lock, Globe, PowerOff, RefreshCw,
+  Search, X, FileText, ExternalLink, Link as LinkIcon,
+  CheckCircle2, Copy, Eye, Trash, UserPlus, ChevronDown,
 } from "lucide-react";
-import MySurveyQuestionsPage from "@/pages/user/MySurveyQuestionsPage";
-import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
-import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
-import { useSurvey } from "@/providers/SurveyProvider";
+import QuestionPage from "@/pages/admin/QuestionPage";
+import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import surveyService from "@/services/surveyService";
+import { toast } from "react-toastify";
 
 /* ════════════════════════════════════════════════════════════════
-   DESIGN TOKENS
+   DESIGN TOKENS — matching admin dark theme
 ════════════════════════════════════════════════════════════════ */
 const C = {
-  bg:          "linear-gradient(165deg, #eef2ff 0%, #f8fafc 42%, #e0f2fe 78%, #fdf4ff 100%)",
-  surface:     "rgba(255,255,255,0.82)",
-  surfaceHigh: "rgba(255,255,255,0.95)",
-  glassBorder: "rgba(255,255,255,0.55)",
-  border:      "rgba(99,102,241,0.1)",
-  borderMed:   "rgba(0,0,0,0.1)",
-  primary:     "#4f46e5",
-  primaryLight:"rgba(79,70,229,0.12)",
-  primaryGrad: "linear-gradient(135deg,#4361ee,#6c7ef7)",
-  text:        "#0f172a",
+  bg:          "#080c1a",
+  surface:     "rgba(13,17,32,0.92)",
+  surfaceHigh: "rgba(17,24,39,0.95)",
+  glassBorder: "rgba(255,255,255,0.07)",
+  border:      "rgba(255,255,255,0.06)",
+  borderHover: "rgba(255,255,255,0.12)",
+  primary:     "#6c7ef7",
+  primaryGrad: "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
+  primaryLight:"rgba(108,126,247,0.12)",
+  primaryDim:  "rgba(108,126,247,0.10)",
+  text:        "#f1f5f9",
   textSub:     "#64748b",
-  textDim:     "#94a3b8",
+  textDim:     "#334155",
   error:       "#ef4444",
-  errorBg:     "rgba(239,68,68,0.1)",
-  errorBorder: "rgba(239,68,68,0.25)",
+  errorBg:     "rgba(239,68,68,0.10)",
+  errorBorder: "rgba(239,68,68,0.20)",
   success:     "#10b981",
-  successBg:   "rgba(16,185,129,0.1)",
-  successBorder:"rgba(16,185,129,0.25)",
+  successBg:   "rgba(16,185,129,0.10)",
+  successBorder:"rgba(16,185,129,0.20)",
   warning:     "#f59e0b",
-  warningBg:   "rgba(245,158,11,0.1)",
-  warningBorder:"rgba(245,158,11,0.25)",
-  font:        "'DM Sans','Inter',sans-serif",
-  thumbGrads: [
-    "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
-    "conic-gradient(from 0deg at 50% 50%, #a8edea, #fed6e3, #ff9999, #a8edea)",
-    "conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #f093fb, #667eea)",
-    "conic-gradient(from 0deg at 50% 50%, #f5af19, #f12711, #fa709a, #f5af19)",
-    "conic-gradient(from 0deg at 50% 50%, #4facfe, #00f2fe, #43e97b, #4facfe)",
-    "conic-gradient(from 0deg at 50% 50%, #30cfd0, #330867, #a8edea, #30cfd0)",
-  ],
+  warningBg:   "rgba(245,158,11,0.10)",
+  font:        "'DM Sans','Plus Jakarta Sans',sans-serif",
 };
 
 /* ════════════════════════════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════════════════════════════ */
-function getTypeLabel(type) {
-  const map = {
-    TEXT:"Văn bản ngắn", PARAGRAPH:"Đoạn văn", EMAIL:"Email",
-    DATE:"Ngày", NUMBER:"Số", RATING:"Xếp hạng",
-    SINGLE_CHOICE:"Một lựa chọn", MULTIPLE_CHOICE:"Nhiều lựa chọn",
-    DROPDOWN:"Menu thả xuống", LINEAR_SCALE:"Phạm vi tuyến tính",
-    TIME:"Giờ", FILE_UPLOAD:"Tải tệp lên",
-  };
-  return map[type] || type;
-}
-
-function getTypeColor(type) {
-  const map = {
-    TEXT:"#4f6ef7", PARAGRAPH:"#7c3aed", EMAIL:"#0891b2",
-    DATE:"#b45309", NUMBER:"#059669", RATING:"#d97706",
-    SINGLE_CHOICE:"#ea580c", MULTIPLE_CHOICE:"#16a34a",
-    DROPDOWN:"#6d28d9", LINEAR_SCALE:"#7c3aed",
-    TIME:"#0891b2",
-  };
-  const c = map[type] || "#6b7280";
-  return { color: c, bg: `${c}18`, border: `${c}40` };
-}
-
 function STATUS_MAP(status) {
   const m = {
-    ACTIVE:   { label:"Đang mở",  color:"#059669", bg:"rgba(16,185,129,0.15)" },
-    DRAFT:    { label:"Nháp",      color:C.textSub, bg:"rgba(107,114,128,0.12)" },
-    EXPIRED:  { label:"Hết hạn",   color:"#dc2626", bg:"rgba(239,68,68,0.12)" },
-    SCHEDULED:{ label:"Lên lịch",  color:"#d97706", bg:"rgba(245,158,11,0.12)" },
-    CLOSED:   { label:"Đã đóng",   color:"#6b7280", bg:"rgba(107,114,128,0.12)" },
+    ACTIVE:    { label:"Đang mở",  color:"#10b981", bg:"rgba(16,185,129,0.15)" },
+    DRAFT:     { label:"Nháp",      color:C.textSub, bg:"rgba(107,114,128,0.12)" },
+    EXPIRED:   { label:"Hết hạn",   color:"#ef4444", bg:"rgba(239,68,68,0.12)" },
+    SCHEDULED: { label:"Lên lịch",  color:"#f59e0b", bg:"rgba(245,158,11,0.12)" },
+    CLOSED:    { label:"Đã đóng",   color:"#6b7280", bg:"rgba(107,114,128,0.12)" },
   };
   return m[status] || m.DRAFT;
 }
@@ -99,49 +66,43 @@ function Modal({ open, onClose, title, children, width=480 }) {
     document.addEventListener("keydown", h);
     return () => document.removeEventListener("keydown", h);
   }, [open, onClose]);
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
-  return createPortal(
+  if (!open || typeof document === "undefined") return null;
+  return (
     <div onClick={onClose} style={{
       position:"fixed", inset:0, zIndex:10050,
-      background:"rgba(15,17,23,0.55)", backdropFilter:"blur(10px)",
+      background:"rgba(0,0,0,0.65)", backdropFilter:"blur(10px)",
       display:"flex", alignItems:"center", justifyContent:"center", padding:20,
-      animation:"fadeIn .16s ease",
     }}>
       <div onClick={e=>e.stopPropagation()} style={{
-        background:"rgba(255,255,255,0.95)",
-        backdropFilter:"blur(24px)", borderRadius:24,
-        border:`1px solid ${C.glassBorder}`,
-        boxShadow:"0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5)",
+        background:C.surfaceHigh, border:`1px solid ${C.glassBorder}`,
+        borderRadius:20, boxShadow:"0 32px 80px rgba(0,0,0,0.5)",
         width:"100%", maxWidth:width, overflow:"hidden",
-        animation:"slideUp .22s cubic-bezier(.16,1,.3,1)",
       }}>
         <div style={{
           display:"flex", alignItems:"center", justifyContent:"space-between",
-          padding:"16px 20px", borderBottom:`1px solid rgba(0,0,0,0.06)`,
+          padding:"16px 20px", borderBottom:`1px solid ${C.border}`,
         }}>
-          <h3 style={{margin:0, fontSize:14, fontWeight:800, color:C.text, fontFamily:C.font}}>{title}</h3>
+          <h3 style={{margin:0, fontSize:15, fontWeight:800, color:C.text, fontFamily:C.font}}>{title}</h3>
           <button onClick={onClose} style={{
-            width:30, height:30, borderRadius:8,
-            border:`1px solid rgba(0,0,0,0.08)`, background:"transparent",
-            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+            width:30, height:30, borderRadius:8, border:`1px solid ${C.border}`,
+            background:"transparent", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center",
             color:C.textSub, transition:"all .15s",
           }}
-            onMouseEnter={e=>{e.currentTarget.style.background=C.errorBg;e.currentTarget.style.color=C.error;}}
-            onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
+            onMouseEnter={e=>{e.currentTarget.style.background=C.errorBg;e.currentTarget.style.borderColor=C.errorBorder;e.currentTarget.style.color=C.error;}}
+            onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textSub;}}
           ><X size={13}/></button>
         </div>
         <div style={{padding:"20px", maxHeight:"70vh", overflowY:"auto"}}>{children}</div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════
    SHARE LINK MODAL
 ════════════════════════════════════════════════════════════════ */
-function ShareLinkModal({ open, onClose, survey, onShare }) {
+function ShareLinkModal({ open, onClose, survey }) {
   const [shareUrl, setShareUrl] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -155,9 +116,14 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
     if (!survey?.id) return;
     setLoading(true); setError("");
     try {
-      const result = await onShare(survey.id);
-      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? null;
-      if (url) setShareUrl(url); else setError("Không lấy được link.");
+      const res = await surveyService.shareSurveyLink(survey.id);
+      const data = res?.data ?? res;
+      const accessToken = data?.access_token ?? data?.accessToken ?? data?.survey?.access_token;
+      const base = window.location.origin;
+      const url = accessToken
+        ? `${base}/user/surveys/${survey.id}?access_token=${accessToken}`
+        : `${base}/user/surveys/${survey.id}`;
+      setShareUrl(url);
     } catch { setError("Tạo link thất bại."); }
     finally { setLoading(false); }
   };
@@ -176,30 +142,44 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const cardStyle = {
+    background: C.surface, border:`1px solid ${C.border}`,
+    borderRadius:16, padding:"18px",
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Chia sẻ khảo sát">
+    <Modal open={open} onClose={onClose} title="Chia sẻ khảo sát" width={500}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <div style={{padding:"14px 16px",background:"rgba(67,97,238,0.08)",borderRadius:14,border:`1px solid rgba(67,97,238,0.2)`}}>
+        <div style={{...cardStyle, borderColor:"rgba(108,126,247,0.2)", background: C.primaryDim}}>
           <div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.font}}>{survey?.title}</div>
           <div style={{fontSize:12,color:C.textSub,marginTop:2,fontFamily:C.font}}>Tạo link để chia sẻ survey với mọi người</div>
         </div>
         {error && (
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderRadius:10,background:C.errorBg,border:`1px solid ${C.errorBorder}`}}>
             <span style={{fontSize:12,color:C.error,fontFamily:C.font}}>{error}</span>
-            <button onClick={handleGenerate} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.errorBorder}`,background:"rgba(255,255,255,0.8)",color:C.error,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:C.font}}>Thử lại</button>
+            <button onClick={handleGenerate} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.errorBorder}`,background:"transparent",color:C.error,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:C.font}}>Thử lại</button>
           </div>
         )}
         {shareUrl ? (
-          <div style={{display:"flex",flexDirection:"column",gap:10,animation:"slideUp .2s ease"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:12,border:`1px solid rgba(67,97,238,0.2)`,backdropFilter:"blur(8px)"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background: C.surface,borderRadius:12,border:`1px solid ${C.primaryDim}`}}>
               <LinkIcon size={13} color={C.primary} style={{flexShrink:0}}/>
               <span style={{flex:1,fontSize:12,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"monospace"}}>{shareUrl}</span>
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={handleCopy} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px",borderRadius:11,border:`1px solid ${copied ? C.successBorder : "rgba(67,97,238,0.3)"}`,background:copied ? C.successBg : "rgba(67,97,238,0.08)",color:copied ? C.success : C.primary,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:C.font,transition:"all .2s"}}>
+              <button onClick={handleCopy} style={{
+                flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px",
+                borderRadius:11,border:`1px solid ${copied ? C.successBorder : C.primaryDim}`,
+                background:copied ? C.successBg : "transparent",
+                color:copied ? C.success : C.primary,fontSize:12,fontWeight:700,cursor:"pointer",
+                fontFamily:C.font,transition:"all .2s",
+              }}>
                 {copied ? <><CheckCircle2 size={13}/> Đã sao chép!</> : <><Copy size={13}/> Sao chép link</>}
               </button>
-              <button onClick={() => window.open(shareUrl,"_blank")} style={{width:42,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:11,border:`1px solid rgba(0,0,0,0.08)`,background:"transparent",color:C.textSub,cursor:"pointer"}}>
+              <button onClick={() => window.open(shareUrl,"_blank")} style={{
+                width:42,display:"flex",alignItems:"center",justifyContent:"center",
+                borderRadius:11,border:`1px solid ${C.border}`,background:"transparent",color:C.textSub,cursor:"pointer",
+              }}>
                 <ExternalLink size={14}/>
               </button>
             </div>
@@ -208,7 +188,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
           <button onClick={handleGenerate} disabled={loading} style={{
             display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 0",
             borderRadius:12,border:"none",
-            background:loading ? "rgba(0,0,0,0.06)" : C.primaryGrad,
+            background:loading ? "rgba(255,255,255,0.05)" : C.primaryGrad,
             color:"#fff",fontSize:13,fontWeight:700,
             cursor:loading?"not-allowed":"pointer",fontFamily:C.font,
             boxShadow:loading?"none":"0 4px 14px rgba(67,97,238,0.35)",
@@ -224,7 +204,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 /* ════════════════════════════════════════════════════════════════
    INVITE MODAL
 ════════════════════════════════════════════════════════════════ */
-function InviteModal({ open, onClose, survey, onInvite }) {
+function InviteModal({ open, onClose, survey }) {
   const [emails,setEmails]=useState("");
   const [role,setRole]=useState("viewer");
   const [loading,setLoading]=useState(false);
@@ -241,26 +221,30 @@ function InviteModal({ open, onClose, survey, onInvite }) {
     const list=emails.split(/[\n,;]+/).map(e=>e.trim()).filter(Boolean);
     if(!list.length){setError("Vui lòng nhập ít nhất 1 email.");return;}
     setLoading(true);setError("");setSuccess(false);
-    try{await Promise.all(list.map(email=>onInvite(survey.id,{email,role})));setSentCount(list.length);setSuccess(true);setEmails("");}
+    try{
+      await Promise.all(list.map(email=>surveyService.inviteSurvey(survey.id,{email,role})));
+      setSentCount(list.length);setSuccess(true);setEmails("");
+    }
     catch{setError("Mời không thành công.");}
     finally{setLoading(false);}
   };
-  const sharedCancelBtn={padding:"9px 16px",borderRadius:10,border:`1px solid rgba(0,0,0,0.1)`,background:"transparent",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font};
-  const sharedPrimaryBtn=(disabled=false)=>({display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:10,border:"none",background:disabled?"rgba(0,0,0,0.05)":C.primaryGrad,color:disabled?C.textSub:"#fff",fontSize:12,fontWeight:700,cursor:disabled?"not-allowed":"pointer",fontFamily:C.font,boxShadow:disabled?"none":"0 4px 14px rgba(67,97,238,0.35)",transition:"all .2s"});
+
+  const sharedCancelBtn={padding:"9px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font};
+
   return (
     <Modal open={open} onClose={onClose} title="Mời người tham gia" width={500}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         {success&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:12,background:C.successBg,border:`1px solid ${C.successBorder}`}}>
           <CheckCircle2 size={14} color={C.success}/>
-          <span style={{fontSize:12,fontWeight:600,color:"#059669",fontFamily:C.font}}>Đã gửi lời mời đến {sentCount} địa chỉ email.</span>
+          <span style={{fontSize:12,fontWeight:600,color:C.success,fontFamily:C.font}}>Đã gửi lời mời đến {sentCount} địa chỉ email.</span>
         </div>}
         <form onSubmit={handleSubmit}>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             <div>
-              <label style={{fontSize:11,fontWeight:700,color:C.textSub,letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:7,display:"block",fontFamily:C.font}}>Vai trò</label>
+              <label style={{display:"block",fontSize:11,fontWeight:700,color:C.textSub,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:7,fontFamily:C.font}}>Vai trò</label>
               <div style={{display:"flex",gap:8}}>
                 {ROLES.map(r=>(
-                  <button key={r.value} type="button" onClick={()=>setRole(r.value)} style={{flex:1,padding:"9px 10px",borderRadius:11,border:`1.5px solid ${role===r.value?C.primary:"rgba(0,0,0,0.08)"}`,background:role===r.value?"rgba(67,97,238,0.1)":"rgba(255,255,255,0.6)",cursor:"pointer",textAlign:"center",transition:"all .15s",backdropFilter:"blur(8px)"}}>
+                  <button key={r.value} type="button" onClick={()=>setRole(r.value)} style={{flex:1,padding:"9px 10px",borderRadius:11,border:`1.5px solid ${role===r.value?C.primary:C.border}`,background:role===r.value?C.primaryLight:"rgba(255,255,255,0.05)",cursor:"pointer",textAlign:"center",transition:"all .15s"}}>
                     <div style={{fontSize:12,fontWeight:700,color:role===r.value?C.primary:C.text,fontFamily:C.font}}>{r.label}</div>
                     <div style={{fontSize:10,color:C.textSub,marginTop:2,fontFamily:C.font}}>{r.desc}</div>
                   </button>
@@ -270,14 +254,26 @@ function InviteModal({ open, onClose, survey, onInvite }) {
             <label style={{fontSize:11,fontWeight:700,color:C.textSub,letterSpacing:"0.05em",textTransform:"uppercase",fontFamily:C.font}}>Địa chỉ email</label>
             <textarea rows={4} value={emails} onChange={e=>{setEmails(e.target.value);setError("");}}
               placeholder={"example@email.com\nuser2@email.com"}
-              style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",background:"rgba(255,255,255,0.8)",backdropFilter:"blur(8px)",border:`1.5px solid ${error?C.error:"rgba(0,0,0,0.1)"}`,borderRadius:11,color:C.text,fontSize:13,fontFamily:C.font,outline:"none",resize:"vertical",lineHeight:1.7}}
-              onFocus={e=>{e.target.style.borderColor=C.primary;e.target.style.boxShadow=`0 0 0 3px rgba(67,97,238,0.1)`;}}
-              onBlur={e=>{e.target.style.borderColor=error?C.error:"rgba(0,0,0,0.1)";e.target.style.boxShadow="none";}}
+              style={{
+                width:"100%",boxSizing:"border-box",padding:"10px 12px",
+                background:C.surface,border:`1.5px solid ${error?C.error:C.border}`,
+                borderRadius:11,color:C.text,fontSize:13,fontFamily:C.font,
+                outline:"none",resize:"vertical",lineHeight:1.7,
+              }}
+              onFocus={e=>{e.target.style.borderColor=C.primary;}}
+              onBlur={e=>{e.target.style.borderColor=error?C.error:C.border;}}
             />
             {error&&<div style={{fontSize:12,color:C.error,fontFamily:C.font}}>{error}</div>}
             <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:4}}>
               <button type="button" onClick={onClose} style={sharedCancelBtn}>Đóng</button>
-              <button type="submit" disabled={loading} style={sharedPrimaryBtn(loading)}>
+              <button type="submit" disabled={loading} style={{
+                display:"flex",alignItems:"center",gap:6,padding:"9px 18px",
+                borderRadius:10,border:"none",
+                background:loading?"rgba(255,255,255,0.05)":C.primaryGrad,
+                color:"#fff",fontSize:12,fontWeight:700,
+                cursor:loading?"not-allowed":"pointer",fontFamily:C.font,
+                boxShadow:loading?"none":"0 4px 14px rgba(67,97,238,0.35)",
+              }}>
                 {loading?<><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>:<><Mail size={13}/> Gửi lời mời</>}
               </button>
             </div>
@@ -291,7 +287,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
 /* ════════════════════════════════════════════════════════════════
    PARTICIPANTS MODAL
 ════════════════════════════════════════════════════════════════ */
-function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
+function ParticipantsModal({ open, onClose, survey }) {
   const [participants,setParticipants]=useState([]);
   const [count,setCount]=useState(0);
   const [loading,setLoading]=useState(false);
@@ -303,16 +299,26 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   const load=useCallback(async()=>{
     if(!survey?.id) return;
     setLoading(true);setError("");
-    try{const res=await onGetParticipants(survey.id,{});setParticipants(res?.participants??[]);setCount(res?.count??0);}
+    try{
+      const res=await surveyService.getParticipants(survey.id,{});
+      const raw = res?.data ?? res;
+      setParticipants(raw?.participants??[]);
+      setCount(raw?.count??0);
+    }
     catch{setError("Không thể tải danh sách.");}
     finally{setLoading(false);}
-  },[survey?.id,onGetParticipants]);
+  },[survey?.id]);
 
   useEffect(()=>{ if(open){load();setSearch("");setConfirmPid(null);setError("");}else{setParticipants([]);setCount(0);} },[open,load]);
 
   const handleDelete=async pid=>{
     setDeleting(pid);
-    try{await onDeleteParticipant(survey.id,pid);setParticipants(p=>p.filter(x=>x.participant_id!==pid));setCount(c=>Math.max(0,c-1));setConfirmPid(null);}
+    try{
+      await surveyService.deleteParticipant(survey.id,pid);
+      setParticipants(p=>p.filter(x=>x.participant_id!==pid));
+      setCount(c=>Math.max(0,c-1));
+      setConfirmPid(null);
+    }
     finally{setDeleting(null);}
   };
 
@@ -326,16 +332,20 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
     return (email||"?")[0].toUpperCase();
   };
 
-  const AV=[{bg:"#e0e7ff",color:"#3730a3"},{bg:"#d1fae5",color:"#065f46"},{bg:"#fce7f3",color:"#9d174d"},{bg:"#fef3c7",color:"#78350f"},{bg:"#f3e8ff",color:"#5b21b6"}];
-  const ROLE_STYLE={viewer:{color:"#1d4ed8",bg:"#eff6ff",border:"#bfdbfe"},respondent:{color:"#059669",bg:"#ecfdf5",border:"#a7f3d0"},editor:{color:"#7c3aed",bg:"#f5f3ff",border:"#ddd6fe"}};
-  const getRoleStyle=role=>ROLE_STYLE[role?.toLowerCase()]??{color:C.primary,bg:"rgba(67,97,238,0.1)",border:"rgba(67,97,238,0.3)"};
+  const AV=[{bg:"#1e293b",color:"#94a3b8"},{bg:"#1a2e1a",color:"#4ade80"},{bg:"#2e1a2e",color:"#f472b6"},{bg:"#2e2a1a",color:"#facc15"},{bg:"#1a1a2e",color:"#a78bfa"}];
+  const ROLE_STYLE={
+    viewer:{color:"#60a5fa",bg:"rgba(96,165,250,0.1)",border:"rgba(96,165,250,0.2)"},
+    respondent:{color:"#4ade80",bg:"rgba(74,222,128,0.1)",border:"rgba(74,222,128,0.2)"},
+    editor:{color:"#c084fc",bg:"rgba(192,132,252,0.1)",border:"rgba(192,132,252,0.2)"},
+  };
+  const getRoleStyle=role=>ROLE_STYLE[role?.toLowerCase()]??{color:C.primary,bg:C.primaryDim,border:C.primaryDim};
 
   return (
     <Modal open={open} onClose={onClose} title="Quản lý người tham gia" width={560}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div style={{display:"flex",gap:10,alignItems:"stretch"}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:12,background:"rgba(67,97,238,0.08)",border:`1px solid rgba(67,97,238,0.2)`}}>
-            <div style={{width:36,height:36,borderRadius:10,background:"rgba(67,97,238,0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:12,background:C.primaryDim,border:`1px solid rgba(108,126,247,0.2)`}}>
+            <div style={{width:36,height:36,borderRadius:10,background:C.primaryLight,display:"flex",alignItems:"center",justifyContent:"center"}}>
               <Users size={16} color={C.primary}/>
             </div>
             <div>
@@ -343,21 +353,29 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
               <div style={{fontSize:11,color:C.textSub,marginTop:2,fontFamily:C.font}}>Tổng participants</div>
             </div>
           </div>
-          <button onClick={load} disabled={loading} style={{padding:"0 14px",borderRadius:12,border:"1px solid rgba(0,0,0,0.08)",background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,fontSize:11,fontWeight:600,color:C.textSub,flexShrink:0,fontFamily:C.font}}>
+          <button onClick={load} disabled={loading} style={{
+            padding:"0 14px",borderRadius:12,border:`1px solid ${C.border}`,
+            background:"transparent",cursor:loading?"not-allowed":"pointer",
+            display:"flex",alignItems:"center",gap:6,fontSize:11,fontWeight:600,color:C.textSub,
+            flexShrink:0,fontFamily:C.font,
+          }}>
             <RefreshCw size={13} style={loading ? {animation:"spin 1s linear infinite"} : {}}/>Tải lại
           </button>
         </div>
+
         {error&&!loading&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderRadius:10,background:C.errorBg,border:`1px solid ${C.errorBorder}`}}>
           <span style={{fontSize:12,color:C.error,fontFamily:C.font}}>{error}</span>
-          <button onClick={load} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.errorBorder}`,background:"rgba(255,255,255,0.8)",color:C.error,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:C.font}}>Thử lại</button>
+          <button onClick={load} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.errorBorder}`,background:"transparent",color:C.error,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:C.font}}>Thử lại</button>
         </div>}
-        <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",border:`1px solid rgba(0,0,0,0.07)`,borderRadius:10}}>
+
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:C.surface,border:`1px solid ${C.border}`,borderRadius:10}}>
           <Search size={13} color={C.textDim}/>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm theo tên, email hoặc vai trò..."
             style={{flex:1,border:"none",outline:"none",fontSize:12,fontFamily:C.font,color:C.text,background:"transparent"}}/>
           {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:C.textDim,display:"flex",padding:0}}><X size={12}/></button>}
         </div>
-        <div style={{border:`1px solid rgba(0,0,0,0.07)`,borderRadius:14,overflow:"hidden",maxHeight:340,overflowY:"auto",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(8px)"}}>
+
+        <div style={{border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden",maxHeight:340,overflowY:"auto",background:C.surface}}>
           {loading?(
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"48px 20px",gap:12}}>
               <Loader2 size={26} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
@@ -376,25 +394,45 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
               const isDeleting=deleting===deleteKey;
               const roleStyle=getRoleStyle(p.role);
               return (
-                <div key={p.participant_id??p.id??i} style={{display:"flex",alignItems:"center",gap:11,padding:"11px 14px",borderBottom:i<filtered.length-1?`1px solid rgba(0,0,0,0.05)`:"none",background:isConfirming?C.errorBg:"transparent",transition:"background .15s"}}>
-                  <div style={{width:34,height:34,borderRadius:"50%",background:av.bg,color:av.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{getInitials(p.name,p.email)}</div>
+                <div key={p.participant_id??p.id??i} style={{
+                  display:"flex",alignItems:"center",gap:11,padding:"11px 14px",
+                  borderBottom:i<filtered.length-1?`1px solid ${C.border}`:"none",
+                  background:isConfirming?C.errorBg:"transparent",
+                  transition:"background .15s",
+                }}>
+                  <div style={{
+                    width:34,height:34,borderRadius:"50%",background:av.bg,color:av.color,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:11,fontWeight:700,flexShrink:0,
+                  }}>{getInitials(p.name,p.email)}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:600,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{p.name||p.email}</div>
                     {p.name&&<div style={{fontSize:11,color:C.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{p.email}</div>}
-                    {!p.name&&<div style={{fontSize:10,color:C.textDim,fontFamily:C.font}}>ID: {p.id?p.id.slice(0,8)+"...":"—"}</div>}
                   </div>
-                  {p.role&&<span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:999,flexShrink:0,color:roleStyle.color,background:roleStyle.bg,border:`1px solid ${roleStyle.border}`,fontFamily:C.font}}>{p.role}</span>}
+                  {p.role&&<span style={{
+                    fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:999,flexShrink:0,
+                    color:roleStyle.color,background:roleStyle.bg,border:`1px solid ${roleStyle.border}`,fontFamily:C.font,
+                  }}>{p.role}</span>}
                   {isConfirming?(
                     <div style={{display:"flex",gap:5,flexShrink:0}}>
-                      <button onClick={()=>setConfirmPid(null)} style={{padding:"4px 9px",borderRadius:7,fontSize:11,fontWeight:600,border:`1px solid rgba(0,0,0,0.1)`,background:"rgba(255,255,255,0.8)",color:C.textSub,cursor:"pointer",fontFamily:C.font}}>Huỷ</button>
-                      <button onClick={()=>handleDelete(deleteKey)} disabled={isDeleting} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 9px",borderRadius:7,fontSize:11,fontWeight:700,border:"none",background:isDeleting?"rgba(0,0,0,0.05)":C.error,color:isDeleting?C.textSub:"#fff",cursor:isDeleting?"not-allowed":"pointer",fontFamily:C.font}}>
+                      <button onClick={()=>setConfirmPid(null)} style={{padding:"4px 9px",borderRadius:7,fontSize:11,fontWeight:600,border:`1px solid ${C.border}`,background:"transparent",color:C.textSub,cursor:"pointer",fontFamily:C.font}}>Huỷ</button>
+                      <button onClick={()=>handleDelete(deleteKey)} disabled={isDeleting} style={{
+                        display:"flex",alignItems:"center",gap:4,padding:"4px 9px",borderRadius:7,fontSize:11,fontWeight:700,border:"none",
+                        background:isDeleting?"rgba(255,255,255,0.05)":C.error,
+                        color:isDeleting?C.textSub:"#fff",cursor:isDeleting?"not-allowed":"pointer",fontFamily:C.font,
+                      }}>
                         {isDeleting?<Loader2 size={10} style={{animation:"spin 1s linear infinite"}}/>:<Trash size={10}/>} Xoá
                       </button>
                     </div>
                   ):(
-                    <button onClick={()=>setConfirmPid(deleteKey)} style={{width:28,height:28,borderRadius:8,flexShrink:0,border:`1px solid rgba(0,0,0,0.08)`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:C.textDim,transition:"all .15s"}}
+                    <button onClick={()=>setConfirmPid(deleteKey)} style={{
+                      width:28,height:28,borderRadius:8,flexShrink:0,border:`1px solid ${C.border}`,
+                      background:"transparent",cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      color:C.textDim,transition:"all .15s",
+                    }}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor=C.errorBorder;e.currentTarget.style.color=C.error;e.currentTarget.style.background=C.errorBg;}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(0,0,0,0.08)";e.currentTarget.style.color=C.textDim;e.currentTarget.style.background="transparent";}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textDim;e.currentTarget.style.background="transparent";}}
                     ><Trash size={12}/></button>
                   )}
                 </div>
@@ -402,17 +440,18 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             })
           )}
         </div>
-        {!loading&&!error&&filtered.length>0&&search&&<div style={{fontSize:11,color:C.textSub,textAlign:"center",fontFamily:C.font}}>Hiển thị {filtered.length} / {participants.length} người</div>}
-        <div style={{display:"flex",justifyContent:"flex-end"}}><button onClick={onClose} style={{padding:"9px 16px",borderRadius:10,border:`1px solid rgba(0,0,0,0.1)`,background:"transparent",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font}}>Đóng</button></div>
+        <div style={{display:"flex",justifyContent:"flex-end"}}>
+          <button onClick={onClose} style={{padding:"9px 16px",borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font}}>Đóng</button>
+        </div>
       </div>
     </Modal>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════
-   TAB BAR
+   SEND PANEL
 ════════════════════════════════════════════════════════════════ */
-function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulkInvite, onGetParticipants, onDeleteParticipant }) {
+function SendPanel({ survey, onPublish, onCloseSurvey }) {
   const [shareOpen,setShareOpen]=useState(false);
   const [inviteOpen,setInviteOpen]=useState(false);
   const [participantsOpen,setParticipantsOpen]=useState(false);
@@ -420,16 +459,17 @@ function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulk
   const isClosed = survey?.status==="CLOSED";
 
   const cardStyle = (hover=true, delay=0) => ({
-    background:"rgba(255,255,255,0.9)",backdropFilter:"blur(20px)",
-    border:"1px solid rgba(255,255,255,0.6)",borderRadius:20,
-    padding:"24px",boxShadow:"0 2px 0 rgba(255,255,255,0.9) inset, 0 8px 32px rgba(15,23,42,0.06)",
-    animation:`slideUp .4s ease ${delay}s both`,
+    background: C.surface, border:`1px solid ${C.glassBorder}`,
+    borderRadius:20, padding:"22px",
     transition:hover?"all .2s ease":"none",
     cursor:hover?"pointer":"default",
   });
 
   const ActionCard = ({icon:Icon,title,desc,sub,onClick,color=C.primary,delay=0}) => (
-    <div onClick={onClick} onMouseEnter={e=>{if(hover){e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(99,102,241,0.14)";e.currentTarget.style.borderColor=`${color}50`;}}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.9) inset, 0 8px 32px rgba(15,23,42,0.06)";e.currentTarget.style.borderColor="rgba(255,255,255,0.6)";}} style={cardStyle(true,delay)}>
+    <div onClick={onClick} style={cardStyle(true,delay)}
+      onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(0,0,0,0.3)";e.currentTarget.style.borderColor=`${color}50`;}}
+      onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor=C.glassBorder;}}
+    >
       <div style={{display:"flex",alignItems:"flex-start",gap:16}}>
         <div style={{width:48,height:48,borderRadius:14,background:`${color}18`,border:`1px solid ${color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <Icon size={22} color={color}/>
@@ -443,17 +483,21 @@ function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulk
     </div>
   );
 
-  const hover = true;
   return (
     <div style={{display:"flex",flexDirection:"column",gap:16,padding:"0 0 40px"}}>
       <ActionCard icon={Share2} title="Chia sẻ link" desc="Tạo link công khai để chia sẻ khảo sát với bất kỳ ai" sub={isPublished?"Đang hoạt động":"Chưa công khai"} onClick={()=>setShareOpen(true)} color={isPublished?"#10b981":C.primary} delay={0}/>
-      <ActionCard icon={Mail} title="Mời qua email" desc="Gửi lời mời khảo sát trực tiếp đến email của người tham gia" onClick={()=>setInviteOpen(true)} color="#7c3aed" delay={0.05}/>
+      <ActionCard icon={Mail} title="Mời qua email" desc="Gửi lời mời khảo sát trực tiếp đến email của người tham gia" onClick={()=>setInviteOpen(true)} color="#a78bfa" delay={0.05}/>
       <ActionCard icon={Users} title="Quản lý người tham gia" desc="Xem danh sách những người đã được mời tham gia khảo sát này" onClick={()=>setParticipantsOpen(true)} color="#0891b2" delay={0.1}/>
+
       <div style={{display:"flex",gap:16}}>
-        <div onClick={()=>onPublish&&onPublish(survey.id,{is_published:!isPublished})} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(99,102,241,0.14)";}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.9) inset, 0 8px 32px rgba(15,23,42,0.06)";}} style={{...cardStyle(true,0.15),flex:1,cursor:"pointer"}}>
+        <div onClick={()=>onPublish&&onPublish(survey.id,{is_published:!isPublished})}
+          style={{...cardStyle(true,0.15),flex:1,cursor:"pointer"}}
+          onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(0,0,0,0.3)";}}
+          onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}
+        >
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:40,height:40,borderRadius:12,background:isPublished?"rgba(245,158,11,0.15)":"rgba(16,185,129,0.15)",border:`1px solid ${isPublished?"rgba(245,158,11,0.3)":"rgba(16,185,129,0.3)"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              {isPublished?<Lock size={18} color="#d97706"/>:<Globe size={18} color="#059669"/>}
+              {isPublished?<Lock size={18} color="#d97706"/>:<Globe size={18} color="#10b981"/>}
             </div>
             <div>
               <h3 style={{fontSize:13,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>{isPublished?"Ẩn survey":"Công khai survey"}</h3>
@@ -461,7 +505,12 @@ function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulk
             </div>
           </div>
         </div>
-        {!isClosed&&<div onClick={()=>onCloseSurvey&&onCloseSurvey(survey.id)} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(239,68,68,0.12)";e.currentTarget.style.borderColor=C.errorBorder;}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.9) inset, 0 8px 32px rgba(15,23,42,0.06)";e.currentTarget.style.borderColor="rgba(255,255,255,0.6)";}} style={{...cardStyle(true,0.2),flex:1,cursor:"pointer"}}>
+
+        {!isClosed&&<div onClick={()=>onCloseSurvey&&onCloseSurvey(survey.id)}
+          style={{...cardStyle(true,0.2),flex:1,cursor:"pointer"}}
+          onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(239,68,68,0.15)";e.currentTarget.style.borderColor=C.errorBorder;}}
+          onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor=C.glassBorder;}}
+        >
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:40,height:40,borderRadius:12,background:C.errorBg,border:`1px solid ${C.errorBorder}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <PowerOff size={18} color={C.error}/>
@@ -473,9 +522,10 @@ function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulk
           </div>
         </div>}
       </div>
-      <ShareLinkModal open={shareOpen} onClose={()=>setShareOpen(false)} survey={survey} onShare={onShare}/>
-      <InviteModal open={inviteOpen} onClose={()=>setInviteOpen(false)} survey={survey} onInvite={onInvite}/>
-      <ParticipantsModal open={participantsOpen} onClose={()=>setParticipantsOpen(false)} survey={survey} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant}/>
+
+      <ShareLinkModal open={shareOpen} onClose={()=>setShareOpen(false)} survey={survey}/>
+      <InviteModal open={inviteOpen} onClose={()=>setInviteOpen(false)} survey={survey}/>
+      <ParticipantsModal open={participantsOpen} onClose={()=>setParticipantsOpen(false)} survey={survey}/>
     </div>
   );
 }
@@ -484,19 +534,17 @@ function SendPanel({ survey, onShare, onInvite, onPublish, onCloseSurvey, onBulk
    TAB BAR
 ════════════════════════════════════════════════════════════════ */
 const TABS_CONFIG = [
-  { id:"design", label:"Thiết kế", icon:LayoutTemplate },
-  { id:"send",   label:"Gửi khảo sát", icon:Send },
-  { id:"analyze",label:"Phân tích", icon:BarChart3 },
+  { id:"design",  label:"Thiết kế",       icon:LayoutTemplate },
+  { id:"send",    label:"Gửi khảo sát",  icon:Send },
+  { id:"analyze", label:"Phân tích",      icon:BarChart3 },
 ];
 
 function TabBar({ active, onChange }) {
   return (
     <div style={{
       display:"flex",alignItems:"center",gap:6,
-      background:"rgba(255,255,255,0.85)",backdropFilter:"blur(20px)",
-      border:`1px solid rgba(255,255,255,0.7)"`,borderRadius:16,
-      padding:5,
-      boxShadow:"0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.05)",
+      background:"rgba(255,255,255,0.04)",border:`1px solid ${C.glassBorder}`,
+      borderRadius:16, padding:5,
     }}>
       {TABS_CONFIG.map(tab=>{
         const Icon = tab.icon;
@@ -507,7 +555,7 @@ function TabBar({ active, onChange }) {
             borderRadius:12,border:"none",cursor:"pointer",
             fontSize:13,fontWeight:is?700:500,
             fontFamily:C.font,transition:"all .2s ease",
-            background:is?"linear-gradient(135deg,#4361ee,#6c7ef7)":"transparent",
+            background:is?C.primaryGrad:"transparent",
             color:is?"#fff":C.textSub,
             boxShadow:is?"0 4px 14px rgba(67,97,238,0.35)":"none",
           }}>
@@ -521,56 +569,94 @@ function TabBar({ active, onChange }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SURVEY STUDIO — MAIN PAGE
+   ADMIN SURVEY STUDIO — MAIN PAGE
 ════════════════════════════════════════════════════════════════ */
-export default function SurveyStudio() {
+export default function AdminSurveyStudio() {
   const { surveyId } = useParams();
   const navigate = useNavigate();
-  const { fetchSurveyById, currentSurvey, publishSurvey, shareLink, inviteSurvey, closeSurvey, bulkInviteSurvey, getParticipants, deleteParticipant } = useSurvey();
-
-  const [activeTab, setActiveTab] = useState("design");
+  const [searchParams] = useSearchParams();
+  const [survey, setSurvey] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get("tab");
+    return ["design", "send", "analyze"].includes(tab) ? tab : "design";
+  });
 
   useEffect(() => {
     if (!surveyId) return;
     setLoading(true);
-    fetchSurveyById(surveyId).finally(() => setLoading(false));
+    surveyService.getSurveyById(surveyId)
+      .then(res => {
+        const body = res?.data;
+        const s = body?.data ?? body?.survey ?? (body?.id != null ? body : null);
+        setSurvey(s);
+      })
+      .catch(() => toast.error("Không tải được thông tin khảo sát"))
+      .finally(() => setLoading(false));
   }, [surveyId]);
 
-  const thumbGrad = C.thumbGrads[0];
-  const survey = currentSurvey;
+  const handlePublish = async (id, payload) => {
+    try {
+      await surveyService.publishSurvey(id, payload);
+      setSurvey(prev => ({ ...prev, ...payload }));
+      toast.success(payload.is_published ? "Đã công khai khảo sát" : "Đã ẩn khảo sát");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Cập nhật thất bại");
+    }
+  };
+
+  const handleClose = async (id) => {
+    try {
+      await surveyService.closeSurvey(id);
+      setSurvey(prev => ({ ...prev, status: "CLOSED" }));
+      toast.success("Đã đóng khảo sát");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Đóng thất bại");
+    }
+  };
+
   const statusInfo = STATUS_MAP(survey?.status);
 
   return (
-    <main style={{minHeight:"100vh",background:"transparent",fontFamily:C.font,position:"relative",overflowX:"hidden"}}>
-      <AnimatedSurveyBackdrop/>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:C.font,position:"relative"}}>
+      {/* Background */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,
+        background:"radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,102,241,0.06) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,85,247,0.04) 0%, transparent 50%)"}}/>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,
+        backgroundImage:"linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+        backgroundSize:"48px 48px"}}/>
 
       {/* ── STUDIO HEADER ── */}
       <div style={{
         position:"sticky",top:0,zIndex:100,
-        background:"rgba(255,255,255,0.88)",backdropFilter:"blur(24px) saturate(190%)",
-        WebkitBackdropFilter:"blur(24px) saturate(190%)",
-        borderBottom:`1px solid rgba(255,255,255,0.7)"`,
-        boxShadow:"0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 24px rgba(15,23,42,0.06)",
+        background:"rgba(8,12,26,0.92)",backdropFilter:"blur(24px) saturate(180%)",
+        WebkitBackdropFilter:"blur(24px) saturate(180%)",
+        borderBottom:`1px solid ${C.border}`,
       }}>
-        {/* Top row */}
-        <div style={{maxWidth:1200,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",gap:16}}>
-          <button onClick={()=>navigate("/user/my-surveys")} style={{
-            display:"flex",alignItems:"center",justifyContent:"center",width:38,height:38,
-            borderRadius:10,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.8)",
+        <div style={{maxWidth:1200,margin:"0 auto",padding:"0 24px",display:"flex",alignItems:"center",gap:16}}>
+          {/* Back */}
+          <button onClick={()=>navigate("/admin/surveys")} style={{
+            display:"flex",alignItems:"center",justifyContent:"center",width:40,height:40,
+            borderRadius:12,border:`1px solid ${C.border}`,background:C.surface,
             cursor:"pointer",flexShrink:0,transition:"all .15s",
-          }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(67,97,238,0.1)";e.currentTarget.style.borderColor="rgba(67,97,238,0.25)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.8)";e.currentTarget.style.borderColor="rgba(0,0,0,0.08)";}}>
-            <ArrowLeft size={16} color={C.text}/>
+            color:C.textSub,
+          }}
+            onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.borderColor=C.primaryDim;e.currentTarget.style.color=C.primary;}}
+            onMouseLeave={e=>{e.currentTarget.style.background=C.surface;e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textSub;}}
+          >
+            <ArrowLeft size={16}/>
           </button>
 
-          {/* Survey thumbnail + title */}
+          {/* Survey info */}
           <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
-            <div style={{width:42,height:42,borderRadius:12,background:thumbGrad,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(99,102,241,0.2)"}}>
-              <FileText size={18} color="rgba(255,255,255,0.9)" strokeWidth={1.5}/>
+            <div style={{width:40,height:40,borderRadius:12,background:C.primaryGrad,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(67,97,238,0.3)"}}>
+              <FileText size={18} color="rgba(255,255,255,0.9)"/>
             </div>
             <div style={{minWidth:0,flex:1}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <h1 style={{fontSize:15,fontWeight:800,color:C.text,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{loading?"...":survey?.title||"Khảo sát"}</h1>
+                <h1 style={{fontSize:15,fontWeight:800,color:C.text,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>
+                  {loading?"...":survey?.title||"Khảo sát"}
+                </h1>
                 {!loading&&<span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:999,color:statusInfo.color,background:statusInfo.bg,flexShrink:0,fontFamily:C.font}}>{statusInfo.label}</span>}
               </div>
               {!loading&&survey?.description&&<p style={{fontSize:11,color:C.textSub,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{survey.description}</p>}
@@ -582,14 +668,11 @@ export default function SurveyStudio() {
             <TabBar active={activeTab} onChange={setActiveTab}/>
           </div>
         </div>
-
-        {/* Bottom divider */}
-        <div style={{height:1,background:"linear-gradient(to right,transparent,rgba(99,102,241,0.15),rgba(99,102,241,0.15),transparent)"}}/>
+        <div style={{height:1,background:`linear-gradient(to right,transparent,rgba(99,102,241,0.15),rgba(99,102,241,0.15),transparent)`}}/>
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <div style={{maxWidth:1200,margin:"0 auto",padding:"32px 20px 60px"}}>
-        {/* Loading */}
+      <div style={{maxWidth:1200,margin:"0 auto",padding:"32px 24px 60px",position:"relative",zIndex:1}}>
         {loading&&(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:16}}>
             <Loader2 size={32} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>
@@ -597,42 +680,37 @@ export default function SurveyStudio() {
           </div>
         )}
 
-        {/* Design tab → MySurveyQuestionsPage */}
+        {/* Design tab */}
         {!loading&&activeTab==="design"&&(
-          <MySurveyQuestionsPage />
+          <div style={{background:C.surface,borderRadius:20,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+            <QuestionPage surveyId={surveyId} embedded />
+          </div>
         )}
 
         {/* Send tab */}
         {!loading&&activeTab==="send"&&(
           <SendPanel
             survey={survey}
-            onShare={shareLink}
-            onInvite={inviteSurvey}
-            onPublish={publishSurvey}
-            onCloseSurvey={closeSurvey}
-            onBulkInvite={bulkInviteSurvey}
-            onGetParticipants={getParticipants}
-            onDeleteParticipant={deleteParticipant}
+            onPublish={handlePublish}
+            onCloseSurvey={handleClose}
           />
         )}
 
-        {/* Analyze tab → UserAnalyticsPage */}
+        {/* Analyze tab */}
         {!loading&&activeTab==="analyze"&&(
-          <UserAnalyticsPage />
+          <AnalyticsPage surveyId={surveyId} embedded />
         )}
       </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         @keyframes spin{to{transform:rotate(360deg);}}
-        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-        @keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
         *{box-sizing:border-box;}
         ::-webkit-scrollbar{width:5px;height:5px;}
         ::-webkit-scrollbar-track{background:transparent;}
-        ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:999px;}
-        ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.15);}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:999px;}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.12);}
       `}</style>
-    </main>
+    </div>
   );
 }

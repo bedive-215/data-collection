@@ -303,17 +303,22 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 ════════════════════════════════════════════════════════════════ */
 function InviteModal({ open, onClose, survey, onInvite }) {
   const [emails,setEmails]=useState("");
+  const [role,setRole]=useState("viewer");
   const [loading,setLoading]=useState(false);
   const [success,setSuccess]=useState(false);
   const [sentCount,setSentCount]=useState(0);
   const [error,setError]=useState("");
-  useEffect(()=>{ if(!open){setEmails("");setSuccess(false);setError("");setSentCount(0);} },[open]);
+  useEffect(()=>{ if(!open){setEmails("");setSuccess(false);setError("");setSentCount(0);setRole("viewer");} },[open]);
+  const ROLES=[
+    {value:"viewer",label:"👁️ Viewer",desc:"Chỉ xem"},
+    {value:"editor",label:"✏️ Editor",desc:"Có thể chỉnh sửa"},
+  ];
   const handleSubmit=async e=>{
     e.preventDefault();
     const list=emails.split(/[\n,;]+/).map(e=>e.trim()).filter(Boolean);
     if(!list.length){setError("Vui lòng nhập ít nhất 1 email.");return;}
     setLoading(true);setError("");setSuccess(false);
-    try{await Promise.all(list.map(email=>onInvite(survey.id,{email,role:"viewer"})));setSentCount(list.length);setSuccess(true);setEmails("");}
+    try{await Promise.all(list.map(email=>onInvite(survey.id,{email,role})));setSentCount(list.length);setSuccess(true);setEmails("");}
     catch{setError("Mời không thành công.");}
     finally{setLoading(false);}
   };
@@ -325,7 +330,18 @@ function InviteModal({ open, onClose, survey, onInvite }) {
           <span style={{fontSize:12,fontWeight:600,color:"#059669",fontFamily:C.font}}>Đã gửi lời mời đến {sentCount} địa chỉ email.</span>
         </div>}
         <form onSubmit={handleSubmit}><div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <label style={{fontSize:11,fontWeight:700,color:C.textSub,letterSpacing:"0.05em",textTransform:"uppercase",fontFamily:C.font}}>Địa chỉ email</label>
+          <div>
+            <label style={{display:"block",fontSize:11,fontWeight:700,color:C.textSub,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:7,fontFamily:C.font}}>Vai trò</label>
+            <div style={{display:"flex",gap:8}}>
+              {ROLES.map(r=>(
+                <button key={r.value} type="button" onClick={()=>setRole(r.value)} style={{flex:1,padding:"9px 10px",borderRadius:11,border:`1.5px solid ${role===r.value?C.primary:"rgba(0,0,0,0.08)"}`,background:role===r.value?"rgba(67,97,238,0.1)":"rgba(255,255,255,0.6)",cursor:"pointer",textAlign:"center",transition:"all .15s",backdropFilter:"blur(8px)"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:role===r.value?C.primary:C.text,fontFamily:C.font}}>{r.label}</div>
+                  <div style={{fontSize:10,color:C.textSub,marginTop:2,fontFamily:C.font}}>{r.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <label style={{display:"block",fontSize:11,fontWeight:700,color:C.textSub,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:7,fontFamily:C.font}}>Địa chỉ email</label>
           <textarea rows={4} value={emails} onChange={e=>{setEmails(e.target.value);setError("");}}
             placeholder={"example@email.com\nuser2@email.com"}
             style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",background:"rgba(255,255,255,0.8)",backdropFilter:"blur(8px)",border:`1.5px solid ${error?C.error:"rgba(0,0,0,0.1)"}`,borderRadius:11,color:C.text,fontSize:13,fontFamily:C.font,outline:"none",resize:"vertical",lineHeight:1.7}}
@@ -362,14 +378,13 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
     const list=parseEmails();
     if(!list.length){setError("Vui lòng nhập ít nhất 1 email.");return;}
     setLoading(true);setError("");
-    try{const res=await onBulkInvite(survey.id,{emails:list,role});setSuccess({sent:res?.sent??list.length,failed:res?.failed??0});setEmails("");}
+    try{const res=await onBulkInvite(survey.id,{emails:list,role});setSuccess({sent:res?.created??list.length,failed:res?.failed??0});setEmails("");}
     catch{setError("Bulk invite thất bại.");}
     finally{setLoading(false);}
   };
   const ROLES=[
     {value:"viewer",label:"👁️ Viewer",desc:"Chỉ xem"},
-    {value:"respondent",label:"✏️ Respondent",desc:"Trả lời"},
-    {value:"editor",label:"🛠️ Editor",desc:"Chỉnh sửa"},
+    {value:"editor",label:"✏️ Editor",desc:"Có thể chỉnh sửa"},
   ];
   return (
     <Modal open={open} onClose={onClose} title="Mời hàng loạt" width={520}>

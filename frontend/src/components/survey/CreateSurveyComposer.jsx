@@ -50,7 +50,6 @@ function parseEmails(text) {
 
 const ROLES = [
   { value: "viewer", label: "Viewer", desc: "Chỉ xem" },
-  { value: "respondent", label: "Người trả lời", desc: "Điền form" },
   { value: "editor", label: "Editor", desc: "Sửa form" },
 ];
 

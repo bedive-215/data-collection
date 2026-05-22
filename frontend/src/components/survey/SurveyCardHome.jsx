@@ -203,11 +203,26 @@ export function SurveyCardHome({
   onDelete,
   onPublish,
   onViewAnalytics,
+  isOwner: isOwnerProp = null,
+  creatorName = null,
 }) {
-  const isOwner = type === "my";
+  const isOwner = isOwnerProp !== null ? isOwnerProp : (type === "my");
   const status  = overrideStatus || survey?.status;
   const cfg     = getCfg(status);
   const isPublished = survey?.is_published;
+
+  // ── Non-owner card uses muted header colors ──
+  const headerBg     = isOwner ? cfg.meshBg : "#f8fafc";
+  const headerImage = isOwner ? cfg.meshImage : [
+    "radial-gradient(at 0% 0%, hsla(215,40%,92%,0.55) 0px, transparent 50%)",
+    "radial-gradient(at 100% 0%, hsla(220,25%,88%,0.5) 0px, transparent 50%)",
+    "radial-gradient(at 100% 100%, hsla(215,22%,85%,0.48) 0px, transparent 50%)",
+    "radial-gradient(at 0% 100%, hsla(215,30%,90%,0.52) 0px, transparent 50%)",
+  ].join(",");
+  const cardBorder  = isOwner ? "1px solid #f1f5f9" : "1px solid rgba(108,126,247,0.25)";
+  const cardShadow = isOwner
+    ? "0 32px 64px -16px rgba(0,0,0,0.1)"
+    : "0 8px 32px -8px rgba(108,126,247,0.18)";
 
   /* Glass button — w-9 h-9 rounded-xl glass-effect */
   const GlassBtn = ({ label, onClick: hdl, children }) => (
@@ -273,8 +288,8 @@ export function SurveyCardHome({
           background: "#ffffff",
           borderRadius: 40,
           overflow: "hidden",
-          boxShadow: "0 32px 64px -16px rgba(0,0,0,0.1)",
-          border: "1px solid #f1f5f9",
+          boxShadow: cardShadow,
+          border: cardBorder,
           fontFamily: C.font,
           display: "flex",
           flexDirection: "column",
@@ -289,8 +304,8 @@ export function SurveyCardHome({
           justifyContent: "center",
           overflow: "hidden",
           height: 110,
-          backgroundColor: cfg.meshBg,
-          backgroundImage: cfg.meshImage,
+          backgroundColor: headerBg,
+          backgroundImage: headerImage,
           flexShrink: 0,
         }}>
 
@@ -337,35 +352,46 @@ export function SurveyCardHome({
             position: "absolute", top: 12, right: 16, zIndex: 10,
             display: "flex", alignItems: "center", gap: 6,
           }}>
-            {isOwner && onLock && (
-              <GlassBtn label="Khóa khảo sát" onClick={() => onLock(survey.id)}>
-                <Lock size={16} />
-              </GlassBtn>
-            )}
-            {onShare && (
-              <GlassBtn label="Chia sẻ" onClick={() => onShare(survey.id)}>
-                <Share size={16} />
-              </GlassBtn>
-            )}
-            {isOwner && onViewAnalytics && (
-              <GlassBtn label="Phân tích" onClick={() => onViewAnalytics(survey.id)}>
-                <BarChart3 size={16} />
-              </GlassBtn>
-            )}
-            {isOwner && onEdit && (
-              <GlassBtn label="Chỉnh sửa" onClick={() => onEdit(survey.id)}>
-                <Edit size={16} />
-              </GlassBtn>
-            )}
-            {isOwner && onPublish && (
-              <GlassBtn label={isPublished ? "Bỏ công khai" : "Công khai"} onClick={() => onPublish(survey.id)}>
-                {isPublished ? <Lock size={16} /> : <Globe size={16} />}
-              </GlassBtn>
-            )}
-            {isOwner && onDelete && (
-              <GlassBtn label="Xóa" onClick={() => onDelete(survey.id)}>
-                <Trash2 size={16} />
-              </GlassBtn>
+            {isOwner ? (
+              <>
+                {onLock && (
+                  <GlassBtn label="Khóa khảo sát" onClick={() => onLock(survey.id)}>
+                    <Lock size={16} />
+                  </GlassBtn>
+                )}
+                {onShare && (
+                  <GlassBtn label="Chia sẻ" onClick={() => onShare(survey.id)}>
+                    <Share size={16} />
+                  </GlassBtn>
+                )}
+                {onViewAnalytics && (
+                  <GlassBtn label="Phân tích" onClick={() => onViewAnalytics(survey.id)}>
+                    <BarChart3 size={16} />
+                  </GlassBtn>
+                )}
+                {onEdit && (
+                  <GlassBtn label="Chỉnh sửa" onClick={() => onEdit(survey.id)}>
+                    <Edit size={16} />
+                  </GlassBtn>
+                )}
+                {onPublish && (
+                  <GlassBtn label={isPublished ? "Bỏ công khai" : "Công khai"} onClick={() => onPublish(survey.id)}>
+                    {isPublished ? <Lock size={16} /> : <Globe size={16} />}
+                  </GlassBtn>
+                )}
+                {onDelete && (
+                  <GlassBtn label="Xóa" onClick={() => onDelete(survey.id)}>
+                    <Trash2 size={16} />
+                  </GlassBtn>
+                )}
+              </>
+            ) : (
+              /* Non-owner: only delete button */
+              onDelete && (
+                <GlassBtn label="Xóa khảo sát" onClick={() => onDelete(survey.id)}>
+                  <Trash2 size={16} />
+                </GlassBtn>
+              )
             )}
           </div>
 
@@ -443,6 +469,24 @@ export function SurveyCardHome({
             </p>
           </div>
 
+          {/* Creator badge for non-owner surveys */}
+          {!isOwner && (creatorName || survey?.creator?.full_name || survey?.creator?.email) && (
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:4,
+              padding:"3px 8px", borderRadius:6,
+              background:"rgba(108,126,247,0.08)",
+              border:"1px solid rgba(108,126,247,0.2)",
+              marginTop:2,
+            }}>
+              <span style={{fontSize:9, fontWeight:700, color:"#6c7ef7", textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:C.font}}>
+                Tạo bởi
+              </span>
+              <span style={{fontSize:10, fontWeight:600, color:"#475569", fontFamily:C.font}}>
+                {creatorName || survey?.creator?.full_name || survey?.creator?.email}
+              </span>
+            </div>
+          )}
+
           {/* Footer Info
               <div class="border-t border-slate-100 flex items-center justify-between mt-2 pt-4">
           */}
@@ -472,7 +516,7 @@ export function SurveyCardHome({
                   letterSpacing: "0.08em",
                   fontFamily: C.font,
                 }}>
-                  Cập nhật
+                  {isOwner ? "Cập nhật" : "Tạo"}
                 </span>
                 <span style={{
                   fontSize: 12, fontWeight: 600,

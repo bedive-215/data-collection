@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
 import authService from "@/services/authService";
 import apiClient from "@/api/apiClient";
+import BlockedBanner from "@/components/common/BlockedBanner";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   );
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   /* ============================
         Persist Tokens
@@ -177,6 +179,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       persistTokens(null, null);
       setUser(null);
+      setIsBlocked(false);
     }
   };
 
@@ -256,6 +259,16 @@ export const AuthProvider = ({ children }) => {
           }
         }
 
+        // Blocked user
+        if (error.response?.status === 403) {
+          const msg = error.response?.data?.message || "";
+          if (msg.includes("khóa") || msg.includes("bị khóa") || msg.includes("banned") || msg.includes("blocked")) {
+            persistTokens(null, null);
+            setUser(null);
+            setIsBlocked(true);
+          }
+        }
+
         return Promise.reject(error);
       }
     );
@@ -285,6 +298,7 @@ export const AuthProvider = ({ children }) => {
     accessToken,
     refreshToken,
     loading,
+    isBlocked,
 
     login,
     loginWithOAuth,
@@ -298,9 +312,12 @@ export const AuthProvider = ({ children }) => {
 
     refreshTokens,
     setUser,
+    setIsBlocked,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>
+      {isBlocked ? <BlockedBanner /> : children}
+    </AuthContext.Provider>;
 };
 
 export default AuthProvider;

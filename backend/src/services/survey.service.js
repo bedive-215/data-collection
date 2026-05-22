@@ -8,7 +8,7 @@ import notificationService from "./notification.service.js";
 import starService from "./star.service.js";
 import achievementService from "./achievement.service.js";
 
-const ALLOWED_EDITOR_ROLES = ['respondent', 'viewer'];
+const ALLOWED_EDITOR_ROLES = ['editor', 'viewer'];
 
 class SurveyService {
     constructor() {
@@ -23,7 +23,7 @@ class SurveyService {
 
     _sanitizePagination(page, limit) {
         const safePage = Math.max(1, parseInt(page) || 1);
-        const safeLimit = Math.min(50, Math.max(1, parseInt(limit) || 10));
+        const safeLimit = Math.min(500, Math.max(1, parseInt(limit) || 500));
 
         return {
             page: safePage,
@@ -167,7 +167,7 @@ class SurveyService {
         };
     }
 
-    // get surveys by user id 
+    // get surveys by user id
     async getMySurveys(user, page = 1, limit = 10) {
 
         const { offset, limit: safeLimit, page: safePage } =
@@ -187,12 +187,39 @@ class SurveyService {
             order: [["created_at", "DESC"]]
         });
 
+        // Lấy participants cho từng survey
+        const surveyIds = surveys.map(s => s.id);
+        const participantsMap = {};
+
+        if (surveyIds.length > 0) {
+            const participants = await this.SurveyParticipant.findAll({
+                where: { survey_id: surveyIds },
+                attributes: ["id", "survey_id", "email", "role", "user_id"],
+                include: [{
+                    model: this.User,
+                    as: "user",
+                    attributes: ["id", "full_name", "email", "avatar"]
+                }],
+                order: [["created_at", "ASC"]]
+            });
+
+            participants.forEach(p => {
+                if (!participantsMap[p.survey_id]) participantsMap[p.survey_id] = [];
+                participantsMap[p.survey_id].push({
+                    id: p.user?.id || null,
+                    name: p.user?.full_name || null,
+                    email: p.email,
+                });
+            });
+        }
+
         return {
             message: "Get surveys successfully!",
             count: surveys.length,
             surveys: surveys.map(s => ({
                 ...this._mapSurvey(s),
-                status: this._getSurveyStatus(s)
+                status: this._getSurveyStatus(s),
+                participants: participantsMap[s.id] || [],
             }))
         };
     }
@@ -227,7 +254,7 @@ class SurveyService {
     }
 
     // get all surveys (for admin)
-    async getAllSurvey(page = 1, limit = 10) {
+    async getAllSurvey(page = 1, limit = 100) {
         const { offset, limit: safeLimit, page: safePage } =
             this._sanitizePagination(page, limit);
 
@@ -242,6 +269,11 @@ class SurveyService {
                 "created_at",
                 "created_by"
             ],
+            include: [{
+                model: this.User,
+                as: "creator",
+                attributes: ["id", "full_name", "email", "avatar"]
+            }],
             offset,
             limit: safeLimit,
             order: [["created_at", "DESC"]]
@@ -254,6 +286,12 @@ class SurveyService {
                 ...this._mapSurvey(s),
                 access_type: s.access_type,
                 created_by: s.created_by,
+                creator: s.creator ? {
+                    id: s.creator.id,
+                    full_name: s.creator.full_name,
+                    email: s.creator.email,
+                    avatar: s.creator.avatar
+                } : null,
                 status: this._getSurveyStatus(s)
             })),
             page: safePage,
@@ -266,12 +304,39 @@ class SurveyService {
             where: { access_type: "PUBLIC" }
         });
 
+        // Lấy participants cho từng survey
+        const surveyIds = surveys.map(s => s.id);
+        const participantsMap = {};
+
+        if (surveyIds.length > 0) {
+            const participants = await this.SurveyParticipant.findAll({
+                where: { survey_id: surveyIds },
+                attributes: ["id", "survey_id", "email", "role", "user_id"],
+                include: [{
+                    model: this.User,
+                    as: "user",
+                    attributes: ["id", "full_name", "email", "avatar"]
+                }],
+                order: [["created_at", "ASC"]]
+            });
+
+            participants.forEach(p => {
+                if (!participantsMap[p.survey_id]) participantsMap[p.survey_id] = [];
+                participantsMap[p.survey_id].push({
+                    id: p.user?.id || null,
+                    name: p.user?.full_name || null,
+                    email: p.email,
+                });
+            });
+        }
+
         return {
             message: "Get public surveys successfully!",
             count: surveys.length,
             surveys: surveys.map(s => ({
                 ...this._mapSurvey(s),
-                status: this._getSurveyStatus(s)
+                status: this._getSurveyStatus(s),
+                participants: participantsMap[s.id] || [],
             }))
         };
     }
@@ -509,7 +574,7 @@ class SurveyService {
 }
 
     async inviteSurvey(surveyId, user, payload) {
-        const { email, role = "respondent" } = payload;
+        const { email, role = "viewer" } = payload;
         if (!email) {
             throw new AppError("Email required", 403);
         }
@@ -520,10 +585,10 @@ class SurveyService {
             throw new AppError("Survey not found", 404);
         }
 
-        // editor chi co the moi voi vai tro la viewer hoac responsdent
+        // editor chi co the moi voi vai tro la viewer hoac editor
         if(!_checkOwnerOrAdmin(user, survey)) {
             if( !ALLOWED_EDITOR_ROLES.includes(role)) {
-                throw new AppError("Editor can only invite respondent or viewer", 404);
+                throw new AppError("Editor can only invite viewer or editor", 404);
             }
         }
         
@@ -583,12 +648,12 @@ const participant = await this.SurveyParticipant.create({
     }
 
     async bulkInvite(surveyId, user, payload) {
-        const { emails = [], role = "respondent" } = payload;
+        const { emails = [], role = "viewer" } = payload;
 
         // validate role
-        const VALID_ROLES = ["viewer", "editor", "respondent"];
+        const VALID_ROLES = ["viewer", "editor"];
         if (!VALID_ROLES.includes(role)) {
-            throw new AppError("Invalid role", 400);
+            throw new AppError("Invalid role. Must be viewer or editor", 400);
         }
 
         if (!Array.isArray(emails) || emails.length === 0) {
@@ -604,7 +669,7 @@ const participant = await this.SurveyParticipant.create({
         // if is editor cant invite editor
         if(!_checkOwnerOrAdmin(user, survey)) {
             if( !ALLOWED_EDITOR_ROLES.includes(role)) {
-                throw new AppError("Editor can only invite respondent or viewer", 404);
+                throw new AppError("Editor can only invite viewer or editor", 404);
             }
         }
 

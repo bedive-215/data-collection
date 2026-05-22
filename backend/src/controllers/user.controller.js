@@ -65,10 +65,11 @@ class UserController {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 20;
-            const role = req.query.role || 'user';
+            const role = req.query.role || null;
             const search = req.query.search || '';
-    
-            const result = await UserService.getListOfUser(page, limit, role, search);
+            const isActive = req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : null;
+
+            const result = await UserService.getListOfUser(page, limit, role, search, isActive);
             res.json(result);
         } catch (err) {
             next(err);
@@ -78,6 +79,44 @@ class UserController {
     async deleteUser (req, res, next) {
         try {
             const result = await UserService.deleteUser(req.params.id);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    async updateUserRole (req, res, next) {
+        try {
+            const { role } = req.body;
+            const result = await UserService.updateUserRole(req.params.id, role);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    async blockUser (req, res, next) {
+        try {
+            const { reason } = req.body;
+            const result = await UserService.blockUser(req.params.id, reason);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    async unblockUser (req, res, next) {
+        try {
+            const result = await UserService.unblockUser(req.params.id);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    async getUserStats (req, res, next) {
+        try {
+            const result = await UserService.getUserStats(req.params.id);
             res.json(result);
         } catch (err) {
             next(err);

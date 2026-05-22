@@ -103,9 +103,8 @@ class NotificationService {
         const invitee = await this.User.findOne({ where: { email: inviteeEmail } });
         const inviterAvatar = inviter.avatar_url || null;
 
-        const roleLabel = role === "editor" ? "Biên tập viên"
-            : role === "viewer" ? "Người xem"
-            : role === "respondent" ? "Người trả lời" : role;
+        const roleLabel = role === "editor" ? "Biên tập viên (có thể chỉnh sửa)"
+            : role === "viewer" ? "Người xem (chỉ xem)" : role;
 
         const expireDate = survey.end_at
             ? `Hạn: ${new Date(survey.end_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" })}`
