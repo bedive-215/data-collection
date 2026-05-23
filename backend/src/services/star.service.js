@@ -159,6 +159,15 @@ class StarService {
                 ref_type: refType,
             }, { transaction });
 
+            // Tính rank và update rank TRƯỚC commit (trong cùng transaction)
+            const newRank = this._getRankFromStars(totalEarnedAfter);
+            const oldRank = user.current_rank;
+            const rankChanged = newRank.name !== oldRank;
+
+            if (rankChanged) {
+                await user.update({ current_rank: newRank.name }, { transaction });
+            }
+
             if (isOwnTransaction) {
                 await transaction.commit();
             }
@@ -167,15 +176,6 @@ class StarService {
             if (amount > 0) {
                 leaderboardService.updatePeriodicStars(userId, amount)
                     .catch(err => console.error("updatePeriodicStars error:", err));
-            }
-
-            // Trả về kết quả kèm thông tin rank mới
-            const newRank = this._getRankFromStars(totalEarnedAfter);
-            const oldRank = user.current_rank;
-            const rankChanged = newRank.name !== oldRank;
-
-            if (rankChanged) {
-                await user.update({ current_rank: newRank.name }, { transaction });
             }
 
             // Gửi notification cho người nhận sao (chỉ khi là cộng sao)
@@ -214,7 +214,10 @@ class StarService {
             };
 
         } catch (err) {
-            if (isOwnTransaction) await transaction.rollback();
+            // Chỉ rollback khi transaction chưa commit
+            if (isOwnTransaction && transaction.finished === null) {
+                await transaction.rollback();
+            }
             throw err;
         }
     }
@@ -282,7 +285,10 @@ class StarService {
             };
 
         } catch (err) {
-            if (isOwnTransaction) await transaction.rollback();
+            // Chỉ rollback khi transaction chưa commit
+            if (isOwnTransaction && transaction.finished === null) {
+                await transaction.rollback();
+            }
             throw err;
         }
     }
@@ -332,7 +338,10 @@ class StarService {
             return { success: true, message: "Transaction reversed" };
 
         } catch (err) {
-            if (isOwnTransaction) await transaction.rollback();
+            // Chỉ rollback khi transaction chưa commit
+            if (isOwnTransaction && transaction.finished === null) {
+                await transaction.rollback();
+            }
             throw err;
         }
     }
