@@ -1,4 +1,4 @@
-// Login.jsx - Dark Theme with Video
+// Login.jsx — Matches Home Page Background (AnimatedSurveyBackdrop)
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -8,14 +8,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { ROUTERS } from "@/utils/constants";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { DS } from "@/utils/authDesignTokens";
+import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
-// Validation schema for email/password login
 const schema = yup.object({
   email: yup.string().required("auth.required").email("auth.invalidEmail"),
   password: yup.string().required("auth.required").min(6, "auth.minPassword"),
 });
 
-// Validation schema for extra info
 const extraSchema = yup.object({
   phone_number: yup
     .string()
@@ -37,7 +37,6 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Google OAuth
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || null;
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -45,508 +44,388 @@ export default function Login() {
   const gsiInitialized = useRef(false);
   const googleButtonRef = useRef(null);
 
-  // Extra info modal state
   const [showExtraForm, setShowExtraForm] = useState(false);
   const [tempToken, setTempToken] = useState(null);
   const [missingFields, setMissingFields] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
-
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
   const {
     register: registerExtra,
     handleSubmit: handleSubmitExtra,
     formState: { errors: extraErrors },
     reset: resetExtraForm,
     clearErrors: clearExtraErrors,
-  } = useForm({
-    resolver: yupResolver(extraSchema),
-    mode: "onChange"
-  });
+  } = useForm({ resolver: yupResolver(extraSchema), mode: "onChange" });
 
-  // ====================== HANDLE EMAIL/PASSWORD ======================
-  const onSubmit = async (data) => {
-    try {
-      setLoading(true);
-      setErrorMessage("");
-
-      const res = await login({ email: data.email, password: data.password });
-
-      const role =
-        res?.user?.role || res?.role || res?.data?.user?.role || res?.data?.role;
-
-      if (!role) throw new Error("Missing role in response");
-
-      
-
-      if (role === "admin") {
-        navigate(ROUTERS.ADMIN.DASHBOARD);
-      } else if (role === "user") {
-        navigate(ROUTERS.USER.HOME);
-      } else {
-        navigate("/");
-      }
-    } catch (err) {
-      const msg =
-        err?.response?.data?.message || err?.message || "Invalid email or password";
-      setErrorMessage(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ====================== HANDLE GOOGLE GSI SETUP ======================
+  // Initialize Google GSI once
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-    if (googleClientLoaded.current) return;
-
+    if (!GOOGLE_CLIENT_ID || googleClientLoaded.current) return;
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
-
-    script.onload = () => {
-      googleClientLoaded.current = true;
-    };
-    script.onerror = () => {
-      googleClientLoaded.current = false;
-    };
-
+    script.onload = () => { googleClientLoaded.current = true; };
+    script.onerror = () => { googleClientLoaded.current = false; };
     document.body.appendChild(script);
   }, [GOOGLE_CLIENT_ID]);
 
-  const initGSI = () => {
-    if (!GOOGLE_CLIENT_ID || !window.google || gsiInitialized.current) return;
-
-    try {
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (response) => {
-          const idToken = response?.credential;
-          if (!idToken) {
-            setErrorMessage("Không nhận được token từ Google");
-            return;
-          }
-          await handleGoogleTokenReceived(idToken);
-        },
-      });
-
-      if (googleButtonRef.current) {
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: "filled_black",
-          size: "large",
-          text: "continue_with",
-          locale: "vi",
-          shape: "pill",
-        });
-      }
-
-      gsiInitialized.current = true;
-    } catch (err) {
-      console.error("GSI initialize error:", err);
-    }
-  };
-
   useEffect(() => {
     const interval = setInterval(() => {
-      if (googleClientLoaded.current && !gsiInitialized.current) {
-        initGSI();
+      if (googleClientLoaded.current && !gsiInitialized.current && GOOGLE_CLIENT_ID && window.google) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: async (response) => {
+              const idToken = response?.credential;
+              if (!idToken) { setErrorMessage("Không nhận được token từ Google"); return; }
+              await handleGoogleTokenReceived(idToken);
+            },
+          });
+          if (googleButtonRef.current) {
+            window.google.accounts.id.renderButton(googleButtonRef.current, {
+              theme: "outline", size: "large", text: "signin_with", locale: "vi", shape: "rectangular",
+              width: "100%",
+            });
+          }
+          gsiInitialized.current = true;
+        } catch (err) { console.error("GSI init error:", err); }
       }
       if (gsiInitialized.current) clearInterval(interval);
     }, 500);
     return () => clearInterval(interval);
   }, []);
 
-  // ====================== HANDLE GOOGLE TOKEN RECEIVED ======================
+  const handleGoogleClick = () => {
+    if (!window.google || !gsiInitialized.current) return;
+    window.google.accounts.id.prompt();
+  };
+
   const handleGoogleTokenReceived = async (idToken) => {
     try {
       setOauthLoading(true);
       setErrorMessage("");
-
-      const res = await axios.post(`${API_URL}/api/v1/auth/login/oauth`, {
-        token: idToken,
-      });
-
+      const res = await axios.post(`${API_URL}/api/v1/auth/login/oauth`, { token: idToken });
       if (res.data.status === "incomplete" || res.data.code === "PROFILE_INCOMPLETE") {
-        const missing = res.data.missing_fields || {};
-        const tempTok = res.data.temp_token || idToken;
-
-        setMissingFields(missing);
-        setTempToken(tempTok);
+        setMissingFields(res.data.missing_fields || {});
+        setTempToken(res.data.temp_token || idToken);
         setShowExtraForm(true);
         setOauthLoading(false);
         return;
       }
-
       handleSuccessfulLogin(res.data);
     } catch (err) {
       if (err?.response?.data?.code === "PROFILE_INCOMPLETE") {
         const missing = {};
-        const requiredFields = err.response.data.required_fields || [];
-
-        requiredFields.forEach(field => {
-          missing[field] = true;
-        });
-
-        const tempTok = err.response.data.temp_token || null;
-
+        (err.response.data.required_fields || []).forEach(f => { missing[f] = true; });
         setMissingFields(missing);
-        setTempToken(tempTok);
+        setTempToken(err.response.data.temp_token || null);
         setShowExtraForm(true);
       } else {
-        const msg = err?.response?.data?.message || err?.message || "Google login failed";
-        setErrorMessage(msg);
+        setErrorMessage(err?.response?.data?.message || err?.message || "Google login failed");
       }
-
       setOauthLoading(false);
     }
   };
 
-  // ====================== HANDLE EXTRA INFO SUBMIT ======================
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      const res = await login({ email: data.email, password: data.password });
+      const role = res?.user?.role || res?.role || res?.data?.user?.role || res?.data?.role;
+      if (!role) throw new Error("Missing role");
+      if (role === "admin") navigate(ROUTERS.ADMIN.DASHBOARD);
+      else if (role === "user") navigate(ROUTERS.USER.HOME);
+      else navigate("/");
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || err?.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onSubmitExtra = async (formData) => {
     try {
       setOauthLoading(true);
       setErrorMessage("");
-
-      const payload = {
-        token: tempToken,
-      };
-
-      if (missingFields?.phone_number) {
-        payload.phone_number = formData.phone_number;
-      }
-
-      if (missingFields?.date_of_birth) {
-        payload.date_of_birth = formData.date_of_birth;
-      }
-
-      const res = await axios.post(
-        `${API_URL}/api/v1/auth/login/oauth`,
-        payload
-      );
-
+      const payload = { token: tempToken };
+      if (missingFields?.phone_number) payload.phone_number = formData.phone_number;
+      if (missingFields?.date_of_birth) payload.date_of_birth = formData.date_of_birth;
+      const res = await axios.post(`${API_URL}/api/v1/auth/login/oauth`, payload);
       handleSuccessfulLogin(res.data);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Không thể hoàn tất đăng ký. Vui lòng thử lại.";
-      setErrorMessage(msg);
+      setErrorMessage(err?.response?.data?.message || err?.message || "Không thể hoàn tất.");
       setOauthLoading(false);
     }
   };
 
-  // ====================== HANDLE SUCCESSFUL LOGIN ======================
   const handleSuccessfulLogin = (data) => {
-    const accessToken =
-      data?.access_token ||
-      data?.accessToken ||
-      data?.token ||
-      data?.data?.access_token ||
-      data?.data?.token;
-
-    const refreshToken =
-      data?.refresh_token ||
-      data?.refreshToken ||
-      data?.data?.refresh_token;
-
-    if (accessToken) {
-      localStorage.setItem("access_token", accessToken);
-    }
-
-    if (refreshToken) {
-      localStorage.setItem("refresh_token", refreshToken);
-    }
-
+    const accessToken = data?.access_token || data?.accessToken || data?.token || data?.data?.access_token || data?.data?.token;
+    const refreshToken = data?.refresh_token || data?.refreshToken || data?.data?.refresh_token;
+    if (accessToken) localStorage.setItem("access_token", accessToken);
+    if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
     const userInfo = data?.user || data?.data?.user;
-    if (userInfo) {
-      localStorage.setItem("user", JSON.stringify(userInfo));
-    }
-
-    const role =
-      data?.user?.role ||
-      data?.role ||
-      data?.data?.user?.role ||
-      data?.data?.role ||
-      "user";
-
-    setShowExtraForm(false);
-    setTempToken(null);
-    setMissingFields(null);
-    resetExtraForm();
-    clearExtraErrors();
-    setOauthLoading(false);
-
-    if (role === "admin") {
-      navigate(ROUTERS.ADMIN.DASHBOARD);
-    } else if (role === "user") {
-      navigate(ROUTERS.USER.HOME);
-    } else {
-      navigate("/");
-    }
+    if (userInfo) localStorage.setItem("user", JSON.stringify(userInfo));
+    const role = data?.user?.role || data?.role || data?.data?.user?.role || data?.data?.role || "user";
+    setShowExtraForm(false); setTempToken(null); setMissingFields(null);
+    resetExtraForm(); clearExtraErrors(); setOauthLoading(false);
+    if (role === "admin") navigate(ROUTERS.ADMIN.DASHBOARD);
+    else if (role === "user") navigate(ROUTERS.USER.HOME);
+    else navigate("/");
   };
 
-  // ====================== RENDER ======================
+  // ── Input wrapper with focus ring ──────────────────────────────────────────
+  const InputWrapper = ({ children, onFocusCapture, onBlurCapture }) => (
+    <div style={{
+      display: "flex", alignItems: "center",
+      borderRadius: DS.inputRadius,
+      background: DS.inputBg,
+      border: `1.5px solid ${DS.inputBorder}`,
+      height: 52,
+      padding: "0 16px",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      transition: "border-color 0.2s, box-shadow 0.2s",
+    }}
+      onFocusCapture={onFocusCapture}
+      onBlurCapture={onBlurCapture}
+    >
+      {children}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen w-full font-sans antialiased bg-[#050505] text-white overflow-x-hidden">
-      <div className="flex min-h-screen w-full flex-col lg:flex-row">
+    <div style={{ minHeight: "100vh", width: "100%", background: "#F8FAFC", fontFamily: DS.font, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
+      {/* Animated mesh gradient backdrop */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <AnimatedSurveyBackdrop />
+      </div>
 
-        {/* ========== LEFT SIDE: Video ========== */}
-        <div className="relative hidden w-full lg:flex lg:w-1/2 flex-col justify-end p-12 overflow-hidden bg-gradient-to-br from-[#2b303b] to-[#15191e]">
-          {/* Video Background */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
-          >
-            <source src="/videos/hello.mp4" type="video/mp4" />
-          </video>
+      {/* Main card */}
+      <div style={{
+        width: "100%", maxWidth: 480,
+        background: DS.cardBg,
+        backdropFilter: `${DS.cardBlur} saturate(190%)`,
+        WebkitBackdropFilter: `${DS.cardBlur} saturate(190%)`,
+        borderRadius: "28px",
+        border: `1px solid ${DS.cardBorder}`,
+        boxShadow: DS.cardShadow,
+        padding: "44px",
+        position: "relative", zIndex: 1,
+      }}>
+        {/* Top decorative bar */}
+        <div style={{
+          position: "absolute", top: 0, left: "50%",
+          transform: "translateX(-50%)",
+          width: 120, height: 5,
+          background: `linear-gradient(90deg, transparent, ${DS.primary}, ${DS.primaryEnd}, transparent)`,
+          borderRadius: "0 0 6px 6px",
+        }} />
 
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-          {/* Content */}
-          <div className="relative z-20 max-w-lg mb-10">
-            <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase text-white backdrop-blur-md mb-6">
-              Premium Series
-            </span>
-            <h1 className="text-5xl font-bold tracking-tight leading-tight text-white mb-4">
-              Đổi mới <br />từng chi tiết.
-            </h1>
-            <p className="text-lg text-gray-300 font-light max-w-md">
-              Trải nghiệm công nghệ đỉnh cao với thiết kế tinh xảo, hiệu năng vượt trội và đẳng cấp khác biệt.
-            </p>
+        {/* Brand + header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 16,
+            background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 8px 24px rgba(67,97,238,0.35)",
+            flexShrink: 0,
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: DS.textPrimary, margin: 0, letterSpacing: "-0.4px" }}>Chào mừng trở lại</h2>
+            <p style={{ fontSize: 14, color: DS.textSecondary, margin: "3px 0 0" }}>Đăng nhập để tiếp tục</p>
           </div>
         </div>
 
-        {/* ========== RIGHT SIDE: Login Form ========== */}
-        <div className="flex w-full flex-col items-center justify-center bg-[#050505] lg:w-1/2 relative p-6 min-h-screen">
-          {/* Background Ambient Glows - hidden on mobile */}
-          <div className="hidden lg:block absolute top-[-10%] right-[-5%] h-[300px] w-[300px] rounded-full bg-[#0f83f0]/10 blur-[100px]" />
-          <div className="hidden lg:block absolute bottom-[-10%] left-[-5%] h-[300px] w-[300px] rounded-full bg-blue-600/5 blur-[100px]" />
+        {/* ── Segmented tabs — both are real buttons, equal width ─── */}
+        <div style={{
+          display: "flex", borderRadius: 16, padding: 5,
+          background: DS.segBg, marginBottom: 28,
+        }}>
+          <button style={{
+            flex: 1, borderRadius: 12, padding: "13px 16px",
+            background: DS.segActiveBg,
+            border: `1px solid ${DS.segActiveBorder}`,
+            color: DS.segActiveText, fontWeight: 700, fontSize: 14,
+            fontFamily: DS.font,
+            boxShadow: "0 1px 4px rgba(67,97,238,0.18)",
+          }}>
+            Đăng nhập
+          </button>
+          <Link to="/register" style={{
+            flex: 1, borderRadius: 12, padding: "13px 16px",
+            background: "transparent",
+            border: "1px solid transparent",
+            color: DS.segInactiveText, fontWeight: 500, fontSize: 14,
+            fontFamily: DS.font, textDecoration: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            Đăng ký
+          </Link>
+        </div>
 
-          <div className="w-full max-w-[440px] z-10">
-            {/* Header */}
-            <div className="mb-10 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-[#0f83f0]">
-                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Chào mừng trở lại</h2>
-              <p className="text-gray-400">Nhập thông tin đăng nhập của bạn để tiếp tục.</p>
+        {/* ── Form ─────────────────────────────────────────────────── */}
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Email */}
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Email</label>
+            <InputWrapper
+              onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+              onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={DS.textMuted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <input type="email" {...register("email")} placeholder="email@example.com"
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 14px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+            </InputWrapper>
+            {errors.email && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.email.message)}</p>}
+          </div>
+
+          {/* Password */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: DS.textSecondary }}>Mật khẩu</label>
+              <Link to="/forgot-password" style={{ fontSize: 12, color: DS.primary, textDecoration: "none", fontFamily: DS.font, fontWeight: 500 }}>Quên mật khẩu?</Link>
             </div>
-
-            {/* Glass Card */}
-            <div className="backdrop-blur-[20px] rounded-3xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] p-8 border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]">
-              {/* Segmented Control */}
-              <div className="mb-8 flex rounded-xl bg-black/40 p-1.5 border border-white/5">
-                <button className="relative flex-1 rounded-lg bg-[#1c252e] py-2.5 text-sm font-medium text-white shadow-lg ring-1 ring-white/10 transition-all">
-                  Đăng nhập
-                </button>
-                <Link
-                  to="/register"
-                  className="flex-1 rounded-lg py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors text-center"
-                >
-                  Đăng ký
-                </Link>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-                {/* Email Input */}
-                <div className="group">
-                  <label className="mb-2 block text-sm font-medium text-gray-300">Email</label>
-                  <div className="flex items-center rounded-lg bg-black/30 px-4">
-                    <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <input
-                      type="email"
-                      {...register("email")}
-                      placeholder="email@example.com"
-                      className="h-12 w-full bg-transparent px-3 text-white placeholder-gray-500 outline-none border-0 appearance-none text-[15px]"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-400 text-xs mt-1">{t(errors.email.message)}</p>
-                  )}
-                </div>
-
-                {/* Password Input */}
-                <div className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-300">Mật khẩu</label>
-                    <Link to="/forgot-password" className="text-xs font-medium text-[#0f83f0] hover:text-[#0f83f0]/80 transition-colors">
-                      Quên mật khẩu?
-                    </Link>
-                  </div>
-                  <div className="flex items-center rounded-lg bg-black/30 px-4">
-                    <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      {...register("password")}
-                      placeholder="••••••••"
-                      className="h-12 w-full bg-transparent px-3 text-white placeholder-gray-500 outline-none border-0 appearance-none text-[15px]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-500 hover:text-white transition-colors flex-shrink-0"
-                    >
-                      {showPassword ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-400 text-xs mt-1">{t(errors.password.message)}</p>
-                  )}
-                </div>
-
-                {/* Error Message */}
-                {errorMessage && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                    <p className="text-red-400 text-sm">{errorMessage}</p>
-                  </div>
+            <InputWrapper
+              onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+              onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={DS.textMuted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <input type={showPassword ? "text" : "password"} {...register("password")} placeholder="••••••••"
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 14px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: DS.textMuted, flexShrink: 0 }}>
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
                 )}
+              </button>
+            </InputWrapper>
+            {errors.password && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.password.message)}</p>}
+          </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-2 flex w-full items-center justify-center rounded-2xl bg-[#0f83f0] py-3.5 text-sm font-semibold text-white shadow-[0_0_20px_-5px_rgba(15,131,240,0.5)] transition-all hover:bg-[#0f83f0]/90 hover:scale-[1.01] hover:shadow-[0_0_25px_-5px_rgba(15,131,240,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Đang xử lý...
-                    </div>
-                  ) : (
-                    "Tiếp tục"
-                  )}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="relative mt-8 mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-[#0e0e10] px-3 text-gray-500 tracking-wider font-medium">Hoặc tiếp tục với</span>
-                </div>
-              </div>
-
-              {/* Social Login */}
-              <div className="flex justify-center">
-                <div ref={googleButtonRef} />
-              </div>
+          {errorMessage && (
+            <div style={{ borderRadius: 14, padding: "13px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}>
+              <p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p>
             </div>
+          )}
 
-            {/* Terms */}
-            <p className="mt-8 text-center text-xs text-gray-600">
-              Bằng cách tiếp tục, bạn đồng ý với{" "}
-              <a href="#" className="text-gray-400 hover:text-white underline decoration-gray-600 underline-offset-2">
-                Điều khoản dịch vụ
-              </a>{" "}
-              và{" "}
-              <a href="#" className="text-gray-400 hover:text-white underline decoration-gray-600 underline-offset-2">
-                Chính sách bảo mật
-              </a>{" "}
-              của chúng tôi.
-            </p>
+          {/* Submit */}
+          <button type="submit" disabled={loading}
+            style={{ height: 54, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: 16, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
+            onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(67,97,238,0.45)"; } }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+          >
+            {loading ? (
+              <><div style={{ width: 18, height: 18, border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang xử lý...</>
+            ) : (
+              <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Tiếp tục</>
+            )}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "24px 0" }}>
+          <div style={{ flex: 1, height: 1, background: DS.divider }} />
+          <span style={{ fontSize: 12, color: DS.textMuted, fontWeight: 500 }}>Hoặc đăng nhập với</span>
+          <div style={{ flex: 1, height: 1, background: DS.divider }} />
+        </div>
+
+        {/* ── Google OAuth button ── */}
+        <div style={{ position: "relative", width: "100%", height: 54 }}>
+          {/* GSI button — rendered invisibly behind the custom UI */}
+          <div ref={googleButtonRef} style={{ position: "absolute", inset: 0, opacity: 0.01, pointerEvents: "auto" }} />
+          {/* Custom UI — clicks pass through to GSI button beneath */}
+          <div
+            onClick={handleGoogleClick}
+            style={{
+              position: "absolute", inset: 0,
+              background: DS.inputBg,
+              border: `1.5px solid ${DS.inputBorder}`,
+              borderRadius: 16,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              transition: "all 0.2s",
+              cursor: "pointer",
+              pointerEvents: "none",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(67,97,238,0.3)"; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: DS.textPrimary, marginLeft: 10, fontFamily: DS.font }}>Đăng nhập với Google</span>
           </div>
         </div>
+
+        {/* Footer */}
+        <p style={{ fontSize: 12, color: DS.textMuted, textAlign: "center", marginTop: 28, lineHeight: 1.7 }}>
+          Bằng cách tiếp tục, bạn đồng ý với{" "}
+          <a href="#" style={{ color: DS.textSecondary, textDecoration: "underline", textUnderlineOffset: 2, fontWeight: 500 }}>Điều khoản</a>
+          {" "}và{" "}
+          <a href="#" style={{ color: DS.textSecondary, textDecoration: "underline", textUnderlineOffset: 2, fontWeight: 500 }}>Chính sách bảo mật</a>
+        </p>
       </div>
 
       {/* EXTRA INFO MODAL */}
       {showExtraForm && missingFields && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="backdrop-blur-[20px] rounded-3xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] p-8 border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] w-full max-w-md">
-            <h3 className="text-xl font-bold mb-2 text-white">
-              Hoàn tất thông tin
-            </h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Vui lòng cung cấp thêm thông tin để hoàn tất đăng ký
-            </p>
-
-            <form onSubmit={handleSubmitExtra(onSubmitExtra)} className="space-y-4">
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ background: "white", borderRadius: 24, padding: 40, width: "100%", maxWidth: 460, boxShadow: "0 25px 50px rgba(0,0,0,0.25)", animation: "slideUp 0.2s ease" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              </div>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: DS.textPrimary, margin: 0 }}>Hoàn tất thông tin</h3>
+                <p style={{ fontSize: 13, color: DS.textSecondary, margin: "3px 0 0" }}>Vui lòng cung cấp thêm thông tin</p>
+              </div>
+            </div>
+            <form onSubmit={handleSubmitExtra(onSubmitExtra)} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {missingFields.phone_number && (
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Số điện thoại <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    {...registerExtra("phone_number")}
-                    placeholder="Ví dụ: 0912345678"
-                    className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#0f83f0]/50 transition"
-                  />
-                  {extraErrors.phone_number && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {extraErrors.phone_number.message}
-                    </p>
-                  )}
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Số điện thoại <span style={{ color: DS.errorText }}>*</span></label>
+                  <input type="text" {...registerExtra("phone_number")} placeholder="0912345678"
+                    style={{ width: "100%", height: 52, borderRadius: 14, background: DS.inputBg, border: `1.5px solid ${DS.inputBorder}`, padding: "0 16px", fontSize: 15, color: DS.inputText, fontFamily: DS.font, outline: "none", boxSizing: "border-box" }}
+                    onFocus={e => { e.target.style.borderColor = DS.inputBorderFocus; e.target.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                    onBlur={e => { e.target.style.borderColor = DS.inputBorder; e.target.style.boxShadow = "none"; }} />
+                  {extraErrors.phone_number && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{extraErrors.phone_number.message}</p>}
                 </div>
               )}
-
               {missingFields.date_of_birth && (
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Ngày sinh <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    {...registerExtra("date_of_birth")}
-                    max={new Date().toISOString().split('T')[0]}
-                    className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white focus:outline-none focus:border-[#0f83f0]/50 transition"
-                  />
-                  {extraErrors.date_of_birth && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {extraErrors.date_of_birth.message}
-                    </p>
-                  )}
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Ngày sinh <span style={{ color: DS.errorText }}>*</span></label>
+                  <input type="date" {...registerExtra("date_of_birth")} max={new Date().toISOString().split("T")[0]}
+                    style={{ width: "100%", height: 52, borderRadius: 14, background: DS.inputBg, border: `1.5px solid ${DS.inputBorder}`, padding: "0 16px", fontSize: 15, color: DS.inputText, fontFamily: DS.font, outline: "none", boxSizing: "border-box" }}
+                    onFocus={e => { e.target.style.borderColor = DS.inputBorderFocus; e.target.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                    onBlur={e => { e.target.style.borderColor = DS.inputBorder; e.target.style.boxShadow = "none"; }} />
+                  {extraErrors.date_of_birth && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{extraErrors.date_of_birth.message}</p>}
                 </div>
               )}
-
-              {errorMessage && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                  <p className="text-red-400 text-sm">{errorMessage}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowExtraForm(false);
-                    setTempToken(null);
-                    setMissingFields(null);
-                    resetExtraForm();
-                    clearExtraErrors();
-                    setErrorMessage("");
-                  }}
-                  className="flex-1 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 font-medium hover:bg-white/10 transition"
-                >
+              {errorMessage && <div style={{ borderRadius: 14, padding: "13px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}><p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p></div>}
+              <div style={{ display: "flex", gap: 12 }}>
+                <button type="button" onClick={() => { setShowExtraForm(false); setTempToken(null); setMissingFields(null); resetExtraForm(); clearExtraErrors(); setErrorMessage(""); }}
+                  style={{ flex: 1, height: 52, borderRadius: 16, background: "#f8fafc", border: `1.5px solid ${DS.inputBorder}`, color: DS.textSecondary, fontFamily: DS.font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                   Hủy
                 </button>
-                <button
-                  type="submit"
-                  disabled={oauthLoading}
-                  className="flex-1 px-4 py-3 rounded-2xl bg-[#0f83f0] text-white font-semibold shadow-[0_0_20px_-5px_rgba(15,131,240,0.5)] hover:bg-[#0f83f0]/90 transition disabled:opacity-50"
-                >
+                <button type="submit" disabled={oauthLoading}
+                  style={{ flex: 1, height: 52, borderRadius: 16, background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", color: "white", fontFamily: DS.font, fontSize: 14, fontWeight: 600, cursor: oauthLoading ? "not-allowed" : "pointer", opacity: oauthLoading ? 0.65 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   {oauthLoading ? "Đang xử lý..." : "Hoàn tất"}
                 </button>
               </div>
@@ -557,17 +436,18 @@ export default function Login() {
 
       {/* LOADING OVERLAY */}
       {oauthLoading && !showExtraForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="backdrop-blur-[20px] rounded-3xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] p-8 border border-white/[0.08]">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-[#0f83f0] rounded-full animate-spin" />
-              <p className="text-gray-300 font-medium">
-                Đang xử lý đăng nhập...
-              </p>
-            </div>
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(248,250,252,0.7)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "white", borderRadius: 24, padding: "44px 52px", textAlign: "center", boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}>
+            <div style={{ width: 52, height: 52, border: "3px solid rgba(67,97,238,0.15)", borderTopColor: DS.primary, borderRadius: "50%", animation: "spin 0.7s linear infinite", margin: "0 auto 18px" }} />
+            <p style={{ fontSize: 16, fontWeight: 600, color: DS.textPrimary }}>Đang xử lý đăng nhập...</p>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </div>
   );
 }
