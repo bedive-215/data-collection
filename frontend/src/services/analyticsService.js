@@ -125,6 +125,15 @@ const analyticsService = {
     });
   },
 
+  // Survey overview stats (used by hub page)
+  getSurveyStats: (surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`${BASE_URL}/surveys/${surveyId}/dashboard`, {
+      params: { ...params, _t: ts },
+      headers: getNoCacheHeaders()
+    });
+  },
+
   // AI Insights for a survey
   getAiInsights: (surveyId, params = {}) => {
     const ts = Date.now();

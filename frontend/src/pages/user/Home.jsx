@@ -1131,6 +1131,7 @@ export default function DashboardPage() {
                   type="my"
                   onShare={handleShare}
                   onLock={handleLock}
+                  onViewAnalytics={() => navigate(`/user/analysis`)}
                 />
               ))}
             </div>

@@ -16,6 +16,7 @@ import {
   Trophy,
   Star,
   Award,
+  BarChart3,
 } from "lucide-react";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
 import { NotificationPanel } from "../../common/Notification";
@@ -132,6 +133,10 @@ function UserDropdown({ user, displayName, onLogout, onClose }) {
           <Award size={17} className="text-purple-500 shrink-0" strokeWidth={2} />
           🏅 Huy hiệu
         </Link>
+        <Link to={ROUTERS.USER.ANALYSIS_HUB} onClick={onClose} className={row}>
+          <BarChart3 size={17} className="text-indigo-500 shrink-0" strokeWidth={2} />
+          📊 Phân tích
+        </Link>
       </div>
 
       <div className="h-px bg-slate-100 my-1.5 mx-2" />
@@ -158,6 +163,7 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
     { label: "💰 Ví Sao", to: "/user/wallet", icon: Star },
     { label: "🏆 Xếp hạng", to: "/user/leaderboard", icon: Trophy },
     { label: "🏅 Huy hiệu", to: "/user/achievements", icon: Award },
+    { label: "📊 Phân tích", to: ROUTERS.USER.ANALYSIS_HUB, icon: BarChart3 },
   ];
 
   return (
@@ -202,7 +208,8 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
 
         {links.map(({ label, to, icon: Icon }) => {
           const active =
-            pathname === to || (to === ROUTERS.USER.MY_SURVEYS && pathname.startsWith(`${ROUTERS.USER.MY_SURVEYS}/`));
+            pathname === to || (to === ROUTERS.USER.MY_SURVEYS && pathname.startsWith(`${ROUTERS.USER.MY_SURVEYS}/`)) ||
+            (to === ROUTERS.USER.ANALYSIS_HUB && pathname.startsWith("/user/analysis"));
           return (
             <Link
               key={to}
@@ -350,6 +357,7 @@ export default function Navbar() {
               <NavLink to="/user/wallet">💰 Ví Sao</NavLink>
               <NavLink to="/user/leaderboard">🏆 Xếp hạng</NavLink>
               <NavLink to="/user/achievements">🏅 Huy hiệu</NavLink>
+              <NavLink to={ROUTERS.USER.ANALYSIS_HUB}>📊 Phân tích</NavLink>
             </div>
           </div>
 

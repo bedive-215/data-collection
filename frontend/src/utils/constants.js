@@ -23,6 +23,11 @@ export const ROUTERS = {
     // DETAIL
     MY_SURVEY_DETAIL:
       "/user/my-surveys/:surveyId",
+
+    // ANALYSIS HUB
+    ANALYSIS_HUB: "/user/analysis",
+    ANALYSIS_STATISTICAL: "/user/analysis/:surveyId/statistical",
+    ANALYSIS_AI: "/user/analysis/:surveyId/ai",
   },
 
   ADMIN: {
