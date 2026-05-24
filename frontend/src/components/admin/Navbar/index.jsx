@@ -1,19 +1,25 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Settings, Search, LogOut, User, ChevronDown } from "lucide-react";
+import { Search, LogOut, User, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPanel } from "../../common/Notification";
 import { useNavigate } from "react-router-dom";
 
-export default function Navbar() {
+export default function Navbar({ onToggleSidebar }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -25,95 +31,162 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const firstChar = user?.full_name?.charAt(0)?.toUpperCase()
+    ?? user?.name?.charAt(0)?.toUpperCase()
+    ?? "A";
+
   return (
-    <header className="w-full sticky top-0 z-50 bg-[#131314]/60 backdrop-blur-xl border-b border-white/5 flex justify-between items-center px-8 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+    <header
+      className="w-full sticky top-0 z-40 flex items-center justify-between px-6 py-3"
+      style={{
+        background: "rgba(15, 17, 23, 0.9)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid var(--admin-border)",
+      }}
+    >
+      {/* ── Left ── */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onToggleSidebar}
+          className="p-2 rounded-lg transition-colors lg:hidden"
+          style={{ color: "var(--admin-text-sub)" }}
+        >
+          <Menu size={20} />
+        </button>
 
-      {/* ── Left: Title + Search ── */}
-      <div className="flex items-center gap-8">
-        <h1 className="text-xl font-bold tracking-tighter text-blue-400 font-['Plus_Jakarta_Sans']">
-          Obsidian Admin
-        </h1>
-
-        <div className="relative group">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b90a0]"
-          />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="bg-[#353436]/50 border-none rounded-full pl-9 pr-4 py-2 text-sm text-[#e5e2e3] focus:ring-1 focus:ring-[#adc6ff] w-64 transition-all duration-300 outline-none"
-          />
+        <div>
+          <h1
+            className="font-bold"
+            style={{ color: "var(--admin-text)", fontSize: 17, lineHeight: 1.2 }}
+          >
+            Control Panel
+          </h1>
+          <p className="text-[11px]" style={{ color: "var(--admin-text-dim)" }}>
+            Quản lý hệ thống khảo sát
+          </p>
         </div>
       </div>
 
-      {/* ── Right: Icon buttons + Avatar ── */}
+      {/* ── Right ── */}
       <div className="flex items-center gap-2">
-
-        {/* Notifications */}
+        {/* Notification bell — dùng NotificationPanel component */}
         <NotificationPanel />
 
-        {/* Settings */}
-        <button className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-blue-300 hover:bg-white/5 transition-all duration-200 active:scale-95">
-          <Settings size={18} strokeWidth={1.5} />
-          <span className="text-sm font-medium">Settings</span>
-        </button>
-
         {/* Divider */}
-        <div className="w-px h-6 bg-white/10 mx-2" />
+        <div className="w-px h-5 mx-1" style={{ background: "var(--admin-border)" }} />
 
-        {/* Avatar with Dropdown */}
+        {/* Avatar + Dropdown */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-3 pl-1 py-1 rounded-xl hover:bg-white/5 transition-all duration-200"
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl transition-all duration-200"
+            style={{
+              background: menuOpen ? "var(--admin-surface-hover)" : "transparent",
+            }}
           >
-            <div className="h-9 w-9 rounded-full bg-[#353436] border border-[#414755] overflow-hidden p-0.5 flex-shrink-0">
+            {/* Avatar */}
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                color: "#000",
+              }}
+            >
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user?.name || "User"}
-                  className="w-full h-full object-cover rounded-full"
+                  alt={user?.full_name || "User"}
+                  className="w-full h-full object-cover rounded-lg"
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-[#adc6ff]/20 flex items-center justify-center text-[#adc6ff] text-xs font-bold">
-                  {user?.full_name?.charAt(0)?.toUpperCase() ?? user?.name?.charAt(0)?.toUpperCase() ?? "A"}
-                </div>
+                firstChar
               )}
             </div>
+
             <div className="hidden xl:block">
-                    <p className="text-sm font-semibold text-[#e5e2e3] leading-tight">
-                      {user?.full_name ?? user?.name ?? "Admin"}
-                    </p>
-              <p className="text-[10px] text-[#8b90a0]">{user?.role ?? "admin"}</p>
+              <p className="text-sm font-semibold leading-tight" style={{ color: "var(--admin-text)" }}>
+                {user?.full_name ?? user?.name ?? "Admin"}
+              </p>
+              <p className="text-[10px]" style={{ color: "var(--admin-text-dim)" }}>
+                {user?.role ?? "admin"}
+              </p>
             </div>
-            <ChevronDown size={14} className={`text-[#8b90a0] transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+
+            <ChevronDown
+              size={13}
+              style={{ color: "var(--admin-text-dim)" }}
+              className="transition-transform duration-200"
+            />
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown */}
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-[#1a1a1b] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[100]">
-              {/* User Info */}
-              <div className="px-4 py-3 border-b border-white/5">
-                <p className="text-sm font-semibold text-[#e5e2e3]">{user?.full_name ?? user?.name ?? "Admin"}</p>
-                <p className="text-xs text-[#8b90a0] truncate">{user?.email ?? ""}</p>
+            <div
+              className="absolute right-0 top-full mt-2 w-56 rounded-xl z-[100] animate-slide-up"
+              style={{
+                background: "var(--admin-surface)",
+                border: "1px solid var(--admin-border)",
+                boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+              }}
+            >
+              {/* User info */}
+              <div
+                className="px-4 py-3.5"
+                style={{ borderBottom: "1px solid var(--admin-border)" }}
+              >
+                <p className="text-sm font-semibold" style={{ color: "var(--admin-text)" }}>
+                  {user?.full_name ?? user?.name ?? "Admin"}
+                </p>
+                <p className="text-xs truncate" style={{ color: "var(--admin-text-sub)" }}>
+                  {user?.email ?? ""}
+                </p>
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-2"
+                  style={{
+                    background: "rgba(245,158,11,0.1)",
+                    color: "var(--admin-primary)",
+                    border: "1px solid rgba(245,158,11,0.2)",
+                  }}
+                >
+                  {user?.role ?? "admin"}
+                </span>
               </div>
 
-              {/* Menu Items */}
-              <div className="py-1">
+              {/* Menu items */}
+              <div className="py-1.5">
                 <button
                   onClick={() => { setMenuOpen(false); navigate("/admin/profile"); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#e5e2e3] hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                  style={{ color: "var(--admin-text-sub)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--admin-surface-hover)"; e.currentTarget.style.color = "var(--admin-text)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--admin-text-sub)"; }}
                 >
-                  <User size={16} className="text-[#8b90a0]" />
+                  <User size={15} style={{ color: "var(--admin-text-dim)" }} />
                   Thông tin tài khoản
                 </button>
 
                 <button
-                  onClick={() => { setMenuOpen(false); handleLogout(); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  onClick={() => { setMenuOpen(false); navigate("/admin/settings"); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                  style={{ color: "var(--admin-text-sub)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--admin-surface-hover)"; e.currentTarget.style.color = "var(--admin-text)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--admin-text-sub)"; }}
                 >
-                  <LogOut size={16} />
+                  <Search size={15} style={{ color: "var(--admin-text-dim)" }} />
+                  Cài đặt
+                </button>
+
+                <div className="mx-3 my-1.5" style={{ borderTop: "1px solid var(--admin-border)" }} />
+
+                <button
+                  onClick={() => { setMenuOpen(false); handleLogout(); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                  style={{ color: "var(--admin-error)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <LogOut size={15} />
                   Đăng xuất
                 </button>
               </div>

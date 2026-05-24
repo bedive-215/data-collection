@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNotification } from "@/contexts/NotificationContext";
 import NotificationDetailModal from "@/components/common/Notification/NotificationDetailModal";
-import { Bell, CheckCheck, Trash2, Clock, Filter, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Trash2, Clock, Loader2, RefreshCw } from "lucide-react";
 
 const TYPE_LABELS = {
     SURVEY_INVITATION: "Lời mời",
@@ -15,14 +15,14 @@ const TYPE_LABELS = {
 };
 
 const TYPE_COLORS = {
-    SURVEY_INVITATION: "bg-indigo-100 text-indigo-700",
-    SURVEY_RESPONSE: "bg-emerald-100 text-emerald-700",
-    SURVEY_EXPIRED: "bg-orange-100 text-orange-700",
-    SURVEY_PUBLISHED: "bg-teal-100 text-teal-700",
-    SURVEY_CLOSED: "bg-red-100 text-red-700",
-    NEW_PARTICIPANT: "bg-purple-100 text-purple-700",
-    SURVEY_INVITATION_SENT: "bg-indigo-100 text-indigo-700",
-    SYSTEM: "bg-slate-100 text-slate-700",
+    SURVEY_INVITATION: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
+    SURVEY_RESPONSE:    { bg: "rgba(16,185,129,0.1)", color: "#10B981", border: "rgba(16,185,129,0.2)" },
+    SURVEY_EXPIRED:    { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
+    SURVEY_PUBLISHED:  { bg: "rgba(99,102,241,0.1)", color: "#6366F1", border: "rgba(99,102,241,0.2)" },
+    SURVEY_CLOSED:     { bg: "rgba(239,68,68,0.1)", color: "#EF4444", border: "rgba(239,68,68,0.2)" },
+    NEW_PARTICIPANT:   { bg: "rgba(139,92,246,0.1)", color: "#8B5CF6", border: "rgba(139,92,246,0.2)" },
+    SURVEY_INVITATION_SENT: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
+    SYSTEM:            { bg: "rgba(156,163,175,0.1)", color: "#9CA3AF", border: "rgba(156,163,175,0.2)" },
 };
 
 const formatTime = (dateString) => {
@@ -68,110 +68,181 @@ export default function AdminNotificationsPage() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            {/* ── Header ── */}
+            <div className="flex items-start justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Thông báo</h1>
-                    <p className="text-slate-400 text-sm mt-1">
-                        {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Tất cả thông báo đã được đọc"}
+                    <h2
+                        className="text-3xl font-extrabold mb-1"
+                        style={{ color: "var(--admin-text)", letterSpacing: "-0.02em" }}
+                    >
+                        Thông báo
+                    </h2>
+                    <p className="text-sm" style={{ color: "var(--admin-text-sub)" }}>
+                        {unreadCount > 0
+                            ? `${unreadCount} thông báo chưa đọc`
+                            : "Tất cả thông báo đã được đọc"}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => refreshNotifications()}
-                        className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                        style={{
+                            background: "var(--admin-surface)",
+                            border: "1px solid var(--admin-border)",
+                            color: "var(--admin-text-sub)",
+                        }}
                     >
+                        <RefreshCw size={14} />
                         Làm mới
                     </button>
                     {unreadCount > 0 && (
                         <button
                             onClick={handleMarkAllRead}
                             disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                            style={{
+                                background: "rgba(245,158,11,0.1)",
+                                color: "#F59E0B",
+                                border: "1px solid rgba(245,158,11,0.2)",
+                            }}
                         >
-                            <CheckCheck size={16} />
+                            {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
                             Đánh dấu đã đọc
                         </button>
                     )}
                     <button
                         onClick={handleDeleteRead}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                        style={{
+                            background: "rgba(239,68,68,0.08)",
+                            color: "#EF4444",
+                            border: "1px solid rgba(239,68,68,0.15)",
+                        }}
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                         Xóa đã đọc
                     </button>
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 mb-4">
-                <Filter size={16} className="text-slate-400" />
-                {["all", "unread", "read"].map((f) => (
+            {/* ── Filters ── */}
+            <div
+                className="flex items-center gap-2 mb-6 p-1.5 rounded-xl inline-flex w-fit"
+                style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)" }}
+            >
+                {[
+                    { value: "all", label: "Tất cả", color: "#F9FAFB" },
+                    { value: "unread", label: "Chưa đọc", color: "#F59E0B" },
+                    { value: "read", label: "Đã đọc", color: "#9CA3AF" },
+                ].map(({ value, label, color }) => (
                     <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                            filter === f
-                                ? "bg-indigo-600 text-white"
-                                : "bg-slate-700/50 text-slate-400 hover:bg-slate-700"
-                        }`}
+                        key={value}
+                        onClick={() => setFilter(value)}
+                        className="px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+                        style={
+                            filter === value
+                                ? { background: "#F59E0B", color: "#000" }
+                                : { background: "transparent", color: "var(--admin-text-sub)" }
+                        }
                     >
-                        {f === "all" ? "Tất cả" : f === "unread" ? "Chưa đọc" : "Đã đọc"}
+                        {label}
                     </button>
                 ))}
             </div>
 
-            {/* Notifications List */}
+            {/* ── Notifications List ── */}
             <div className="space-y-3">
                 {filteredNotifications.length === 0 ? (
-                    <div className="bg-slate-800/50 rounded-2xl p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/50 flex items-center justify-center">
-                            <Bell size={32} className="text-slate-500" />
+                    <div
+                        className="rounded-2xl p-16 text-center"
+                        style={{
+                            background: "var(--admin-surface)",
+                            border: "1px solid var(--admin-border)",
+                        }}
+                    >
+                        <div
+                            className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                            style={{ background: "var(--admin-bg-secondary)" }}
+                        >
+                            <Bell size={32} style={{ color: "var(--admin-text-dim)" }} />
                         </div>
-                        <p className="text-lg font-medium text-slate-400">Không có thông báo nào</p>
-                        <p className="text-sm text-slate-500 mt-1">Các thông báo sẽ xuất hiện khi có hoạt động mới</p>
+                        <p className="text-base font-semibold mb-1" style={{ color: "var(--admin-text)" }}>
+                            Không có thông báo nào
+                        </p>
+                        <p className="text-sm" style={{ color: "var(--admin-text-dim)" }}>
+                            Các thông báo sẽ xuất hiện khi có hoạt động mới
+                        </p>
                     </div>
                 ) : (
-                    filteredNotifications.map((notification) => (
-                        <div
-                            key={notification.id}
-                            onClick={() => setSelectedNotification(notification)}
-                            className={`bg-slate-800/50 rounded-xl p-4 cursor-pointer transition-all hover:bg-slate-800/70 border border-transparent hover:border-slate-700 ${
-                                !notification.read ? "border-l-4 border-l-indigo-500" : ""
-                            }`}
-                        >
-                            <div className="flex items-start gap-4">
-                                {!notification.read && (
-                                    <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 flex-shrink-0" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span
-                                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                                TYPE_COLORS[notification.type] || TYPE_COLORS.SYSTEM
-                                            }`}
-                                        >
-                                            {TYPE_LABELS[notification.type] || "Thông báo"}
-                                        </span>
-                                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                                            <Clock size={12} />
-                                            {formatTime(notification.createdAt)}
-                                        </span>
-                                    </div>
-                                    <h3 className={`font-medium ${notification.read ? "text-slate-300" : "text-white"}`}>
-                                        {notification.title}
-                                    </h3>
-                                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{notification.message}</p>
-                                    {notification.data?.surveyTitle && (
-                                        <p className="text-xs text-slate-500 mt-2">
-                                            Khảo sát: {notification.data.surveyTitle}
-                                        </p>
+                    filteredNotifications.map((notification) => {
+                        const tc = TYPE_COLORS[notification.type] || TYPE_COLORS.SYSTEM;
+                        return (
+                            <div
+                                key={notification.id}
+                                onClick={() => setSelectedNotification(notification)}
+                                className="rounded-2xl p-4 cursor-pointer transition-all group"
+                                style={{
+                                    background: "var(--admin-surface)",
+                                    border: `1px solid ${notification.read ? "var(--admin-border)" : "rgba(245,158,11,0.2)"}`,
+                                    borderLeft: notification.read ? "1px solid var(--admin-border)" : `3px solid ${tc.color}`,
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.background = "var(--admin-surface-hover)";
+                                    e.currentTarget.style.borderColor = "var(--admin-border-hover)";
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.background = "var(--admin-surface)";
+                                    e.currentTarget.style.borderColor = notification.read ? "var(--admin-border)" : `${tc.color}30`;
+                                }}
+                            >
+                                <div className="flex items-start gap-4">
+                                    {!notification.read && (
+                                        <div
+                                            className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
+                                            style={{ background: tc.color }}
+                                        />
                                     )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <span
+                                                className="px-2.5 py-0.5 rounded-full text-[10px] font-bold"
+                                                style={{ background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}
+                                            >
+                                                {TYPE_LABELS[notification.type] || "Thông báo"}
+                                            </span>
+                                            <span
+                                                className="text-xs flex items-center gap-1"
+                                                style={{ color: "var(--admin-text-dim)" }}
+                                            >
+                                                <Clock size={11} />
+                                                {formatTime(notification.createdAt)}
+                                            </span>
+                                        </div>
+                                        <h3
+                                            className="text-sm font-semibold mb-1"
+                                            style={{ color: notification.read ? "var(--admin-text-sub)" : "var(--admin-text)" }}
+                                        >
+                                            {notification.title}
+                                        </h3>
+                                        <p
+                                            className="text-sm line-clamp-2"
+                                            style={{ color: "var(--admin-text-dim)", lineHeight: 1.5 }}
+                                        >
+                                            {notification.message}
+                                        </p>
+                                        {notification.data?.surveyTitle && (
+                                            <p className="text-xs mt-2" style={{ color: "var(--admin-text-dim)" }}>
+                                                Khảo sát: {notification.data.surveyTitle}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 

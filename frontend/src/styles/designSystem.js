@@ -1,110 +1,141 @@
 /**
- * Design System — Shared design tokens cho toàn bộ app
- * Dùng chung cho cả admin (dark) và user (light)
+ * Admin Design System — Warm Dark Premium Theme
+ * Dùng cho toàn bộ admin dashboard
+ * Phiên bản: v2 — thống nhất màu sắc, loại bỏ xung đột
  */
+
+// ─── SHARED CHART COLORS (standalone export) ───────────────────────────────────
+export const chartColors = ["#F59E0B","#6366F1","#8B5CF6","#10B981","#3B82F6","#EC4899","#EF4444","#14B8A6"];
 
 // ─── ADMIN DARK THEME ────────────────────────────────────────────────────────
 export const adminTheme = {
-  bg: "#080c1a",
-  bgSecondary: "#0d1224",
-  surface: "rgba(255,255,255,0.04)",
-  surfaceHover: "rgba(255,255,255,0.07)",
-  surfaceActive: "rgba(99,102,241,0.08)",
-  border: "rgba(255,255,255,0.07)",
-  borderHover: "rgba(255,255,255,0.12)",
-  borderActive: "rgba(99,102,241,0.35)",
-  text: "#f8fafc",
-  textSub: "#94a3b8",
-  textDim: "#475569",
-  primary: "#6366f1",
-  primaryHover: "#7c7ff7",
-  primaryDim: "rgba(99,102,241,0.12)",
-  primaryBorder: "rgba(99,102,241,0.3)",
-  success: "#10b981",
-  successDim: "rgba(16,185,129,0.12)",
-  warning: "#f59e0b",
-  warningDim: "rgba(245,158,11,0.12)",
-  error: "#ef4444",
-  errorDim: "rgba(239,68,68,0.12)",
-  violet: "#a855f7",
-  violetDim: "rgba(168,85,247,0.12)",
-  cyan: "#06b6d4",
-  amber: "#f59e0b",
-  font: "'DM Sans', 'Inter', sans-serif",
+  // ─── Nền & Bề mặt ────────────────────────────────────────────────────
+  bg:           "#0F1117",
+  bgSecondary:  "#141620",
+  surface:      "#1A1D2E",
+  surfaceHover: "#222638",
+  surfaceActive:"rgba(99,102,241,0.08)",
+  surfaceGlass: "rgba(26,29,46,0.85)",
+
+  // ─── Border ────────────────────────────────────────────────────────────
+  border:        "#2A2D3E",
+  borderHover:   "#3A3D50",
+  borderActive:  "rgba(99,102,241,0.4)",
+
+  // ─── Text ─────────────────────────────────────────────────────────────
+  text:       "#F9FAFB",
+  textSub:    "#9CA3AF",
+  textDim:    "#4B5563",
+
+  // ─── Màu chính (Amber — ấm, nổi bật) ───────────────────────────────
+  primary:       "#F59E0B",
+  primaryHover:  "#D97706",
+  primaryDim:   "rgba(245,158,11,0.12)",
+  primaryBorder: "rgba(245,158,11,0.3)",
+
+  // ─── Màu phụ (Indigo — cho data visualization) ─────────────────────────
+  secondary:     "#6366F1",
+  secondaryDim:  "rgba(99,102,241,0.12)",
+
+  // ─── Accent ───────────────────────────────────────────────────────────
+  accent:        "#8B5CF6",
+  accentDim:     "rgba(139,92,246,0.12)",
+
+  // ─── Trạng thái ──────────────────────────────────────────────────────
+  success:      "#10B981",
+  successDim:   "rgba(16,185,129,0.12)",
+  warning:      "#F59E0B",
+  warningDim:   "rgba(245,158,11,0.12)",
+  error:       "#EF4444",
+  errorDim:    "rgba(239,68,68,0.12)",
+  info:        "#3B82F6",
+  infoDim:     "rgba(59,130,246,0.12)",
+
+  // ─── Chart colors ─────────────────────────────────────────────────────
+  chartColors: ["#F59E0B","#6366F1","#8B5CF6","#10B981","#3B82F6","#EC4899","#EF4444","#14B8A6"],
+
+  // ─── Typography ───────────────────────────────────────────────────────
+  font:     "'Plus Jakarta Sans', 'Inter', sans-serif",
   fontMono: "'JetBrains Mono', 'Fira Code', monospace",
+
+  // ─── Border radius ────────────────────────────────────────────────────
   radiusSm: 8,
   radiusMd: 12,
   radiusLg: 18,
   radiusXl: 24,
-  shadow: "0 4px 24px rgba(0,0,0,0.3)",
-  shadowSm: "0 2px 12px rgba(0,0,0,0.2)",
-  shadowPrimary: "0 4px 20px rgba(99,102,241,0.3)",
+
+  // ─── Shadows ──────────────────────────────────────────────────────────
+  shadow:          "0 4px 24px rgba(0,0,0,0.4)",
+  shadowSm:        "0 2px 12px rgba(0,0,0,0.3)",
+  shadowPrimary:   "0 4px 20px rgba(245,158,11,0.25)",
+  shadowCard:      "0 8px 32px rgba(0,0,0,0.35)",
+  shadowGlow:      "0 0 40px rgba(245,158,11,0.08)",
 };
 
 // ─── USER LIGHT THEME ─────────────────────────────────────────────────────────
 export const userTheme = {
-  bg: "#f0f2f8",
-  bgSecondary: "#ffffff",
-  surface: "#ffffff",
-  surfaceHover: "#f8fafc",
-  surfaceActive: "rgba(99,102,241,0.05)",
-  border: "rgba(0,0,0,0.08)",
-  borderHover: "rgba(99,102,241,0.2)",
-  borderActive: "rgba(99,102,241,0.35)",
-  text: "#111827",
-  textSub: "#4b5563",
-  textDim: "#9ca3af",
-  primary: "#6366f1",
-  primaryHover: "#4f46e5",
-  primaryDim: "rgba(99,102,241,0.08)",
-  primaryBorder: "rgba(99,102,241,0.2)",
-  success: "#10b981",
-  successDim: "rgba(16,185,129,0.08)",
-  warning: "#f59e0b",
-  warningDim: "rgba(245,158,11,0.08)",
-  error: "#ef4444",
-  errorDim: "rgba(239,68,68,0.08)",
-  violet: "#a855f7",
-  violetDim: "rgba(168,85,247,0.08)",
-  cyan: "#06b6d4",
-  amber: "#f59e0b",
-  font: "'DM Sans', 'Inter', sans-serif",
+  bg:           "#F8F9FC",
+  bgSecondary:  "#FFFFFF",
+  surface:      "#FFFFFF",
+  surfaceHover: "#F3F4F7",
+  surfaceActive:"rgba(99,102,241,0.06)",
+  surfaceGlass: "rgba(255,255,255,0.9)",
+  border:        "rgba(0,0,0,0.07)",
+  borderHover:   "rgba(0,0,0,0.12)",
+  borderActive:  "rgba(99,102,241,0.35)",
+  text:       "#111827",
+  textSub:    "#4B5563",
+  textDim:    "#9CA3AF",
+  primary:       "#F59E0B",
+  primaryHover:  "#D97706",
+  primaryDim:   "rgba(245,158,11,0.08)",
+  primaryBorder: "rgba(245,158,11,0.2)",
+  secondary:     "#6366F1",
+  secondaryDim:  "rgba(99,102,241,0.08)",
+  accent:        "#8B5CF6",
+  accentDim:     "rgba(139,92,246,0.08)",
+  success:      "#10B981",
+  successDim:   "rgba(16,185,129,0.08)",
+  warning:      "#F59E0B",
+  warningDim:   "rgba(245,158,11,0.08)",
+  error:       "#EF4444",
+  errorDim:    "rgba(239,68,68,0.08)",
+  info:        "#3B82F6",
+  infoDim:     "rgba(59,130,246,0.08)",
+  chartColors: ["#F59E0B","#6366F1","#8B5CF6","#10B981","#3B82F6","#EC4899","#EF4444","#14B8A6"],
+  font:     "'Plus Jakarta Sans', 'Inter', sans-serif",
   fontMono: "'JetBrains Mono', 'Fira Code', monospace",
   radiusSm: 8,
   radiusMd: 12,
   radiusLg: 18,
   radiusXl: 24,
-  shadow: "0 4px 24px rgba(15,23,42,0.06)",
-  shadowSm: "0 2px 12px rgba(15,23,42,0.04)",
-  shadowPrimary: "0 4px 20px rgba(99,102,241,0.25)",
+  shadow:      "0 4px 24px rgba(15,23,42,0.06)",
+  shadowSm:    "0 2px 12px rgba(15,23,42,0.04)",
+  shadowPrimary:"0 4px 20px rgba(245,158,11,0.2)",
+  shadowCard:   "0 8px 32px rgba(15,23,42,0.08)",
+  shadowGlow:   "0 0 40px rgba(245,158,11,0.06)",
 };
-
-// ─── CHART COLORS ─────────────────────────────────────────────────────────────
-export const chartColors = [
-  "#6366f1", "#a855f7", "#ec4899", "#f59e0b",
-  "#10b981", "#06b6d4", "#8b5cf6", "#f97316"
-];
 
 // ─── QUESTION TYPE BADGES ──────────────────────────────────────────────────────
 export const questionTypeBadge = {
-  SINGLE_CHOICE:   { label: "Một lựa chọn", bg: "#e0e7ff", color: "#6366f1" },
-  MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", bg: "#f3e8ff", color: "#a855f7" },
-  DROPDOWN:        { label: "Dropdown", bg: "#ede9fe", color: "#7c3aed" },
-  RATING:          { label: "Đánh giá", bg: "#fef3c7", color: "#f59e0b" },
-  NUMBER:          { label: "Số", bg: "#cffafe", color: "#06b6d4" },
-  DATE:            { label: "Ngày", bg: "#d1fae5", color: "#10b981" },
-  TEXT:            { label: "Văn bản", bg: "#fce7f3", color: "#ec4899" },
-  PARAGRAPH:       { label: "Đoạn văn", bg: "#fee2e2", color: "#ef4444" },
-  EMAIL:           { label: "Email", bg: "#fef9c3", color: "#eab308" },
+  SINGLE_CHOICE:   { label: "Một lựa chọn", bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
+  MULTIPLE_CHOICE:{ label: "Nhiều lựa chọn", bg: "rgba(139,92,246,0.12)", color: "#8B5CF6" },
+  DROPDOWN:        { label: "Dropdown", bg: "rgba(99,102,241,0.12)", color: "#6366F1" },
+  RATING:          { label: "Đánh giá", bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
+  NUMBER:          { label: "Số", bg: "rgba(59,130,246,0.12)", color: "#3B82F6" },
+  DATE:            { label: "Ngày", bg: "rgba(16,185,129,0.12)", color: "#10B981" },
+  TEXT:            { label: "Văn bản", bg: "rgba(236,72,153,0.12)", color: "#EC4899" },
+  PARAGRAPH:       { label: "Đoạn văn", bg: "rgba(239,68,68,0.12)", color: "#EF4444" },
+  EMAIL:           { label: "Email", bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
 };
 
 // ─── DATE RANGE PRESETS ────────────────────────────────────────────────────────
 export const DATE_PRESETS = [
-  { label: "Hôm nay",   value: "today" },
-  { label: "7 ngày",   value: "7d" },
-  { label: "30 ngày",  value: "30d" },
+  { label: "Hôm nay",    value: "today" },
+  { label: "7 ngày",    value: "7d" },
+  { label: "30 ngày",   value: "30d" },
   { label: "Tháng này", value: "this_month" },
-  { label: "Tháng trước", value: "last_month" },
+  { label: "Tháng trước",value: "last_month" },
   { label: "Tùy chỉnh", value: "custom" },
 ];
 
@@ -142,11 +173,11 @@ export function resolveDatePreset(preset) {
 
   return {
     from: preset !== "custom" ? start.toISOString().split("T")[0] : null,
-    to: preset !== "custom" ? end.toISOString().split("T")[0] : null,
+    to:   preset !== "custom" ? end.toISOString().split("T")[0]   : null,
   };
 }
 
-// ─── FORMATTING HELPERS ────────────────────────────────────────────────────────
+// ─── FORMATTING HELPERS ───────────────────────────────────────────────────────
 export function formatNumber(n) {
   if (typeof n !== "number") return n ?? "—";
   return n.toLocaleString("vi-VN");
@@ -169,16 +200,16 @@ export function truncate(str, max = 50) {
   return str.length > max ? str.slice(0, max) + "…" : str;
 }
 
-// ─── ANIMATION KEYFRAMES (inject vào document) ─────────────────────────────────
+// ─── GLOBAL CSS (inject vào document) ─────────────────────────────────────────
 export const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
   * { box-sizing: border-box; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.3); }
+  ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.15); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.25); }
 
   input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
 `;
