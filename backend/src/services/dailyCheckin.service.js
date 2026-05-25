@@ -1,6 +1,7 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import starService, { STAR_REWARDS } from "./star.service.js";
+import starService from "./star.service.js";
+import { STAR_REWARDS } from "../domain/star.domain.js";
 import achievementService from "./achievement.service.js";
 import leaderboardService from "./leaderboard.service.js";
 import notificationService from "./notification.service.js";

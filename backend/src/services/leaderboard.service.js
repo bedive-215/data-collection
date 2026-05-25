@@ -1,6 +1,6 @@
 import { Op, fn, col, literal } from "sequelize";
 import models from "../models/index.js";
-import { WEEKLY_PRIZES } from "./star.service.js";
+import { WEEKLY_PRIZES } from "../domain/star.domain.js";
 
 export const LEADERBOARD_PERIODS = {
     WEEKLY: "WEEKLY",
