@@ -1,7 +1,7 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import surveyService from "./survey.service.js";
 import crypto from "crypto";
+import { getSurveyStatus } from "../domain/survey.domain.js";
 
 class QuestionService {
     constructor() {
@@ -339,7 +339,7 @@ class QuestionService {
 
     // get questions by survey
     async getQuestionsBySurvey(survey) {
-        const status = surveyService._getSurveyStatus(survey);
+        const status = getSurveyStatus(survey);
 
         if (status !== "ACTIVE") {
             throw new AppError(`Survey is ${status}`, 403);

@@ -1,99 +1,78 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { Op } from "sequelize";
-import { sendInviteEmail } from "../utils/sendMail.js";
-import sequelize from "../configs/db.config.js";
+
 import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
+import { sanitizePagination } from "../utils/pagination.js";
+import { generateSurveyAccessToken } from "../utils/token.js";
+import { buildSurveyPublicUrl } from "../utils/surveyUrl.js";
+
+import { getSurveyStatus } from "../domain/survey.domain.js";
+import { mapSurveyDetail, mapSurvey } from "../mappers/survey.mapper.js";
+
 import notificationService from "./notification.service.js";
 import starService from "./star.service.js";
 import achievementService from "./achievement.service.js";
 
-const ALLOWED_EDITOR_ROLES = ['editor', 'viewer'];
+import eventBus from "../events/eventBus.js";
+import { SURVEY_EVENTS } from "../events/survey/survey.events.js";
+import { emailQueue } from "../queues/email.queue.js";
+
+const ALLOWED_EDITOR_ROLES = ["viewer", "respondent"];
+const VALID_INVITE_ROLES = ["viewer", "editor", "respondent"];
 
 class SurveyService {
     constructor() {
-        this.Survey = models.Survey;
-        this.Question = models.Question;
-        this.QuestionOption = models.QuestionOption;
-        this.User = models.User;
-        this.SurveyParticipant = models.SurveyParticipant;
-        this.SurveyAccess = models.SurveyAccess;
-        this.Section = models.Section;
-    }
-
-    _sanitizePagination(page, limit) {
-        const safePage = Math.max(1, parseInt(page) || 1);
-        const safeLimit = Math.min(500, Math.max(1, parseInt(limit) || 500));
-
-        return {
-            page: safePage,
-            limit: safeLimit,
-            offset: (safePage - 1) * safeLimit
-        };
-    }
-
-    _getSurveyStatus(survey) {
-        const now = new Date();
-        if (survey.start_at && now < survey.start_at) return "SCHEDULED";
-        if (survey.end_at && now > survey.end_at) return "EXPIRED";
-        return "ACTIVE";
+        const { Survey, Question, QuestionOption, User, SurveyParticipant, SurveyAccess, Section } = models;
+        Object.assign(this, { Survey, Question, QuestionOption, User, SurveyParticipant, SurveyAccess, Section });
     }
 
     _validateTitle(title) {
-        if (!title || !title.trim()) {
-            throw new AppError("Title is required!", 400);
+        if (!title || !title.trim()) throw new AppError("Title is required!", 400);
+    }
+
+    _validateDates(start_at, end_at) {
+        if (start_at && end_at && new Date(end_at) <= new Date(start_at)) {
+            throw new AppError("end_at must be after start_at", 400);
         }
     }
 
-    _generateAccessToken() {
-        return (
-            Math.random()
-                .toString(36)
-                .substring(2, 15)
-            +
-            Math.random()
-                .toString(36)
-                .substring(2, 15)
-        );
-    }
-
-    /**
-     * URL người dùng mở trên trình duyệt (SPA).
-     * FRONTEND_URL = gốc web (vd http://localhost:5173), khác BASE_URL (API) nếu tách cổng.
-     */
-    _shareSurveyPublicUrl(survey) {
-        const id = survey.id;
-        const token = survey.access_token;
-        const front = (process.env.FRONTEND_URL || "").trim().replace(/\/$/, "");
-        if (front) {
-            return `${front}/user/survey/${id}?access_token=${encodeURIComponent(token)}`;
+    _validateTimeLimit(time_limit_seconds) {
+        if (time_limit_seconds !== undefined && time_limit_seconds !== null && time_limit_seconds < 30) {
+            throw new AppError("time_limit_seconds must be at least 30", 400);
         }
-        const apiBase = (process.env.BASE_URL || "").trim().replace(/\/$/, "");
-        return `${apiBase}/surveys/${id}?access_token=${token}`;
     }
 
-    // Create new survey
+    async _loadParticipantsMap(surveyIds) {
+        if (!surveyIds.length) return {};
+        const rows = await this.SurveyParticipant.findAll({
+            where: { survey_id: surveyIds },
+            attributes: ["id", "survey_id", "email", "role", "user_id"],
+            include: [{ model: this.User, as: "user", attributes: ["id", "full_name", "email", "avatar"] }],
+            order: [["created_at", "ASC"]],
+        });
+        return rows.reduce((map, p) => {
+            (map[p.survey_id] ??= []).push({
+                id: p.user?.id ?? null,
+                name: p.user?.full_name ?? null,
+                email: p.email,
+            });
+            return map;
+        }, {});
+    }
+
     async createSurvey(user, payload) {
         const {
             title, description, start_at, end_at,
             is_anonymous, max_responses, randomize_questions,
             randomize_options, time_limit_seconds, show_progress_bar,
             allow_back, one_question_per_page, thank_you_message,
-            logo_url, background_url, accent_color,
-            show_correct_answers,
+            logo_url, background_url, accent_color, show_correct_answers,
         } = payload;
 
         this._validateTitle(title);
-
-        if (start_at && end_at && new Date(end_at) <= new Date(start_at)) {
-            throw new AppError("end_at must be after start_at", 400);
-        }
-
-        if (time_limit_seconds !== undefined && time_limit_seconds !== null) {
-            if (time_limit_seconds < 30) {
-                throw new AppError("time_limit_seconds must be at least 30", 400);
-            }
-        }
+        this._validateDates(start_at, end_at);
+        this._validateTimeLimit(time_limit_seconds);
 
         const survey = await this.Survey.create({
             title: title.trim(),
@@ -116,827 +95,328 @@ class SurveyService {
             show_correct_answers: show_correct_answers ?? false,
         });
 
-        // ── GAMIFICATION: Cộng sao khi tạo survey ─────────────────
         const starResult = await starService.rewardCreateSurvey(user.id, survey.id);
         await achievementService.checkAndUnlock(user.id, "survey_created", { survey_id: survey.id });
-        // ── GAMIFICATION END ───────────────────────────────────────
 
-        return {
-            message: "Created survey successfully",
-            survey: this._mapSurvey(survey),
-            gamification: starResult,
-        };
+        return { message: "Created survey successfully", survey: mapSurvey(survey), gamification: starResult };
     }
 
-    // get survey by id (with questions & options)
     async getSurveyById(user, survey_id, access_token = null) {
-        if (!survey_id) {
-            throw new AppError("Survey id is required!", 400);
-        }
+        if (!survey_id) throw new AppError("Survey id is required!", 400);
 
         const survey = await this.Survey.findByPk(survey_id, {
             include: [
-                {
-                    model: this.Question,
-                    as: "questions",
-                    include: [{ model: this.QuestionOption, as: "options" }]
-                },
-                {
-                    model: this.Section,
-                    as: "sections",
-                    include: [{ model: this.Question, as: "questions" }],
-                    order: [["order_index", "ASC"]]
-                }
-            ]
+                { model: this.Question, as: "questions", include: [{ model: this.QuestionOption, as: "options" }] },
+                { model: this.Section, as: "sections", include: [{ model: this.Question, as: "questions" }], order: [["order_index", "ASC"]] },
+            ],
         });
 
-        if (!survey) {
-            throw new AppError("Survey not found!", 404);
-        }
+        if (!survey) throw new AppError("Survey not found!", 404);
 
-        const status = this._getSurveyStatus(survey);
+        const status = getSurveyStatus(survey);
 
-        const isOwnerOrAdmin = _checkOwnerOrAdmin(user, survey);
-        if (status !== "ACTIVE" && !isOwnerOrAdmin) {
+        if (status !== "ACTIVE") {
             throw new AppError(`Survey is ${status}`, 403);
         }
 
-        return {
-            message: "Get survey successfully!",
-            survey: this._mapSurveyDetail(survey, status),
-        };
+        return { message: "Get survey successfully!", survey: mapSurveyDetail(survey, status) };
     }
 
-    // get surveys by user id
-    async getMySurveys(user, page = 1, limit = 10) {
-
-        const { offset, limit: safeLimit, page: safePage } =
-            this._sanitizePagination(page, limit);
-
-        const surveys = await this.Survey.findAll({
-            where: { created_by: user.id },
-            attributes: [
-                "id",
-                "title",
-                "start_at",
-                "end_at",
-                "created_at"
-            ],
-            offset,
-            limit: safeLimit,
-            order: [["created_at", "DESC"]]
-        });
-
-        // Lấy participants cho từng survey
-        const surveyIds = surveys.map(s => s.id);
-        const participantsMap = {};
-
-        if (surveyIds.length > 0) {
-            const participants = await this.SurveyParticipant.findAll({
-                where: { survey_id: surveyIds },
-                attributes: ["id", "survey_id", "email", "role", "user_id"],
-                include: [{
-                    model: this.User,
-                    as: "user",
-                    attributes: ["id", "full_name", "email", "avatar"]
-                }],
-                order: [["created_at", "ASC"]]
-            });
-
-            participants.forEach(p => {
-                if (!participantsMap[p.survey_id]) participantsMap[p.survey_id] = [];
-                participantsMap[p.survey_id].push({
-                    id: p.user?.id || null,
-                    name: p.user?.full_name || null,
-                    email: p.email,
-                });
-            });
-        }
-
-        return {
-            message: "Get surveys successfully!",
-            count: surveys.length,
-            surveys: surveys.map(s => ({
-                ...this._mapSurvey(s),
-                status: this._getSurveyStatus(s),
-                participants: participantsMap[s.id] || [],
-            }))
-        };
-    }
-
-    // get surveys by user id (for admin)
-    async getSurveyByUserId(user, page = 1, limit = 10) {
-        const { offset, limit: safeLimit, page: safePage } =
-            this._sanitizePagination(page, limit);
-
-        const surveys = await this.Survey.findAll({
-            where: { created_by: user.id },
-            attributes: [
-                "id",
-                "title",
-                "start_at",
-                "end_at",
-                "created_at"
-            ],
-            offset,
-            limit: safeLimit,
-            order: [["created_at", "DESC"]]
-        });
-
-        return {
-            message: "Get surveys successfully!",
-            count: surveys.length,
-            surveys: surveys.map(s => ({
-                ...this._mapSurvey(s),
-                status: this._getSurveyStatus(s)
-            }))
-        };
-    }
-
-    // get all surveys (for admin)
-    async getAllSurvey(page = 1, limit = 100) {
-        const { offset, limit: safeLimit, page: safePage } =
-            this._sanitizePagination(page, limit);
-
-        const { count, rows } = await this.Survey.findAndCountAll({
-            attributes: [
-                "id",
-                "title",
-                "description",
-                "start_at",
-                "end_at",
-                "access_type",
-                "created_at",
-                "created_by"
-            ],
-            include: [{
-                model: this.User,
-                as: "creator",
-                attributes: ["id", "full_name", "email", "avatar"]
-            }],
-            offset,
-            limit: safeLimit,
-            order: [["created_at", "DESC"]]
-        });
-
-        return {
-            message: "Get surveys successfully!",
-            count,
-            surveys: rows.map(s => ({
-                ...this._mapSurvey(s),
-                access_type: s.access_type,
-                created_by: s.created_by,
-                creator: s.creator ? {
-                    id: s.creator.id,
-                    full_name: s.creator.full_name,
-                    email: s.creator.email,
-                    avatar: s.creator.avatar
-                } : null,
-                status: this._getSurveyStatus(s)
-            })),
-            page: safePage,
-            totalPages: Math.ceil(count / safeLimit)
-        };
-    }
-
-    async getSurveyPublic() {
-        const surveys = await this.Survey.findAll({
-            where: { access_type: "PUBLIC" }
-        });
-
-        // Lấy participants cho từng survey
-        const surveyIds = surveys.map(s => s.id);
-        const participantsMap = {};
-
-        if (surveyIds.length > 0) {
-            const participants = await this.SurveyParticipant.findAll({
-                where: { survey_id: surveyIds },
-                attributes: ["id", "survey_id", "email", "role", "user_id"],
-                include: [{
-                    model: this.User,
-                    as: "user",
-                    attributes: ["id", "full_name", "email", "avatar"]
-                }],
-                order: [["created_at", "ASC"]]
-            });
-
-            participants.forEach(p => {
-                if (!participantsMap[p.survey_id]) participantsMap[p.survey_id] = [];
-                participantsMap[p.survey_id].push({
-                    id: p.user?.id || null,
-                    name: p.user?.full_name || null,
-                    email: p.email,
-                });
-            });
-        }
-
-        return {
-            message: "Get public surveys successfully!",
-            count: surveys.length,
-            surveys: surveys.map(s => ({
-                ...this._mapSurvey(s),
-                status: this._getSurveyStatus(s),
-                participants: participantsMap[s.id] || [],
-            }))
-        };
-    }
-
-    async updateSurvey(user, surveyId, payload) {
-        const survey = await this.Survey.findByPk(surveyId);
-
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
+    async updateSurvey(user, survey, payload) {
+        if (!survey) throw new AppError("Survey not found", 404);
 
         const {
             title, description, start_at, end_at,
             is_anonymous, max_responses, randomize_questions,
             randomize_options, time_limit_seconds, show_progress_bar,
             allow_back, one_question_per_page, thank_you_message,
-            logo_url, background_url, accent_color,
-            show_correct_answers,
+            logo_url, background_url, accent_color, show_correct_answers,
         } = payload;
 
-        if (title !== undefined) {
-            this._validateTitle(title);
-            survey.title = title.trim();
-        }
-
-        if (description !== undefined) {
-            survey.description = description?.trim() || null;
-        }
-
-        if (start_at !== undefined) {
-            survey.start_at = start_at;
-        }
-
+        if (title !== undefined) { this._validateTitle(title); survey.title = title.trim(); }
+        if (description !== undefined) survey.description = description?.trim() || null;
+        if (start_at !== undefined) survey.start_at = start_at;
         if (end_at !== undefined) {
             if (survey.start_at && new Date(end_at) <= new Date(survey.start_at)) {
                 throw new AppError("end_at must be after start_at", 400);
             }
             survey.end_at = end_at;
         }
-
-        // ── NEW: Nâng cao survey settings ───────────────────────────
-        if (is_anonymous !== undefined)       survey.is_anonymous = is_anonymous;
-        if (max_responses !== undefined)     survey.max_responses = max_responses;
+        if (is_anonymous !== undefined) survey.is_anonymous = is_anonymous;
+        if (max_responses !== undefined) survey.max_responses = max_responses;
         if (randomize_questions !== undefined) survey.randomize_questions = randomize_questions;
-        if (randomize_options !== undefined)  survey.randomize_options = randomize_options;
+        if (randomize_options !== undefined) survey.randomize_options = randomize_options;
         if (time_limit_seconds !== undefined) {
-            if (time_limit_seconds !== null && time_limit_seconds < 30) {
-                throw new AppError("time_limit_seconds must be at least 30", 400);
-            }
+            this._validateTimeLimit(time_limit_seconds);
             survey.time_limit_seconds = time_limit_seconds;
         }
         if (show_progress_bar !== undefined) survey.show_progress_bar = show_progress_bar;
-        if (allow_back !== undefined)        survey.allow_back = allow_back;
+        if (allow_back !== undefined) survey.allow_back = allow_back;
         if (one_question_per_page !== undefined) survey.one_question_per_page = one_question_per_page;
         if (thank_you_message !== undefined) survey.thank_you_message = thank_you_message || null;
-        if (logo_url !== undefined)          survey.logo_url = logo_url || null;
-        if (background_url !== undefined)    survey.background_url = background_url || null;
-        if (accent_color !== undefined)      survey.accent_color = accent_color || "#6366f1";
+        if (logo_url !== undefined) survey.logo_url = logo_url || null;
+        if (background_url !== undefined) survey.background_url = background_url || null;
+        if (accent_color !== undefined) survey.accent_color = accent_color || "#6366f1";
         if (show_correct_answers !== undefined) survey.show_correct_answers = show_correct_answers;
 
         await survey.save();
+        return { message: "Updated survey successfully", survey: mapSurvey(survey) };
+    }
+
+    async deleteSurveyById(survey, user) {
+        if (!survey) throw new AppError("Survey not found", 404);
+
+        if (survey.created_by === user.id) {
+            await starService.penalizeSurveyDeleted(survey.created_by, survey.id);
+            eventBus.emit(SURVEY_EVENTS.DELETED, { survey, deleter: user });
+        }
+
+        await survey.destroy();
+        return { message: "Deleted survey successfully" };
+    }
+
+    // base survey query with optional participant loading
+    async _getSurveysByUser(user, page, limit, { withParticipants = false } = {}) {
+        const { offset, limit: safeLimit, page: safePage } = sanitizePagination(page, limit);
+
+        const surveys = await this.Survey.findAll({
+            where: { created_by: user.id },
+            attributes: ["id", "title", "start_at", "end_at", "created_at"],
+            offset,
+            limit: safeLimit,
+            order: [["created_at", "DESC"]],
+        });
+
+        const participantsMap = withParticipants
+            ? await this._loadParticipantsMap(surveys.map(s => s.id))
+            : {};
 
         return {
-            message: "Updated survey successfully",
-            survey: this._mapSurvey(survey)
+            message: "Get surveys successfully!",
+            count: surveys.length,
+            surveys: surveys.map(s => ({
+                ...mapSurvey(s),
+                status: getSurveyStatus(s),
+                ...(withParticipants && { participants: participantsMap[s.id] || [] }),
+            })),
         };
     }
 
-    // Gia hạn thời gian khảo sát
-    async extendDeadline(surveyId, user, payload) {
-        const survey = await this.Survey.findByPk(surveyId);
+    async getMySurveys(user, page = 1, limit = 10) {
+        return this._getSurveysByUser(user, page, limit, { withParticipants: true });
+    }
 
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
+    async getSurveyByUserId(user, page = 1, limit = 10) {
+        return this._getSurveysByUser(user, page, limit);
+    }
 
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to extend this survey", 403);
-        }
+    async getAllSurvey(page = 1, limit = 100) {
+        const { offset, limit: safeLimit, page: safePage } = sanitizePagination(page, limit);
 
+        const { count, rows } = await this.Survey.findAndCountAll({
+            attributes: ["id", "title", "description", "start_at", "end_at", "access_type", "created_at", "created_by"],
+            include: [{ model: this.User, as: "creator", attributes: ["id", "full_name", "email", "avatar"] }],
+            offset,
+            limit: safeLimit,
+            order: [["created_at", "DESC"]],
+        });
+
+        return {
+            message: "Get surveys successfully!",
+            count,
+            page: safePage,
+            totalPages: Math.ceil(count / safeLimit),
+            surveys: rows.map(s => ({
+                ...mapSurvey(s),
+                access_type: s.access_type,
+                created_by: s.created_by,
+                creator: s.creator
+                    ? { id: s.creator.id, full_name: s.creator.full_name, email: s.creator.email, avatar: s.creator.avatar }
+                    : null,
+                status: getSurveyStatus(s),
+            })),
+        };
+    }
+
+    async getSurveyPublic() {
+        const surveys = await this.Survey.findAll({ where: { access_type: "PUBLIC" } });
+        const participantsMap = await this._loadParticipantsMap(surveys.map(s => s.id));
+
+        return {
+            message: "Get public surveys successfully!",
+            count: surveys.length,
+            surveys: surveys.map(s => ({
+                ...mapSurvey(s),
+                status: getSurveyStatus(s),
+                participants: participantsMap[s.id] || [],
+            })),
+        };
+    }
+
+    async extendDeadline(survey, user, payload) {
         const { new_end_at } = payload;
 
-        if (!new_end_at) {
-            throw new AppError("new_end_at is required", 400);
-        }
+        if (!new_end_at) throw new AppError("new_end_at is required", 400);
 
         const newDate = new Date(new_end_at);
-        const now = new Date();
-
-        if (newDate <= now) {
-            throw new AppError("new_end_at must be in the future", 400);
-        }
-
-        if (survey.start_at && newDate <= survey.start_at) {
-            throw new AppError("new_end_at must be after start_at", 400);
-        }
+        if (newDate <= new Date()) throw new AppError("new_end_at must be in the future", 400);
+        if (survey.start_at && newDate <= survey.start_at) throw new AppError("new_end_at must be after start_at", 400);
 
         survey.end_at = newDate;
         survey.notified_expired = false;
         await survey.save();
 
-        return {
-            message: "Survey deadline extended successfully",
-            survey: this._mapSurvey(survey)
-        };
+        return { message: "Survey deadline extended successfully", survey: mapSurvey(survey) };
     }
 
-    async deleteSurveyById(surveyId, user) {
-        const survey = await this.Survey.findByPk(surveyId);
-
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        // ── GAMIFICATION: Thu hồi sao khi xóa survey ───────────────
-        if (survey.created_by === user.id) {
-            await starService.penalizeSurveyDeleted(survey.created_by, survey.id);
-            notificationService.notifySurveyDeleted({
-                userId: survey.created_by,
-                surveyTitle: survey.title,
-            }).catch(err => console.error("notifySurveyDeleted error:", err));
-        }
-        // ── GAMIFICATION END ───────────────────────────────────────
-
-        survey.destroy();
-
-        return {
-            message: "Deleted survey successfully"
-        };
+    async closeSurvey(survey, user) {
+        survey.end_at = new Date();
+        await survey.save();
+        eventBus.emit(SURVEY_EVENTS.CLOSED, { survey });
+        return { message: "Closed survey successfully", survey: mapSurvey(survey) };
     }
 
-    async closeSurvey(surveyId, user) {
-    const survey = await this.Survey.findByPk(surveyId);
-    if (!survey) throw new AppError("Survey not found", 404);
-
-    if (!_checkOwnerOrAdmin(user, survey)) {
-        throw new AppError("You do not have permission to close this survey", 403);
-    }
-
-    survey.end_at = new Date();
-    await survey.save();
-
-    // Gửi notification
-    await notificationService.notifySurveyClosed({ survey });
-
-    return { message: "Closed survey successfully", survey: this._mapSurvey(survey) };
-}
-
-    async publicSurvey(surveyId, user) {
-        const survey = await this.Survey.findByPk(surveyId);
-
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to publish this survey", 403);
-        }
-
-        if (survey.access_type === "PUBLIC") {
-            throw new AppError("Survey is already public", 400);
-        }
-
+    async publicSurvey(survey, user) {
+        if (survey.access_type === "PUBLIC") throw new AppError("Survey is already public", 400);
         survey.access_type = "PUBLIC";
         await survey.save();
-
-        return {
-            message: "Published survey successfully",
-            survey: this._mapSurvey(survey)
-        };
+        return { message: "Published survey successfully", survey: mapSurvey(survey) };
     }
 
-    async shareLink(surveyId, user) {
-        const t = await sequelize.transaction();
-        try {
-            const survey = await this.Survey.findByPk(surveyId, { transaction: t });
-
-            if (!survey) {
-                throw new AppError("Survey not found", 404);
-            }
-
-            if (!_checkOwnerOrAdmin(user, survey)) {
-                throw new AppError("You do not have permission to share this survey", 403);
-            }
-
-            // set access type
-            if (survey.access_type !== "LINK") {
-                survey.access_type = "LINK";
-                await survey.save({ transaction: t });
-            }
-
-            // find or create access
-            const [surveyAccess] = await this.SurveyAccess.findOrCreate({
-                where: { survey_id: survey.id },
-                defaults: {
-                    access_token: this._generateAccessToken()
-                },
-                transaction: t
-            });
-
-            await t.commit();
-
-            return {
-                message: "Share link generated successfully",
-                url: `${process.env.BASE_URL}/surveys/${survey.id}?access_token=${surveyAccess.access_token}`
-            };
-
-        } catch (error) {
-            await t.rollback();
-            throw error;
-        }
-
-
-        // chỉ owner hoặc admin mới được lấy link
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission to share this survey", 403);
-        }
-
-        // nếu chưa phải LINK → chuyển sang LINK
-        if (survey.access_type !== "LINK") {
-            survey.access_type = "LINK";
-        }
-
-        // nếu chưa có token → generate
-        if (!survey.access_token) {
-            survey.access_token = this._generateAccessToken();
-        }
+    async shareLink(survey, user) {
+        if (survey.access_type !== "LINK") survey.access_type = "LINK";
+        if (!survey.access_token) survey.access_token = generateSurveyAccessToken();
 
         await survey.save();
+        return { message: "Share link generated successfully", url: buildSurveyPublicUrl(survey) };
+    }
 
-        return {
-            message: "Share link generated successfully",
-            url: this._shareSurveyPublicUrl(survey)
-        };
-}
-
-    async inviteSurvey(surveyId, user, payload) {
+    // invite participant to survey (owner)
+    async inviteSurvey(survey, user, payload) {
         const { email, role = "viewer" } = payload;
-        if (!email) {
-            throw new AppError("Email required", 403);
+        if (!email) throw new AppError("Email required", 400);
+        if (!VALID_INVITE_ROLES.includes(role)) throw new AppError("Invalid role. Must be viewer or editor", 400);
+        if (!_checkOwnerOrAdmin(user, survey) && !ALLOWED_EDITOR_ROLES.includes(role)) {
+            throw new AppError("Only owner or admin can invite participants with this role", 403);
         }
 
-        const survey = await this.Survey.findByPk(surveyId);
+        if (survey.access_type !== "PRIVATE") throw new AppError("Invite only works for PRIVATE survey", 400);
 
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
+        const existingUser = await this.User.findOne({ where: { email } });
+        if (!existingUser) throw new AppError(`User with email ${email} does not exist`, 400);
 
-        // editor chi co the moi voi vai tro la viewer hoac editor
-        if(!_checkOwnerOrAdmin(user, survey)) {
-            if( !ALLOWED_EDITOR_ROLES.includes(role)) {
-                throw new AppError("Editor can only invite viewer or editor", 404);
-            }
-        }
-        
-        // chỉ dùng cho PRIVATE
-        if (survey.access_type !== "PRIVATE") {
-            throw new AppError("Invite only works for PRIVATE survey", 400);
-        }
-        
-     
-        // check đã tồn tại participant chưa
-        const existingParticipant = await this.SurveyParticipant.findOne({
-            where: {
-                survey_id: survey.id,
-                email: email
-            }
+        const existing = await this.SurveyParticipant.findOne({ where: { survey_id: survey.id, email } });
+        if (existing) throw new AppError("User already invited", 409);
+
+        const participant = await this.SurveyParticipant.create({
+            survey_id: survey.id,
+            user_id: existingUser.id,
+            email: existingUser.email,
+            role,
         });
 
-       const existingUser = await this.User.findOne({
-    where: { email }
-});
-
-if (!existingUser) {
-    throw new AppError(
-        `User with email ${email} does not exist`,
-        400
-    );
-}
-
-const participant = await this.SurveyParticipant.create({
-    survey_id: survey.id,
-    user_id: existingUser.id,   // ✔ chắc chắn không null
-    email: existingUser.email,
-    role
-});
-
-        // send email invite
-        await sendInviteEmail({
+        await emailQueue.add("invite-email", {
             to: email,
             surveyTitle: survey.title,
-            surveyLink: `${process.env.BASE_URL}/surveys/${survey.id}`,
+            surveyLink: `${process.env.FRONTEND_URL}/user/survey/${survey.id}`,
             senderName: user.full_name,
             senderEmail: user.email,
         });
 
-        // Send real-time notification
-        await notificationService.notifySurveyInvitation({
-            survey,
-            inviteeEmail: email,
-            inviter: user,
-            role: role
-        });
+        eventBus.emit(SURVEY_EVENTS.INVITATION, { survey, inviteeEmail: email, inviter: user, role });
 
-        return {
-            message: "User invited successfully",
-            participant
-        };
+        return { message: "User invited successfully", participant };
     }
 
-    async bulkInvite(surveyId, user, payload) {
+    async bulkInvite(survey, user, payload) {
         const { emails = [], role = "viewer" } = payload;
-
-        // validate role
-        const VALID_ROLES = ["viewer", "editor"];
-        if (!VALID_ROLES.includes(role)) {
-            throw new AppError("Invalid role. Must be viewer or editor", 400);
+        if (!VALID_INVITE_ROLES.includes(role)) throw new AppError("Invalid role. Must be viewer or editor", 400);
+        if (!_checkOwnerOrAdmin(user, survey) && !ALLOWED_EDITOR_ROLES.includes(role)) {
+            throw new AppError("Only owner or admin can invite participants with this role", 403);
         }
+        if (!Array.isArray(emails) || emails.length === 0) throw new AppError("Emails must be a non-empty array", 400);
 
-        if (!Array.isArray(emails) || emails.length === 0) {
-            throw new AppError("Emails must be a non-empty array", 400);
-        }
+        if (survey.access_type !== "PRIVATE") throw new AppError("Bulk invite only works for PRIVATE survey", 400);
 
-        const survey = await this.Survey.findByPk(surveyId);
-
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        // if is editor cant invite editor
-        if(!_checkOwnerOrAdmin(user, survey)) {
-            if( !ALLOWED_EDITOR_ROLES.includes(role)) {
-                throw new AppError("Editor can only invite viewer or editor", 404);
-            }
-        }
-
-        if (survey.access_type !== "PRIVATE") {
-            throw new AppError("Bulk invite only works for PRIVATE survey", 400);
-        }
-
-        // tìm user đã tồn tại
-        const users = await this.User.findAll({
-            where: { email: emails }
-        });
+        const [users, existingParticipants] = await Promise.all([
+            this.User.findAll({ where: { email: emails } }),
+            this.SurveyParticipant.findAll({ where: { survey_id: survey.id, email: emails } }),
+        ]);
 
         const userMap = Object.fromEntries(users.map(u => [u.email, u]));
-
-        // tìm participant đã tồn tại
-        const existingParticipants = await this.SurveyParticipant.findAll({
-            where: {
-                survey_id: survey.id,
-                email: emails
-            }
-        });
-
         const existingEmails = new Set(existingParticipants.map(p => p.email));
 
-        // lọc email hợp lệ để insert
         const toCreate = emails
             .filter(email => !existingEmails.has(email))
-            .map(email => ({
-                survey_id: survey.id,
-                email,
-                user_id: userMap[email]?.id || null,
-                role
-            }));
+            .map(email => ({ survey_id: survey.id, email, user_id: userMap[email]?.id || null, role }));
 
-        // bulk insert
         const created = await this.SurveyParticipant.bulkCreate(toCreate);
 
-        // gửi email mời
-        const emailPromises = toCreate.map((p) =>
-            sendInviteEmail({
-                to: p.email,
-                surveyTitle: survey.title,
-                surveyLink: `${process.env.BASE_URL}/surveys/${survey.id}`,
-                senderName: user.full_name,
-                senderEmail: user.email,
-            }).then(() => {
-                // Send real-time notification for each invitee
-                return notificationService.notifySurveyInvitation({
-                    survey,
-                    inviteeEmail: p.email,
-                    inviter: user,
-                    role: p.role
-                });
-            })
+        await emailQueue.addBulk(
+            toCreate.map(p => ({
+                name: "invite-email",
+                data: {
+                    to: p.email,
+                    surveyTitle: survey.title,
+                    surveyLink: `${process.env.FRONTEND_URL}/survey/${survey.id}`,
+                    senderName: user.full_name,
+                    senderEmail: user.email,
+                },
+            }))
         );
 
-        const results = await Promise.allSettled(emailPromises);
-
-        const success = results.filter(r => r.status === "fulfilled").length;
-        const failed = results.filter(r => r.status === "rejected").length;
-
-        return {
-            message: "Bulk invite processed",
-            total: emails.length,
-            created: created.length,
-            skipped: existingEmails.size,
-            success,
-            failed
-        };
+        return { message: "Bulk invite processed", total: emails.length, created: created.length, skipped: existingEmails.size };
     }
 
-    async getParticipants(surveyId, user) {
-        const survey = await this.Survey.findByPk(surveyId);
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission", 403);
-        }
-
+    async getParticipants(survey, user) {
         const { rows, count } = await this.SurveyParticipant.findAndCountAll({
             where: { survey_id: survey.id },
             attributes: ["id", "email", "role", "created_at"],
-            include: [
-                {
-                    model: this.User,
-                    as: "user",
-                    attributes: ["id", "full_name", "email"]
-                }
-            ]
+            include: [{ model: this.User, as: "user", attributes: ["id", "full_name", "email"] }],
         });
 
-        const participants = rows.map(p => {
-            if (p.user && p.email === p.user.email) {
-                return {
-                    participant_id: p.id,
-                    id: p.user.id,
-                    name: p.user.name,
-                    email: p.user.email,
-                    role: p.role,
-                    created_at: p.created_at
-                };
-            }
+        const participants = rows.map(p => ({
+            participant_id: p.id,
+            id: p.user?.id ?? null,
+            name: p.user?.full_name ?? null,
+            email: p.email,
+            role: p.role,
+            created_at: p.created_at,
+        }));
 
-            return {
-                participant_id: p.id,
-                id: null,
-                name: null,
-                email: p.email,
-                role: p.role,
-                created_at: p.created_at
-            };
-        });
-
-        return {
-            participants,
-            count
-        };
+        return { participants, count };
     }
 
-    // delete participant
-    async deleteParticipant(surveyId, participantId, user) {
-        const survey = await this.Survey.findByPk(surveyId);
-
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        if (!_checkOwnerOrAdmin(user, survey)) {
-            throw new AppError("You do not have permission", 403);
-        }
-
-        const participant = await this.SurveyParticipant.findOne({
-            where: {
-                id: participantId,
-                survey_id: survey.id
-            }
-        });
-
-        if (!participant) {
-            throw new AppError("Participant not found", 404);
-        }
+    async deleteParticipant(survey, participantId, user) {
+        const participant = await this.SurveyParticipant.findOne({ where: { id: participantId, survey_id: survey.id } });
+        if (!participant) throw new AppError("Participant not found", 404);
 
         await participant.destroy();
-
-        return {
-            message: "Participant removed successfully"
-        };
+        return { message: "Participant removed successfully" };
     }
 
     async getInvitedSurveys(user, { page = 1, limit = 10 }) {
-    const offset = (page - 1) * limit;
+        const offset = (page - 1) * limit;
 
-    const { rows, count } = await this.SurveyParticipant.findAndCountAll({
-        where: {
-            [Op.or]: [          // ← đổi this.Op thành Op
-                { user_id: user.id },
-                { email: user.email }
-            ]
-        },
-        include: [
-            {
+        const { rows, count } = await this.SurveyParticipant.findAndCountAll({
+            where: { [Op.or]: [{ user_id: user.id }, { email: user.email }] },
+            include: [{
                 model: this.Survey,
                 as: "survey",
                 where: { access_type: "PRIVATE" },
-                attributes: ["id", "title", "description", "created_at", "created_by", "start_at", "end_at", "status"]
-            }
-        ],
-        limit,
-        offset,
-        order: [["created_at", "DESC"]]
-    });
+                attributes: ["id", "title", "description", "created_at", "created_by", "start_at", "end_at"],
+            }],
+            limit,
+            offset,
+            order: [["created_at", "DESC"]],
+        });
 
-    const surveys = rows.map(row => {
-        const s = row.survey;
-        return {
-            id: s.id,
-            title: s.title,
-            description: s.description,
-            created_at: s.created_at,
-            created_by: s.created_by,
-            start_at: s.start_at,
-            end_at: s.end_at,
-            status: s.status || null,
-            invitedAt: row.created_at
-        };
-    });
+        const surveys = rows.map(row => {
+            const s = row.survey;
+            return { id: s.id, title: s.title, description: s.description, created_at: s.created_at, created_by: s.created_by, start_at: s.start_at, end_at: s.end_at, invitedAt: row.created_at };
+        });
 
-    return { total: count, page, totalPages: Math.ceil(count / limit), data: surveys };
-}
-
-    _mapSurvey(survey) {
-        return {
-            id: survey.id,
-            title: survey.title,
-            description: survey.description,
-            start_at: survey.start_at,
-            end_at: survey.end_at,
-            created_at: survey.created_at,
-            is_anonymous: survey.is_anonymous ?? false,
-            max_responses: survey.max_responses ?? null,
-            randomize_questions: survey.randomize_questions ?? false,
-            randomize_options: survey.randomize_options ?? false,
-            time_limit_seconds: survey.time_limit_seconds ?? null,
-            show_progress_bar: survey.show_progress_bar ?? true,
-            allow_back: survey.allow_back ?? true,
-            one_question_per_page: survey.one_question_per_page ?? true,
-            thank_you_message: survey.thank_you_message ?? null,
-            logo_url: survey.logo_url ?? null,
-            background_url: survey.background_url ?? null,
-            accent_color: survey.accent_color ?? "#6366f1",
-            show_correct_answers: survey.show_correct_answers ?? false,
-            thank_you_redirect_url: survey.thank_you_redirect_url ?? null,
-        };
-    }
-
-    _mapSurveyDetail(survey, status) {
-        const base = {
-            ...this._mapSurvey(survey),
-            status,
-            sections: (survey.sections || []).map(sec => ({
-                id: sec.id,
-                title: sec.title,
-                description: sec.description,
-                order_index: sec.order_index,
-                icon: sec.icon,
-                cover_url: sec.cover_url,
-                min_required: sec.min_required,
-                show_progress: sec.show_progress,
-                questions: (sec.questions || []).map(q => this._mapQuestion(q)).sort((a, b) => a.order_index - b.order_index),
-            })),
-            questions: (survey.questions || []).map(q => this._mapQuestion(q)).sort((a, b) => a.order_index - b.order_index),
-        };
-        return base;
-    }
-
-    _mapQuestion(q) {
-        return {
-            id: q.id,
-            survey_id: q.survey_id,
-            section_id: q.section_id,
-            content: q.content,
-            description: q.description ?? null,
-            placeholder: q.placeholder ?? null,
-            type: q.type,
-            required: q.required,
-            order_index: q.order_index,
-            settings: q.settings ?? {},
-            media_url: q.media_url ?? null,
-            media_type: q.media_type ?? null,
-            condition: q.condition ?? null,
-            hidden_from_analytics: q.hidden_from_analytics ?? false,
-            next_question_id: q.next_question_id ?? null,
-            next_section_id: q.next_section_id ?? null,
-            options: q.options
-                ? q.options.map(o => ({
-                    id: o.id,
-                    label: o.label,
-                    value: o.value,
-                    order_index: o.order_index,
-                    is_other: o.is_other ?? false,
-                    image_url: o.image_url ?? null,
-                    media_type: o.media_type ?? null,
-                })).sort((a, b) => a.order_index - b.order_index)
-                : [],
-        };
+        return { total: count, page, totalPages: Math.ceil(count / limit), data: surveys };
     }
 }
 

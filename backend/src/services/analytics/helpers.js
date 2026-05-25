@@ -61,7 +61,7 @@ export function normalizeGender(g) {
 
 export function cleanSurveyAnalytics(data) {
     return {
-        survey_id: data.survey_id, // nếu muốn giữ, không thì xoá luôn
+        survey_id: data.survey_id,
         total_responses: data.total_responses,
 
         questions: data.questions.map((q) => ({

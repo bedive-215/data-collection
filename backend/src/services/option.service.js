@@ -1,6 +1,6 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import surveyService from "./survey.service.js";
+import { getSurveyStatus } from "../domain/survey.domain.js";
 
 class QuestionOptionService {
     constructor() {
@@ -109,7 +109,7 @@ class QuestionOptionService {
     }
 
     async getOptionsByQuestion(question_id, survey) {
-        const status = surveyService._getSurveyStatus(survey);
+        const status = getSurveyStatus(survey);
         if (status !== "ACTIVE") {
             throw new AppError(`Survey is ${status}`, 403);
         }

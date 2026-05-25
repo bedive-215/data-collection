@@ -131,8 +131,8 @@ class NotificationService {
                     createdBy: survey.created_by
                 }
             });
-        }
 
+        }
         // Notify inviter about the invitation sent
         await this.createNotification({
             userId: inviter.id,
@@ -149,6 +149,7 @@ class NotificationService {
                 createdBy: survey.created_by
             }
         });
+
     }
 
     async notifyNewParticipant({ survey, participantEmail, participantId }) {
