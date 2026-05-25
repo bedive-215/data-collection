@@ -111,9 +111,9 @@ class SurveyController {
     // update survey (owner, editor, admin)
     async updateSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.updateSurvey(user, survey_id, req.body);
+            const result = await SurveyService.updateSurvey(user, survey, req.body);
 
             return res.status(200).json({
                 message: result.message,
@@ -127,9 +127,9 @@ class SurveyController {
     // delete survey (owner, admin)
     async deleteSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.deleteSurveyById(survey_id, user);
+            const result = await SurveyService.deleteSurveyById(survey, user);
 
             return res.status(200).json({
                 message: result.message
@@ -142,9 +142,9 @@ class SurveyController {
     // close survey (owner, admin)
     async closeSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.closeSurvey(survey_id, user);
+            const result = await SurveyService.closeSurvey(survey, user);
             return res.status(200).json({
                 message: result.message
             });
@@ -155,9 +155,9 @@ class SurveyController {
 
     async publicSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.publicSurvey(survey_id, user);
+            const result = await SurveyService.publicSurvey(survey, user);
             return res.status(200).json({
                 message: result.message,
                 data: result.survey
@@ -169,9 +169,9 @@ class SurveyController {
 
     async shareLink(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.shareLink(survey_id, user);
+            const result = await SurveyService.shareLink(survey, user);
             return res.status(200).json({
                 message: result.message,
                 url: result.url
@@ -183,10 +183,10 @@ class SurveyController {
 
     async inviteSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const payload = req.body;
             const user = req.user;
-            const result = await SurveyService.inviteSurvey(survey_id, user, payload);
+            const result = await SurveyService.inviteSurvey(survey, user, payload);
             return res.status(200).json({
                 message: result.message
             });
@@ -197,10 +197,10 @@ class SurveyController {
 
     async bulkInviteSurvey(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const payload = req.body;
             const user = req.user;
-            const result = await SurveyService.bulkInvite(survey_id, user, payload);
+            const result = await SurveyService.bulkInvite(survey, user, payload);
             return res.status(200).json({
                 message: result.message,
                 invited: result.created ?? result.invited,
@@ -216,9 +216,9 @@ class SurveyController {
 
     async getParticipants(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const user = req.user;
-            const result = await SurveyService.getParticipants(survey_id, user);
+            const result = await SurveyService.getParticipants(survey, user);
             return res.status(200).json({
                 message: result.message,
                 count: result.count,
@@ -231,10 +231,10 @@ class SurveyController {
 
     async deleteParticipant(req, res, next) {
         try {
-            const { survey_id } = req.params;
+            const survey = req.survey;
             const { pid } = req.params;
             const user = req.user;
-            const result = await SurveyService.deleteParticipant(survey_id, pid, user);
+            const result = await SurveyService.deleteParticipant(survey, pid, user);
             return res.status(200).json({
                 message: result.message
             });

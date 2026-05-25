@@ -1,7 +1,6 @@
 import { jsonToToon } from "../helpers/jsonToToon.helper.js";
 
 export function buildAnalyticsPrompt(cleanedData) {
-    console.log("Dữ liệu đã được làm sạch:", cleanedData);
     const optimizedData = jsonToToon(cleanedData);
     console.log("Dữ liệu đã được tối ưu hóa thành TOON:", optimizedData);
     return `

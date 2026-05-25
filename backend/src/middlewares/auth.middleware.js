@@ -33,7 +33,6 @@ export class authMiddleware {
                 role: user.role,
                 phone_number: decoded.phone_number
             };
-            console.log('[DEBUG auth] user:', req.user); // TODO: remove
 
             next();
         } catch (err) {

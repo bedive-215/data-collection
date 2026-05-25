@@ -29,7 +29,9 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
                 },
             ],
         };
-    } getAnswerInclude() {
+    }
+
+    getAnswerInclude() {
         return {
             model: this.Answer,
             as: "answers",
@@ -127,6 +129,20 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         const totalResponses = await this.Response.count({
             where: this._buildResponseWhere(survey_id, filters),
         });
+
+        const completeTotal = await this.Response.count({
+            where: this._buildResponseWhere(survey_id, { ...filters, status: "COMPLETED" }),
+        });
+
+        if(completeTotal === 0) {
+            return {
+                survey_id,
+                total_responses: 0,
+                generated_at: new Date().toISOString(),
+                filters_applied: filters,
+                questions: [],
+            };
+        }
 
         const analytics = await Promise.all(
             questions.map((q) => this.getQuestionAnalytics(q.id, { ...filters, survey_id }, {...options}))
@@ -815,6 +831,15 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
 
     async getAiAnalytics(survey_id, filters = {},) {
         const data = await this.getSurveyAnalytics(survey_id, filters, {ai_mode: true});
+        if(data.total_responses === 0) {
+            return {
+                survey_id,
+                total_responses: 0,
+                generated_at: new Date().toISOString(),
+                filters_applied: filters,
+                ai_insights: "No responses to analyze.",
+            };
+        }
         const cleaned = cleanSurveyAnalytics(data);
 
         const prompt = buildAnalyticsPrompt(cleaned);
