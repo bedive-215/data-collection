@@ -1,69 +1,140 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
-  Minus,
-  Globe,
-  Smartphone,
-  Share2,
-  Zap,
-  Link,
-  CloudLightning,
-  PlusCircle,
-  RefreshCw,
+  TrendingDown,
   Users,
   ClipboardList,
   HelpCircle,
   CheckSquare,
+  RefreshCw,
+  PlusCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  Globe,
+  Smartphone,
+  Share2,
+  Activity,
+  Eye,
 } from "lucide-react";
 import { useAdminStats } from "@/providers/AdminStatsProvider";
 
 const BAR_HEIGHTS = [50, 75, 38, 88, 62, 55, 94, 70, 48, 82];
 
 const PLATFORMS = [
-  { label: "Web Platform", pct: 54, color: "bg-blue-600", Icon: Globe, iconColor: "text-blue-500" },
-  { label: "Mobile App", pct: 32, color: "bg-violet-500", Icon: Smartphone, iconColor: "text-violet-400" },
-  { label: "Social Media", pct: 14, color: "bg-sky-400", Icon: Share2, iconColor: "text-sky-400" },
+  { label: "Web Platform", pct: 54, color: "#F59E0B", bgColor: "rgba(245,158,11,0.1)", Icon: Globe },
+  { label: "Mobile App", pct: 32, color: "#6366F1", bgColor: "rgba(99,102,241,0.1)", Icon: Smartphone },
+  { label: "Social Media", pct: 14, color: "#10B981", bgColor: "rgba(16,185,129,0.1)", Icon: Share2 },
 ];
 
-const RESPONSES = [
+const LIVE_FEED = [
   {
     name: "Nguyễn Minh Quân",
     time: "2 phút trước",
-    survey: "Khảo sát: Trải nghiệm người dùng App v2.0",
+    survey: "Trải nghiệm người dùng App v2.0",
     quote: "Giao diện mới rất mượt, nhưng tôi hy vọng có thêm tính năng lọc dữ liệu nhanh hơn.",
-    accent: "border-blue-600",
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9QZSz9bmG32EyFbbIWk2LO4-xv1A1IIcYy6FBpaSEGBWALpfSh7qXFtwwQhZrCf8fqfrDYZFDOPVXsFb0n19KgQa2uz_sLjyTvp2AE8A9r4Y19qCZtQHiJPbLWp-Fm2Vg3RSasSPAkMRpT5vfYPXAIRHbCmJPVS9FWG5D6ySAHymXDtvZ2jTcxlJxqGFWZDkrKLzrROvDqsCH4MaaFudTswZOv9hzYjQAj6ZdJdpOvcQxG4TccMpAs3Ll57OpQelRkrM2q2gdKGI",
+    accentColor: "#F59E0B",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=quan&backgroundColor=b6e3f4",
   },
   {
     name: "Lê Thị Thu Hà",
     time: "5 phút trước",
-    survey: "Khảo sát: Khảo sát Sản phẩm Mới",
+    survey: "Khảo sát Sản phẩm Mới",
     quote: "Giá cả khá cạnh tranh so với thị trường hiện tại. Tôi sẽ cân nhắc mua dùng thử.",
-    accent: "border-violet-500",
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBsBn6aMgPqzD8QPZUwGqrM_lWv7wVzOhM2uRgZ2dTE6lSaEkf3bH7kr7DtW6qRJEO--QlLZTGJfwjqG-HA75vhx8BCZe3SMcHgZ06ONCXlp161reSdmoIyb2uzFPcNkJl2flz4417lbYH3EH1kYPHAJXelc358s96nkZFUw6DOekVYqJ7EoBF82P72eZ6gmoHYTL_oXrQy4EDTUy8VbD2KcRCTbKv4TuEtF39ZfDMTF9GY6nsDcSyNnDjtnBTtkW_o9dsCCT2CTEM",
+    accentColor: "#6366F1",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ha&backgroundColor=ffd5dc",
+  },
+  {
+    name: "Trần Đình Khoa",
+    time: "12 phút trước",
+    survey: "Đánh giá Dịch vụ CSKH",
+    quote: "Nhân viên hỗ trợ rất nhiệt tình. Thời gian phản hồi chỉ mất 5 phút.",
+    accentColor: "#10B981",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=khoa&backgroundColor=c0aede",
   },
 ];
 
-const CONNECTIONS = [
-  { name: "Main Dashboard API", sub: "api.v1.collection.io", status: "Active", active: true, Icon: Zap, iconWrap: "bg-blue-500/15 text-blue-400" },
-  { name: "Social Web Scraper", sub: "Chạy mỗi 15 phút", status: "Active", active: true, Icon: CloudLightning, iconWrap: "bg-violet-500/15 text-violet-400" },
-  { name: "CRM Integration", sub: "Chờ cấu hình", status: "Idle", active: false, Icon: Link, iconWrap: "bg-slate-500/15 text-slate-400" },
+const QUICK_STATS = [
+  { label: "Người dùng mới", val: 24, change: "+12%", up: true, color: "#F59E0B" },
+  { label: "Khảo sát hoàn thành", val: 156, change: "+8%", up: true, color: "#6366F1" },
+  { label: "Tỷ lệ hoàn thành", val: "87%", change: "+3%", up: true, color: "#10B981" },
+  { label: "Thời gian TB", val: "4.2p", change: "-15%", up: false, color: "#3B82F6" },
 ];
 
-function GlassCard({ children, className = "" }) {
+/* ──────────────────────────────────────────
+   Helpers
+────────────────────────────────────────── */
+function SkeletonBlock({ className = "" }) {
   return (
-    <div className={`bg-white/[0.04] backdrop-blur-md border border-white/5 ${className}`}>
-      {children}
+    <div
+      className={`animate-pulse rounded-lg ${className}`}
+      style={{ background: "var(--admin-surface-hover)" }}
+    />
+  );
+}
+
+function StatCard({ label, value, icon, color, bgColor, change, up, loading }) {
+  return (
+    <div
+      className="p-6 rounded-2xl relative overflow-hidden group transition-all duration-300 hover:-translate-y-0.5"
+      style={{
+        background: "var(--admin-surface)",
+        border: "1px solid var(--admin-border)",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+      }}
+    >
+      {/* Glow effect */}
+      <div
+        className="absolute -right-6 -top-6 w-28 h-28 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+        style={{ background: color }}
+      />
+
+      <div className="flex items-start justify-between mb-4">
+        <p
+          className="text-xs font-bold uppercase tracking-widest"
+          style={{ color: "var(--admin-text-dim)" }}
+        >
+          {label}
+        </p>
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: bgColor }}
+        >
+          {icon}
+        </div>
+      </div>
+
+      <div className="flex items-end justify-between">
+        {loading ? (
+          <SkeletonBlock className="h-9 w-24" />
+        ) : (
+          <p
+            className="text-3xl font-extrabold"
+            style={{ color: "var(--admin-text)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
+            {value}
+          </p>
+        )}
+
+        {change && (
+          <span
+            className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full mb-1"
+            style={{
+              background: up ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+              color: up ? "#10B981" : "#EF4444",
+            }}
+          >
+            {up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {change}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-function SkeletonBlock({ className = "" }) {
-  return <div className={`animate-pulse bg-white/10 rounded-lg ${className}`} />;
-}
-
 export default function Dashboard() {
-  const [chartView, setChartView] = useState("month");
+  const [chartView, setChartView] = useState("week");
 
   const {
     dashboard,
@@ -80,7 +151,6 @@ export default function Dashboard() {
 
   const overview = dashboard?.overview ?? null;
 
-  // Map surveyByDay → bar heights (normalize to %)
   const barData = (() => {
     if (!surveyByDay || surveyByDay.length === 0) return BAR_HEIGHTS;
     const counts = surveyByDay.map((d) => Number(d.count));
@@ -91,7 +161,12 @@ export default function Dashboard() {
   const dateLabels = (() => {
     if (!surveyByDay || surveyByDay.length === 0)
       return ["01 Thg 10", "10 Thg 10", "20 Thg 10", "30 Thg 10"];
-    const picks = [0, Math.floor(surveyByDay.length / 3), Math.floor((2 * surveyByDay.length) / 3), surveyByDay.length - 1];
+    const picks = [
+      0,
+      Math.floor(surveyByDay.length / 3),
+      Math.floor((2 * surveyByDay.length) / 3),
+      surveyByDay.length - 1,
+    ];
     return picks.map((i) => {
       const d = new Date(surveyByDay[i]?.date ?? "");
       return isNaN(d)
@@ -104,98 +179,101 @@ export default function Dashboard() {
     {
       label: "Tổng Người dùng",
       value: loading ? null : overview?.totalUsers?.toLocaleString() ?? "—",
-      badge: { text: "Hệ thống", color: "text-slate-400", Icon: null },
-      glow: "bg-blue-600/10",
-      Icon: Users,
+      icon: <Users size={18} style={{ color: "#F59E0B" }} />,
+      color: "#F59E0B",
+      bgColor: "rgba(245,158,11,0.1)",
     },
     {
       label: "Tổng Khảo sát",
       value: loading ? null : overview?.totalSurveys?.toLocaleString() ?? "—",
-      badge: { text: "Đang chạy", color: "text-emerald-400", Icon: TrendingUp },
-      glow: "bg-indigo-600/10",
-      Icon: ClipboardList,
+      icon: <ClipboardList size={18} style={{ color: "#6366F1" }} />,
+      color: "#6366F1",
+      bgColor: "rgba(99,102,241,0.1)",
     },
     {
       label: "Tổng Câu hỏi",
       value: loading ? null : overview?.totalQuestions?.toLocaleString() ?? "—",
-      badge: { text: "Tích lũy", color: "text-slate-400", Icon: null },
-      glow: "bg-blue-700/10",
-      Icon: HelpCircle,
+      icon: <HelpCircle size={18} style={{ color: "#10B981" }} />,
+      color: "#10B981",
+      bgColor: "rgba(16,185,129,0.1)",
     },
     {
       label: "Tổng Lựa chọn",
       value: loading ? null : overview?.totalOptions?.toLocaleString() ?? "—",
-      badge: { text: "Options", color: "text-amber-400", Icon: Minus },
-      glow: "bg-purple-600/10",
-      Icon: CheckSquare,
+      icon: <CheckSquare size={18} style={{ color: "#8B5CF6" }} />,
+      color: "#8B5CF6",
+      bgColor: "rgba(139,92,246,0.1)",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f121a] text-white p-10 font-['Inter',sans-serif]">
-
-      {/* Header */}
-      <header className="mb-10 flex justify-between items-start">
+    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h2 className="font-['Manrope',sans-serif] text-4xl font-bold text-white mb-2 tracking-tight">
+          <h2
+            className="text-3xl font-extrabold mb-1"
+            style={{ color: "var(--admin-text)", letterSpacing: "-0.02em" }}
+          >
             Tổng quan Hệ thống
           </h2>
-          <p className="text-slate-400 max-w-2xl text-sm leading-relaxed">
-            Theo dõi hiệu suất thu thập dữ liệu đa nền tảng và tương tác người dùng theo thời gian thực.
+          <p className="text-sm" style={{ color: "var(--admin-text-sub)" }}>
+            Theo dõi hiệu suất thu thập dữ liệu theo thời gian thực
           </p>
         </div>
         <button
           onClick={() => { fetchDashboard(); fetchSurveyByDay(); }}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-slate-300 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+          style={{
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            color: "var(--admin-text-sub)",
+          }}
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           Làm mới
         </button>
-      </header>
+      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-        {STATS.map(({ label, value, badge, glow, Icon: CardIcon }) => (
-          <GlassCard key={label} className="p-6 rounded-2xl relative overflow-hidden group">
-            <div className={`absolute -right-4 -top-4 w-24 h-24 ${glow} rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500`} />
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-widest">
-                {label}
-              </p>
-              {CardIcon && <CardIcon size={15} className="text-slate-600" />}
-            </div>
-            <div className="flex items-end gap-2">
-              {loading ? (
-                <SkeletonBlock className="h-9 w-24" />
-              ) : (
-                <span className="font-['Manrope',sans-serif] text-3xl font-bold text-white">
-                  {value}
-                </span>
-              )}
-              <span className={`text-xs font-medium mb-1.5 flex items-center gap-0.5 ${badge.color}`}>
-                {badge.Icon && <badge.Icon size={14} />}
-                {badge.text}
-              </span>
-            </div>
-          </GlassCard>
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        {STATS.map(({ label, value, icon, color, bgColor }) => (
+          <StatCard
+            key={label}
+            label={label}
+            value={value}
+            icon={icon}
+            color={color}
+            bgColor={bgColor}
+            loading={loading}
+          />
         ))}
       </div>
 
-      {/* Row 1: Chart + Platform */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-
+      {/* ── Row 1: Chart + Platform ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Chart */}
-        <GlassCard className="lg:col-span-2 p-8 rounded-3xl">
+        <div
+          className="lg:col-span-2 p-7 rounded-2xl"
+          style={{
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          }}
+        >
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-white mb-1">
+              <h3
+                className="text-lg font-bold mb-1"
+                style={{ color: "var(--admin-text)" }}
+              >
                 Hiệu suất Khảo sát
               </h3>
-              <p className="text-slate-500 text-sm">
+              <p className="text-sm" style={{ color: "var(--admin-text-sub)" }}>
                 {surveyByDay.length > 0
                   ? `Biểu đồ ${surveyByDay.length} ngày gần nhất`
-                  : "Biểu đồ phản hồi hàng ngày trong 7 ngày qua"}
+                  : "Biểu đồ phản hồi hàng ngày"}
               </p>
             </div>
             <div className="flex gap-2">
@@ -203,11 +281,12 @@ export default function Dashboard() {
                 <button
                   key={v}
                   onClick={() => setChartView(v)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={
                     chartView === v
-                      ? "bg-blue-600/20 text-blue-500"
-                      : "bg-white/5 text-slate-300 hover:bg-white/10"
-                  }`}
+                      ? { background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }
+                      : { background: "transparent", color: "var(--admin-text-dim)", border: "1px solid var(--admin-border)" }
+                  }
                 >
                   {v === "week" ? "Tuần" : "Tháng"}
                 </button>
@@ -215,183 +294,345 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="h-64 flex items-end gap-1.5 relative">
+          {/* Bar Chart */}
+          <div
+            className="h-60 flex items-end gap-1.5 relative"
+            style={{ paddingBottom: 24 }}
+          >
+            {/* Grid lines */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="w-full h-px bg-white/[0.06]" />
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="w-full"
+                  style={{ borderTop: i > 0 ? "1px dashed var(--admin-border)" : "none", height: "20%" }}
+                />
               ))}
             </div>
+
             {loading
               ? Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex-1 rounded-t-md bg-white/5 animate-pulse"
-                    style={{ height: `${30 + Math.random() * 50}%` }}
+                    className="flex-1 rounded-t-lg animate-pulse"
+                    style={{
+                      height: `${30 + Math.random() * 50}%`,
+                      background: "var(--admin-surface-hover)",
+                    }}
                   />
                 ))
               : barData.map((h, i) => (
                   <div
                     key={i}
-                    className="flex-1 rounded-t-md transition-all duration-300 hover:brightness-125 group/bar relative"
+                    className="flex-1 rounded-t-lg transition-all duration-300 hover:brightness-125 group/bar relative cursor-pointer"
                     style={{
                       height: `${h}%`,
-                      background: "linear-gradient(to top, rgba(0,73,219,0.4), #0049db)",
-                      boxShadow: h >= 90 ? "0 0 20px rgba(41,98,255,0.3)" : "none",
+                      background: `linear-gradient(to top, rgba(245,158,11,0.3), #F59E0B)`,
+                      boxShadow: h >= 90 ? "0 0 20px rgba(245,158,11,0.2)" : "none",
                     }}
                   >
                     {surveyByDay[i] && (
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/bar:flex bg-slate-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
-                        {surveyByDay[i].count} khảo sát
+                      <div
+                        className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover/bar:flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold z-10 whitespace-nowrap"
+                        style={{
+                          background: "var(--admin-surface)",
+                          border: "1px solid var(--admin-border)",
+                          color: "var(--admin-text)",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                        }}
+                      >
+                        <span style={{ color: "#F59E0B" }}>{surveyByDay[i].count}</span> khảo sát
                       </div>
                     )}
                   </div>
                 ))}
           </div>
 
-          <div className="flex justify-between mt-4">
+          {/* X-axis labels */}
+          <div className="flex justify-between mt-3">
             {dateLabels.map((d, i) => (
-              <span key={`${d}-${i}`} className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">
+              <span
+                key={`${d}-${i}`}
+                className="text-[10px] font-medium uppercase"
+                style={{ color: "var(--admin-text-dim)", letterSpacing: "0.05em" }}
+              >
                 {d}
               </span>
             ))}
           </div>
-        </GlassCard>
+        </div>
 
-        {/* Platform */}
-        <GlassCard className="p-8 rounded-3xl flex flex-col">
-          <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-white mb-6">
+        {/* Platform Distribution */}
+        <div
+          className="p-7 rounded-2xl"
+          style={{
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          }}
+        >
+          <h3
+            className="text-lg font-bold mb-6"
+            style={{ color: "var(--admin-text)" }}
+          >
             Phân phối Nền tảng
           </h3>
-          <div className="flex-1 flex flex-col justify-center gap-6">
-            {PLATFORMS.map(({ label, pct, color, Icon, iconColor }) => (
+
+          <div className="flex flex-col justify-center flex-1 gap-5">
+            {PLATFORMS.map(({ label, pct, color, bgColor, Icon }) => (
               <div key={label}>
-                <div className="flex justify-between mb-2">
-                  <span className={`text-slate-300 text-sm flex items-center gap-2 ${iconColor}`}>
-                    <Icon size={16} />
-                    <span className="text-slate-300">{label}</span>
+                <div className="flex justify-between items-center mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ background: bgColor }}
+                    >
+                      <Icon size={15} style={{ color }} />
+                    </div>
+                    <span className="text-sm font-medium" style={{ color: "var(--admin-text-sub)" }}>
+                      {label}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold" style={{ color: "var(--admin-text)" }}>
+                    {pct}%
                   </span>
-                  <span className="text-white text-sm font-semibold">{pct}%</span>
                 </div>
-                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-2 rounded-full overflow-hidden"
+                  style={{ background: "var(--admin-bg-secondary)" }}
+                >
                   <div
-                    className={`h-full ${color} rounded-full transition-all duration-700`}
-                    style={{ width: `${pct}%` }}
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, background: `linear-gradient(to right, ${color}, ${color}99)` }}
                   />
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+
+          <div
+            className="mt-8 pt-5"
+            style={{ borderTop: "1px solid var(--admin-border)" }}
+          >
             {loading ? (
               <SkeletonBlock className="h-4 w-48 mx-auto" />
             ) : (
-              <p className="text-slate-500 text-xs">
-                Dữ liệu từ {overview?.totalSurveys ?? "—"} khảo sát •{" "}
-                {overview?.totalQuestions ?? "—"} câu hỏi
+              <p className="text-xs text-center" style={{ color: "var(--admin-text-dim)" }}>
+                Dữ liệu từ{" "}
+                <span style={{ color: "var(--admin-primary)", fontWeight: 700 }}>
+                  {overview?.totalSurveys ?? "—"}
+                </span>{" "}
+                khảo sát •{" "}
+                <span style={{ color: "var(--admin-text-sub)", fontWeight: 700 }}>
+                  {overview?.totalQuestions ?? "—"}
+                </span>{" "}
+                câu hỏi
               </p>
             )}
           </div>
-        </GlassCard>
+        </div>
       </div>
 
-      {/* Row 2: Live Feed + Connections */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
+      {/* ── Row 2: Live Feed + Quick Stats ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Live Responses */}
-        <GlassCard className="lg:col-span-7 p-8 rounded-3xl">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+        <div
+          className="lg:col-span-3 p-7 rounded-2xl"
+          style={{
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          }}
+        >
+          <div className="flex justify-between items-center mb-5">
+            <h3
+              className="text-lg font-bold flex items-center gap-2"
+              style={{ color: "var(--admin-text)" }}
+            >
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: "#EF4444", animation: "pulse-glow 2s infinite" }}
+              />
               Phản hồi Trực tiếp
             </h3>
-            <a href="#" className="text-xs text-blue-500 font-semibold hover:underline">
-              Xem tất cả
+            <a
+              href="#"
+              className="text-xs font-semibold transition-colors"
+              style={{ color: "#F59E0B" }}
+            >
+              Xem tất cả →
             </a>
           </div>
-          <div className="flex flex-col gap-4">
-            {RESPONSES.map(({ name, time, survey, quote, accent, avatar }) => (
+
+          <div className="flex flex-col gap-3">
+            {LIVE_FEED.map(({ name, time, survey, quote, accentColor, avatar }) => (
               <div
                 key={name}
-                className="p-4 bg-white/[0.03] rounded-2xl flex gap-4 border border-white/5 hover:border-blue-600/30 transition-colors"
+                className="p-4 rounded-xl flex gap-4 transition-all duration-200"
+                style={{
+                  background: "var(--admin-bg-secondary)",
+                  border: "1px solid var(--admin-border)",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = `${accentColor}40`;
+                  e.currentTarget.style.background = "var(--admin-surface-hover)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "var(--admin-border)";
+                  e.currentTarget.style.background = "var(--admin-bg-secondary)";
+                }}
               >
-                <img src={avatar} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                <img
+                  src={avatar}
+                  alt={name}
+                  className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                  style={{ border: `2px solid ${accentColor}40` }}
+                />
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between mb-1">
-                    <p className="text-sm font-semibold text-white">{name}</p>
-                    <span className="text-[10px] text-slate-500 flex-shrink-0 ml-2">{time}</span>
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-bold" style={{ color: "var(--admin-text)" }}>
+                      {name}
+                    </p>
+                    <span
+                      className="text-[10px] flex-shrink-0 ml-2 flex items-center gap-1"
+                      style={{ color: "var(--admin-text-dim)" }}
+                    >
+                      <Activity size={10} />
+                      {time}
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mb-2 truncate">{survey}</p>
-                  <div className={`bg-[#0f121a] p-3 rounded-xl border-l-2 ${accent}`}>
-                    <p className="text-sm italic text-slate-300">"{quote}"</p>
+                  <p
+                    className="text-[11px] mb-2 truncate"
+                    style={{ color: "var(--admin-text-dim)" }}
+                  >
+                    {survey}
+                  </p>
+                  <div
+                    className="p-3 rounded-xl"
+                    style={{
+                      background: "var(--admin-bg)",
+                      borderLeft: `3px solid ${accentColor}`,
+                    }}
+                  >
+                    <p className="text-sm italic" style={{ color: "var(--admin-text-sub)", lineHeight: 1.5 }}>
+                      "{quote}"
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </GlassCard>
+        </div>
 
-        {/* Connections + Quick Stats */}
-        <GlassCard className="lg:col-span-5 p-8 rounded-3xl flex flex-col gap-6">
-
-          {/* Quick API stats */}
-          <div>
-            <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-white mb-4">
+        {/* Right column: Quick Stats + Activity */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Quick Stats */}
+          <div
+            className="p-6 rounded-2xl"
+            style={{
+              background: "var(--admin-surface)",
+              border: "1px solid var(--admin-border)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h3
+              className="text-base font-bold mb-4"
+              style={{ color: "var(--admin-text)" }}
+            >
               Thống kê Nhanh
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Người dùng", val: overview?.totalUsers, color: "text-blue-400" },
-                { label: "Khảo sát", val: overview?.totalSurveys, color: "text-violet-400" },
-                { label: "Câu hỏi", val: overview?.totalQuestions, color: "text-sky-400" },
-                { label: "Lựa chọn", val: overview?.totalOptions, color: "text-emerald-400" },
-              ].map(({ label, val, color }) => (
-                <div key={label} className="p-3 bg-white/[0.03] rounded-xl border border-white/5">
-                  <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">{label}</p>
-                  {loading ? (
-                    <SkeletonBlock className="h-6 w-16" />
-                  ) : (
-                    <p className={`text-lg font-bold font-['Manrope',sans-serif] ${color}`}>
-                      {val?.toLocaleString() ?? "—"}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Connections */}
-          <div>
-            <h3 className="font-['Manrope',sans-serif] text-base font-bold text-white mb-3">
-              Kết nối Dữ liệu
-            </h3>
-            <div className="flex flex-col gap-3">
-              {CONNECTIONS.map(({ name, sub, status, active, Icon, iconWrap }) => (
+              {QUICK_STATS.map(({ label, val, change, up, color }) => (
                 <div
-                  key={name}
-                  className={`flex items-center justify-between p-4 bg-white/[0.03] rounded-2xl border border-white/5 transition-opacity ${!active ? "opacity-55" : ""}`}
+                  key={label}
+                  className="p-3 rounded-xl"
+                  style={{
+                    background: "var(--admin-bg-secondary)",
+                    border: "1px solid var(--admin-border)",
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconWrap}`}>
-                      <Icon size={16} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{name}</p>
-                      <p className="text-[10px] text-slate-500">{sub}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"}`}>
-                    {status}
+                  <p
+                    className="text-[10px] uppercase tracking-wider mb-2 font-bold"
+                    style={{ color: "var(--admin-text-dim)" }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    className="text-xl font-extrabold mb-1"
+                    style={{ color, fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                  >
+                    {val}
+                  </p>
+                  <span
+                    className="flex items-center gap-0.5 text-[10px] font-bold"
+                    style={{ color: up ? "#10B981" : "#EF4444" }}
+                  >
+                    {up ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
+                    {change}
                   </span>
                 </div>
               ))}
-
-              <button className="w-full py-3 border border-dashed border-white/15 rounded-2xl text-slate-400 text-sm font-medium hover:bg-white/[0.03] hover:border-blue-600/40 transition-all flex items-center justify-center gap-2">
-                <PlusCircle size={16} />
-                Thêm Nguồn Dữ liệu mới
-              </button>
             </div>
           </div>
-        </GlassCard>
+
+          {/* System Activity */}
+          <div
+            className="p-6 rounded-2xl flex-1"
+            style={{
+              background: "var(--admin-surface)",
+              border: "1px solid var(--admin-border)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h3
+              className="text-base font-bold mb-4"
+              style={{ color: "var(--admin-text)" }}
+            >
+              Hoạt động Hệ thống
+            </h3>
+            <div className="flex flex-col gap-2">
+              {[
+                { icon: <Zap size={13} />, text: "API response time: 12ms", sub: "2 phút trước", color: "#10B981" },
+                { icon: <Users size={13} />, text: "3 người dùng mới đăng ký", sub: "5 phút trước", color: "#F59E0B" },
+                { icon: <ClipboardList size={13} />, text: "Khảo sát mới được tạo", sub: "12 phút trước", color: "#6366F1" },
+                { icon: <Eye size={13} />, text: "100 lượt xem trang chủ", sub: "15 phút trước", color: "#3B82F6" },
+              ].map(({ icon, text, sub, color }, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                  style={{ background: "var(--admin-bg-secondary)" }}
+                >
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${color}18` }}
+                  >
+                    <span style={{ color }}>{icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold truncate" style={{ color: "var(--admin-text)" }}>
+                      {text}
+                    </p>
+                    <p className="text-[10px]" style={{ color: "var(--admin-text-dim)" }}>
+                      {sub}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="w-full mt-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
+              style={{
+                background: "var(--admin-bg-secondary)",
+                border: "1px dashed var(--admin-border)",
+                color: "var(--admin-text-dim)",
+              }}
+            >
+              <PlusCircle size={14} />
+              Xem thêm hoạt động
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

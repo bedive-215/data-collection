@@ -135,10 +135,10 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div style={{
       background: "rgba(15,17,35,0.97)", backdropFilter: "blur(20px)",
-      border: "1px solid rgba(99,102,241,0.3)", borderRadius: 14,
-      padding: "12px 16px", boxShadow: "0 8px 32px rgba(99,102,241,0.2)",
+      border: "1px solid rgba(245,158,11,0.3)", borderRadius: 14,
+      padding: "12px 16px", boxShadow: "0 8px 32px rgba(245,158,11,0.2)",
     }}>
-      <p style={{ color: "#94a3b8", fontSize: 12, marginBottom: 6 }}>{label}</p>
+      <p style={{ color: "#9CA3AF", fontSize: 12, marginBottom: 6 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color, fontSize: 14, fontWeight: 700 }}>
           {p.name}: {typeof p.value === "number" ? fmt(p.value) : p.value}
@@ -149,7 +149,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 // ─── PROGRESS BAR ─────────────────────────────────────────────────────────────
-function ProgressBar({ value, max, color = "#6366f1" }) {
+function ProgressBar({ value, max, color = "#F59E0B" }) {
   const [w, setW] = useState(0);
   const pct = max > 0 ? (value / max) * 100 : 0;
   useEffect(() => { const t = setTimeout(() => setW(pct), 60); return () => clearTimeout(t); }, [pct]);
@@ -209,11 +209,11 @@ function DateHeatmap({ data }) {
         ))}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, justifyContent: "flex-end" }}>
-        <span style={{ fontSize: 10, color: "#475569" }}>Ít</span>
+        <span style={{ fontSize: 10, color: "#4B5563" }}>Ít</span>
         {[0, 0.25, 0.5, 0.75, 1].map((r, i) => (
           <div key={i} style={{ width: 11, height: 11, borderRadius: 2, background: getColor(r * max) }} />
         ))}
-        <span style={{ fontSize: 10, color: "#475569" }}>Nhiều</span>
+        <span style={{ fontSize: 10, color: "#4B5563" }}>Nhiều</span>
       </div>
     </div>
   );
@@ -232,8 +232,8 @@ function FunnelViz({ dropOffData }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={funnelData} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-          <XAxis type="number" stroke="#475569" fontSize={11} />
-          <YAxis dataKey="name" type="category" stroke="#475569" fontSize={11} width={40} />
+          <XAxis type="number" stroke="#4B5563" fontSize={11} />
+          <YAxis dataKey="name" type="category" stroke="#4B5563" fontSize={11} width={40} />
           <Tooltip content={<ChartTooltip />} />
           <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
             {funnelData.map((_, i) => (
@@ -250,20 +250,20 @@ function FunnelViz({ dropOffData }) {
 function NPSCard({ npsData }) {
   if (!npsData) return (
     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 18, padding: 22, textAlign: "center" }}>
-      <p style={{ color: "#475569", fontSize: 13 }}>Cần câu hỏi đánh giá (RATING 1-10) để tính NPS</p>
+      <p style={{ color: "#4B5563", fontSize: 13 }}>Cần câu hỏi đánh giá (RATING 1-10) để tính NPS</p>
     </div>
   );
   const scoreColor = npsData.score >= 50 ? "#10b981" : npsData.score >= 0 ? "#f59e0b" : "#ef4444";
   return (
     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 18, padding: "20px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <ThumbsUp size={17} color="#6366f1" />
+        <ThumbsUp size={17} color="#F59E0B" />
         <h4 style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>NPS Score</h4>
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
         <div>
           <p style={{ fontSize: 48, fontWeight: 900, color: scoreColor, lineHeight: 1, margin: 0 }}>{npsData.score}</p>
-          <p style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>trên 100</p>
+          <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>trên 100</p>
         </div>
         <div style={{ flex: 1, paddingBottom: 4 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
@@ -274,7 +274,7 @@ function NPSCard({ npsData }) {
             ].map(s => (
               <div key={s.label} style={{ flex: 1, background: `${s.color}15`, border: `1px solid ${s.color}30`, borderRadius: 10, padding: "6px 8px", textAlign: "center" }}>
                 <p style={{ fontSize: 16, fontWeight: 800, color: s.color, margin: 0 }}>{s.count}</p>
-                <p style={{ fontSize: 9, color: "#64748b", margin: 0 }}>{s.label}</p>
+                <p style={{ fontSize: 9, color: "#9CA3AF", margin: 0 }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -294,9 +294,9 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
   const colors = {
-    indigo:  { icon: "#6366f1", glow: "rgba(99,102,241,0.25)" },
+    indigo:  { icon: "#F59E0B", glow: "rgba(245,158,11,0.25)" },
     emerald: { icon: "#10b981", glow: "rgba(16,185,129,0.25)" },
-    violet:  { icon: "#a855f7", glow: "rgba(168,85,247,0.25)" },
+    violet:  { icon: "#8B5CF6", glow: "rgba(139,92,246,0.25)" },
     amber:   { icon: "#f59e0b", glow: "rgba(245,158,11,0.25)" },
     cyan:    { icon: "#06b6d4", glow: "rgba(6,182,212,0.25)" },
   };
@@ -312,11 +312,11 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
       <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle, ${c.glow}, transparent 70%)`, pointerEvents: "none" }} />
       <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <p style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{label}</p>
+          <p style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{label}</p>
           <p style={{ fontSize: 28, fontWeight: 900, color: "#f8fafc", margin: 0, lineHeight: 1.1 }}>{visible ? value : "—"}</p>
-          {sub && <p style={{ fontSize: 11, color: "#475569", marginTop: 6 }}>{sub}</p>}
+          {sub && <p style={{ fontSize: 11, color: "#4B5563", marginTop: 6 }}>{sub}</p>}
         </div>
-        <div style={{ width: 46, height: 46, borderRadius: 14, background: `linear-gradient(135deg, ${c.icon}20, ${c.icon}10)`, border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${c.glow}` }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: `linear-gradient(135deg, ${c.icon}20, ${c.icon}10)`, border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${c.glow}` }}>
           <Icon size={20} color={c.icon} strokeWidth={1.8} />
         </div>
       </div>
@@ -326,7 +326,7 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
 
 // ─── TYPE BADGE ───────────────────────────────────────────────────────────────
 function TypeBadge({ type }) {
-  const t = questionTypeBadge?.[type] || { label: type, bg: "#1e293b", color: "#94a3b8" };
+  const t = questionTypeBadge?.[type] || { label: type, bg: "#1e293b", color: "#9CA3AF" };
   return (
     <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: t.bg, color: t.color }}>
       {t.label}
@@ -341,10 +341,10 @@ function EmptyState({ icon: Icon, title, desc, onAction, actionLabel }) {
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
         <Icon size={28} color="#334155" strokeWidth={1.5} />
       </div>
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#475569", margin: 0 }}>{title}</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#4B5563", margin: 0 }}>{title}</h3>
       <p style={{ fontSize: 13, color: "#334155", maxWidth: 300, lineHeight: 1.6, margin: 0 }}>{desc}</p>
       {onAction && actionLabel && (
-        <button onClick={onAction} style={{ marginTop: 8, padding: "9px 20px", borderRadius: 12, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.1)", color: "#818cf8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+        <button onClick={onAction} style={{ marginTop: 8, padding: "9px 20px", borderRadius: 12, border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.1)", color: "#D97706", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           {actionLabel}
         </button>
       )}
@@ -367,21 +367,21 @@ function QuestionCard({ question, index }) {
   return (
     <div style={{
       background: expanded ? "rgba(15,17,35,0.97)" : "rgba(15,17,35,0.8)",
-      border: `1px solid ${expanded ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.06)"}`,
+      border: `1px solid ${expanded ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.06)"}`,
       borderRadius: 18, overflow: "hidden", backdropFilter: "blur(12px)",
       opacity: animDone ? 1 : 0, transform: animDone ? "translateY(0)" : "translateY(12px)",
       transition: `all 0.4s ease ${index * 60}ms`,
-      boxShadow: expanded ? "0 8px 40px rgba(99,102,241,0.12)" : "0 2px 12px rgba(0,0,0,0.2)",
+      boxShadow: expanded ? "0 8px 40px rgba(245,158,11,0.12)" : "0 2px 12px rgba(0,0,0,0.2)",
     }}>
       {/* Header */}
       <div
         style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
         onClick={() => setExpanded(!expanded)}
-        onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.04)"; }}
+        onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.04)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #6366f1, #a855f7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#fff", flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #F59E0B, #D97706)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#fff", flexShrink: 0 }}>
             {index + 1}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -390,7 +390,7 @@ function QuestionCard({ question, index }) {
             </h4>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TypeBadge type={question.type} />
-              <span style={{ fontSize: 12, color: "#475569" }}>{question.total_responses ?? 0} phản hồi</span>
+              <span style={{ fontSize: 12, color: "#4B5563" }}>{question.total_responses ?? 0} phản hồi</span>
               {topOpt && (
                 <span style={{ fontSize: 11, color: "#10b981", display: "flex", alignItems: "center", gap: 4 }}>
                   <TrendingUp size={11} /> {topOpt.label?.slice(0, 15)} ({topOpt.percent}%)
@@ -399,7 +399,7 @@ function QuestionCard({ question, index }) {
             </div>
           </div>
         </div>
-        <div style={{ width: 30, height: 30, borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+        <div style={{ width: 30, height: 30, borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "#9CA3AF" }}>
           {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </div>
       </div>
@@ -416,8 +416,8 @@ function QuestionCard({ question, index }) {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={question.options} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                      <XAxis type="number" stroke="#475569" fontSize={11} />
-                      <YAxis dataKey="label" type="category" stroke="#475569" fontSize={11} width={120} tickFormatter={v => v?.length > 15 ? v.slice(0, 15) + "…" : v} />
+                      <XAxis type="number" stroke="#4B5563" fontSize={11} />
+                      <YAxis dataKey="label" type="category" stroke="#4B5563" fontSize={11} width={120} tickFormatter={v => v?.length > 15 ? v.slice(0, 15) + "…" : v} />
                       <Tooltip content={<ChartTooltip />} />
                       <Bar dataKey="count" radius={[0, 8, 8, 0]} maxBarSize={20}>
                         {question.options.map((_, i) => (
@@ -434,8 +434,8 @@ function QuestionCard({ question, index }) {
                     <div style={{ width: 9, height: 9, borderRadius: "50%", background: chartColors[i % chartColors.length], flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: "#cbd5e1", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.label}</span>
                     <div style={{ width: 140 }}><ProgressBar value={opt.count} max={question.options[0]?.count || 1} color={chartColors[i % chartColors.length]} /></div>
-                    <span style={{ fontSize: 12, color: "#64748b", width: 42, textAlign: "right" }}>{opt.percent}%</span>
-                    <span style={{ fontSize: 12, color: "#94a3b8", width: 30, textAlign: "right", fontWeight: 700 }}>{opt.count}</span>
+                    <span style={{ fontSize: 12, color: "#9CA3AF", width: 42, textAlign: "right" }}>{opt.percent}%</span>
+                    <span style={{ fontSize: 12, color: "#9CA3AF", width: 30, textAlign: "right", fontWeight: 700 }}>{opt.count}</span>
                   </div>
                 ))}
               </div>
@@ -447,13 +447,13 @@ function QuestionCard({ question, index }) {
             <div style={{ paddingTop: 18 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Trung bình", value: question.avg?.toFixed(1),    color: "#6366f1" },
-                  { label: "Thấp nhất",  value: question.min,                color: "#94a3b8" },
-                  { label: "Cao nhất",   value: question.max,                color: "#94a3b8" },
-                  { label: "Độ lệch",    value: question.stddev?.toFixed(2), color: "#94a3b8" },
+                  { label: "Trung bình", value: question.avg?.toFixed(1),    color: "#F59E0B" },
+                  { label: "Thấp nhất",  value: question.min,                color: "#9CA3AF" },
+                  { label: "Cao nhất",   value: question.max,                color: "#9CA3AF" },
+                  { label: "Độ lệch",    value: question.stddev?.toFixed(2), color: "#9CA3AF" },
                 ].map((item, i) => (
                   <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "12px", textAlign: "center" }}>
-                    <p style={{ fontSize: 10, color: "#475569", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
+                    <p style={{ fontSize: 10, color: "#4B5563", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
                     <p style={{ fontSize: 20, fontWeight: 900, color: item.color, margin: 0 }}>{item.value ?? "—"}</p>
                   </div>
                 ))}
@@ -463,12 +463,12 @@ function QuestionCard({ question, index }) {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={question.distribution}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey={question.type === "RATING" ? "rating" : "value"} stroke="#475569" fontSize={11} />
-                      <YAxis stroke="#475569" fontSize={11} />
+                      <XAxis dataKey={question.type === "RATING" ? "rating" : "value"} stroke="#4B5563" fontSize={11} />
+                      <YAxis stroke="#4B5563" fontSize={11} />
                       <Tooltip content={<ChartTooltip />} />
                       <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={40}>
                         {question.distribution.map((_, i) => (
-                          <Cell key={i} fill="#6366f1" />
+                          <Cell key={i} fill="#F59E0B" />
                         ))}
                       </Bar>
                     </BarChart>
@@ -486,14 +486,14 @@ function QuestionCard({ question, index }) {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={question.distribution}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="month" stroke="#475569" fontSize={11} />
-                      <YAxis stroke="#475569" fontSize={11} />
+                      <XAxis dataKey="month" stroke="#4B5563" fontSize={11} />
+                      <YAxis stroke="#4B5563" fontSize={11} />
                       <Tooltip content={<ChartTooltip />} />
                       <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={40} fill="#06b6d4" />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartBox>
-              ) : <p style={{ color: "#475569", textAlign: "center", padding: "20px 0" }}>Chưa có dữ liệu ngày</p>}
+              ) : <p style={{ color: "#4B5563", textAlign: "center", padding: "20px 0" }}>Chưa có dữ liệu ngày</p>}
             </div>
           )}
 
@@ -504,10 +504,10 @@ function QuestionCard({ question, index }) {
                 <>
                   {question.word_frequency?.length > 0 && (
                     <div style={{ marginBottom: 14 }}>
-                      <p style={{ fontSize: 12, color: "#475569", marginBottom: 10, fontWeight: 600 }}>Từ khóa nổi bật</p>
+                      <p style={{ fontSize: 12, color: "#4B5563", marginBottom: 10, fontWeight: 600 }}>Từ khóa nổi bật</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {question.word_frequency.slice(0, 16).map((item, i) => (
-                          <span key={item.word || i} style={{ padding: "4px 10px", background: "rgba(99,102,241,0.12)", color: "#818cf8", borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid rgba(99,102,241,0.2)" }}>
+                          <span key={item.word || i} style={{ padding: "4px 10px", background: "rgba(245,158,11,0.12)", color: "#D97706", borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid rgba(245,158,11,0.2)" }}>
                             {item.word} <span style={{ opacity: 0.6 }}>({item.count})</span>
                           </span>
                         ))}
@@ -516,14 +516,14 @@ function QuestionCard({ question, index }) {
                   )}
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 280, overflowY: "auto" }}>
                     {question.answers.map((ans, i) => (
-                      <div key={ans.id || i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "#94a3b8" }}>
+                      <div key={ans.id || i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "#9CA3AF" }}>
                         {ans.text || ans.answer_text || "—"}
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <div style={{ textAlign: "center", padding: "20px 0", color: "#475569" }}>Chưa có câu trả lời</div>
+                <div style={{ textAlign: "center", padding: "20px 0", color: "#4B5563" }}>Chưa có câu trả lời</div>
               )}
             </div>
           )}
@@ -541,10 +541,10 @@ function ResponseRow({ response }) {
       <div
         style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 18px", cursor: "pointer" }}
         onClick={() => setExpanded(!expanded)}
-        onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.03)"; }}
+        onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.03)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
-        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#475569" }}>{response.response_id?.slice(0, 6)}</div>
+        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#4B5563" }}>{response.response_id?.slice(0, 6)}</div>
         <div style={{ flex: 1 }}>
           <span style={{
             display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700,
@@ -555,12 +555,12 @@ function ResponseRow({ response }) {
             {response.status === "COMPLETED" ? "✓ Hoàn thành" : "○ Đang làm"}
           </span>
         </div>
-        <div style={{ fontSize: 12, color: "#64748b", width: 70, textAlign: "right" }}>{response.time_to_complete_seconds ? fmtDur(response.time_to_complete_seconds) : "—"}</div>
-        <div style={{ fontSize: 12, color: "#64748b", width: 40, textAlign: "right" }}>{response.answers?.length || 0}</div>
-        <div style={{ fontSize: 12, color: "#475569", width: 80, textAlign: "right", fontFamily: "monospace" }}>
+        <div style={{ fontSize: 12, color: "#9CA3AF", width: 70, textAlign: "right" }}>{response.time_to_complete_seconds ? fmtDur(response.time_to_complete_seconds) : "—"}</div>
+        <div style={{ fontSize: 12, color: "#9CA3AF", width: 40, textAlign: "right" }}>{response.answers?.length || 0}</div>
+        <div style={{ fontSize: 12, color: "#4B5563", width: 80, textAlign: "right", fontFamily: "monospace" }}>
           {response.submitted_at ? new Date(response.submitted_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) : "—"}
         </div>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "#9CA3AF" }}>
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </div>
@@ -569,8 +569,8 @@ function ResponseRow({ response }) {
           {response.answers.map((ans, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12, padding: "10px 14px" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 11, color: "#475569", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ans.question_content}</p>
-                <p style={{ fontSize: 13, color: "#94a3b8", margin: 0, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <p style={{ fontSize: 11, color: "#4B5563", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ans.question_content}</p>
+                <p style={{ fontSize: 13, color: "#9CA3AF", margin: 0, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {ans.value || ans.answer_text || "—"}
                 </p>
               </div>
@@ -589,14 +589,14 @@ function DatePresetSelector({ activePreset, onChange }) {
   const current = DATE_PRESETS?.find(p => p.value === activePreset) || { label: "30 ngày" };
   return (
     <div style={{ position: "relative" }}>
-      <button onClick={() => setShow(!show)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#94a3b8", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+      <button onClick={() => setShow(!show)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#9CA3AF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         <Filter size={14} /> {current.label} <ChevronDown size={14} />
       </button>
       {show && (
         <>
           <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#0d1224", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: 6, zIndex: 200, minWidth: 155, boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
             {(DATE_PRESETS || []).map(p => (
-              <button key={p.value} onClick={() => { onChange(p.value); setShow(false); }} style={{ width: "100%", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 10, border: "none", background: "transparent", color: p.value === activePreset ? "#818cf8" : "#94a3b8", fontSize: 13, fontWeight: p.value === activePreset ? 700 : 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textAlign: "left" }}>
+              <button key={p.value} onClick={() => { onChange(p.value); setShow(false); }} style={{ width: "100%", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 10, border: "none", background: "transparent", color: p.value === activePreset ? "#D97706" : "#9CA3AF", fontSize: 13, fontWeight: p.value === activePreset ? 700 : 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textAlign: "left" }}>
                 {p.label}
               </button>
             ))}
@@ -614,7 +614,7 @@ function TrendSwitcher({ value, onChange }) {
   return (
     <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: 3, gap: 2 }}>
       {opts.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s", background: value === o.value ? "linear-gradient(135deg, #6366f1, #7c5df7)" : "transparent", color: value === o.value ? "#fff" : "#475569" }}>
+        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s", background: value === o.value ? "linear-gradient(135deg, #F59E0B, #D97706)" : "transparent", color: value === o.value ? "#fff" : "#4B5563" }}>
           {o.label}
         </button>
       ))}
@@ -627,12 +627,12 @@ function SearchBar({ value, onChange, placeholder = "Tìm kiếm phản hồi...
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-      <Search size={15} color={focused ? "#6366f1" : "#475569"} style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
+      <Search size={15} color={focused ? "#F59E0B" : "#4B5563"} style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
       <input value={value} onChange={e => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder}
-        style={{ padding: "10px 14px 10px 40px", width: "100%", background: "rgba(255,255,255,0.04)", border: `1px solid ${focused ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: 12, fontSize: 13, color: "#f1f5f9", fontFamily: "'DM Sans', sans-serif", outline: "none" }}
+        style={{ padding: "10px 14px 10px 40px", width: "100%", background: "rgba(255,255,255,0.04)", border: `1px solid ${focused ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: 12, fontSize: 13, color: "#f1f5f9", fontFamily: "'DM Sans', sans-serif", outline: "none" }}
       />
       {value && (
-        <button onClick={() => onChange("")} style={{ position: "absolute", right: 10, background: "none", border: "none", cursor: "pointer", color: "#475569", display: "flex", padding: 4 }}>
+        <button onClick={() => onChange("")} style={{ position: "absolute", right: 10, background: "none", border: "none", cursor: "pointer", color: "#4B5563", display: "flex", padding: 4 }}>
           <X size={14} />
         </button>
       )}
@@ -646,7 +646,7 @@ function StatusFilter({ value, onChange }) {
   return (
     <div style={{ display: "flex", gap: 6 }}>
       {opts.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "7px 14px", borderRadius: 10, border: `1px solid ${value === o.value ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`, background: value === o.value ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)", color: value === o.value ? "#818cf8" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "7px 14px", borderRadius: 10, border: `1px solid ${value === o.value ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.08)"}`, background: value === o.value ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", color: value === o.value ? "#D97706" : "#9CA3AF", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           {o.label}
         </button>
       ))}
@@ -1022,7 +1022,7 @@ export default function AnalyticsPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#080c1a", color: "#fff", fontFamily: "'DM Sans', sans-serif", position: "relative" }}>
       {/* Background */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,85,247,0.06) 0%, transparent 50%)" }} />
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 50%)" }} />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
       {/* Sticky Header */}
@@ -1030,18 +1030,18 @@ export default function AnalyticsPage() {
         <div style={{ padding: "16px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button onClick={() => navigate(-1)} style={{ width: 42, height: 42, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#94a3b8" }}>
+              <button onClick={() => navigate(-1)} style={{ width: 42, height: 42, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#9CA3AF" }}>
                 <ArrowLeft size={18} />
               </button>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Sparkles size={18} color="#6366f1" />
+                  <Sparkles size={18} color="#F59E0B" />
                   <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc", margin: 0 }}>Phân tích Khảo sát</h1>
                 </div>
-                <p style={{ fontSize: 11, color: "#475569", margin: 0, marginTop: 3, fontFamily: "monospace" }}>{surveyId}</p>
+                <p style={{ fontSize: 11, color: "#4B5563", margin: 0, marginTop: 3, fontFamily: "monospace" }}>{surveyId}</p>
               </div>
             </div>
-            <button onClick={handleRefreshAll} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#94a3b8", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+            <button onClick={handleRefreshAll} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#9CA3AF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               <RefreshCw size={15} /> Làm mới
             </button>
           </div>
@@ -1051,7 +1051,7 @@ export default function AnalyticsPage() {
             const Icon = tab.icon;
             const is = activeTab === tab.id;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "14px 14px 0 0", border: "none", borderBottom: is ? "2px solid #6366f1" : "2px solid transparent", background: "transparent", color: is ? "#6366f1" : "#475569", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "14px 14px 0 0", border: "none", borderBottom: is ? "2px solid #F59E0B" : "2px solid transparent", background: "transparent", color: is ? "#F59E0B" : "#4B5563", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 <Icon size={15} /> {tab.label}
               </button>
             );
@@ -1064,20 +1064,20 @@ export default function AnalyticsPage() {
 
         {/* Filter Bar */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, marginBottom: 24, flexWrap: "wrap" }}>
-          <Filter size={15} color="#475569" />
-          <span style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>Khoảng thời gian:</span>
+          <Filter size={15} color="#4B5563" />
+          <span style={{ fontSize: 12, color: "#4B5563", fontWeight: 600 }}>Khoảng thời gian:</span>
           <DatePresetSelector activePreset={datePreset} onChange={applyPreset} />
           {datePreset === "custom" && (
             <>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, fontSize: 12, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, fontSize: 12, color: "#9CA3AF", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
               <span style={{ color: "#334155" }}>—</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, fontSize: 12, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, fontSize: 12, color: "#9CA3AF", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
             </>
           )}
           {/* Live indicator */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: liveResponseCount !== null ? "#10b981" : "#475569", boxShadow: liveResponseCount !== null ? "0 0 8px rgba(16,185,129,0.6)" : "none" }} />
-            <span style={{ fontSize: 11, color: liveResponseCount !== null ? "#10b981" : "#475569", fontWeight: 600 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: liveResponseCount !== null ? "#10b981" : "#4B5563", boxShadow: liveResponseCount !== null ? "0 0 8px rgba(16,185,129,0.6)" : "none" }} />
+            <span style={{ fontSize: 11, color: liveResponseCount !== null ? "#10b981" : "#4B5563", fontWeight: 600 }}>
               {liveResponseCount !== null ? `Live · ${liveResponseCount} phản hồi` : "Real-time"}
             </span>
           </div>
@@ -1108,8 +1108,8 @@ export default function AnalyticsPage() {
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.1))", border: "1px solid rgba(99,102,241,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Activity size={17} color="#6366f1" />
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(139,92,246,0.1))", border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Activity size={17} color="#F59E0B" />
                     </div>
                     <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Xu hướng phản hồi</h3>
                   </div>
@@ -1121,20 +1121,20 @@ export default function AnalyticsPage() {
                       <AreaChart data={trendData}>
                         <defs>
                           <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                            <stop offset="5%"  stopColor="#F59E0B" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                        <XAxis dataKey="period" stroke="#475569" fontSize={11} />
-                        <YAxis stroke="#475569" fontSize={11} />
+                        <XAxis dataKey="period" stroke="#4B5563" fontSize={11} />
+                        <YAxis stroke="#4B5563" fontSize={11} />
                         <Tooltip content={<ChartTooltip />} />
-                        <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2.5} fill="url(#g1)" dot={false} activeDot={{ r: 6, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }} />
+                        <Area type="monotone" dataKey="count" stroke="#F59E0B" strokeWidth={2.5} fill="url(#g1)" dot={false} activeDot={{ r: 6, fill: "#F59E0B", stroke: "#fff", strokeWidth: 2 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </ChartBox>
                 ) : <EmptyState icon={Activity} title="Chưa có dữ liệu xu hướng" desc="Khảo sát chưa có phản hồi nào trong khoảng thời gian này" />}
-                {tErr && <p style={{ color: "#ef4444", fontSize: 12, textAlign: "center", marginTop: 8 }}>{tErr} <button onClick={fetchTrend} style={{ color: "#6366f1", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}>Thử lại</button></p>}
+                {tErr && <p style={{ color: "#ef4444", fontSize: 12, textAlign: "center", marginTop: 8 }}>{tErr} <button onClick={fetchTrend} style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}>Thử lại</button></p>}
               </div>
 
               {/* Heatmap */}
@@ -1169,16 +1169,16 @@ export default function AnalyticsPage() {
                     ].map(item => (
                       <div key={item.label}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontSize: 13, color: "#94a3b8" }}>{item.label}</span>
+                          <span style={{ fontSize: 13, color: "#9CA3AF" }}>{item.label}</span>
                           <span style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{fmt(item.value)}</span>
                         </div>
                         <ProgressBar value={item.value} max={comp?.total_started ?? overviewStats.total_started ?? 1} color={item.color} />
                       </div>
                     ))}
                     {(comp?.avg_completion_time_seconds ?? 0) > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12 }}>
-                        <Clock size={14} color="#818cf8" />
-                        <span style={{ fontSize: 13, color: "#818cf8" }}>Thời gian TB: <strong>{comp?.avg_completion_time_display ?? "—"}</strong></span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.12)", borderRadius: 12 }}>
+                        <Clock size={14} color="#D97706" />
+                        <span style={{ fontSize: 13, color: "#D97706" }}>Thời gian TB: <strong>{comp?.avg_completion_time_display ?? "—"}</strong></span>
                       </div>
                     )}
                     {cErr && <p style={{ color: "#ef4444", fontSize: 12 }}>{cErr}</p>}
@@ -1204,8 +1204,8 @@ export default function AnalyticsPage() {
               <NPSCard npsData={npsData} />
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(168,85,247,0.1))", border: "1px solid rgba(168,85,247,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <BarChart3 size={17} color="#a855f7" />
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))", border: "1px solid rgba(139,92,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <BarChart3 size={17} color="#8B5CF6" />
                   </div>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Phân bố câu hỏi</h3>
                 </div>
@@ -1225,7 +1225,7 @@ export default function AnalyticsPage() {
                           ))}
                         </Pie>
                         <Tooltip content={<ChartTooltip />} />
-                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ color: "#64748b", fontSize: 11 }} />
+                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ color: "#9CA3AF", fontSize: 11 }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </ChartBox>
@@ -1243,14 +1243,14 @@ export default function AnalyticsPage() {
             ) : svErr ? (
               <div style={{ textAlign: "center", padding: 40 }}>
                 <p style={{ color: "#ef4444", marginBottom: 12 }}>{svErr}</p>
-                <button onClick={fetchSurvey} style={{ padding: "8px 20px", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 10, color: "#818cf8", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button>
+                <button onClick={fetchSurvey} style={{ padding: "8px 20px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 10, color: "#D97706", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button>
               </div>
             ) : questions.length === 0 ? (
               <EmptyState icon={Target} title="Chưa có câu hỏi" desc="Khảo sát này chưa có câu hỏi nào" actionLabel="Tạo câu hỏi" onAction={() => navigate(`/admin/surveys/${surveyId}`)} />
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <p style={{ fontSize: 13, color: "#475569", margin: 0 }}>{questions.length} câu hỏi</p>
+                  <p style={{ fontSize: 13, color: "#4B5563", margin: 0 }}>{questions.length} câu hỏi</p>
                 </div>
                 {questions.map((q, i) => <QuestionCard key={q.question_id || i} question={q} index={i} />)}
               </div>
@@ -1267,7 +1267,7 @@ export default function AnalyticsPage() {
               </div>
               <StatusFilter value={rStatus} onChange={v => { setRStatus(v); setRPage(1); }} />
               {(rSearch || rStatus) && (
-                <button onClick={() => { setRSearch(""); setRStatus(""); setRPage(1); }} style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#64748b", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+                <button onClick={() => { setRSearch(""); setRStatus(""); setRPage(1); }} style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#9CA3AF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
                   <X size={13} /> Xóa lọc
                 </button>
               )}
@@ -1276,10 +1276,10 @@ export default function AnalyticsPage() {
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
               <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <FileText size={17} color="#6366f1" />
+                  <FileText size={17} color="#F59E0B" />
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Danh sách phản hồi</h3>
                 </div>
-                <span style={{ fontSize: 12, color: "#475569", background: "rgba(255,255,255,0.04)", padding: "4px 12px", borderRadius: 20 }}>
+                <span style={{ fontSize: 12, color: "#4B5563", background: "rgba(255,255,255,0.04)", padding: "4px 12px", borderRadius: 20 }}>
                   {responses?.pagination?.total_responses ?? 0} tổng số
                 </span>
               </div>
@@ -1295,7 +1295,7 @@ export default function AnalyticsPage() {
               {rLoad
                 ? [1,2,3,4,5].map(i => <SkeletonTableRow key={i} cols={5} theme="dark" />)
                 : rErr
-                  ? <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ef4444" }}>{rErr}</p><button onClick={() => fetchResponses(rPage)} style={{ padding: "8px 20px", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 10, color: "#818cf8", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button></div>
+                  ? <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ef4444" }}>{rErr}</p><button onClick={() => fetchResponses(rPage)} style={{ padding: "8px 20px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 10, color: "#D97706", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button></div>
                   : responses?.responses?.length > 0
                     ? responses.responses.map(r => <ResponseRow key={r.response_id} response={r} />)
                     : <div style={{ padding: "60px 20px", textAlign: "center" }}><EmptyState icon={Eye} title="Không tìm thấy phản hồi" desc={rSearch || rStatus ? "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm" : "Chưa có phản hồi nào trong khoảng thời gian này"} /></div>
@@ -1303,11 +1303,11 @@ export default function AnalyticsPage() {
               {/* Pagination */}
               {(responses?.pagination?.total_pages ?? 0) > 1 && (
                 <div style={{ padding: "14px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <button onClick={() => setRPage(p => Math.max(1, p - 1))} disabled={rPage === 1} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: rPage === 1 ? "not-allowed" : "pointer", fontSize: 13, opacity: rPage === 1 ? 0.4 : 1, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif" }}>←</button>
+                  <button onClick={() => setRPage(p => Math.max(1, p - 1))} disabled={rPage === 1} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: rPage === 1 ? "not-allowed" : "pointer", fontSize: 13, opacity: rPage === 1 ? 0.4 : 1, color: "#9CA3AF", fontFamily: "'DM Sans', sans-serif" }}>←</button>
                   {Array.from({ length: Math.min(5, responses.pagination.total_pages) }, (_, i) => i + 1).map(pg => (
-                    <button key={pg} onClick={() => setRPage(pg)} style={{ width: 36, height: 36, borderRadius: 10, border: pg === rPage ? "none" : "1px solid rgba(255,255,255,0.08)", background: pg === rPage ? "linear-gradient(135deg, #6366f1, #7c5df7)" : "rgba(255,255,255,0.04)", color: pg === rPage ? "#fff" : "#94a3b8", fontWeight: pg === rPage ? 700 : 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>{pg}</button>
+                    <button key={pg} onClick={() => setRPage(pg)} style={{ width: 36, height: 36, borderRadius: 10, border: pg === rPage ? "none" : "1px solid rgba(255,255,255,0.08)", background: pg === rPage ? "linear-gradient(135deg, #F59E0B, #7c5df7)" : "rgba(255,255,255,0.04)", color: pg === rPage ? "#fff" : "#9CA3AF", fontWeight: pg === rPage ? 700 : 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>{pg}</button>
                   ))}
-                  <button onClick={() => setRPage(p => Math.min(responses.pagination.total_pages, p + 1))} disabled={rPage === responses.pagination.total_pages} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: rPage === responses.pagination.total_pages ? "not-allowed" : "pointer", fontSize: 13, opacity: rPage === responses.pagination.total_pages ? 0.4 : 1, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif" }}>→</button>
+                  <button onClick={() => setRPage(p => Math.min(responses.pagination.total_pages, p + 1))} disabled={rPage === responses.pagination.total_pages} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: rPage === responses.pagination.total_pages ? "not-allowed" : "pointer", fontSize: 13, opacity: rPage === responses.pagination.total_pages ? 0.4 : 1, color: "#9CA3AF", fontFamily: "'DM Sans', sans-serif" }}>→</button>
                 </div>
               )}
             </div>
@@ -1319,7 +1319,7 @@ export default function AnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <Zap size={17} color="#a855f7" />
+                <Zap size={17} color="#8B5CF6" />
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Cross-Tabulation</h3>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 16 }}>
@@ -1328,15 +1328,15 @@ export default function AnalyticsPage() {
                   { label: "Câu hỏi B (Cột)",  val: selectedQ2, set: setSelectedQ2 },
                 ].map(({ label, val, set }, idx) => (
                   <div key={idx}>
-                    <label style={{ display: "block", fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 8 }}>{label}</label>
-                    <select value={val || ""} onChange={e => set(e.target.value || null)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", color: "#94a3b8", cursor: "pointer" }}>
+                    <label style={{ display: "block", fontSize: 12, color: "#9CA3AF", fontWeight: 600, marginBottom: 8 }}>{label}</label>
+                    <select value={val || ""} onChange={e => set(e.target.value || null)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", color: "#9CA3AF", cursor: "pointer" }}>
                       <option value="">Chọn câu hỏi...</option>
                       {choiceQs.map(q => (<option key={q.question_id} value={q.question_id}>{q.question_content?.slice(0, 60)}</option>))}
                     </select>
                   </div>
                 ))}
               </div>
-              <button onClick={fetchCrossTab} disabled={!selectedQ1 || !selectedQ2 || ctLoading} style={{ padding: "11px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #6366f1, #7c5df7)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: !selectedQ1 || !selectedQ2 || ctLoading ? "not-allowed" : "pointer", opacity: !selectedQ1 || !selectedQ2 || ctLoading ? 0.5 : 1, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={fetchCrossTab} disabled={!selectedQ1 || !selectedQ2 || ctLoading} style={{ padding: "11px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #F59E0B, #7c5df7)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: !selectedQ1 || !selectedQ2 || ctLoading ? "not-allowed" : "pointer", opacity: !selectedQ1 || !selectedQ2 || ctLoading ? 0.5 : 1, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                 {ctLoading ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={15} />}
                 Phân tích
               </button>
@@ -1351,18 +1351,18 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <h4 style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Kết quả kiểm định Chi-Square</h4>
-                    <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>Mối tương quan giữa 2 câu hỏi</p>
+                    <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>Mối tương quan giữa 2 câu hỏi</p>
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 16 }}>
                   {[
-                    { label: "Chi-Square (χ²)", value: chiResult.chi_square,         color: "#818cf8" },
-                    { label: "Cramér's V",       value: chiResult.cramers_v,          color: "#818cf8" },
-                    { label: "Bậc tự do (df)",   value: chiResult.degrees_of_freedom, color: "#94a3b8" },
-                    { label: "Mẫu",              value: chiResult.total_samples,      color: "#94a3b8" },
+                    { label: "Chi-Square (χ²)", value: chiResult.chi_square,         color: "#D97706" },
+                    { label: "Cramér's V",       value: chiResult.cramers_v,          color: "#D97706" },
+                    { label: "Bậc tự do (df)",   value: chiResult.degrees_of_freedom, color: "#9CA3AF" },
+                    { label: "Mẫu",              value: chiResult.total_samples,      color: "#9CA3AF" },
                   ].map(item => (
                     <div key={item.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                      <p style={{ fontSize: 10, color: "#475569", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
+                      <p style={{ fontSize: 10, color: "#4B5563", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
                       <p style={{ fontSize: 24, fontWeight: 900, color: item.color, margin: 0 }}>{item.value}</p>
                     </div>
                   ))}
@@ -1370,11 +1370,11 @@ export default function AnalyticsPage() {
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   {[
                     { label: "Ý nghĩa thống kê",  value: chiResult.significance, color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
-                    { label: "Độ mạnh tương quan", value: chiResult.strength,     color: chiResult.has_correlation ? "#10b981" : "#94a3b8" },
+                    { label: "Độ mạnh tương quan", value: chiResult.strength,     color: chiResult.has_correlation ? "#10b981" : "#9CA3AF" },
                     { label: "Kết luận",            value: chiResult.has_correlation ? "Có tương quan ✓" : "Không có tương quan", color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
                   ].map(item => (
                     <div key={item.label} style={{ flex: 1, minWidth: 140, background: `${item.color}15`, border: `1px solid ${item.color}30`, borderRadius: 12, padding: "10px 14px" }}>
-                      <p style={{ fontSize: 10, color: "#475569", marginBottom: 4, fontWeight: 600 }}>{item.label}</p>
+                      <p style={{ fontSize: 10, color: "#4B5563", marginBottom: 4, fontWeight: 600 }}>{item.label}</p>
                       <p style={{ fontSize: 14, fontWeight: 800, color: item.color, margin: 0 }}>{item.value}</p>
                     </div>
                   ))}
@@ -1394,11 +1394,11 @@ export default function AnalyticsPage() {
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "rgba(255,255,255,0.02)" }}>
-                        <th style={{ padding: "11px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#475569", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                        <th style={{ padding: "11px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#4B5563", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
                           {crossTab.question_a?.label?.slice(0, 20)}
                         </th>
                         {Object.values(crossTab.rows[0]?.breakdown || {}).slice(0, 10).map(opt => (
-                          <th key={opt.option_id} style={{ padding: "11px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: "#475569", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase" }}>
+                          <th key={opt.option_id} style={{ padding: "11px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: "#4B5563", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase" }}>
                             {opt.label?.slice(0, 12)}
                           </th>
                         ))}
@@ -1407,16 +1407,16 @@ export default function AnalyticsPage() {
                     <tbody>
                       {crossTab.rows.map(row => (
                         <tr key={row.option_id}
-                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.04)"; }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.04)"; }}
                           onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                         >
-                          <td style={{ padding: "11px 14px", fontSize: 13, color: "#94a3b8", borderBottom: "1px solid rgba(255,255,255,0.04)", whiteSpace: "nowrap" }}>{row.label?.slice(0, 25)}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 13, color: "#9CA3AF", borderBottom: "1px solid rgba(255,255,255,0.04)", whiteSpace: "nowrap" }}>{row.label?.slice(0, 25)}</td>
                           {Object.values(row.breakdown || {}).slice(0, 10).map(cell => {
                             const maxCount = Math.max(...crossTab.rows.flatMap(r => Object.values(r.breakdown || {}).map(c => c.count)), 1);
                             const intensity = cell.count / maxCount;
                             return (
                               <td key={cell.option_id} style={{ padding: "11px 12px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 8, fontSize: 13, fontWeight: 800, background: `rgba(99,102,241,${intensity * 0.5})`, color: intensity > 0.5 ? "#fff" : "#818cf8" }}>
+                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 8, fontSize: 13, fontWeight: 800, background: `rgba(99,102,241,${intensity * 0.5})`, color: intensity > 0.5 ? "#fff" : "#D97706" }}>
                                   {cell.count}
                                 </span>
                               </td>
@@ -1437,17 +1437,17 @@ export default function AnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.1))", border: "1px solid rgba(99,102,241,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Brain size={17} color="#6366f1" />
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(139,92,246,0.1))", border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Brain size={17} color="#F59E0B" />
                 </div>
                 <div>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>AI Insights</h3>
-                  <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>Phân tích thông minh được tạo bởi AI</p>
+                  <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>Phân tích thông minh được tạo bởi AI</p>
                 </div>
                 <button
                   onClick={fetchAiInsights}
                   disabled={aiLoad}
-                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.1)", color: "#818cf8", fontSize: 12, fontWeight: 700, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
+                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.1)", color: "#D97706", fontSize: 12, fontWeight: 700, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
                 >
                   <RefreshCw size={13} style={aiLoad ? { animation: "spin 1s linear infinite" } : {}} />
                   Tải lại
@@ -1467,7 +1467,7 @@ export default function AnalyticsPage() {
               ) : aiErr ? (
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <p style={{ color: "#ef4444", marginBottom: 12 }}>{aiErr}</p>
-                  <button onClick={fetchAiInsights} style={{ padding: "8px 20px", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 10, color: "#818cf8", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                  <button onClick={fetchAiInsights} style={{ padding: "8px 20px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 10, color: "#D97706", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                     Thử lại
                   </button>
                 </div>
@@ -1475,7 +1475,7 @@ export default function AnalyticsPage() {
                 <div
                   style={{
                     background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(99,102,241,0.15)",
+                    border: "1px solid rgba(245,158,11,0.15)",
                     borderRadius: 16,
                     padding: "24px",
                     fontSize: 13,
@@ -1489,30 +1489,30 @@ export default function AnalyticsPage() {
                 >
                   {aiInsights.split("\n").map((line, i) => {
                     const trimmed = line.trim();
-                    if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", margin: "20px 0 8px", borderBottom: "1px solid rgba(99,102,241,0.2)", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
+                    if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", margin: "20px 0 8px", borderBottom: "1px solid rgba(245,158,11,0.2)", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
                     if (trimmed.startsWith("## ")) return <h3 key={i} style={{ fontSize: 17, fontWeight: 700, color: "#f1f5f9", margin: "24px 0 10px" }}>{trimmed.slice(3)}</h3>;
                     if (trimmed.startsWith("* **")) {
                       const match = trimmed.match(/^\* \*\*(.+?)\*\*[:—]?\s*(.*)$/);
                       if (match) return (
                         <div key={i} style={{ margin: "10px 0 8px", paddingLeft: 8 }}>
-                          <strong style={{ color: "#818cf8" }}>{match[1]}</strong>
-                          {match[2] && <span style={{ color: "#94a3b8" }}>{match[2]}</span>}
+                          <strong style={{ color: "#D97706" }}>{match[1]}</strong>
+                          {match[2] && <span style={{ color: "#9CA3AF" }}>{match[2]}</span>}
                         </div>
                       );
                     }
-                    if (trimmed.startsWith("*   ")) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, color: "#94a3b8" }}>{trimmed.slice(4).replace(/\*\*(.+?)\*\*/g, "$1")}</li>;
+                    if (trimmed.startsWith("*   ")) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, color: "#9CA3AF" }}>{trimmed.slice(4).replace(/\*\*(.+?)\*\*/g, "$1")}</li>;
                     if (trimmed.startsWith("- **")) {
                       const m = trimmed.match(/^- \*\*(.+?)\*\*[:—]?\s*(.*)$/);
                       if (m) return (
-                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid rgba(99,102,241,0.2)" }}>
+                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid rgba(245,158,11,0.2)" }}>
                           <strong style={{ color: "#e2e8f0" }}>{m[1]}</strong>
-                          {m[2] && <span style={{ color: "#64748b" }}> — {m[2]}</span>}
+                          {m[2] && <span style={{ color: "#9CA3AF" }}> — {m[2]}</span>}
                         </div>
                       );
                     }
                     if (trimmed === "---") return <hr key={i} style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "16px 0" }} />;
                     if (!trimmed) return <div key={i} style={{ height: 6 }} />;
-                    return <p key={i} style={{ margin: "4px 0", color: "#94a3b8" }}>{trimmed.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")}</p>;
+                    return <p key={i} style={{ margin: "4px 0", color: "#9CA3AF" }}>{trimmed.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")}</p>;
                   })}
                 </div>
               ) : (
@@ -1531,16 +1531,16 @@ export default function AnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <FileSpreadsheet size={18} color="#6366f1" />
+                <FileSpreadsheet size={18} color="#F59E0B" />
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Xuất dữ liệu</h3>
               </div>
-              <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 20, lineHeight: 1.6 }}>
                 Xuất toàn bộ dữ liệu khảo sát theo khoảng thời gian đã chọn.
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {[
                   { icon: FileSpreadsheet, title: "Xuất CSV",  desc: "Định dạng Excel/Google Sheets.", format: "csv",  color: "#10b981" },
-                  { icon: Copy,            title: "Xuất JSON", desc: "Dữ liệu thô dạng JSON.",         format: "json", color: "#a855f7" },
+                  { icon: Copy,            title: "Xuất JSON", desc: "Dữ liệu thô dạng JSON.",         format: "json", color: "#8B5CF6" },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
@@ -1553,11 +1553,11 @@ export default function AnalyticsPage() {
                         <div style={{ width: 52, height: 52, borderRadius: 16, background: `${item.color}20`, border: `1px solid ${item.color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Icon size={24} color={item.color} />
                         </div>
-                        <ChevronRight size={18} color="#475569" />
+                        <ChevronRight size={18} color="#4B5563" />
                       </div>
                       <div>
                         <h4 style={{ fontSize: 15, fontWeight: 800, color: "#f1f5f9", margin: 0, marginBottom: 6 }}>{item.title}</h4>
-                        <p style={{ fontSize: 12, color: "#64748b", margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+                        <p style={{ fontSize: 12, color: "#9CA3AF", margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <Download size={14} color={item.color} />
@@ -1579,7 +1579,7 @@ export default function AnalyticsPage() {
                   { label: "Tỷ lệ hoàn thành", value: `${overviewStats.completion_rate ?? 0}%` },
                 ].map(item => (
                   <div key={item.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                    <p style={{ fontSize: 10, color: "#475569", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
+                    <p style={{ fontSize: 10, color: "#4B5563", marginBottom: 6, fontWeight: 600 }}>{item.label}</p>
                     <p style={{ fontSize: 22, fontWeight: 900, color: "#f1f5f9", margin: 0 }}>{fmt(item.value)}</p>
                   </div>
                 ))}
@@ -1597,7 +1597,7 @@ export default function AnalyticsPage() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
-        input::placeholder { color: #475569; }
+        input::placeholder { color: #4B5563; }
       `}</style>
     </div>
   );

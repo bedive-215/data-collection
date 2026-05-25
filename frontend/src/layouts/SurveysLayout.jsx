@@ -1184,6 +1184,7 @@ export default function SurveysLayout() {
                         type="my"
                         onShare={handleShareLayout}
                         onLock={handleCloseLayout}
+                        onViewAnalytics={(id) => navigate(`/user/my-surveys/${id}/studio?tab=analyze`)}
                       />
                     ))}
                   </div>

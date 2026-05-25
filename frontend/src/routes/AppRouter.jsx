@@ -48,6 +48,11 @@ import LeaderboardPage from "@/pages/user/LeaderboardPage";
 import AchievementsPage from "@/pages/user/AchievementsPage";
 import StarWalletPage from "@/pages/user/StarWalletPage";
 
+// ANALYSIS - separate from survey
+import AnalysisHubPage from "@/pages/user/AnalysisHubPage";
+import StatisticalAnalysisPage from "@/pages/user/StatisticalAnalysisPage";
+import AIAnalysisPage from "@/pages/user/AIAnalysisPage";
+
 // Errors
 import NotFound from "@/pages/error/NotFound";
 import Forbidden from "@/pages/error/Forbidden";
@@ -143,6 +148,27 @@ const routeConfig = [
     layout: HomeLayout,
     guard: GenderGuard,
   },
+
+  // ── ANALYSIS (separate from survey) ─────────────────────────────
+  {
+    path: ROUTERS.USER.ANALYSIS_HUB,
+    element: AnalysisHubPage,
+    layout: HomeLayout,
+    guard: GenderGuard,
+  },
+  {
+    path: ROUTERS.USER.ANALYSIS_STATISTICAL,
+    element: StatisticalAnalysisPage,
+    layout: HomeLayout,
+    guard: GenderGuard,
+  },
+  {
+    path: ROUTERS.USER.ANALYSIS_AI,
+    element: AIAnalysisPage,
+    layout: HomeLayout,
+    guard: GenderGuard,
+  },
+
   {
     path: ROUTERS.USER.NOTIFICATIONS,
     element: NotificationsPage,

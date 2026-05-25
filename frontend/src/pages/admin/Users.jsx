@@ -14,12 +14,9 @@ import {
   Phone,
   Calendar,
   Search,
-  Filter,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  MessageSquare,
   ShieldAlert,
   ShieldCheck,
   UserCog,
@@ -27,84 +24,18 @@ import {
   CheckCircle,
   Eye,
   X,
-  AlertTriangle,
   Star,
   Trophy,
   Flame,
   Clock,
+  Filter,
 } from "lucide-react";
 
 /* ================================
-   GlassCard
+   Shared Helpers
 =============================== */
-function GlassCard({ children, className = "" }) {
-  return (
-    <div className={`bg-white/[0.04] backdrop-blur-md border border-white/5 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-/* ================================
-   StatCard
-=============================== */
-function StatCard({ glowClass, barClass, iconWrapClass, icon, label, value, loading }) {
-  return (
-    <GlassCard className="p-5 rounded-2xl relative overflow-hidden group">
-      <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-70 group-hover:scale-150 transition-transform duration-500 ${glowClass}`} />
-      <div className={`absolute left-0 top-0 w-1 h-full rounded-r-sm ${barClass}`} />
-      <div className="flex justify-between items-start">
-        <div className="pl-3">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">
-            {label}
-          </p>
-          {loading ? (
-            <div className="h-8 w-16 bg-white/10 rounded-lg animate-pulse" />
-          ) : (
-            <p className="font-['Manrope',sans-serif] text-2xl font-bold text-white">
-              {typeof value === "number" ? value.toLocaleString() : value ?? "—"}
-            </p>
-          )}
-        </div>
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconWrapClass}`}>
-          {icon}
-        </div>
-      </div>
-    </GlassCard>
-  );
-}
-
-/* ================================
-   IconBtn
-=============================== */
-function IconBtn({ children, onClick, title, className = "" }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`p-1.5 rounded-lg border border-transparent text-slate-500
-        hover:text-slate-300 hover:bg-white/5 hover:border-white/10 transition-all ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ================================
-   PaginationBtn
-=============================== */
-function PaginationBtn({ children, disabled, onClick }) {
-  return (
-    <button
-      disabled={disabled}
-      onClick={onClick}
-      className="p-1.5 rounded-lg border border-transparent text-slate-500
-        hover:bg-white/5 hover:border-white/10
-        disabled:opacity-30 disabled:cursor-default transition-all"
-    >
-      {children}
-    </button>
-  );
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString("vi-VN") : "—";
 }
 
 /* ================================
@@ -114,11 +45,12 @@ function RoleBadge({ role }) {
   const isAdmin = role === "admin";
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border
-        ${isAdmin
-          ? "bg-violet-500/10 text-violet-300 border-violet-500/20"
-          : "bg-blue-600/10 text-blue-300 border-blue-600/20"
-        }`}
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border"
+      style={{
+        background: isAdmin ? "rgba(245,158,11,0.1)" : "rgba(99,102,241,0.1)",
+        color: isAdmin ? "#F59E0B" : "#6366F1",
+        borderColor: isAdmin ? "rgba(245,158,11,0.2)" : "rgba(99,102,241,0.2)",
+      }}
     >
       {isAdmin ? <Shield size={11} /> : <User size={11} />}
       {role}
@@ -131,12 +63,26 @@ function RoleBadge({ role }) {
 =============================== */
 function StatusBadge({ isActive }) {
   return isActive ? (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-emerald-500/10 text-emerald-300 border-emerald-500/20">
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border"
+      style={{
+        background: "rgba(16,185,129,0.1)",
+        color: "#10B981",
+        borderColor: "rgba(16,185,129,0.2)",
+      }}
+    >
       <CheckCircle size={11} />
       Hoạt động
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-red-500/10 text-red-300 border-red-500/20">
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border"
+      style={{
+        background: "rgba(239,68,68,0.1)",
+        color: "#EF4444",
+        borderColor: "rgba(239,68,68,0.2)",
+      }}
+    >
       <XCircle size={11} />
       Bị khóa
     </span>
@@ -146,27 +92,54 @@ function StatusBadge({ isActive }) {
 /* ================================
    ConfirmModal
 =============================== */
-function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText, confirmClass, loading }) {
+function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText, confirmBgClass, loading }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-        <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-        <p className="text-sm text-slate-400 mb-5 leading-relaxed">{message}</p>
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div
+        className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
+        style={{
+          background: "var(--admin-surface)",
+          border: "1px solid var(--admin-border)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: "rgba(239,68,68,0.1)" }}
+          >
+            <ShieldAlert size={20} style={{ color: "#EF4444" }} />
+          </div>
+          <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
+            {title}
+          </h3>
+        </div>
+        <p className="text-sm mb-6" style={{ color: "var(--admin-text-sub)", lineHeight: 1.6 }}>
+          {message}
+        </p>
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400
-              bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              background: "var(--admin-bg-secondary)",
+              border: "1px solid var(--admin-border)",
+              color: "var(--admin-text-sub)",
+            }}
           >
             Hủy
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 rounded-xl text-sm font-bold text-white transition-all
-              disabled:opacity-50 disabled:cursor-not-allowed ${confirmClass}`}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: confirmBgClass || "#EF4444" }}
           >
             {loading ? <Loader2 size={15} className="animate-spin mx-auto" /> : confirmText}
           </button>
@@ -188,81 +161,120 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
 
   if (!open || !user) return null;
 
-  const isPromoting = newRole === "admin";
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div
+        className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
+        style={{
+          background: "var(--admin-surface)",
+          border: "1px solid var(--admin-border)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}
+      >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white">Thay đổi vai trò</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+          <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
+            Thay đổi vai trò
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--admin-text-dim)" }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+        {/* User info */}
+        <div
+          className="flex items-center gap-3 mb-5 p-3 rounded-xl"
+          style={{ background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)" }}
+        >
           {user.avatar ? (
-            <img src={user.avatar} alt={user.full_name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
+            <img
+              src={user.avatar}
+              alt={user.full_name}
+              className="w-10 h-10 rounded-xl object-cover"
+              style={{ border: "1px solid var(--admin-border)" }}
+            />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center">
-              <User size={18} className="text-white" />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+            >
+              <User size={18} style={{ color: "#000" }} />
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold text-white">{user.full_name}</p>
-            <p className="text-xs text-slate-500">{user.email}</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--admin-text)" }}>
+              {user.full_name}
+            </p>
+            <p className="text-xs" style={{ color: "var(--admin-text-dim)" }}>
+              {user.email}
+            </p>
           </div>
         </div>
 
-        <div className="flex gap-3 mb-5">
+        {/* Role options */}
+        <div className="flex gap-3 mb-4">
           <button
             onClick={() => setNewRole("admin")}
-            className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${
+            className="flex-1 p-4 rounded-xl border transition-all flex flex-col items-center gap-2"
+            style={
               newRole === "admin"
-                ? "bg-violet-500/10 border-violet-500/30 text-white"
-                : "bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20"
-            }`}
+                ? { background: "rgba(245,158,11,0.1)", border: "2px solid rgba(245,158,11,0.4)", color: "var(--admin-text)" }
+                : { background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)", color: "var(--admin-text-sub)" }
+            }
           >
-            <Shield size={20} className={newRole === "admin" ? "text-violet-400" : ""} />
+            <Shield size={22} style={{ color: newRole === "admin" ? "#F59E0B" : "var(--admin-text-dim)" }} />
             <span className="text-xs font-bold">Admin</span>
           </button>
           <button
             onClick={() => setNewRole("user")}
-            className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${
+            className="flex-1 p-4 rounded-xl border transition-all flex flex-col items-center gap-2"
+            style={
               newRole === "user"
-                ? "bg-blue-600/10 border-blue-600/30 text-white"
-                : "bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20"
-            }`}
+                ? { background: "rgba(99,102,241,0.1)", border: "2px solid rgba(99,102,241,0.4)", color: "var(--admin-text)" }
+                : { background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)", color: "var(--admin-text-sub)" }
+            }
           >
-            <User size={20} className={newRole === "user" ? "text-blue-400" : ""} />
+            <User size={22} style={{ color: newRole === "user" ? "#6366F1" : "var(--admin-text-dim)" }} />
             <span className="text-xs font-bold">User</span>
           </button>
         </div>
 
         {newRole !== user.role && (
-          <div className="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-xs text-amber-300">
-              {isPromoting
-                ? "Người dùng này sẽ có quyền truy cập bảng quản trị."
-                : "Người dùng này sẽ mất quyền truy cập bảng quản trị."}
-            </p>
+          <div
+            className="mb-4 p-3 rounded-xl text-sm"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#F59E0B" }}
+          >
+            {newRole === "admin"
+              ? "Người dùng này sẽ có quyền truy cập bảng quản trị."
+              : "Người dùng này sẽ mất quyền truy cập bảng quản trị."}
           </div>
         )}
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex gap-3 justify-end mt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400
-              bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              background: "var(--admin-bg-secondary)",
+              border: "1px solid var(--admin-border)",
+              color: "var(--admin-text-sub)",
+            }}
           >
             Hủy
           </button>
           <button
             onClick={() => onConfirm(newRole)}
             disabled={loading || newRole === user.role}
-            className="px-4 py-2 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-500 text-white
-              disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: "#F59E0B" }}
           >
             {loading ? <Loader2 size={15} className="animate-spin mx-auto" /> : "Xác nhận"}
           </button>
@@ -286,31 +298,61 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div
+        className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
+        style={{
+          background: "var(--admin-surface)",
+          border: "1px solid var(--admin-border)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}
+      >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white">Khóa tài khoản</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+          <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
+            Khóa tài khoản
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--admin-text-dim)" }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-red-500/5 border border-red-500/10">
-          <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
-            <ShieldAlert size={18} className="text-red-400" />
+        <div
+          className="flex items-center gap-3 mb-4 p-3 rounded-xl"
+          style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}
+        >
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(239,68,68,0.1)" }}
+          >
+            <ShieldAlert size={18} style={{ color: "#EF4444" }} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{user.full_name}</p>
-            <p className="text-xs text-slate-500">{user.email}</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--admin-text)" }}>
+              {user.full_name}
+            </p>
+            <p className="text-xs" style={{ color: "var(--admin-text-dim)" }}>
+              {user.email}
+            </p>
           </div>
         </div>
 
-        <p className="text-sm text-slate-400 mb-3">
+        <p className="text-sm mb-4" style={{ color: "var(--admin-text-sub)", lineHeight: 1.6 }}>
           Người dùng sẽ bị đăng xuất ngay lập tức và không thể đăng nhập cho đến khi được mở khóa.
         </p>
 
         <div className="mb-5">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+          <label
+            className="block text-xs font-bold uppercase tracking-wider mb-2"
+            style={{ color: "var(--admin-text-dim)" }}
+          >
             Lý do khóa (tùy chọn)
           </label>
           <textarea
@@ -319,26 +361,35 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
             placeholder="Ví dụ: Vi phạm điều khoản sử dụng..."
             maxLength={500}
             rows={3}
-            className="w-full bg-white/5 border border-white/[0.08] focus:border-red-500/50
-              rounded-xl py-2.5 px-3 text-sm text-white placeholder:text-slate-600
-              outline-none transition-colors resize-none"
+            className="w-full rounded-xl py-3 px-4 text-sm resize-none transition-colors"
+            style={{
+              background: "var(--admin-bg-secondary)",
+              border: "1px solid var(--admin-border)",
+              color: "var(--admin-text)",
+            }}
           />
-          <p className="text-[10px] text-slate-600 mt-1 text-right">{reason.length}/500</p>
+          <p className="text-[10px] text-right mt-1" style={{ color: "var(--admin-text-dim)" }}>
+            {reason.length}/500
+          </p>
         </div>
 
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400
-              bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              background: "var(--admin-bg-secondary)",
+              border: "1px solid var(--admin-border)",
+              color: "var(--admin-text-sub)",
+            }}
           >
             Hủy
           </button>
           <button
             onClick={() => onConfirm(reason)}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-500 text-white
-              disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: "#EF4444" }}
           >
             {loading ? <Loader2 size={15} className="animate-spin mx-auto" /> : "Khóa tài khoản"}
           </button>
@@ -354,32 +405,58 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
 function UserDetailModal({ open, onClose, user }) {
   if (!open || !user) return null;
 
-  const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
-  const formatDateTime = (d) => (d ? new Date(d).toLocaleString("vi-VN") : "—");
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[85vh] overflow-y-auto">
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div
+        className="relative p-6 w-full max-w-lg rounded-2xl animate-slide-up overflow-y-auto max-h-[85vh]"
+        style={{
+          background: "var(--admin-surface)",
+          border: "1px solid var(--admin-border)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}
+      >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white">Chi tiết người dùng</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+          <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
+            Chi tiết người dùng
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--admin-text-dim)" }}
+          >
             <X size={18} />
           </button>
         </div>
 
         {/* Avatar + Name */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-5">
           {user.avatar ? (
-            <img src={user.avatar} alt={user.full_name} className="w-16 h-16 rounded-2xl object-cover border border-white/10" />
+            <img
+              src={user.avatar}
+              alt={user.full_name}
+              className="w-16 h-16 rounded-2xl object-cover"
+              style={{ border: "1px solid var(--admin-border)" }}
+            />
           ) : (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center">
-              <User size={28} className="text-white" />
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+            >
+              <User size={28} style={{ color: "#000" }} />
             </div>
           )}
           <div>
-            <p className="text-lg font-bold text-white">{user.full_name}</p>
-            <p className="text-xs text-slate-500 font-mono">ID: {user.id}</p>
+            <p className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
+              {user.full_name}
+            </p>
+            <p className="text-xs font-mono" style={{ color: "var(--admin-text-dim)" }}>
+              ID: {user.id}
+            </p>
             <div className="flex gap-2 mt-2">
               <RoleBadge role={user.role} />
               <StatusBadge isActive={user.is_active} />
@@ -388,62 +465,108 @@ function UserDetailModal({ open, onClose, user }) {
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {[
-            { label: "Email", value: user.email, icon: <Mail size={14} /> },
-            { label: "Số điện thoại", value: user.phone_number || "—", icon: <Phone size={14} /> },
-            { label: "Giới tính", value: user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác", icon: <User size={14} /> },
-            { label: "Ngày sinh", value: formatDate(user.date_of_birth), icon: <Calendar size={14} /> },
-            { label: "Ngày tạo", value: formatDate(user.created_at), icon: <Clock size={14} /> },
-            { label: "Xác thực email", value: user.email_verified ? "Đã xác thực" : "Chưa xác thực", icon: user.email_verified ? <CheckCircle size={14} className="text-emerald-400" /> : <XCircle size={14} className="text-red-400" /> },
+            { label: "Email", value: user.email, icon: <Mail size={13} /> },
+            { label: "Số điện thoại", value: user.phone_number || "—", icon: <Phone size={13} /> },
+            {
+              label: "Giới tính",
+              value: user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác",
+              icon: <User size={13} />,
+            },
+            { label: "Ngày sinh", value: formatDate(user.date_of_birth), icon: <Calendar size={13} /> },
+            { label: "Ngày tạo", value: formatDate(user.created_at), icon: <Clock size={13} /> },
+            {
+              label: "Xác thực email",
+              value: user.email_verified ? "Đã xác thực" : "Chưa xác thực",
+              icon: user.email_verified
+                ? <CheckCircle size={13} style={{ color: "#10B981" }} />
+                : <XCircle size={13} style={{ color: "#EF4444" }} />,
+            },
           ].map(({ label, value, icon }) => (
-            <div key={label} className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                {icon} {label}
+            <div
+              key={label}
+              className="p-3 rounded-xl"
+              style={{ background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)" }}
+            >
+              <p
+                className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1"
+                style={{ color: "var(--admin-text-dim)" }}
+              >
+                {icon}
+                {label}
               </p>
-              <p className="text-sm font-medium text-white truncate">{value}</p>
+              <p className="text-sm font-medium truncate" style={{ color: "var(--admin-text)" }}>
+                {value}
+              </p>
             </div>
           ))}
         </div>
 
         {/* Block Info */}
         {!user.is_active && (
-          <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-            <p className="text-xs font-bold text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-              <ShieldAlert size={13} /> Thông tin khóa tài khoản
+          <div
+            className="mb-4 p-4 rounded-xl"
+            style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}
+          >
+            <p
+              className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"
+              style={{ color: "#EF4444" }}
+            >
+              <ShieldAlert size={13} />
+              Thông tin khóa tài khoản
             </p>
-            <p className="text-xs text-slate-400 mb-1">
-              <span className="font-semibold text-slate-300">Bị khóa lúc:</span> {formatDateTime(user.blocked_at)}
+            <p className="text-xs mb-1" style={{ color: "var(--admin-text-sub)" }}>
+              <span className="font-semibold" style={{ color: "var(--admin-text)" }}>
+                Bị khóa lúc:
+              </span>{" "}
+              {user.blocked_at
+                ? new Date(user.blocked_at).toLocaleString("vi-VN")
+                : "—"}
             </p>
             {user.block_reason && (
-              <p className="text-xs text-slate-400">
-                <span className="font-semibold text-slate-300">Lý do:</span> {user.block_reason}
+              <p className="text-xs" style={{ color: "var(--admin-text-sub)" }}>
+                <span className="font-semibold" style={{ color: "var(--admin-text)" }}>
+                  Lý do:
+                </span>{" "}
+                {user.block_reason}
               </p>
             )}
           </div>
         )}
 
         {/* Gamification */}
-        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-          <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <Trophy size={13} /> Thông tin gamification
+        <div
+          className="p-4 rounded-xl"
+          style={{ background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)" }}
+        >
+          <p
+            className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5"
+            style={{ color: "var(--admin-text-dim)" }}
+          >
+            <Trophy size={13} />
+            Thông tin gamification
           </p>
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-2 rounded-lg bg-white/[0.03]">
-              <Star size={16} className="text-amber-400 mx-auto mb-1" />
-              <p className="text-sm font-bold text-white">{user.star_balance ?? 0}</p>
-              <p className="text-[9px] text-slate-600 uppercase">Sao</p>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-white/[0.03]">
-              <Trophy size={16} className="text-violet-400 mx-auto mb-1" />
-              <p className="text-sm font-bold text-white">{user.current_rank ?? "BRONZE"}</p>
-              <p className="text-[9px] text-slate-600 uppercase">Hạng</p>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-white/[0.03]">
-              <Flame size={16} className="text-orange-400 mx-auto mb-1" />
-              <p className="text-sm font-bold text-white">{user.streak_count ?? 0}</p>
-              <p className="text-[9px] text-slate-600 uppercase">Chuỗi</p>
-            </div>
+            {[
+              { icon: <Star size={16} style={{ color: "#F59E0B" }} />, value: user.star_balance ?? 0, label: "Sao", bg: "rgba(245,158,11,0.08)" },
+              { icon: <Trophy size={16} style={{ color: "#8B5CF6" }} />, value: user.current_rank ?? "BRONZE", label: "Hạng", bg: "rgba(139,92,246,0.08)" },
+              { icon: <Flame size={16} style={{ color: "#EF4444" }} />, value: user.streak_count ?? 0, label: "Chuỗi", bg: "rgba(239,68,68,0.08)" },
+            ].map(({ icon, value, label, bg }) => (
+              <div
+                key={label}
+                className="text-center p-3 rounded-xl"
+                style={{ background: bg }}
+              >
+                <div className="mb-1">{icon}</div>
+                <p className="text-sm font-bold" style={{ color: "var(--admin-text)" }}>
+                  {value}
+                </p>
+                <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--admin-text-dim)" }}>
+                  {label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -454,75 +577,157 @@ function UserDetailModal({ open, onClose, user }) {
 /* ================================
    UserRow
 =============================== */
-function UserRow({ u, onView, onRoleChange, onBlock, onUnblock, onDelete, formatDate }) {
-  const isBlocked = !u.is_active;
-  const isAdmin = u.role === "admin";
-
+function UserRow({ u, onView, onRoleChange, onBlock, onUnblock, onDelete }) {
   return (
-    <tr className={`border-t border-white/[0.04] transition-colors group ${isBlocked ? "opacity-60" : "hover:bg-blue-600/[0.03]"}`}>
-      <td className="px-7 py-4">
+    <tr
+      style={{ borderBottom: "1px solid var(--admin-border)" }}
+      className="group transition-colors"
+    >
+      {/* User */}
+      <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           {u.avatar ? (
             <img
               src={u.avatar}
               alt={u.full_name}
-              className="w-10 h-10 rounded-full object-cover border border-white/10 flex-shrink-0"
+              className="w-10 h-10 rounded-xl object-cover"
+              style={{ border: "1px solid var(--admin-border)" }}
               onError={(e) => { e.target.style.display = "none"; }}
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center flex-shrink-0">
-              <User size={18} className="text-white" />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+            >
+              <User size={18} style={{ color: "#000" }} />
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold text-white">{u.full_name}</p>
-            <p className="text-[11px] text-slate-600 font-medium mt-0.5">
-              {u.id ? `USR-${String(u.id).split("-")[0].toUpperCase()}` : "—"}
+            <p className="text-sm font-semibold" style={{ color: "var(--admin-text)" }}>
+              {u.full_name}
+            </p>
+            <p className="text-[10px] font-mono mt-0.5" style={{ color: "var(--admin-text-dim)" }}>
+              #{u.id}
             </p>
           </div>
         </div>
       </td>
+
+      {/* Email */}
       <td className="px-5 py-4">
-        <div className="flex items-center gap-1.5 text-sm text-slate-300">
-          <Mail size={13} className="text-slate-600 flex-shrink-0" />
+        <div className="flex items-center gap-1.5 text-sm" style={{ color: "var(--admin-text-sub)" }}>
+          <Mail size={13} style={{ color: "var(--admin-text-dim)", flexShrink: 0 }} />
           <span className="truncate max-w-[180px]">{u.email}</span>
         </div>
         {u.phone_number && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-            <Phone size={12} className="text-slate-600 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: "var(--admin-text-dim)" }}>
+            <Phone size={12} style={{ color: "var(--admin-text-dim)", flexShrink: 0 }} />
             {u.phone_number}
           </div>
         )}
       </td>
+
+      {/* Role */}
       <td className="px-5 py-4">
         <RoleBadge role={u.role} />
       </td>
+
+      {/* Status */}
       <td className="px-5 py-4">
         <StatusBadge isActive={u.is_active} />
       </td>
-      <td className="px-5 py-4 text-sm text-slate-400">
+
+      {/* Date */}
+      <td className="px-5 py-4 text-sm" style={{ color: "var(--admin-text-sub)" }}>
         {formatDate(u.created_at)}
       </td>
-      <td className="px-7 py-4">
+
+      {/* Actions */}
+      <td className="px-6 py-4">
         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <IconBtn title="Xem chi tiết" onClick={() => onView(u)}>
+          <button
+            onClick={() => onView(u)}
+            className="p-2 rounded-lg border border-transparent transition-all"
+            title="Xem chi tiết"
+            style={{ color: "var(--admin-text-dim)" }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "var(--admin-surface-hover)";
+              e.currentTarget.style.color = "var(--admin-text)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--admin-text-dim)";
+            }}
+          >
             <Eye size={15} />
-          </IconBtn>
-          <IconBtn title="Đổi vai trò" onClick={() => onRoleChange(u)}>
+          </button>
+          <button
+            onClick={() => onRoleChange(u)}
+            className="p-2 rounded-lg border border-transparent transition-all"
+            title="Đổi vai trò"
+            style={{ color: "var(--admin-text-dim)" }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "var(--admin-surface-hover)";
+              e.currentTarget.style.color = "var(--admin-text)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--admin-text-dim)";
+            }}
+          >
             <UserCog size={15} />
-          </IconBtn>
-          {!isBlocked ? (
-            <IconBtn title="Khóa tài khoản" onClick={() => onBlock(u)} className="hover:!text-amber-400">
-              <ShieldAlert size={15} />
-            </IconBtn>
-          ) : (
-            <IconBtn title="Mở khóa tài khoản" onClick={() => onUnblock(u)} className="hover:!text-emerald-400">
+          </button>
+          {!u.is_active ? (
+            <button
+              onClick={() => onUnblock(u)}
+              className="p-2 rounded-lg border border-transparent transition-all"
+              title="Mở khóa"
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "rgba(16,185,129,0.1)";
+                e.currentTarget.style.color = "#10B981";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--admin-text-dim)";
+              }}
+              style={{ color: "var(--admin-text-dim)" }}
+            >
               <ShieldCheck size={15} />
-            </IconBtn>
+            </button>
+          ) : (
+            <button
+              onClick={() => onBlock(u)}
+              className="p-2 rounded-lg border border-transparent transition-all"
+              title="Khóa tài khoản"
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "rgba(245,158,11,0.1)";
+                e.currentTarget.style.color = "#F59E0B";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--admin-text-dim)";
+              }}
+              style={{ color: "var(--admin-text-dim)" }}
+            >
+              <ShieldAlert size={15} />
+            </button>
           )}
-          <IconBtn title="Xóa người dùng" onClick={() => onDelete(u)} className="hover:!text-red-400">
+          <button
+            onClick={() => onDelete(u)}
+            className="p-2 rounded-lg border border-transparent transition-all"
+            title="Xóa"
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+              e.currentTarget.style.color = "#EF4444";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--admin-text-dim)";
+            }}
+            style={{ color: "var(--admin-text-dim)" }}
+          >
             <Trash2 size={15} />
-          </IconBtn>
+          </button>
         </div>
       </td>
     </tr>
@@ -535,14 +740,13 @@ function UserRow({ u, onView, onRoleChange, onBlock, onUnblock, onDelete, format
 export default function UserManagement() {
   const { token } = useAuth();
 
-  /* ── State ── */
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | blocked
+  const [statusFilter, setStatusFilter] = useState("all");
   const limit = 10;
 
   /* ── Modals ── */
@@ -557,7 +761,6 @@ export default function UserManagement() {
     overview,
     loading: loadingStats,
     fetchOverview,
-    fetchTotalUsersAnswered,
   } = useAdminStats();
 
   /* ── Fetch list ── */
@@ -585,10 +788,9 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchOverview();
-    fetchTotalUsersAnswered();
   }, []);
 
-  /* ── Helpers ── */
+  /* ── Pagination helper ── */
   const getVisiblePages = () => {
     if (totalPages <= 5) return [...Array(totalPages).keys()].map((x) => x + 1);
     let start = Math.max(page - 2, 1);
@@ -596,8 +798,6 @@ export default function UserManagement() {
     if (end - start < 4) start = Math.max(end - 4, 1);
     return [...Array(end - start + 1).keys()].map((x) => start + x);
   };
-
-  const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "-");
 
   /* ── Search debounce ── */
   useEffect(() => {
@@ -613,7 +813,6 @@ export default function UserManagement() {
     setPage(1);
     fetchListUsers();
     fetchOverview();
-    fetchTotalUsersAnswered();
   };
 
   const handleRoleChange = async (newRole) => {
@@ -661,7 +860,7 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = async (user) => {
+  const handleDelete = (user) => {
     setDeleteUserTarget(user);
   };
 
@@ -674,7 +873,6 @@ export default function UserManagement() {
       setDeleteUserTarget(null);
       fetchListUsers();
       fetchOverview();
-      fetchTotalUsersAnswered();
     } catch (err) {
       toast.error(err.response?.data?.message || "Xóa thất bại");
     } finally {
@@ -682,120 +880,172 @@ export default function UserManagement() {
     }
   };
 
-  /* ── Counts ── */
-  const activeCount = users.filter((u) => u.is_active).length;
-  const blockedCount = total - (overview?.totalActiveUsers ?? activeCount);
-
   const isLoading = loadingUsers || loadingStats;
 
-  return (
-    <div className="min-h-screen bg-[#0f121a] text-white p-8 font-['Inter',sans-serif]">
+  /* ── Stat cards data ── */
+  const STAT_CARDS = [
+    {
+      label: "Tổng người dùng",
+      value: overview?.totalUsers ?? total,
+      icon: <Users size={20} style={{ color: "#F59E0B" }} />,
+      bg: "rgba(245,158,11,0.1)",
+      color: "#F59E0B",
+    },
+    {
+      label: "Đang hoạt động",
+      value: overview?.totalActiveUsers ?? "—",
+      icon: <ShieldCheck size={20} style={{ color: "#10B981" }} />,
+      bg: "rgba(16,185,129,0.1)",
+      color: "#10B981",
+    },
+    {
+      label: "Bị khóa",
+      value: overview?.totalBlockedUsers ?? "—",
+      icon: <ShieldAlert size={20} style={{ color: "#EF4444" }} />,
+      bg: "rgba(239,68,68,0.1)",
+      color: "#EF4444",
+    },
+    {
+      label: "Tổng khảo sát",
+      value: overview?.totalSurveys ?? "—",
+      icon: <ClipboardList size={20} style={{ color: "#6366F1" }} />,
+      bg: "rgba(99,102,241,0.1)",
+      color: "#6366F1",
+    },
+  ];
 
-      {/* Header */}
-      <header className="mb-8 flex justify-between items-start">
+  return (
+    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h2 className="font-['Manrope',sans-serif] text-3xl font-bold text-white mb-1 tracking-tight">
+          <h2
+            className="text-3xl font-extrabold mb-1"
+            style={{ color: "var(--admin-text)", letterSpacing: "-0.02em" }}
+          >
             Quản lý Người dùng
           </h2>
-          <p className="text-slate-400 text-sm">
+          <p className="text-sm" style={{ color: "var(--admin-text-sub)" }}>
             Phân quyền, khóa/mở khóa và quản lý tài khoản thành viên
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white
-            bg-white/[0.06] hover:bg-white/10 border border-white/10
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          style={{
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            color: "var(--admin-text-sub)",
+          }}
         >
-          <RotateCcw size={15} className={`text-blue-400 ${isLoading ? "animate-spin" : ""}`} />
+          <RotateCcw size={14} className={isLoading ? "animate-spin" : ""} />
           Làm mới
         </button>
-      </header>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          glowClass="bg-blue-600/10"
-          barClass="bg-blue-600"
-          iconWrapClass="bg-blue-600/10 border border-blue-600/20"
-          icon={<Users size={18} className="text-blue-400" />}
-          label="Tổng người dùng"
-          value={overview?.totalUsers ?? total}
-          loading={loadingStats}
-        />
-        <StatCard
-          glowClass="bg-emerald-600/10"
-          barClass="bg-emerald-500"
-          iconWrapClass="bg-emerald-500/10 border border-emerald-500/20"
-          icon={<ShieldCheck size={18} className="text-emerald-400" />}
-          label="Đang hoạt động"
-          value={overview?.totalActiveUsers ?? "—"}
-          loading={loadingStats}
-        />
-        <StatCard
-          glowClass="bg-red-600/10"
-          barClass="bg-red-500"
-          iconWrapClass="bg-red-500/10 border border-red-500/20"
-          icon={<ShieldAlert size={18} className="text-red-400" />}
-          label="Bị khóa"
-          value={overview?.totalBlockedUsers ?? "—"}
-          loading={loadingStats}
-        />
-        <StatCard
-          glowClass="bg-indigo-600/10"
-          barClass="bg-indigo-500"
-          iconWrapClass="bg-indigo-500/10 border border-indigo-500/20"
-          icon={<ClipboardList size={18} className="text-indigo-400" />}
-          label="Tổng khảo sát"
-          value={overview?.totalSurveys ?? "—"}
-          loading={loadingStats}
-        />
       </div>
 
-      {/* Table Card */}
-      <GlassCard className="rounded-2xl overflow-hidden">
-        {/* Table Header */}
-        <div className="px-7 py-4 border-b border-white/5 bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h3 className="font-['Manrope',sans-serif] text-base font-bold text-white">
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {STAT_CARDS.map(({ label, value, icon, bg, color }) => (
+          <div
+            key={label}
+            className="p-5 rounded-2xl relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+            style={{
+              background: "var(--admin-surface)",
+              border: "1px solid var(--admin-border)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              className="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-15"
+              style={{ background: color }}
+            />
+            <div className="flex items-start justify-between mb-3">
+              <p
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "var(--admin-text-dim)" }}
+              >
+                {label}
+              </p>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: bg }}>
+                {icon}
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="h-8 w-20 rounded-lg animate-pulse" style={{ background: "var(--admin-surface-hover)" }} />
+            ) : (
+              <p
+                className="text-2xl font-extrabold"
+                style={{ color: "var(--admin-text)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                {typeof value === "number" ? value.toLocaleString() : value}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Table Card ── */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "var(--admin-surface)",
+          border: "1px solid var(--admin-border)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+        }}
+      >
+        {/* Table header */}
+        <div
+          className="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+          style={{ borderBottom: "1px solid var(--admin-border)" }}
+        >
+          <h3 className="text-base font-bold" style={{ color: "var(--admin-text)" }}>
             Danh sách thành viên
           </h3>
-          <div className="flex gap-2 items-center">
-            {/* Status Filter */}
-            <div className="flex rounded-lg border border-white/10 bg-white/[0.03] overflow-hidden">
-              {[
-                { value: "all", label: "Tất cả" },
-                { value: "active", label: "Hoạt động" },
-                { value: "blocked", label: "Bị khóa" },
-              ].map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => { setStatusFilter(value); setPage(1); }}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                    statusFilter === value
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--admin-border)" }}>
+            {[
+              { value: "all", label: "Tất cả" },
+              { value: "active", label: "Hoạt động" },
+              { value: "blocked", label: "Bị khóa" },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => { setStatusFilter(value); setPage(1); }}
+                className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all"
+                style={
+                  statusFilter === value
+                    ? { background: "#F59E0B", color: "#000" }
+                    : { background: "var(--admin-bg-secondary)", color: "var(--admin-text-dim)" }
+                }
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Search */}
-        <div className="px-7 py-3 border-b border-white/5 bg-[#0f121a]/50">
+        <div
+          className="px-6 py-3"
+          style={{ borderBottom: "1px solid var(--admin-border)", background: "var(--admin-bg-secondary)" }}
+        >
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--admin-text-dim)" }}
+            />
             <input
               type="text"
               placeholder="Tìm kiếm người dùng theo tên, email, số điện thoại..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/[0.08] focus:border-blue-600/50
-                rounded-lg py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600
-                outline-none transition-colors"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm"
+              style={{
+                background: "var(--admin-bg-secondary)",
+                border: "1px solid var(--admin-border)",
+                color: "var(--admin-text)",
+              }}
             />
           </div>
         </div>
@@ -804,24 +1054,27 @@ export default function UserManagement() {
         <div className="overflow-x-auto">
           {loadingUsers ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 size={40} className="text-blue-400 animate-spin" />
-              <p className="text-slate-400 text-sm font-medium">Đang tải dữ liệu...</p>
+              <Loader2 size={40} style={{ color: "#F59E0B" }} className="animate-spin" />
+              <p className="text-sm font-medium" style={{ color: "var(--admin-text-dim)" }}>
+                Đang tải dữ liệu...
+              </p>
             </div>
           ) : (
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
-                <tr className="bg-white/[0.03]">
+                <tr style={{ background: "var(--admin-bg-secondary)" }}>
                   {[
-                    { label: "Người dùng", cls: "px-7 text-left" },
+                    { label: "Người dùng", cls: "px-6 text-left" },
                     { label: "Liên hệ", cls: "px-5 text-left" },
                     { label: "Vai trò", cls: "px-5 text-left" },
                     { label: "Trạng thái", cls: "px-5 text-left" },
                     { label: "Ngày tạo", cls: "px-5 text-left" },
-                    { label: "Thao tác", cls: "px-7 text-right" },
+                    { label: "Thao tác", cls: "px-6 text-right" },
                   ].map(({ label, cls }) => (
                     <th
                       key={label}
-                      className={`${cls} py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest`}
+                      className={`${cls} py-3 text-[10px] font-bold uppercase tracking-widest`}
+                      style={{ color: "var(--admin-text-dim)" }}
                     >
                       {label}
                     </th>
@@ -833,8 +1086,10 @@ export default function UserManagement() {
                   <tr>
                     <td colSpan={6} className="py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
-                        <Users size={48} className="text-slate-700" />
-                        <p className="text-slate-500 font-medium">Không có người dùng nào</p>
+                        <Users size={48} style={{ color: "var(--admin-text-dim)" }} />
+                        <p className="text-sm font-medium" style={{ color: "var(--admin-text-dim)" }}>
+                          Không có người dùng nào
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -848,7 +1103,6 @@ export default function UserManagement() {
                       onBlock={setBlockUser}
                       onUnblock={handleUnblock}
                       onDelete={handleDelete}
-                      formatDate={formatDate}
                     />
                   ))
                 )}
@@ -858,45 +1112,62 @@ export default function UserManagement() {
         </div>
 
         {/* Pagination */}
-        <div className="px-7 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-3">
-          <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-            {search
-              ? `${users.length} kết quả`
-              : `Hiển thị ${users.length} / ${total} thành viên`}
+        <div
+          className="px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3"
+          style={{ borderTop: "1px solid var(--admin-border)" }}
+        >
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--admin-text-dim)" }}>
+            {search ? `${users.length} kết quả` : `Hiển thị ${users.length} / ${total} thành viên`}
           </span>
           <div className="flex items-center gap-1">
-            <PaginationBtn disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 1}
+              className="p-2 rounded-lg border border-transparent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ color: "var(--admin-text-dim)" }}
+            >
               <ChevronLeft size={17} />
-            </PaginationBtn>
+            </button>
             {getVisiblePages().map((p) => (
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all
-                  ${p === page
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                    : "text-slate-500 hover:bg-white/5 hover:text-slate-300"
-                  }`}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all"
+                style={
+                  p === page
+                    ? { background: "#F59E0B", color: "#000", boxShadow: "0 4px 12px rgba(245,158,11,0.3)" }
+                    : { color: "var(--admin-text-dim)" }
+                }
+                onMouseEnter={e => {
+                  if (p !== page) {
+                    e.currentTarget.style.background = "var(--admin-surface-hover)";
+                    e.currentTarget.style.color = "var(--admin-text)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (p !== page) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--admin-text-dim)";
+                  }
+                }}
               >
                 {p}
               </button>
             ))}
-            <PaginationBtn
-              disabled={page === totalPages || totalPages === 0}
+            <button
               onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages || totalPages === 0}
+              className="p-2 rounded-lg border border-transparent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ color: "var(--admin-text-dim)" }}
             >
               <ChevronRight size={17} />
-            </PaginationBtn>
+            </button>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
-      {/* Modals */}
-      <UserDetailModal
-        open={!!viewUser}
-        onClose={() => setViewUser(null)}
-        user={viewUser}
-      />
+      {/* ── Modals ── */}
+      <UserDetailModal open={!!viewUser} onClose={() => setViewUser(null)} user={viewUser} />
 
       <RoleChangeModal
         open={!!roleUser}
@@ -921,7 +1192,7 @@ export default function UserManagement() {
         title="Xóa người dùng"
         message={`Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản "${deleteUserTarget?.full_name}"? Hành động này không thể hoàn tác.`}
         confirmText="Xóa vĩnh viễn"
-        confirmClass="bg-red-600 hover:bg-red-500"
+        confirmBgClass="#EF4444"
         loading={modalLoading}
       />
     </div>

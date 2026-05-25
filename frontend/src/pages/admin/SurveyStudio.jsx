@@ -15,31 +15,33 @@ import surveyService from "@/services/surveyService";
 import { toast } from "react-toastify";
 
 /* ════════════════════════════════════════════════════════════════
-   DESIGN TOKENS — matching admin dark theme
+   DESIGN TOKENS — aligned with Admin Design System v2
 ════════════════════════════════════════════════════════════════ */
 const C = {
-  bg:          "#080c1a",
-  surface:     "rgba(13,17,32,0.92)",
-  surfaceHigh: "rgba(17,24,39,0.95)",
-  glassBorder: "rgba(255,255,255,0.07)",
-  border:      "rgba(255,255,255,0.06)",
-  borderHover: "rgba(255,255,255,0.12)",
-  primary:     "#6c7ef7",
-  primaryGrad: "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
-  primaryLight:"rgba(108,126,247,0.12)",
-  primaryDim:  "rgba(108,126,247,0.10)",
-  text:        "#f1f5f9",
-  textSub:     "#64748b",
-  textDim:     "#334155",
-  error:       "#ef4444",
+  bg:          "#0F1117",
+  bgSecondary: "#141620",
+  surface:     "#1A1D2E",
+  surfaceHigh: "#222638",
+  glassBorder: "rgba(42,45,62,0.7)",
+  border:      "#2A2D3E",
+  borderHover: "#3A3D50",
+  primary:     "#F59E0B",
+  primaryHover:"#D97706",
+  primaryGrad: "linear-gradient(135deg,#F59E0B,#D97706)",
+  primaryLight:"rgba(245,158,11,0.12)",
+  primaryDim:  "rgba(245,158,11,0.08)",
+  text:        "#F9FAFB",
+  textSub:     "#9CA3AF",
+  textDim:     "#4B5563",
+  error:       "#EF4444",
   errorBg:     "rgba(239,68,68,0.10)",
   errorBorder: "rgba(239,68,68,0.20)",
-  success:     "#10b981",
+  success:     "#10B981",
   successBg:   "rgba(16,185,129,0.10)",
   successBorder:"rgba(16,185,129,0.20)",
-  warning:     "#f59e0b",
+  warning:     "#F59E0B",
   warningBg:   "rgba(245,158,11,0.10)",
-  font:        "'DM Sans','Plus Jakarta Sans',sans-serif",
+  font:        "'Plus Jakarta Sans',sans-serif",
 };
 
 /* ════════════════════════════════════════════════════════════════

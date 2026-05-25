@@ -1,4 +1,4 @@
-// Register.jsx - Dark Theme with Video
+// Register.jsx — Matches Home Page Background (AnimatedSurveyBackdrop)
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import { ROUTERS } from "@/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { DS } from "@/utils/authDesignTokens";
+import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
 const schemaStep1 = yup.object({
   full_name: yup.string().required("auth.required"),
@@ -29,20 +31,13 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({ resolver: yupResolver(schemaStep1) });
-
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: yupResolver(schemaStep1) });
   const [otp, setOtp] = useState("");
 
   const onSubmitStep1 = async (data) => {
     try {
       setLoading(true);
       setErrorMessage("");
-
       await registerUser({
         full_name: data.full_name,
         date_of_birth: data.date_of_birth,
@@ -51,7 +46,6 @@ export default function RegisterPage() {
         password: data.password,
         gender: data.gender,
       });
-
       setEmail(data.email);
       setStep(2);
       setOtpMessage("Mã xác minh đã được gửi đến email của bạn.");
@@ -66,9 +60,7 @@ export default function RegisterPage() {
     try {
       setLoading(true);
       setErrorMessage("");
-
       await verifyEmail({ email, otp });
-
       setOtpMessage("Xác minh thành công!");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
@@ -78,335 +70,225 @@ export default function RegisterPage() {
     }
   };
 
+  const inputStyle = () => ({
+    display: "flex",
+    alignItems: "center",
+    borderRadius: DS.inputRadius,
+    background: DS.inputBg,
+    border: `1.5px solid ${DS.inputBorder}`,
+    height: DS.inputHeight,
+    padding: "0 16px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+    transition: "border-color 0.2s, box-shadow 0.2s",
+  });
+
   return (
-    <div className="min-h-screen w-full font-sans antialiased bg-[#050505] text-white overflow-x-hidden">
-      <div className="flex min-h-screen w-full flex-col lg:flex-row">
+    <div style={{ minHeight: "100vh", width: "100%", background: "#F8FAFC", fontFamily: DS.font, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <AnimatedSurveyBackdrop />
+      </div>
 
-        {/* ========== LEFT SIDE: Video ========== */}
-        <div className="relative hidden w-full lg:flex lg:w-1/2 flex-col justify-end p-12 overflow-hidden bg-gradient-to-br from-[#2b303b] to-[#15191e]">
-          {/* Video Background */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
-          >
-            <source src="/videos/hello.mp4" type="video/mp4" />
-          </video>
+      <div style={{
+        width: "100%", maxWidth: 480,
+        background: DS.cardBg,
+        backdropFilter: `${DS.cardBlur} saturate(190%)`,
+        WebkitBackdropFilter: `${DS.cardBlur} saturate(190%)`,
+        borderRadius: "28px",
+        border: `1px solid ${DS.cardBorder}`,
+        boxShadow: DS.cardShadow,
+        padding: "44px",
+        position: "relative",
+        zIndex: 1,
+      }}>
+        {/* Top decorative bar */}
+        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 5, background: `linear-gradient(90deg, transparent, ${DS.primary}, ${DS.primaryEnd}, transparent)`, borderRadius: "0 0 6px 6px" }} />
 
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-          {/* Content */}
-          <div className="relative z-20 max-w-lg mb-10">
-            <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase text-white backdrop-blur-md mb-6">
-              Premium Series
-            </span>
-            <h1 className="text-5xl font-bold tracking-tight leading-tight text-white mb-4">
-              Đổi mới <br />từng chi tiết.
-            </h1>
-            <p className="text-lg text-gray-300 font-light max-w-md">
-              Trải nghiệm công nghệ đỉnh cao với thiết kế tinh xảo, hiệu năng vượt trội và đẳng cấp khác biệt.
+        {/* Brand header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(67,97,238,0.35)", flexShrink: 0 }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: DS.textPrimary, margin: 0, letterSpacing: "-0.4px" }}>
+              {step === 1 ? "Tạo tài khoản" : "Xác minh email"}
+            </h2>
+            <p style={{ fontSize: 14, color: DS.textSecondary, margin: "3px 0 0" }}>
+              {step === 1 ? "Đăng ký để bắt đầu" : "Nhập mã đã gửi đến email"}
             </p>
           </div>
         </div>
 
-        {/* ========== RIGHT SIDE: Register Form ========== */}
-        <div className="flex w-full flex-col items-center justify-center bg-[#050505] lg:w-1/2 relative p-6 min-h-screen">
-          {/* Background Ambient Glows - hidden on mobile */}
-          <div className="hidden lg:block absolute top-[-10%] right-[-5%] h-[300px] w-[300px] rounded-full bg-[#0f83f0]/10 blur-[100px]" />
-          <div className="hidden lg:block absolute bottom-[-10%] left-[-5%] h-[300px] w-[300px] rounded-full bg-blue-600/5 blur-[100px]" />
+        {/* Segmented tabs — both equal */}
+        <div style={{ display: "flex", borderRadius: 16, padding: 5, background: DS.segBg, marginBottom: 28 }}>
+          <Link to="/login" style={{ flex: 1, borderRadius: 12, padding: "13px 16px", background: "transparent", border: "1px solid transparent", color: DS.segInactiveText, fontWeight: 500, fontSize: 14, fontFamily: DS.font, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            Đăng nhập
+          </Link>
+          <button style={{ flex: 1, borderRadius: 12, padding: "13px 16px", background: DS.segActiveBg, border: `1px solid ${DS.segActiveBorder}`, color: DS.segActiveText, fontWeight: 700, fontSize: 14, fontFamily: DS.font, boxShadow: "0 1px 4px rgba(67,97,238,0.18)" }}>
+            Đăng ký
+          </button>
+        </div>
 
-          <div className="w-full max-w-[440px] z-10">
-            {/* Header */}
-            <div className="mb-8 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-[#0f83f0]">
-                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
+        {/* STEP 1 */}
+        {step === 1 && (
+          <form onSubmit={handleSubmit(onSubmitStep1)} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Full name */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Họ và tên</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type="text" {...register("full_name")} placeholder="Nguyễn Văn A"
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
               </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
-                {step === 1 ? "Tạo tài khoản" : "Xác minh email"}
-              </h2>
-              <p className="text-gray-400">
-                {step === 1
-                  ? "Đăng ký để trải nghiệm dịch vụ của chúng tôi."
-                  : "Nhập mã xác minh đã được gửi đến email của bạn."}
-              </p>
+              {errors.full_name && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.full_name.message)}</p>}
             </div>
 
-            {/* Glass Card */}
-            <div className="backdrop-blur-[20px] rounded-3xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] p-8 border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]">
-              {/* Segmented Control */}
-              <div className="mb-8 flex rounded-xl bg-black/40 p-1.5 border border-white/5">
-                <Link
-                  to="/login"
-                  className="flex-1 rounded-lg py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors text-center"
-                >
-                  Đăng nhập
-                </Link>
-                <button className="relative flex-1 rounded-lg bg-[#1c252e] py-2.5 text-sm font-medium text-white shadow-lg ring-1 ring-white/10 transition-all">
-                  Đăng ký
+            {/* Phone */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Số điện thoại</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type="text" {...register("phone_number")} placeholder="0912345678"
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+              </div>
+              {errors.phone_number && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.phone_number.message)}</p>}
+            </div>
+
+            {/* Date of birth */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Ngày sinh</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type="date" {...register("date_of_birth")}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+              </div>
+              {errors.date_of_birth && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.date_of_birth.message)}</p>}
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Giới tính</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[{ value: "MALE", label: "Nam" }, { value: "FEMALE", label: "Nữ" }, { value: "OTHER", label: "Khác" }].map((opt) => {
+                  const sel = watch("gender") === opt.value;
+                  return (
+                    <label key={opt.value} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px 8px", borderRadius: DS.inputRadius, background: sel ? DS.genderSelectedBg : DS.genderUnselectedBg, border: `1.5px solid ${sel ? DS.genderSelectedBorder : DS.genderUnselectedBorder}`, color: sel ? DS.genderSelectedText : DS.genderUnselectedText, fontSize: 13, fontWeight: 600, fontFamily: DS.font, cursor: "pointer", transition: "all 0.15s" }}>
+                      <input type="radio" value={opt.value} {...register("gender")} style={{ display: "none" }} />
+                      {opt.label}
+                    </label>
+                  );
+                })}
+              </div>
+              {errors.gender && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.gender.message)}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Email</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type="email" {...register("email")} placeholder="email@example.com"
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+              </div>
+              {errors.email && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.email.message)}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Mật khẩu</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type={showPassword ? "text" : "password"} {...register("password")} placeholder="••••••••"
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: DS.textMuted }}>
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
                 </button>
               </div>
-
-              {/* STEP 1: Registration Form */}
-              {step === 1 && (
-                <form onSubmit={handleSubmit(onSubmitStep1)} className="flex flex-col gap-4">
-                  {/* Full Name */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Họ và tên</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <input
-                        {...register("full_name")}
-                        placeholder="Nguyễn Văn A"
-                        className="h-12 w-full border-none bg-transparent px-3 text-white placeholder-gray-600 outline-none border-0 appearance-none text-sm"
-                      />
-                    </div>
-                    {errors.full_name && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.full_name.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Ngày sinh</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <input
-                        type="date"
-                        {...register("date_of_birth")}
-                        className="h-12 w-full border-none bg-transparent px-3 text-white outline-none border-0 appearance-none text-sm"
-                      />
-                    </div>
-                    {errors.date_of_birth && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.date_of_birth.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Số điện thoại</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <input
-                        {...register("phone_number")}
-                        placeholder="0912345678"
-                        className="h-12 w-full border-none bg-transparent px-3 text-white placeholder-gray-600 outline-none border-0 appearance-none text-sm"
-                      />
-                    </div>
-                    {errors.phone_number && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.phone_number.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Gender */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Giới tính</label>
-                    <div className="flex gap-2">
-                      {[
-                        { value: "MALE", label: "Nam", icon: (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        ) },
-                        { value: "FEMALE", label: "Nữ", icon: (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        ) },
-                        { value: "OTHER", label: "Khác", icon: (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4a2 2 0 100 4 2 2 0 000-4zM4.93 4.93l1.41 1.41M19.07 4.93l-1.41 1.41M12 12a4 4 0 100 8 4 4 0 000-8zM12 20v2M12 2v2" />
-                          </svg>
-                        ) },
-                      ].map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`flex-1 flex items-center justify-center gap-2 rounded-lg cursor-pointer transition-all py-2.5 border text-sm font-medium select-none
-                            ${watch("gender") === opt.value
-                              ? "bg-[#0f83f0]/20 border-[#0f83f0]/60 text-white shadow-[0_0_10px_-2px_rgba(15,131,240,0.4)]"
-                              : "bg-black/30 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-200"
-                            }`}
-                        >
-                          <input
-                            type="radio"
-                            value={opt.value}
-                            {...register("gender")}
-                            className="sr-only"
-                          />
-                          {opt.icon}
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                    {errors.gender && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.gender.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Email</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <input
-                        type="email"
-                        {...register("email")}
-                        placeholder="email@example.com"
-                        className="h-12 w-full border-none bg-transparent px-3 text-white placeholder-gray-600 outline-none border-0 appearance-none text-sm"
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.email.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Password */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Mật khẩu</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        {...register("password")}
-                        placeholder="••••••••"
-                        className="h-12 w-full border-none bg-transparent px-3 text-white placeholder-gray-600 outline-none border-0 appearance-none text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-gray-500 hover:text-white transition-colors"
-                      >
-                        {showPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <p className="text-red-400 text-xs mt-1">{t(errors.password.message)}</p>
-                    )}
-                  </div>
-
-                  {/* Error Message */}
-                  {errorMessage && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                      <p className="text-red-400 text-sm">{errorMessage}</p>
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-2 flex w-full items-center justify-center rounded-2xl bg-[#0f83f0] py-3.5 text-sm font-semibold text-white shadow-[0_0_20px_-5px_rgba(15,131,240,0.5)] transition-all hover:bg-[#0f83f0]/90 hover:scale-[1.01] hover:shadow-[0_0_25px_-5px_rgba(15,131,240,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Đang xử lý...
-                      </div>
-                    ) : (
-                      "Đăng ký"
-                    )}
-                  </button>
-                </form>
-              )}
-
-              {/* STEP 2: OTP Verification */}
-              {step === 2 && (
-                <div className="flex flex-col gap-4">
-                  <p className="text-sm text-gray-400">
-                    Mã xác minh đã gửi đến <span className="text-white font-medium">{email}</span>
-                  </p>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">Mã xác minh (OTP)</label>
-                    <div className="flex items-center rounded-lg bg-black/30 px-4">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                      <input
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        placeholder="Nhập mã 6 chữ số..."
-                        className="h-12 w-full border-none bg-transparent px-3 text-white placeholder-gray-600 outline-none border-0 appearance-none text-sm tracking-widest"
-                      />
-                    </div>
-                  </div>
-
-                  {errorMessage && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                      <p className="text-red-400 text-sm">{errorMessage}</p>
-                    </div>
-                  )}
-
-                  {otpMessage && (
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
-                      <p className="text-green-400 text-sm">{otpMessage}</p>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={onSubmitVerify}
-                    disabled={loading}
-                    className="mt-2 flex w-full items-center justify-center rounded-2xl bg-[#0f83f0] py-3.5 text-sm font-semibold text-white shadow-[0_0_20px_-5px_rgba(15,131,240,0.5)] transition-all hover:bg-[#0f83f0]/90 hover:scale-[1.01] hover:shadow-[0_0_25px_-5px_rgba(15,131,240,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Đang xác minh...
-                      </div>
-                    ) : (
-                      "Xác minh email"
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-center text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    ← Quay lại
-                  </button>
-                </div>
-              )}
+              {errors.password && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.password.message)}</p>}
             </div>
 
-            {/* Terms */}
-            <p className="mt-8 text-center text-xs text-gray-600">
-              Bằng cách đăng ký, bạn đồng ý với{" "}
-              <a href="#" className="text-gray-400 hover:text-white underline decoration-gray-600 underline-offset-2">
-                Điều khoản dịch vụ
-              </a>{" "}
-              và{" "}
-              <a href="#" className="text-gray-400 hover:text-white underline decoration-gray-600 underline-offset-2">
-                Chính sách bảo mật
-              </a>
+            {errorMessage && (
+              <div style={{ borderRadius: 12, padding: "12px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}>
+                <p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading}
+              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+            >
+              {loading ? <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang xử lý...</> : "Đăng ký"}
+            </button>
+          </form>
+        )}
+
+        {/* STEP 2 */}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <p style={{ fontSize: 14, color: DS.textSecondary, margin: 0 }}>
+              Mã đã gửi đến <span style={{ fontWeight: 600, color: DS.textPrimary }}>{email}</span>
             </p>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Mã xác minh</label>
+              <div style={inputStyle()}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              >
+                <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Nhập mã 6 chữ số..."
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 16, color: DS.inputText, fontFamily: DS.font, letterSpacing: "0.2em" }} />
+              </div>
+            </div>
+            {errorMessage && (
+              <div style={{ borderRadius: 12, padding: "12px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}>
+                <p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p>
+              </div>
+            )}
+            {otpMessage && (
+              <div style={{ borderRadius: 12, padding: "12px 16px", background: DS.successBg, border: `1px solid ${DS.successBorder}` }}>
+                <p style={{ fontSize: 13, color: DS.successText, margin: 0 }}>{otpMessage}</p>
+              </div>
+            )}
+            <button onClick={onSubmitVerify} disabled={loading}
+              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+            >
+              {loading ? <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang xác minh...</> : "Xác minh email"}
+            </button>
+            <button type="button" onClick={() => setStep(1)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: DS.textMuted, fontSize: 13, fontFamily: DS.font, fontWeight: 500, padding: "8px 0", transition: "color 0.15s" }}
+              onMouseEnter={e => e.currentTarget.style.color = DS.textSecondary}
+              onMouseLeave={e => e.currentTarget.style.color = DS.textMuted}
+            >
+              ← Quay lại
+            </button>
           </div>
-        </div>
+        )}
+
+        <p style={{ fontSize: 12, color: DS.textMuted, textAlign: "center", marginTop: 24, lineHeight: 1.6 }}>
+          Bằng cách đăng ký, bạn đồng ý với <a href="#" style={{ color: DS.textSecondary, textDecoration: "underline", textUnderlineOffset: 2 }}>Điều khoản</a> và <a href="#" style={{ color: DS.textSecondary, textDecoration: "underline", textUnderlineOffset: 2 }}>Chính sách bảo mật</a>
+        </p>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

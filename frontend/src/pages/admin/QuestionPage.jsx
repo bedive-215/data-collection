@@ -16,25 +16,32 @@ import {
 } from "lucide-react";
 import AiQuestionAssistant from "@/components/survey/AiQuestionAssistant";
 
-/* ── Design tokens ────────────────────────────────────────────────── */
+/* ── Design tokens — aligned with Admin Design System v2 ───────────────────── */
 const C = {
-  bg:            "#080b14",
-  surfaceLow:    "#0d1120",
-  surface:       "#0d1120",
-  surfaceHigh:   "#111827",
-  border:        "#1a2035",
-  borderHover:   "#2e3d70",
-  primary:       "#6c7ef7",
-  primaryGrad:   "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
-  primaryDim:    "rgba(108,126,247,0.10)",
-  primaryBorder: "#2a3464",
-  text:          "#f1f5f9",
-  textSub:       "#64748b",
-  textDim:       "#334155",
-  error:         "#ef4444",
+  bg:            "#0F1117",
+  bgSecondary:   "#141620",
+  surfaceLow:    "#141620",
+  surface:       "#1A1D2E",
+  surfaceHover:  "#222638",
+  surfaceHigh:   "#222638",
+  border:        "#2A2D3E",
+  borderHover:   "#3A3D50",
+  primary:       "#F59E0B",
+  primaryHover:  "#D97706",
+  primaryGrad:   "linear-gradient(135deg,#F59E0B,#D97706)",
+  primaryDim:    "rgba(245,158,11,0.10)",
+  primaryBorder: "rgba(245,158,11,0.30)",
+  secondary:     "#6366F1",
+  secondaryDim:  "rgba(99,102,241,0.10)",
+  accent:        "#8B5CF6",
+  accentDim:     "rgba(139,92,246,0.10)",
+  text:          "#F9FAFB",
+  textSub:       "#9CA3AF",
+  textDim:       "#4B5563",
+  error:         "#EF4444",
   errorBg:       "#150f0f",
-  errorBorder:   "#2a1010",
-  font:          "'DM Sans','Plus Jakarta Sans',sans-serif",
+  errorBorder:   "rgba(239,68,68,0.30)",
+  font:          "'Plus Jakarta Sans','DM Sans',sans-serif",
 };
 
 /* ─────────────────────────────────────────────────────────────────────
