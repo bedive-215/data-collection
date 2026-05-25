@@ -808,7 +808,7 @@ export default function StatisticalAnalysisPage() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <button onClick={() => navigate(ROUTERS.USER.ANALYSIS_HUB)} style={{
+            <button onClick={() => navigate(ROUTERS.USER.HOME)} style={{
               width: 42, height: 42, borderRadius: 14, border: "none",
               background: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)",
               display: "flex", alignItems: "center", justifyContent: "center",

@@ -1578,7 +1578,7 @@ export default function MySurveysPage() {
                   type="my"
                   onShare={handleShare}
                   onLock={handleClose}
-                  onViewAnalytics={() => navigate(`/user/analysis`)}
+                  onViewAnalytics={() => navigate(`/user/my-surveys/${survey.id}/studio?tab=analyze`)}
                 />
               ))}
             </div>

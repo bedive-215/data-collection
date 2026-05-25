@@ -2,14 +2,14 @@
 // Flow: click card → SurveyStudio → 3 tabs: Design / Send / Analyze
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
-  ArrowLeft, Send, LayoutTemplate, BarChart3, Loader2,
   Plus, Trash2, Pencil, Check, GripVertical, PlusCircle,
   Image, ChevronLeft, ChevronRight, ChevronDown, Copy,
   ExternalLink, Link as LinkIcon, CheckCircle2, Users,
   Share2, Mail, UserPlus, Lock, Globe, PowerOff, RefreshCw,
   Search, X, FileText, Loader, Eye, EyeOff, Trash,
+  Send, LayoutTemplate, BarChart3, Loader2,
 } from "lucide-react";
 import MySurveyQuestionsPage from "@/pages/user/MySurveyQuestionsPage";
 import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
@@ -490,26 +490,29 @@ const TABS_CONFIG = [
 ];
 
 function TabBar({ active, onChange }) {
+  const tabStyle = {
+    background: "rgba(255,255,255,0.85)",
+    backdropFilter: "blur(24px) saturate(190%)",
+    WebkitBackdropFilter: "blur(24px) saturate(190%)",
+    border: "1px solid rgba(255,255,255,0.7)",
+    borderRadius: 18,
+    boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)",
+    display: "flex", gap: 5, padding: 5,
+  };
   return (
-    <div style={{
-      display:"flex",alignItems:"center",gap:6,
-      background:"rgba(255,255,255,0.85)",backdropFilter:"blur(20px)",
-      border:`1px solid rgba(255,255,255,0.7)"`,borderRadius:16,
-      padding:5,
-      boxShadow:"0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.05)",
-    }}>
+    <div style={tabStyle}>
       {TABS_CONFIG.map(tab=>{
         const Icon = tab.icon;
         const is = active===tab.id;
         return (
           <button key={tab.id} onClick={()=>onChange(tab.id)} style={{
-            display:"flex",alignItems:"center",gap:7,padding:"9px 18px",
+            display:"flex",alignItems:"center",gap:8,padding:"10px 18px",
             borderRadius:12,border:"none",cursor:"pointer",
             fontSize:13,fontWeight:is?700:500,
             fontFamily:C.font,transition:"all .2s ease",
-            background:is?"linear-gradient(135deg,#4361ee,#6c7ef7)":"transparent",
+            background:is?"linear-gradient(135deg,#6366f1,#7c5df7)":"transparent",
             color:is?"#fff":C.textSub,
-            boxShadow:is?"0 4px 14px rgba(67,97,238,0.35)":"none",
+            boxShadow:is?"0 4px 14px rgba(99,102,241,0.35)":"none",
           }}>
             <Icon size={15}/>
             {tab.label}
@@ -525,10 +528,14 @@ function TabBar({ active, onChange }) {
 ════════════════════════════════════════════════════════════════ */
 export default function SurveyStudio() {
   const { surveyId } = useParams();
-  const navigate = useNavigate();
   const { fetchSurveyById, currentSurvey, publishSurvey, shareLink, inviteSurvey, closeSurvey, bulkInviteSurvey, getParticipants, deleteParticipant } = useSurvey();
 
-  const [activeTab, setActiveTab] = useState("design");
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const validTabs = ["design", "send", "analyze"];
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "design"
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -547,48 +554,34 @@ export default function SurveyStudio() {
 
       {/* ── STUDIO HEADER ── */}
       <div style={{
-        position:"sticky",top:0,zIndex:100,
-        background:"rgba(255,255,255,0.88)",backdropFilter:"blur(24px) saturate(190%)",
-        WebkitBackdropFilter:"blur(24px) saturate(190%)",
-        borderBottom:`1px solid rgba(255,255,255,0.7)"`,
-        boxShadow:"0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 24px rgba(15,23,42,0.06)",
+        borderBottom:"1px solid rgba(99,102,241,0.1)",
+        boxShadow:"0 1px 3px rgba(15,23,42,0.04)",
       }}>
-        {/* Top row */}
-        <div style={{maxWidth:1200,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",gap:16}}>
-          <button onClick={()=>navigate("/user/my-surveys")} style={{
-            display:"flex",alignItems:"center",justifyContent:"center",width:38,height:38,
-            borderRadius:10,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.8)",
-            cursor:"pointer",flexShrink:0,transition:"all .15s",
-          }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(67,97,238,0.1)";e.currentTarget.style.borderColor="rgba(67,97,238,0.25)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.8)";e.currentTarget.style.borderColor="rgba(0,0,0,0.08)";}}>
-            <ArrowLeft size={16} color={C.text}/>
-          </button>
-
-          {/* Survey thumbnail + title */}
-          <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
-            <div style={{width:42,height:42,borderRadius:12,background:thumbGrad,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(99,102,241,0.2)"}}>
-              <FileText size={18} color="rgba(255,255,255,0.9)" strokeWidth={1.5}/>
-            </div>
-            <div style={{minWidth:0,flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <h1 style={{fontSize:15,fontWeight:800,color:C.text,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{loading?"...":survey?.title||"Khảo sát"}</h1>
-                {!loading&&<span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:999,color:statusInfo.color,background:statusInfo.bg,flexShrink:0,fontFamily:C.font}}>{statusInfo.label}</span>}
+        <div style={{maxWidth:1200,margin:"0 auto",padding:"14px 20px",display:"flex",alignItems:"center",gap:20}}>
+          {!loading&&(
+            <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+              <div style={{width:34,height:34,borderRadius:10,background:thumbGrad,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <FileText size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.5}/>
               </div>
-              {!loading&&survey?.description&&<p style={{fontSize:11,color:C.textSub,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{survey.description}</p>}
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <h1 style={{fontSize:13,fontWeight:800,color:C.text,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:220,fontFamily:C.font}}>{survey?.title||"Khảo sát"}</h1>
+                <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:999,color:statusInfo.color,background:statusInfo.bg,flexShrink:0,fontFamily:C.font}}>{statusInfo.label}</span>
+              </div>
             </div>
-          </div>
-
-          {/* Tab bar */}
-          <div style={{flexShrink:0}}>
-            <TabBar active={activeTab} onChange={setActiveTab}/>
-          </div>
+          )}
+          {loading&&(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:34,height:34,borderRadius:10,background:"rgba(0,0,0,0.06)"}}/>
+              <div style={{width:120,height:12,borderRadius:6,background:"rgba(0,0,0,0.06)"}}/>
+            </div>
+          )}
+          <div style={{width:1,height:28,background:"rgba(0,0,0,0.08)",flexShrink:0}}/>
+          <TabBar active={activeTab} onChange={setActiveTab}/>
         </div>
-
-        {/* Bottom divider */}
-        <div style={{height:1,background:"linear-gradient(to right,transparent,rgba(99,102,241,0.15),rgba(99,102,241,0.15),transparent)"}}/>
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <div style={{maxWidth:1200,margin:"0 auto",padding:"32px 20px 60px"}}>
+      <div style={{maxWidth:1200,margin:"20px auto 60px",padding:"0 20px"}}>
         {/* Loading */}
         {loading&&(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:16}}>

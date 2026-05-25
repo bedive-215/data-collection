@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BarChart3, Sparkles, ArrowLeft, Search, Loader2,
+  BarChart3, Sparkles, Search, Loader2,
   ChevronDown, FileText, CheckCircle2, Users, Brain,
   TrendingUp, ArrowRight, Globe, Lock, X, ChevronUp,
 } from "lucide-react";
@@ -408,49 +408,30 @@ export default function AnalysisHubPage() {
       fontFamily: C.font,
       overflowX: "hidden",
     }}>
-      {/* Header */}
-      <div style={{
-        background: "#fff",
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
-        padding: "0 24px",
-        height: 64,
-        display: "flex", alignItems: "center",
-        position: "sticky", top: 0, zIndex: 50,
-        boxShadow: "0 1px 8px rgba(15,23,42,0.06)",
-      }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: "rgba(0,0,0,0.04)", border: "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", marginRight: 14,
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
-        >
-          <ArrowLeft size={16} color={C.text} />
-        </button>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px 60px" }}>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* ── Page Header (inside content, below Navbar) ── */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          marginBottom: 28,
+        }}>
           <div style={{
-            width: 34, height: 34, borderRadius: 10,
+            width: 42, height: 42, borderRadius: 12,
             background: `linear-gradient(135deg, ${C.primary}, #7c3aed)`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: `0 4px 12px ${C.primary}30`,
+            boxShadow: `0 4px 14px ${C.primary}30`, flexShrink: 0,
           }}>
-            <Sparkles size={16} color="#fff" strokeWidth={1.8} />
+            <Sparkles size={18} color="#fff" strokeWidth={1.8} />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text, fontFamily: C.font }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: C.text, fontFamily: C.font }}>
               Trung tâm Phân tích
             </h1>
+            <p style={{ margin: 0, fontSize: 12, color: C.textSub, fontFamily: C.font, marginTop: 2 }}>
+              Chọn khảo sát để xem chi tiết phân tích
+            </p>
           </div>
         </div>
-      </div>
-
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "28px 24px 60px" }}>
 
         {/* ── Survey Selector ─────────────────────────────── */}
         <div style={{ marginBottom: 24 }}>

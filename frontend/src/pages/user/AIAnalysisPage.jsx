@@ -216,7 +216,7 @@ export default function AIAnalysisPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button
-              onClick={() => navigate(ROUTERS.USER.ANALYSIS_HUB)}
+              onClick={() => navigate(ROUTERS.USER.HOME)}
               style={{
                 width: 42, height: 42, borderRadius: 14,
                 background: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)",
