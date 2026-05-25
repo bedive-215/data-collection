@@ -6,19 +6,28 @@ export const emailHandlers = {
 
     "verification-email": async (data) => {
         return sendVerificationEmail(
-            data.to,
-            data.code,
-            data.expireTime,
-            data.fullName
+            data.email,
+            data.otp,
+            data.otpExpires,
+            data.full_name
         );
     },
 
     "password-reset-email": async (data) => {
         return sendPasswordResetEmail(
-            data.to,
+            data.email,
             data.code,
-            data.expireTime,
-            data.fullName
+            data.expires,
+            data.full_name
+        );
+    },
+
+    "resend-verification-email": async (data) => {
+        return reSendVerificationEmail(
+            data.email,
+            data.otp,
+            data.otpExpires,
+            data.full_name
         );
     },
 };

@@ -1,12 +1,14 @@
-import bcrypt from 'bcryptjs';
-import { sendVerificationEmail, reSendVerificationEmail } from '../utils/sendMail.js';
-import models from '../models/index.js';
 import { AppError } from '../middlewares/handleException.middlware.js';
 import { Op } from 'sequelize';
-import 'dotenv/config';
-import { generateAccessToken, generateRefreshToken } from '../utils/token.js';
+import bcrypt from 'bcryptjs';
 import axios from 'axios';
+import 'dotenv/config';
+
+import models from '../models/index.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/token.js';
 import { makeCode } from '../utils/makeCode.js';
+
+import { emailQueue } from '../queues/email.queue.js';
 
 class AuthService {
   constructor() {
@@ -48,7 +50,7 @@ class AuthService {
     user.last_verification_code_sent_at = new Date();
     await user.save();
 
-    await sendVerificationEmail(email, otp, otpExpires, full_name);
+    await emailQueue.add('verification-email', { email, otp, otpExpires, full_name });
 
     return {
       user_id: user.id,
@@ -181,7 +183,7 @@ class AuthService {
     await user.save();
 
     // Gửi email - SỬ DỤNG user.full_name
-    await reSendVerificationEmail(email, otp, otpExpires, user.full_name);
+    await emailQueue.add('resend-verification-email', { email, otp, otpExpires, full_name: user.full_name });
 
     return {
       message: 'Verification code was resent!',
@@ -346,8 +348,7 @@ class AuthService {
     user.password_reset_code_expires_at = expires;
     await user.save();
 
-    // Gửi email
-    await sendPasswordResetEmail(email, code, expires, user.full_name);
+    await emailQueue.add('password-reset-email', { email, code, expires, full_name: user.full_name });
 
     return { message: "Reset password code sent to email" };
   }
