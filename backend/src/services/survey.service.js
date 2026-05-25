@@ -10,12 +10,11 @@ import { buildSurveyPublicUrl } from "../utils/surveyUrl.js";
 import { getSurveyStatus } from "../domain/survey.domain.js";
 import { mapSurveyDetail, mapSurvey } from "../mappers/survey.mapper.js";
 
-import notificationService from "./notification.service.js";
-import starService from "./star.service.js";
-import achievementService from "./achievement.service.js";
-
 import eventBus from "../events/eventBus.js";
 import { SURVEY_EVENTS } from "../events/survey/survey.events.js";
+import { START_EVENTS } from "../events/start/start.event.js";
+import { ACHIEVEMENT_EVENTS } from "../events/achivenent/achivement.event.js";
+
 import { emailQueue } from "../queues/email.queue.js";
 
 const ALLOWED_EDITOR_ROLES = ["viewer", "respondent"];
@@ -95,10 +94,11 @@ class SurveyService {
             show_correct_answers: show_correct_answers ?? false,
         });
 
-        const starResult = await starService.rewardCreateSurvey(user.id, survey.id);
-        await achievementService.checkAndUnlock(user.id, "survey_created", { survey_id: survey.id });
+        // Emit events for starting survey and unlocking achievement
+        eventBus.emit(START_EVENTS.STARTED, { userId: user.id, surveyId: survey.id });
+        eventBus.emit(ACHIEVEMENT_EVENTS.UNLOCKED, { userId: user.id, achievementKey: "survey_created", data: { survey_id: survey.id } });
 
-        return { message: "Created survey successfully", survey: mapSurvey(survey), gamification: starResult };
+        return { message: "Created survey successfully", survey: mapSurvey(survey) };
     }
 
     async getSurveyById(user, survey_id, access_token = null) {
@@ -167,7 +167,7 @@ class SurveyService {
         if (!survey) throw new AppError("Survey not found", 404);
 
         if (survey.created_by === user.id) {
-            await starService.penalizeSurveyDeleted(survey.created_by, survey.id);
+            eventBus.emit(START_EVENTS.DELETED, { owner: survey.created_by, surveyId: survey.id });
             eventBus.emit(SURVEY_EVENTS.DELETED, { survey, deleter: user });
         }
 

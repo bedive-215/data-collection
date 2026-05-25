@@ -1,9 +1,7 @@
 import eventBus from "../eventBus.js";
+import { SURVEY_EVENTS } from "./survey.events.js";
 
 import notificationService from "../../services/notification.service.js";
-import starService from "../../services/star.service.js";
-import achievementService from "../../services/achievement.service.js";
-import { SURVEY_EVENTS } from "./survey.events.js";
 
 eventBus.on(SURVEY_EVENTS.CLOSED, async (payload) => {
     await notificationService.notifySurveyClosed(payload);
