@@ -21,7 +21,7 @@ class StarService {
     async _adjustStars(userId, amount, type, description, metadata = {}, options = {}) {
         const { refId = null, refType = null, externalTransaction = null } = options;
 
-        return withTransaction(externalTransaction, async (transaction) => {
+        return withTransaction(this.sequelize, externalTransaction, async (transaction) => {
             const user = await this.User.findByPk(userId, {
                 lock: transaction.LOCK.UPDATE,
                 transaction,
@@ -106,7 +106,7 @@ class StarService {
         if (!originalTx) throw new AppError("Transaction not found", 404);
         if (originalTx.is_reversed) throw new AppError("Transaction already reversed", 400);
 
-        return withTransaction(externalTransaction, async (transaction) => {
+        return withTransaction(this.sequelize, externalTransaction, async (transaction) => {
             if (originalTx.amount > 0) {
                 const user = await this.User.findByPk(originalTx.user_id, {
                     lock: transaction.LOCK.UPDATE,
