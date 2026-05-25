@@ -921,8 +921,8 @@ function StatsStrip({ mySurveys, total, done, pending, loading }) {
   return (
     <div style={{
       display:"grid",
-      gridTemplateColumns:"repeat(auto-fit,minmax(168px,1fr))",
-      gap:16,
+      gridTemplateColumns:"repeat(auto-fit,minmax(200px,280px))",
+      gap:14,
       marginBottom:36,
     }}>
       {stats.map((s,i)=>(
@@ -1213,7 +1213,7 @@ export default function SurveysLayout() {
                 <span style={{fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:999,background:"rgba(245,158,11,0.12)",color:C.warning,border:"1px solid rgba(245,158,11,0.25)",fontFamily:C.font}}>{invitedSurveys.length}</span>
               </div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:18}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,280px))",gap:14}}>
               {invitedSurveys.map((survey,index)=>{
                 const isDone = doneSurveyIds.has(survey.id);
                 const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
@@ -1310,7 +1310,7 @@ export default function SurveysLayout() {
           {modalSurvey&&<SubmissionModal surveyId={modalSurvey.id} surveyTitle={modalSurvey.title} onClose={()=>setModalSurvey(null)}/>}
 
           {publicLoading&&(
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,280px))",gap:14}}>
               {Array(6).fill(0).map((_,i)=><PublicCardSkeleton key={i}/>)}
             </div>
           )}
@@ -1341,7 +1341,7 @@ export default function SurveysLayout() {
                     survey={survey}
                     index={i}
                     overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
-                    onClick={() => doneSurveyIds.has(survey.id) ? navigate(`/user/my-survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
+                    onClick={() => doneSurveyIds.has(survey.id) ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
                     type="public"
                   />
                 ))}

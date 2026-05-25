@@ -70,18 +70,34 @@ function SurveyResponsePage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      let surveyRes = null;
+      let responseRes = null;
+      let hasError = false;
+
       try {
         setLoading(true);
-        const surveyRes = await fetchSurveyById(surveyId);
+        setError(null);
+        surveyRes = await fetchSurveyById(surveyId);
         setSurvey(surveyRes);
+      } catch (err) {
+        console.warn("Survey fetch failed (may be expired):", err?.message || err);
+        surveyRes = null;
+      }
 
-        const responseRes = await getMySubmission(surveyId);
+      try {
+        responseRes = await getMySubmission(surveyId);
         setResponse(responseRes);
       } catch (err) {
-        setError(err.message || "Không thể tải dữ liệu");
-      } finally {
-        setLoading(false);
+        console.warn("Response fetch failed:", err?.message || err);
+        responseRes = null;
       }
+
+      hasError = !surveyRes && !responseRes;
+      if (hasError) {
+        setError("Không thể tải dữ liệu khảo sát này.");
+      }
+
+      setLoading(false);
     };
 
     fetchData();
@@ -100,7 +116,7 @@ function SurveyResponsePage() {
     );
   }
 
-  if (error || !survey || !response) {
+  if (error || !response) {
     return (
       <main style={{ minHeight: "100vh", background: "transparent", position: "relative", padding: "28px 20px", fontFamily: PAGE.font }}>
         <AnimatedSurveyBackdrop />
@@ -255,7 +271,7 @@ function SurveyResponsePage() {
                 color: PAGE.text,
               }}
             >
-              {survey.title}
+              {survey?.title || response?.data?.survey?.title || "Khảo sát đã hoàn thành"}
             </h2>
 
             <p
@@ -267,7 +283,7 @@ function SurveyResponsePage() {
                 color: PAGE.textSub,
               }}
             >
-              {survey.description}
+              {survey?.description || response?.data?.survey?.description || ""}
             </p>
 
             <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", color: PAGE.textSub }}>

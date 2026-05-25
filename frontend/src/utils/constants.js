@@ -14,6 +14,7 @@ export const ROUTERS = {
 
     SURVEY_TAKE: "/user/survey/:surveyId",
     SURVEY_RESPONSE: "/user/survey/:surveyId/response",
+    MY_RESPONSE: "/user/my-responses/:surveyId",
 
     SURVEYS: "/user/surveys",
 

@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, ClipboardList, Clock, Zap,
-  Trophy, Inbox, ArrowRight, Globe, Flame, Target,
-  Sparkles, TrendingUp, Rocket, LayoutGrid, Calendar,
+  Inbox, ArrowRight, Globe,
+  Sparkles, Rocket, LayoutGrid, Calendar,
   Lock, Share, Link as LinkIcon, X, ExternalLink, Copy, Loader2,
   Users, Star,
 } from "lucide-react";
@@ -784,124 +784,8 @@ function CheckinBanner() {
 }
 
 // ── STAT CARD COMPONENTS ────────────────────────────────────────────────
-function ActivityBento({ activity, delay }) {
-  return (
-    <BentoCard delay={delay}>
-      <div style={{ display: "flex", gap: 12, fontFamily: C.font }}>
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            minWidth: 44,
-            borderRadius: 12,
-            background: activity.iconBg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "1px solid rgba(0,0,0,0.04)",
-          }}
-        >
-          <activity.Icon size={22} color={activity.iconColor} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 4, marginTop: 0 }}>
-            {activity.title}
-          </h4>
-          <p style={{ fontSize: 11, color: C.textDim, margin: "0 0 8px" }}>{activity.sub}</p>
-          <span style={{ fontSize: 12, fontWeight: 700, color: activity.xpColor }}>{activity.xp}</span>
-        </div>
-      </div>
-    </BentoCard>
-  );
-}
 
-function ChallengeBento() {
-  return (
-    <div
-      style={{
-        borderRadius: 22,
-        padding: "26px 24px",
-        color: "#fff",
-        overflow: "hidden",
-        position: "relative",
-        animation: "slideInUp 0.8s ease-out 0.35s both",
-        background: "linear-gradient(148deg,#6366f1 0%,#a855f7 48%,#ec4899 100%)",
-        border: "1px solid rgba(255,255,255,0.22)",
-        boxShadow: "0 2px 0 rgba(255,255,255,0.18) inset, 0 18px 44px rgba(99,102,241,0.35)",
-        cursor: "default",
-        fontFamily: C.font,
-        transition: "transform 0.28s ease, box-shadow 0.28s ease",
-        minHeight: 200,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.22) inset, 0 24px 52px rgba(236,72,153,0.28)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.18) inset, 0 18px 44px rgba(99,102,241,0.35)";
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: -36,
-          right: -36,
-          width: 140,
-          height: 140,
-          background: "radial-gradient(circle, rgba(255,255,255,0.2), transparent)",
-          borderRadius: "50%",
-          animation: "float 6s ease-in-out infinite",
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <Flame size={26} color="#fbbf24" />
-          <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.92 }}>
-            Thử thách
-          </span>
-        </div>
-        <h3 style={{ fontSize: 22, fontWeight: 900, marginBottom: 12, marginTop: 0 }}>Cuối tuần</h3>
-        <p style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 18, opacity: 0.95 }}>
-          Hoàn thành <strong>5 khảo sát</strong> trong <strong>48 giờ</strong> để nhận <strong>Bonus 2000 XP</strong>
-        </p>
-        <button
-          type="button"
-          style={{
-            width: "100%",
-            padding: "12px 0",
-            background: "rgba(255,255,255,0.95)",
-            color: C.primary,
-            fontWeight: 800,
-            borderRadius: 12,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: C.font,
-            transition: "transform .15s, box-shadow .15s",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.02)";
-            e.currentTarget.style.boxShadow = "0 10px 26px rgba(0,0,0,0.18)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,0,0,0.12)";
-          }}
-        >
-          Tham gia
-        </button>
-      </div>
-    </div>
-  );
-}
 
-const ACTIVITIES = [
-  { Icon: CheckCircle2, iconColor: "#10b981", iconBg: "#d1fae5", title: "Khảo sát sức khỏe", sub: "Hoàn thành · 2 giờ trước", xp: "+250 XP", xpColor: "#10b981" },
-  { Icon: Trophy, iconColor: "#f59e0b", iconBg: "#fef3c7", title: "Đạt cấp 12", sub: "Thành tích · Hôm qua", xp: "+500 XP", xpColor: "#f59e0b" },
-  { Icon: Target, iconColor: "#4f46e5", iconBg: "#e0e7ff", title: "Thói quen ăn uống", sub: "Hoàn thành · 1 ngày trước", xp: "+150 XP", xpColor: "#4f46e5" },
-];
 
 function toArray(val) {
   if (!val) return [];
@@ -974,7 +858,7 @@ export default function DashboardPage() {
   }, []);
 
   const surveyPath = (id) => ROUTERS.USER.SURVEY_TAKE.replace(":surveyId", id);
-  const responsePath = (id) => ROUTERS.USER.SURVEY_RESPONSE.replace(":surveyId", id);
+  const responsePath = (id) => ROUTERS.USER.MY_RESPONSE.replace(":surveyId", id);
 
   const handleStart = (id) => navigate(surveyPath(id));
 
@@ -1062,7 +946,6 @@ export default function DashboardPage() {
             <BentoStatCard icon={ClipboardList} label="Đã hoàn thành" value={loading ? "—" : String(doneCount)} sub={`trên ${publicSurveys.length} khảo sát`} color="#4f46e5" delay={0.1} />
             <BentoStatCard icon={Zap} label="Chưa làm" value={loading ? "—" : String(pendingCount)} sub="Đang chờ bạn" color="#f59e0b" delay={0.15} />
             <GamificationQuickStatsCard />
-            <BentoStatCard icon={TrendingUp} label="Cấp độ" value="12" sub="Nâng cao" color="#a855f7" delay={0.25} />
           </div>
         </div>
 
@@ -1099,7 +982,7 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
@@ -1121,7 +1004,7 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {mySurveys.slice(0, 5).map((survey, i) => (
                 <SurveyCardHome
                   key={survey.id}
@@ -1159,7 +1042,7 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
@@ -1181,7 +1064,7 @@ export default function DashboardPage() {
               </div>
             </GlassmorphCard>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {publicSurveys.slice(0, 5).map((survey, i) => {
                 const done = doneSurveyIds.has(survey.id);
                 return (
@@ -1199,31 +1082,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <SectionHeading style={{ marginBottom: 18 }}>Hoạt động & thử thách</SectionHeading>
-          <div
-            className="home-act-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1.6fr) minmax(260px, 1fr)",
-              gap: 18,
-              alignItems: "stretch",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 16,
-              }}
-            >
-              {ACTIVITIES.map((activity, i) => (
-                <ActivityBento key={i} activity={activity} delay={0.45 + i * 0.08} />
-              ))}
-            </div>
-            <ChallengeBento />
-          </div>
-        </div>
       </div>
 
       <ShareModal

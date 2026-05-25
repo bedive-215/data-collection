@@ -41,6 +41,7 @@ import GenderGuard from "@/components/common/GenderGuard";
 import MySurveysPage from "@/pages/user/MySurveysPage";
 import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
 import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
+import MyResponsePage from "@/pages/user/MyResponsePage";
 import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
 import NotificationsPage from "@/pages/user/NotificationsPage";
 import SurveyStudio from "@/pages/user/SurveyStudio";
@@ -111,6 +112,12 @@ const routeConfig = [
   {
     path: ROUTERS.USER.SURVEY_RESPONSE,
     element: SurveyResponsePage,
+    layout: HomeLayout,
+    guard: GenderGuard,
+  },
+  {
+    path: ROUTERS.USER.MY_RESPONSE,
+    element: MyResponsePage,
     layout: HomeLayout,
     guard: GenderGuard,
   },

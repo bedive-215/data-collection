@@ -1441,6 +1441,18 @@ function SurveyCard({
     { icon:<Trash2 size={13}/>, label:"Xóa", action:() => onDelete(s.id), color:C.error },
   ].filter(Boolean);
 
+  const cardTheme = (() => {
+    const MAP = {
+      ACTIVE:    { mesh:"linear-gradient(135deg, #f0f2ff 0%, #e8ebff 50%, #dde2ff 100%)", accent:"#6366f1" },
+      DRAFT:     { mesh:"linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 50%, #e8ecf2 100%)", accent:"#94a3b8" },
+      EXPIRED:   { mesh:"linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #ffd9d9 100%)", accent:"#ef4444" },
+      CLOSED:    { mesh:"linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #eceef1 100%)", accent:"#9ca3af" },
+      SCHEDULED: { mesh:"linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #cce9fb 100%)", accent:"#0284c7" },
+      COMPLETED: { mesh:"linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #c4e4ce 100%)", accent:"#059669" },
+    };
+    return MAP[s.status] || MAP.DRAFT;
+  })();
+
   return (
     <>
       <div
@@ -1449,22 +1461,16 @@ function SurveyCard({
         onMouseMove={handleMouseMove}
         style={{
           background:      C.surface,
-          borderColor:    hovered ? C.borderHover : C.border,
-          borderWidth:    isOwner ? "3px 1px 1px 1px" : "1px",
+          borderColor:    hovered ? "#d0d7e8" : "#e8ecf2",
+          borderWidth:    "1px",
           borderStyle:    "solid",
-          borderTopColor:  isOwner ? ownerBorderColor : (hovered ? C.borderHover : C.border),
-          borderTopWidth: isOwner ? 3 : 1,
           borderRadius:   12,
           overflow:      "hidden",
           cursor:        "pointer",
-          transition:    "border-color .15s, box-shadow .15s, transform .6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transition:    "border-color .2s, box-shadow .25s, transform .5s cubic-bezier(0.34,1.56,0.64,1)",
           boxShadow:     hovered
-            ? isOwner
-              ? "0 8px 32px rgba(108, 126, 247, 0.35)"
-              : "0 8px 24px rgba(0,0,0,0.3)"
-            : isOwner
-              ? "0 4px 16px rgba(108, 126, 247, 0.15)"
-              : "0 4px 12px rgba(0,0,0,0.3)",
+            ? "0 12px 32px rgba(0,0,0,0.09), 0 3px 8px rgba(0,0,0,0.04)"
+            : "0 1px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
           transform:     `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
           display:       "flex",
           flexDirection: "column",
@@ -1474,115 +1480,107 @@ function SurveyCard({
         }}
         onClick={() => !editing && onOpen(s.id)}
       >
-        {/* Thumbnail — premium mesh design */}
+        {/* Header — pastel mesh gradient + icon */}
         <div style={{
-          height:148,
+          height:110,
           background: isClosed
-            ? "linear-gradient(135deg,#1a1a2e,#16213e)"
-            : isOwner
-              ? "linear-gradient(135deg, rgba(108,126,247,0.30), rgba(79,110,247,0.15), #111827)"
-              : `linear-gradient(135deg, ${C.primaryDim.replace("0.10","0.35")}, ${C.surfaceHigh})`,
-          position:"relative", borderBottom:`1px solid ${C.border}`,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          opacity: isClosed ? 0.65 : 1,
-          overflow: "hidden", flexShrink: 0,
+            ? "linear-gradient(135deg,#f3f4f6,#e5e7eb)"
+            : cardTheme.mesh,
+          position:"relative",
+          overflow:"hidden", flexShrink:0,
         }}>
-          {/* Shimmer */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)" }} />
+          {/* Radial highlight */}
+          <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.5) 0%, transparent 65%)", pointerEvents:"none" }} />
           {/* Bottom fade */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 28, background: "linear-gradient(to top, #0d1120, transparent)" }} />
-          {/* Central document icon */}
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:28, background:"linear-gradient(to top, #fff 20%, transparent)", pointerEvents:"none" }} />
+
+          {/* Floating icon */}
           <div style={{
             position:"absolute", top:"50%", left:"50%",
             transform:"translate(-50%,-50%)",
-            width:68, height:68,
-            borderRadius:18,
-            background:"rgba(255,255,255,0.06)",
-            backdropFilter:"blur(10px)",
-            WebkitBackdropFilter:"blur(10px)",
-            border:"1px solid rgba(255,255,255,0.1)",
-            boxShadow:"0 8px 32px rgba(0,0,0,0.4)",
+            width:56, height:56,
+            borderRadius:14,
+            background:"rgba(255,255,255,0.55)",
+            backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
+            border:"1.5px solid rgba(255,255,255,0.7)",
+            boxShadow:"0 6px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>
             <div style={{
-              width:36, height:36,
-              borderRadius:10,
-              background:"rgba(255,255,255,0.08)",
+              width:30, height:30, borderRadius:8,
+              background:"rgba(255,255,255,0.55)",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>
-              <FileText size={22} color="rgba(255,255,255,0.6)" strokeWidth={1.5} />
+              <FileText size={18} color={cardTheme.accent} strokeWidth={1.5} />
             </div>
           </div>
 
-          {/* Badges */}
-          <div style={{position:"absolute", top:8, left:8, display:"flex", flexDirection:"column", gap:4}}>
+          {/* Top-left badges */}
+          <div style={{position:"absolute", top:10, left:10, display:"flex", flexDirection:"column", gap:4, zIndex:10}}>
             {isOwner && (
               <span style={{
-                fontSize:10, fontWeight:700, padding:"3px 8px",
-                borderRadius:999, color:"#fff",
+                fontSize:9.5, fontWeight:700, padding:"3px 8px",
+                borderRadius:6, color:"#fff",
                 background:"linear-gradient(90deg, #6c7ef7, #4f6ef7)",
                 boxShadow:"0 2px 8px rgba(108,126,247,0.4)",
-                display:"flex", alignItems:"center", gap:4,
+                display:"flex", alignItems:"center", gap:3,
               }}>
-                <span style={{fontSize:8}}>★</span> Biểu mẫu của bạn
+                ★ Biểu mẫu của bạn
               </span>
             )}
             {s.status && <StatusBadge status={s.status}/>}
             {isPublished && (
               <span style={{
-                fontSize:10, fontWeight:700, padding:"3px 8px",
-                borderRadius:999, color:C.primary, background:"rgba(108,126,247,0.15)",
-                display:"flex", alignItems:"center", gap:4,
+                fontSize:9.5, fontWeight:700, padding:"3px 8px",
+                borderRadius:6, color:"#059669",
+                background:"rgba(5,150,105,0.10)",
+                border:"1px solid rgba(5,150,105,0.20)",
+                display:"flex", alignItems:"center", gap:3,
               }}>
                 <Globe size={9}/> Published
               </span>
             )}
           </div>
 
-          {/* Quick action buttons */}
+          {/* Quick action buttons — top-right */}
           {!editing && (
-            <div
-              style={{position:"absolute", bottom:10, left:10, display:"flex", gap:5}}
-              onClick={e => e.stopPropagation()}
-            >
+            <div style={{position:"absolute", top:10, right:10, display:"flex", gap:5, zIndex:10}} onClick={e => e.stopPropagation()}>
               <button onClick={() => setShareOpen(true)} title="Chia sẻ" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(108,126,247,0.8)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = C.textSub; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                 <Share2 size={12}/>
               </button>
               <button onClick={() => setInviteOpen(true)} title="Mời người dùng" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(108,126,247,0.8)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = C.textSub; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                 <Mail size={12}/>
               </button>
               <button onClick={() => setBulkInviteOpen(true)} title="Mời hàng loạt" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(108,126,247,0.8)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = C.textSub; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                 <UserPlus size={12}/>
               </button>
               <button onClick={() => setParticipantsOpen(true)} title="Xem participants" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(108,126,247,0.8)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = C.textSub; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                 <Users size={12}/>
               </button>
               <button
                 onClick={() => setPublishOpen(true)} title={isPublished ? "Ẩn survey" : "Publish"}
                 style={{
                   ...quickBtn,
-                  background: isPublished ? "rgba(245,158,11,0.7)" : "rgba(255,255,255,0.08)",
-                  color: isPublished ? "#fff" : C.textSub,
+                  background: isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)",
+                  borderColor: isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)",
+                  color: isPublished ? "#d97706" : "#64748b",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.9)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.7)" : "rgba(255,255,255,0.08)";
-                  e.currentTarget.style.color = isPublished ? "#fff" : C.textSub;
-                }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "#d97706"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#d97706"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)"; e.currentTarget.style.color = isPublished ? "#d97706" : "#64748b"; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)"; }}>
                 {isPublished ? <Lock size={12}/> : <Globe size={12}/>}
               </button>
               {!isClosed && (
                 <button onClick={() => setCloseOpen(true)} title="Đóng survey" style={quickBtn}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(107,114,128,0.8)"; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = C.textSub; }}>
+                  onMouseEnter={e => { e.currentTarget.style.background = "#6b7280"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6b7280"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                   <PowerOff size={12}/>
                 </button>
               )}
@@ -1590,26 +1588,28 @@ function SurveyCard({
           )}
 
           {/* 3-dot menu */}
-          <div ref={menuRef} style={{position:"absolute", top:8, right:8}} onClick={e => e.stopPropagation()}>
+          <div ref={menuRef} style={{position:"absolute", top:10, right: isEditing ? 10 : "auto", left: isEditing ? 10 : "auto", display: isEditing ? "block" : "none", zIndex:20}} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(v => !v)}
               style={{
-                width:30, height:30, borderRadius:"50%",
-                background: menuOpen ? "rgba(108,126,247,0.2)" : "rgba(0,0,0,0.3)",
-                border:"none", cursor:"pointer", color:"#fff",
+                width:26, height:26, borderRadius:8,
+                background: menuOpen ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.55)",
+                backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
+                border:"1px solid rgba(255,255,255,0.7)",
+                cursor:"pointer", color:"#64748b",
                 display:"flex", alignItems:"center", justifyContent:"center",
                 transition:"background .15s",
               }}
             >
-              <MoreVertical size={15}/>
+              <MoreVertical size={14}/>
             </button>
             {menuOpen && (
               <div style={{
-                position:"absolute", top:34, right:0, zIndex:20, width:196,
-                background:C.surfaceHigh, border:`1px solid ${C.border}`,
-                borderRadius:12, overflow:"hidden",
-                boxShadow:"0 8px 24px rgba(0,0,0,0.5)",
-                animation:"slideInUp 0.2s ease-out",
+                position:"absolute", top:30, right:0, zIndex:20, width:190,
+                background:C.surfaceHigh, border:`1px solid #e8ecf2`,
+                borderRadius:10, overflow:"hidden",
+                boxShadow:"0 8px 24px rgba(0,0,0,0.12)",
+                animation:"slideInUp 0.15s ease-out",
               }}>
                 {menuItems.map((item, i) => (
                   <button key={i} onClick={item.action} style={{
@@ -1619,9 +1619,9 @@ function SurveyCard({
                     fontSize:13, fontWeight:500,
                     color: item.color || C.text,
                     cursor:"pointer", fontFamily:C.font,
-                    borderBottom: i < menuItems.length - 1 ? `1px solid ${C.border}` : "none",
+                    borderBottom: i < menuItems.length - 1 ? `1px solid #f4f6f8` : "none",
                   }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.surface}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f4f6f8"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     {isDeleting && item.label === "Xóa"

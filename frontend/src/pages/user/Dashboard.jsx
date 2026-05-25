@@ -1,37 +1,9 @@
 // ─── DashboardPage.jsx ────────────────────────────────────────────
 
 import { useEffect, useState } from "react";
-import  surveyService  from "@/services/surveyService";
-
-// ── SurveyCard ──────────────────────────────────────────────────────
-function SurveyCard({ icon, iconColor, iconBg, tag, title, desc, duration }) {
-  return (
-    <div className="group bg-surface-container hover:bg-surface-bright transition-all duration-300 p-6 rounded-2xl border border-outline-variant/5">
-      <div className="flex justify-between items-start mb-6">
-        <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center ${iconColor} group-hover:scale-110 transition-transform`}>
-          <span className="material-symbols-outlined text-3xl">{icon}</span>
-        </div>
-        <span className="text-xs font-bold px-3 py-1 bg-surface-container-highest rounded-full text-on-surface-variant tracking-wider uppercase">
-          {tag}
-        </span>
-      </div>
-
-      <h3 className="text-xl font-bold mb-2 text-on-surface font-headline">{title}</h3>
-      <p className="text-on-surface-variant text-sm mb-6 line-clamp-2">{desc}</p>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-on-surface-variant text-xs">
-          <span className="material-symbols-outlined text-sm">schedule</span>
-          <span>{duration}</span>
-        </div>
-
-        <button className="px-6 py-2 bg-gradient-to-r from-primary-dim to-primary text-on-primary font-bold rounded-xl text-sm active:scale-95 transition-all">
-          Start
-        </button>
-      </div>
-    </div>
-  );
-}
+import { useNavigate } from "react-router-dom";
+import surveyService from "@/services/surveyService";
+import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 
 // ── ActivityItem ────────────────────────────────────────────────────
 function ActivityItem({ icon, iconColor, iconBg, title, sub, xp, xpColor }) {
@@ -69,6 +41,7 @@ function WeekendChallenge() {
 
 // ── MAIN PAGE ───────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -133,16 +106,14 @@ export default function DashboardPage() {
               {loading ? (
                 <p>Loading...</p>
               ) : (
-                surveys.map((s) => (
-                  <SurveyCard
+                surveys.map((s, i) => (
+                  <SurveyCardHome
                     key={s.id}
-                    icon="description"
-                    iconColor="text-primary"
-                    iconBg="bg-primary/10"
-                    tag="Survey"
-                    title={s.title}
-                    desc={s.description}
-                    duration="5 phút"
+                    survey={s}
+                    index={i}
+                    onClick={() => navigate(`/user/surveys/${s.id}/take`)}
+                    type="public"
+                    overrideStatus={s.status}
                   />
                 ))
               )}

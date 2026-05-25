@@ -391,7 +391,6 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
         const res = await getMySubmission(surveyId);
 
         // Backend trả: { data: [{ response_id, answers: [...] }] }
-        // Hoặc trực tiếp array responses
         const raw = res?.data ?? res ?? [];
 
         const allAnswers = Array.isArray(raw)
@@ -416,113 +415,138 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
-        background: "rgba(0,0,0,0.35)",
-        backdropFilter: "blur(6px)",
+        zIndex: 9999,
+        background: "rgba(15,23,42,0.5)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         padding: 16,
+        animation: "smFade .15s ease",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: 640,
-          maxHeight: "90vh",
+          maxWidth: 560,
+          maxHeight: "88vh",
           overflow: "hidden",
-          background: "#f4f5f7",
-          borderRadius: 24,
-          border: "1px solid #e5e7eb",
+          background: "#ffffff",
+          borderRadius: 18,
+          border: "1px solid #e2e8f0",
           display: "flex",
           flexDirection: "column",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.14)",
+          animation: "smUp .22s cubic-bezier(.16,1,.3,1)",
+          fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
         }}
       >
-        {/* Header */}
+        {/* Header — green gradient */}
         <div
           style={{
-            padding: "14px 20px",
-            background: "#fff",
-            borderBottom: "1px solid #e5e7eb",
+            padding: "14px 18px",
+            background: "linear-gradient(135deg, #059669, #10b981)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexShrink: 0,
           }}
         >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 9,
+              background: "rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <CheckCircle2 size={16} color="#fff" />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Đáp án của bạn</div>
+              <div style={{
+                fontSize: 11, color: "rgba(255,255,255,0.75)",
+                maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {surveyTitle}
+              </div>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-700"
+            style={{
+              width: 28, height: 28, borderRadius: 7,
+              border: "1px solid rgba(255,255,255,0.3)",
+              background: "rgba(255,255,255,0.15)",
+              cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", color: "#fff",
+              transition: "background .15s",
+            }}
           >
-            <ArrowLeft size={16} />
-            Đóng
+            <X size={13} />
           </button>
-
-          <div className="text-sm font-bold text-gray-700">InsightFlow</div>
-
-          <div style={{ width: 60 }} />
         </div>
 
         {/* Body */}
-        <div style={{ padding: 24, overflowY: "auto", flex: 1 }}>
-          {/* Hero */}
-          <div className="text-center mb-6">
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-              style={{ background: "#dcfce7", border: "1px solid #86efac" }}
-            >
-              <CheckCircle2 size={14} color="#16a34a" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#15803d]">
-                Đã hoàn thành
-              </span>
-            </div>
+        <div style={{ padding: "20px 20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
 
-            <h2 className="text-xl font-extrabold text-gray-900 mb-1">
-              {surveyTitle}
-            </h2>
-
-            {!loading && (
-              <p className="text-sm text-gray-400">{answers.length} câu hỏi</p>
-            )}
-          </div>
-
-          {/* Loading */}
           {loading && (
-            <div className="flex items-center justify-center py-16 text-[#4f6ef7] gap-3">
-              <Loader2 size={20} className="animate-spin" />
-              <span className="font-semibold text-sm">Đang tải...</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "40px 0", color: "#94a3b8" }}>
+              <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+              <span style={{ fontSize: 13, fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>Đang tải đáp án...</span>
             </div>
           )}
 
-          {/* Error */}
           {!loading && error && (
-            <div className="flex flex-col items-center py-16 gap-3 text-gray-400">
-              <span className="text-4xl">⚠️</span>
-              <p>{error}</p>
+            <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <div style={{ marginBottom: 8 }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Không thể tải đáp án</div>
+              <div style={{ fontSize: 13, color: "#94a3b8" }}>{error}</div>
             </div>
           )}
 
-          {/* Empty */}
           {!loading && !error && answers.length === 0 && (
-            <div className="flex flex-col items-center py-16 gap-3 text-gray-400">
-              <Inbox size={42} />
-              <p>Không có câu trả lời.</p>
+            <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: "#f8fafc", border: "1.5px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                <Inbox size={22} color="#94a3b8" />
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Chưa có đáp án</div>
+              <div style={{ fontSize: 13, color: "#94a3b8" }}>Bạn chưa trả lời khảo sát này.</div>
             </div>
           )}
 
-          {/* Answers */}
           {!loading && !error && answers.length > 0 && (
-            <div className="flex flex-col gap-4">
-              {answers.map((item, idx) => (
-                <QuestionCard
-                  key={item.question_id ?? idx}
-                  item={item}
-                  index={idx}
-                />
-              ))}
-            </div>
+            <>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "8px 14px", borderRadius: 10,
+                background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.15)",
+                alignSelf: "flex-start",
+              }}>
+                <CheckCircle2 size={13} color="#059669" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#059669" }}>{answers.length} câu hỏi</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {answers.map((item, idx) => (
+                  <QuestionCard
+                    key={item.question_id ?? idx}
+                    item={item}
+                    index={idx}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
+      <style>{`
+        @keyframes smFade { from{opacity:0} to{opacity:1} }
+        @keyframes smUp   { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+        @keyframes spin   { to{transform:rotate(360deg)} }
+      `}</style>
     </div>
   );
 }
@@ -555,21 +579,15 @@ function CardSkeleton() {
 // SurveyCardWrapper — adapts SurveyCardHome for SurveysPage
 // ─────────────────────────────────────────────────────────────
 function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index }) {
-  const handleClick = () => {
-    if (done) {
-      onViewSubmission(survey.id, survey.title);
-    } else {
-      onStart(survey.id);
-    }
-  };
-
   return (
     <SurveyCardHome
       survey={survey}
       index={index}
       overrideStatus={done ? "COMPLETED" : null}
-      onClick={handleClick}
+      onClick={done ? null : () => onStart(survey.id)}
+      onViewResponses={done ? onViewSubmission : null}
       type="public"
+      isOwner={false}
     />
   );
 }
@@ -871,7 +889,7 @@ export default function SurveysPage() {
 
       {/* Loading skeletons */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 280px))", gap:14 }}>
           {Array(6)
             .fill(0)
             .map((_, i) => (
@@ -882,12 +900,17 @@ export default function SurveysPage() {
 
       {/* Error */}
       {!loading && error && (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-4">
-          <span className="text-5xl">⚠️</span>
-          <p>{error}</p>
+        <div className="flex flex-col items-center justify-center py-20 gap-4" style={{textAlign:"center"}}>
+          <div style={{width:56,height:56,borderRadius:16,background:"rgba(239,68,68,0.08)",border:"1.5px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <p style={{fontSize:15,fontWeight:700,color:"#374151",margin:"0 0 4px",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>Đã xảy ra lỗi</p>
+            <p style={{fontSize:13,color:"#94a3b8",margin:0,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>{error}</p>
+          </div>
           <button
             onClick={fetchData}
-            className="text-[#4f6ef7] font-semibold hover:underline"
+            style={{padding:"8px 20px",borderRadius:10,border:"1px solid rgba(79,70,229,0.3)",background:"rgba(79,70,229,0.06)",color:"#4f46e5",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif"}}
           >
             Thử lại
           </button>
@@ -896,16 +919,16 @@ export default function SurveysPage() {
 
       {/* Empty */}
       {!loading && !error && displayed.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-300 gap-4">
-          <Inbox size={52} strokeWidth={1.2} />
-          <div className="text-center">
-            <p className="text-base font-semibold text-gray-500">
-              Không có khảo sát nào
+        <div className="flex flex-col items-center justify-center py-20 gap-4" style={{textAlign:"center"}}>
+          <div style={{width:56,height:56,borderRadius:16,background:"#f8fafc",border:"1.5px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Inbox size={24} color="#94a3b8" />
+          </div>
+          <div>
+            <p style={{fontSize:15,fontWeight:700,color:"#374151",margin:"0 0 4px",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+              {search ? `Không tìm thấy kết quả cho "${search}"` : "Chưa có khảo sát nào"}
             </p>
-            <p className="text-sm text-gray-400 mt-1">
-              {search
-                ? `Không tìm thấy kết quả cho "${search}"`
-                : "Chưa có dữ liệu"}
+            <p style={{fontSize:13,color:"#94a3b8",margin:0,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+              {search ? "Thử tìm với từ khóa khác" : "Hãy quay lại sau khi có khảo sát mới"}
             </p>
           </div>
         </div>
@@ -914,10 +937,9 @@ export default function SurveysPage() {
       {/* Content */}
       {!loading && !error && displayed.length > 0 && (
         <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
-              : "flex flex-col gap-3"
+            style={viewMode === "grid"
+            ? { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:16 }
+            : { display:"flex", flexDirection:"column", gap:10 }
           }
         >
           {displayed.map((survey, index) => (
