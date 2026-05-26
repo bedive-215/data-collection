@@ -55,36 +55,35 @@ class ResponseService {
         const questionIds = answers.map(a => a.question_id);
         if (new Set(questionIds).size !== questionIds.length) throw new AppError("Duplicate question", 400);
 
-        await withTransaction(this.sequelize, null, async (transaction) => {
+        const { responseId } = await withTransaction(this.sequelize, null, async (transaction) => {
             const response = await this.Response.findOne({
                 where: { user_id, survey_id, submitted_at: null },
                 transaction,
             });
-            if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.", 400);
+            if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát...", 400);
 
             const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
             const answerRecords = await buildAnswerRecords(response.id, answers, questionMap, optionMap);
-
             await this.Answer.bulkCreate(answerRecords, { transaction });
             await response.update({ submitted_at: new Date(), status: "COMPLETED" }, { transaction });
+
+            return { responseId: response.id }; // ← lấy id trước khi commit
         });
 
-        // Lấy response sau commit để dùng cho gamification
-        const response = await this.Response.findOne({ where: { user_id, survey_id }, order: [["created_at", "DESC"]] });
         const survey = await this.Survey.findByPk(survey_id);
         const isCreator = survey.created_by === user_id;
 
         eventBus.emit(RESPONSE_EVENTS.SUBMITTED, {
             userId: user_id,
             surveyId: survey_id,
-            responseId: response.id,
+            responseId,
             isCreator,
             survey,
         });
 
         return {
             message: "Submit survey successfully",
-            response_id: response.id,
+            response_id: responseId,
         };
     }
 

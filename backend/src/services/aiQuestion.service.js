@@ -180,7 +180,7 @@ class AiQuestionService {
     const { mode, rawText, surveyTitle, surveyDescription, count = 8 } = body;
 
     const system =
-  "You are an expert survey designer. Return ONLY valid JSON. No markdown. No code fences. No explanations.";
+      "You are an expert survey designer. Return ONLY valid JSON. No markdown. No code fences. No explanations.";
 
     let userPrompt;
     if (mode === "parse") {
