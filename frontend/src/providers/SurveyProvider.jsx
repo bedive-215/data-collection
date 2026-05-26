@@ -506,6 +506,24 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
+  const extendSurvey = useCallback(async (id, new_end_at) => {
+    try {
+      startLoading();
+      const res = await surveyService.extendSurvey(id, { new_end_at });
+      const data = res?.data ?? res;
+      const updated = normalizeSurvey(data?.survey || {});
+      const update = (prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s));
+      setSurveys(update);
+      setMySurveys(update);
+      toast.success("Đã gia hạn khảo sát");
+      return updated;
+    } catch (err) {
+      handleError(err, "Không thể gia hạn khảo sát");
+    } finally {
+      stopLoading();
+    }
+  }, []);
+
   // Không dùng startLoading/stopLoading: SurveysLayout gán `loading` vào UI "My Surveys"
   // → spinner thay cả grid → MySurveyCard + ShareLinkModal bị unmount → mất shareUrl dù API OK.
   const shareLink = useCallback(async (id) => {
@@ -596,6 +614,7 @@ const SurveyProvider = ({ children }) => {
       deleteSurvey,
       closeSurvey,
       publishSurvey,
+      extendSurvey,
       shareLink,
       inviteSurvey,
       bulkInviteSurvey,
@@ -622,6 +641,7 @@ const SurveyProvider = ({ children }) => {
       deleteSurvey,
       closeSurvey,
       publishSurvey,
+      extendSurvey,
       shareLink,
       inviteSurvey,
       bulkInviteSurvey,
