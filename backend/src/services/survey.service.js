@@ -12,7 +12,7 @@ import { mapSurveyDetail, mapSurvey } from "../mappers/survey.mapper.js";
 
 import eventBus from "../events/eventBus.js";
 import { SURVEY_EVENTS } from "../events/survey/survey.events.js";
-import { START_EVENTS } from "../events/start/start.event.js";
+import { STAR_EVENTS } from "../events/star/star.event.js";
 import { ACHIEVEMENT_EVENTS } from "../events/achivenent/achivement.event.js";
 
 import { emailQueue } from "../queues/email.queue.js";

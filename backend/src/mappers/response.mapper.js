@@ -24,7 +24,7 @@ export function mapAnswerToResponse(answers, optionMap = {}) {
     });
 }
 
-export function buildAnswerRecords(response_id, answers, questionMap, optionMap) {
+export async function buildAnswerRecords(response_id, answers, questionMap, optionMap) {
     const records = [];
 
     for (const ans of answers) {
@@ -65,7 +65,7 @@ export function buildAnswerRecords(response_id, answers, questionMap, optionMap)
     return records;
 }
 
-export function buildMaps(answers, survey_id, transaction = null) {
+export async function buildMaps(answers, survey_id, transaction = null) {
     const questionIds = answers.map(a => a.question_id);
     const questions = await this.Question.findAll({
         where: { id: questionIds, survey_id },
@@ -85,7 +85,7 @@ export function buildMaps(answers, survey_id, transaction = null) {
     };
 }
 
-export function getAnswersWithMap(response_id) {
+export async function getAnswersWithMap(response_id) {
     const answers = await this.Answer.findAll({
         where: { response_id },
         include: [

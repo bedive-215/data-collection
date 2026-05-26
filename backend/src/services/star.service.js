@@ -8,9 +8,8 @@ import { withTransaction } from "../utils/transaction.js";
 
 import { mapTransaction } from "../mappers/star.mapper.js";
 
-import { STAR_EVENTS } from "../events/start/start.event.js";
 import eventBus from "../events/eventBus.js";
-
+import { STAR_EVENTS } from "../events/star/star.event.js";
 class StarService {
     constructor() {
         const { User, StarTransaction, sequelize } = models;

@@ -1,7 +1,7 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { mapAchievement } from "../mappers/achivement.mapper.js";
-import { evaluateCondition } from "../helpers/evaluateCondition.js";
+import { evaluateCondition } from "../helpers/evaluateCondition.helper.js";
 import { withTransaction } from "../utils/transaction.js";
 
 import { ACHIEVEMENTS_DEF, ACHIEVEMENT_CATEGORY_ORDER } from "../domain/achivement.domain.js";
@@ -10,7 +10,7 @@ import starService from "./star.service.js";
 
 import eventBus from "../events/eventBus.js";
 import { ACHIEVEMENT_EVENTS } from "../events/achivenent/achivement.event.js";
-import { START_EVENTS } from "../events/start/start.event.js";
+import { STAR_EVENTS } from "../events/star/star.event.js";
 
 class AchievementService {
     constructor() {
