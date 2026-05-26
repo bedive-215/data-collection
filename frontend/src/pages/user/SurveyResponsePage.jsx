@@ -63,6 +63,7 @@ function SurveyResponsePage() {
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
+  const [errorStatus, setErrorStatus] = useState(null);
   const { getMySubmission } = useResponse();
 
   useEffect(() => {
@@ -70,15 +71,19 @@ function SurveyResponsePage() {
       try {
         setLoading(true);
         setError(null);
+        setErrorStatus(null);
         const res = await getMySubmission(surveyId);
         setResponse(res);
       } catch (err) {
         console.warn("Submission fetch failed:", err?.message || err);
         const status = err?.response?.status;
+        setErrorStatus(status);
         if (status === 403 || status === 404) {
           setError("Bạn chưa tham gia khảo sát này hoặc không có quyền xem.");
         } else if (status === 401) {
           setError("Vui lòng đăng nhập để xem kết quả.");
+        } else if (status === 500) {
+          setError("Dữ liệu khảo sát đang gặp sự cố. Vui lòng thử lại sau.");
         } else {
           setError("Không thể tải kết quả. Vui lòng thử lại sau.");
         }
@@ -135,9 +140,15 @@ function SurveyResponsePage() {
                 <p style={{ margin: "0 0 8px", color: PAGE.textSub, fontSize: 13, lineHeight: 1.55 }}>
                   {error || "Không thể tải được câu trả lời của bạn"}
                 </p>
-                <p style={{ margin: 0, color: PAGE.textDim, fontSize: 12, lineHeight: 1.5 }}>
-                  Có thể khảo sát đã hết hạn, đã đóng, hoặc bạn không có quyền xem.
-                </p>
+                {errorStatus === 500 ? (
+                  <p style={{ margin: 0, color: PAGE.textDim, fontSize: 12, lineHeight: 1.5 }}>
+                    Khảo sát này hiện đang gặp sự cố về dữ liệu. Vui lòng liên hệ người tạo khảo sát hoặc thử lại sau.
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, color: PAGE.textDim, fontSize: 12, lineHeight: 1.5 }}>
+                    Có thể khảo sát đã hết hạn, đã đóng, hoặc bạn không có quyền xem.
+                  </p>
+                )}
               </div>
             </div>
             <div style={{ marginTop: 16 }}>
