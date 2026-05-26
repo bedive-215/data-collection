@@ -119,8 +119,6 @@ class QuestionService {
         });
     }
 
-    // ─── Queries ──────────────────────────────────────────────────────────────
-
     async getQuestionsBySurvey(survey) {
         const status = getSurveyStatus(survey);
         if (status !== "ACTIVE") throw new AppError(`Survey is ${status}`, 403);
