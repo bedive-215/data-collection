@@ -392,7 +392,10 @@ export default function SurveyTakePage() {
 
   // Check survey scheduling
   useEffect(() => {
-    if (!currentSurvey) return;
+    if (!currentSurvey) {
+      setSurveyStatus("expired"); // No survey = consider it expired/not found
+      return;
+    }
     const now = new Date();
     const start = currentSurvey.start_at ? new Date(currentSurvey.start_at) : null;
     const end = currentSurvey.end_at ? new Date(currentSurvey.end_at) : null;

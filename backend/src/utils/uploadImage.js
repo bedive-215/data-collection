@@ -16,3 +16,7 @@ export const uploadBufferToCloudinary = (buffer, folder = "avatar_images") => {
     streamifier.createReadStream(buffer).pipe(stream);
   });
 };
+
+export const deleteFromCloudinary = (publicId) => {
+  return cloudinary.uploader.destroy(publicId);
+};

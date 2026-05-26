@@ -4,9 +4,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuestion } from "@/providers/QuestionProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
 import surveyService from "@/services/surveyService";
+import mediaService from "@/services/mediaService";
 import { ROUTERS } from "@/utils/constants";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import AiQuestionAssistant from "@/components/survey/AiQuestionAssistant";
+import { toast } from "react-toastify";
 import {
   Plus, Trash2, Loader2, AlertCircle, Inbox, X,
   Pencil, Check, GripVertical, PlusCircle, Image, ChevronLeft, Sparkles,
@@ -120,6 +122,7 @@ const buildBEOptions = (optionRows) =>
       value:       r.value.trim(),
       order_index: i,
       is_other:    r.is_other ?? false,
+      image_url:   r.image?.url || r.image_url || null,
     }));
 
 /* ── getPlainText helper ──────────────────────────────────────────── */
@@ -1419,7 +1422,13 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       ? existingOptions.map(o =>
           typeof o === "string"
             ? { label: o, value: o, order_index: 0, is_other: false, image: null }
-            : { label: o.label ?? "", value: o.value ?? "", order_index: o.order_index ?? 0, is_other: o.is_other ?? false, image: null }
+            : {
+                label: o.label ?? "",
+                value: o.value ?? "",
+                order_index: o.order_index ?? 0,
+                is_other: o.is_other ?? false,
+                image: o.image_url ? { url: o.image_url } : null,
+              }
         )
       : [newOptionRow()]
   );
@@ -1451,6 +1460,43 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
     }
 
     setSaving(true);
+    // Upload question image if selected (check if it's a blob URL = local file needs upload)
+    let finalMediaUrl = mediaUrl.trim() || null;
+    if (finalMediaUrl && finalMediaUrl.startsWith("blob:")) {
+      // It's a local blob URL - need to upload
+      const blobRes = await fetch(finalMediaUrl);
+      const blob = await blobRes.blob();
+      const file = new File([blob], "question_image.png", { type: blob.type });
+      try {
+        const uploadRes = await mediaService.uploadQuestionMedia(file);
+        finalMediaUrl = uploadRes?.url || uploadRes?.data?.url || null;
+      } catch (err) {
+        console.error("[SaveQuestion] Image upload failed:", err);
+      }
+    }
+
+    // Upload option images if selected
+    let finalOptionRows = optionRows;
+    if (isChoice) {
+      const rowsWithFiles = optionRows.filter(r => r.image?.url?.startsWith("blob:"));
+      if (rowsWithFiles.length > 0) {
+        finalOptionRows = await Promise.all(optionRows.map(async (row) => {
+          if (!row.image?.url?.startsWith("blob:")) return row;
+          try {
+            const blobRes = await fetch(row.image.url);
+            const blob = await blobRes.blob();
+            const file = new File([blob], "option_image.png", { type: blob.type });
+            const uploadRes = await mediaService.uploadOptionMedia(file);
+            const uploadedUrl = uploadRes?.url || uploadRes?.data?.url;
+            return { ...row, image: uploadedUrl ? { url: uploadedUrl } : row.image };
+          } catch (err) {
+            console.error("[SaveQuestion] Option image upload failed:", err);
+            return row;
+          }
+        }));
+      }
+    }
+
     const payload = {
       content:  contentHtml,
       type:     toBEType(type),
@@ -1458,11 +1504,11 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       settings: hasSettings ? settings : undefined,
       description: description.trim() || null,
       placeholder: placeholder.trim() || null,
-      media_url: mediaUrl.trim() || null,
+      media_url: finalMediaUrl,
       section_id: sectionId || null,
       condition: condition || null,
     };
-    if (isChoice) payload.options = buildBEOptions(optionRows);
+    if (isChoice) payload.options = buildBEOptions(finalOptionRows);
 
    try { await onSave(q.id, surveyId, payload); }
     finally { setSaving(false); }
@@ -1497,7 +1543,9 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           background: C.surface,
           backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)",
-          border: `1px solid ${hovered ? "rgba(99,102,241,0.28)" : "rgba(255,255,255,0.55)"}`,
+          borderTop: "1px solid rgba(99,102,241,0.22)",
+          borderRight: "1px solid rgba(99,102,241,0.22)",
+          borderBottom: "1px solid rgba(99,102,241,0.22)",
           borderLeft: `4px solid ${hovered ? C.primary : "rgba(99,102,241,0.2)"}`,
           borderRadius: 16,
           padding: "16px 22px",
@@ -1586,7 +1634,9 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       background: C.surface,
       backdropFilter: "blur(14px)",
       WebkitBackdropFilter: "blur(14px)",
-      border: `1px solid rgba(99,102,241,0.22)`,
+      borderTop: "1px solid rgba(99,102,241,0.22)",
+      borderRight: "1px solid rgba(99,102,241,0.22)",
+      borderBottom: "1px solid rgba(99,102,241,0.22)",
       borderLeft: `4px solid ${C.primary}`,
       borderRadius: 16,
       boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 16px 40px rgba(79,70,229,0.12)",
@@ -2156,6 +2206,37 @@ const fetchSections = useCallback(async (sid) => {
 
     setFormError("");
 
+    // Upload question image if selected
+    let finalMediaUrl = mediaUrl.trim() || null;
+    if (qImage?.file) {
+      try {
+        const uploadRes = await mediaService.uploadQuestionMedia(qImage.file);
+        finalMediaUrl = uploadRes?.url || uploadRes?.data?.url || finalMediaUrl;
+      } catch (err) {
+        console.error("[AddQuestion] Image upload failed:", err);
+        toast.error("Upload ảnh thất bại. Câu hỏi sẽ được tạo không có ảnh.");
+      }
+    }
+
+    // Upload option images if selected
+    let finalOptionRows = optionRows;
+    if (isChoice) {
+      const rowsWithImages = optionRows.filter(r => r.image?.file);
+      if (rowsWithImages.length > 0) {
+        finalOptionRows = await Promise.all(optionRows.map(async (row) => {
+          if (!row.image?.file) return row;
+          try {
+            const uploadRes = await mediaService.uploadOptionMedia(row.image.file);
+            const uploadedUrl = uploadRes?.url || uploadRes?.data?.url;
+            return { ...row, image: uploadedUrl ? { url: uploadedUrl } : row.image };
+          } catch (err) {
+            console.error("[AddQuestion] Option image upload failed:", err);
+            return row;
+          }
+        }));
+      }
+    }
+
     const payload = {
       content:     contentHtml,
       type:        toBEType(type),
@@ -2164,12 +2245,12 @@ const fetchSections = useCallback(async (sid) => {
       settings:    hasSettings ? settings : undefined,
       description: description.trim() || null,
       placeholder: placeholder.trim() || null,
-      media_url: mediaUrl.trim() || null,
+      media_url: finalMediaUrl,
       section_id: activeSectionId || null,
     };
 
     if (isChoice) {
-      payload.options = buildBEOptions(optionRows);
+      payload.options = buildBEOptions(finalOptionRows);
     }
 
     setShowForm(false);
@@ -2361,8 +2442,10 @@ const fetchSections = useCallback(async (sid) => {
           {showForm && (
             <div style={{
               background:C.surface,backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",
-              border:`1px solid rgba(99,102,241,0.2)`,
-              borderLeft:`4px solid ${C.primary}`,borderRadius:14,
+              borderTop: "1px solid rgba(99,102,241,0.2)",
+              borderRight: "1px solid rgba(99,102,241,0.2)",
+              borderBottom: "1px solid rgba(99,102,241,0.2)",
+              borderLeft: `4px solid ${C.primary}`,borderRadius:14,
               padding:"20px 24px",boxShadow:"0 2px 0 rgba(255,255,255,0.85) inset, 0 14px 36px rgba(79,70,229,0.08)",
             }}>
               <h2 style={{fontSize:16,fontWeight:700,color:C.text,margin:"0 0 16px"}}>Câu hỏi mới</h2>
@@ -2403,14 +2486,45 @@ const fetchSections = useCallback(async (sid) => {
                       </div>
                     )}
                     <div>
-                      <span style={lbl}>Hình ảnh / Video URL (tùy chọn)</span>
-                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                        <input type="url" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
-                          placeholder="https://example.com/image.jpg"
-                          style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1}}/>
-                        {mediaUrl && (
-                          <img src={mediaUrl} alt="Preview" style={{maxWidth:60,maxHeight:40,borderRadius:6,objectFit:"cover",border:`1px solid ${C.border}`}}/>
+                      <span style={lbl}>Hình ảnh / Video (tùy chọn)</span>
+                      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) { toast.error("File quá lớn. Tối đa 5MB."); return; }
+                            setQImage({ file, url: URL.createObjectURL(file) });
+                            e.target.value = "";
+                          }}
+                          style={{display:"none"}}
+                          id="q-image-upload"
+                        />
+                        <label htmlFor="q-image-upload" style={{
+                          display:"inline-flex",alignItems:"center",gap:6,
+                          padding:"7px 12px",border:`1px solid ${C.border}`,borderRadius:8,
+                          cursor:"pointer",fontSize:12,color:C.textSub,background:C.surfaceHigh,
+                          transition:"all .12s",
+                        }}>
+                          <ImagePlus size={14}/> Chọn ảnh
+                        </label>
+                        {qImage && (
+                          <img src={qImage.url} alt="Preview" style={{maxWidth:80,maxHeight:50,borderRadius:6,objectFit:"cover",border:`1px solid ${C.border}`}}/>
                         )}
+                        {qImage && (
+                          <button type="button" onClick={() => { setQImage(null); }}
+                            style={{padding:"4px 8px",border:"none",borderRadius:6,background:"rgba(239,68,68,0.1)",color:"#dc2626",cursor:"pointer",fontSize:11,fontWeight:600}}>
+                            Xóa ảnh
+                          </button>
+                        )}
+                        <input
+                          type="url"
+                          value={mediaUrl}
+                          onChange={e => { setMediaUrl(e.target.value); setQImage(null); }}
+                          placeholder="Hoặc dán URL ảnh..."
+                          style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1, maxWidth:200}}
+                        />
                       </div>
                     </div>
                   </div>

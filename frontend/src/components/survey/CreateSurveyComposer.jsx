@@ -7,6 +7,7 @@ import {
 import { useSurvey } from "@/providers/SurveyProvider";
 import { ROUTERS } from "@/utils/constants";
 import { toast } from "react-toastify";
+import ImageUploader from "@/components/common/ImageUploader";
 
 /* Đồng bộ SurveysLayout / Home — không clone màu Google Form */
 const C = {
@@ -59,8 +60,8 @@ function newQuestionId() {
 
 function defaultOptions() {
   return [
-    { label: "Tùy chọn 1", value: `opt_${Date.now()}_a` },
-    { label: "Tùy chọn 2", value: `opt_${Date.now()}_b` },
+    { label: "Tùy chọn 1", value: `opt_${Date.now()}_a`, image_url: null, media_type: null },
+    { label: "Tùy chọn 2", value: `opt_${Date.now()}_b`, image_url: null, media_type: null },
   ];
 }
 
@@ -71,6 +72,8 @@ function emptyDraft() {
     type: "TEXT",
     required: false,
     settings: null,
+    media_url: null,
+    media_type: null,
     options: defaultOptions(),
   };
 }
@@ -184,7 +187,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
       const n = (d.options?.length || 0) + 1;
       return {
         ...d,
-        options: [...(d.options || []), { label: `Tùy chọn ${n}`, value: `opt_${Date.now()}_${n}` }],
+        options: [...(d.options || []), { label: `Tùy chọn ${n}`, value: `opt_${Date.now()}_${n}`, image_url: null, media_type: null }],
       };
     }));
   };
@@ -246,7 +249,14 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
         type: d.type,
         required: d.required,
         settings: d.settings,
-        options: d.options,
+        media_url: d.media_url || null,
+        media_type: d.media_type || null,
+        options: (d.options || []).map(o => ({
+          label: o.label,
+          value: o.value,
+          image_url: o.image_url || null,
+          media_type: o.media_type || null,
+        })),
       }))
       .filter((d) => d.content);
 
@@ -583,6 +593,18 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                       />
                     </div>
 
+                    {/* Image uploader for question */}
+                    <div style={{ marginBottom: CHOICE_TYPES.includes(d.type) ? 10 : 0 }}>
+                      <ImageUploader
+                        value={d.media_url}
+                        onChange={(media) => updateDraft(d.id, {
+                          media_url: media?.url || null,
+                          media_type: media?.media_type || null,
+                        })}
+                        label="Thêm ảnh câu hỏi"
+                      />
+                    </div>
+
                     {d.type === "NUMBER" && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
                         <div>
@@ -635,34 +657,45 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: C.textSub, marginBottom: 6 }}>Lựa chọn (ít nhất 2, value không trùng)</div>
                         {(d.options || []).map((opt, oi) => (
-                          <div key={`${d.id}-opt-${oi}`} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
-                            <input
-                              value={opt.label}
-                              onChange={(e) => updateOption(d.id, oi, "label", e.target.value)}
-                              placeholder="Nhãn"
-                              style={{ ...fieldIn(), flex: 1 }}
-                            />
-                            <input
-                              value={opt.value}
-                              onChange={(e) => updateOption(d.id, oi, "value", e.target.value)}
-                              placeholder="Giá trị"
-                              style={{ ...fieldIn(), flex: "0 0 120px" }}
-                            />
-                            <button
-                              type="button"
-                              disabled={(d.options || []).length <= 2}
-                              onClick={() => removeOption(d.id, oi)}
-                              style={{
-                                padding: 8,
-                                border: "none",
-                                borderRadius: 8,
-                                background: (d.options || []).length <= 2 ? "transparent" : "rgba(0,0,0,0.05)",
-                                cursor: (d.options || []).length <= 2 ? "not-allowed" : "pointer",
-                                color: C.textSub,
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                          <div key={`${d.id}-opt-${oi}`} style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10, padding: 10, borderRadius: 10, background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.05)" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <input
+                                value={opt.label}
+                                onChange={(e) => updateOption(d.id, oi, "label", e.target.value)}
+                                placeholder="Nhãn"
+                                style={{ ...fieldIn(), flex: 1 }}
+                              />
+                              <input
+                                value={opt.value}
+                                onChange={(e) => updateOption(d.id, oi, "value", e.target.value)}
+                                placeholder="Giá trị"
+                                style={{ ...fieldIn(), flex: "0 0 120px" }}
+                              />
+                              <button
+                                type="button"
+                                disabled={(d.options || []).length <= 2}
+                                onClick={() => removeOption(d.id, oi)}
+                                style={{
+                                  padding: 8,
+                                  border: "none",
+                                  borderRadius: 8,
+                                  background: (d.options || []).length <= 2 ? "transparent" : "rgba(239,68,68,0.1)",
+                                  cursor: (d.options || []).length <= 2 ? "not-allowed" : "pointer",
+                                  color: (d.options || []).length <= 2 ? "#94a3b8" : "#dc2626",
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            {/* Image uploader for option */}
+                            <div>
+                              <ImageUploader
+                                value={opt.image_url}
+                                onChange={(media) => updateOption(d.id, oi, "image_url", media?.url || null)}
+                                type="option"
+                                label="Thêm ảnh đáp án"
+                              />
+                            </div>
                           </div>
                         ))}
                         <button

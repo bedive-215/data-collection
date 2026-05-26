@@ -729,10 +729,15 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
           </div>
           {loading&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"48px 0",gap:8,color:C.primary}}><Loader2 size={18} style={{animation:"spin 1s linear infinite"}}/><span style={{fontSize:13,fontFamily:C.font}}>Đang tải...</span></div>}
           {!loading&&error&&<div style={{textAlign:"center",padding:"32px 20px"}}>
-            <div style={{fontSize:40,marginBottom:12}}>⏰</div>
-            <div style={{fontSize:14,fontWeight:700,color:"#92400e",marginBottom:8,fontFamily:C.font}}>Khảo sát đã hết hạn</div>
-            <div style={{fontSize:13,color:C.textSub,fontFamily:C.font,lineHeight:1.6}}>{error}</div>
-            <div style={{marginTop:16}}><button onClick={onClose} style={{padding:"8px 20px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.8)",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:C.font}}>Đóng</button></div>
+            <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",boxShadow:"0 4px 16px rgba(217,119,6,0.20)"}}>
+              <Clock size={32} color="#d97706"/>
+            </div>
+            <h3 style={{fontSize:18,fontWeight:800,color:"#111827",marginBottom:8,fontFamily:C.font}}>Khảo sát đã kết thúc</h3>
+            <p style={{fontSize:14,color:"#6b7280",marginBottom:24,lineHeight:1.7,fontFamily:C.font}}>Khảo sát này đã kết thúc. Cảm ơn bạn đã quan tâm!</p>
+            <div style={{height:1,background:"#f3f4f6",marginBottom:20}}/>
+            <button onClick={onClose} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 28px",background:"linear-gradient(135deg,#4361ee,#6c7ef7)",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:C.font,boxShadow:"0 4px 14px rgba(79,110,247,0.30)"}}>
+              Đã hiểu
+            </button>
           </div>}
           {!loading&&!error&&expiredWarning&&<div style={{textAlign:"center",padding:"32px 20px",background:"rgba(245,158,11,0.08)",borderRadius:14,border:"1px solid rgba(245,158,11,0.2)"}}>
             <div style={{fontSize:13,color:"#92400e",fontFamily:C.font,lineHeight:1.6,marginBottom:16}}>Khảo sát này đã kết thúc. Kết quả của bạn vẫn được lưu.</div>
