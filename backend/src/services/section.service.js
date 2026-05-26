@@ -1,6 +1,8 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 
+import { mapSection } from "../mappers/section.mapper.js";
+
 class SectionService {
     constructor() {
         this.Section = models.Section;
@@ -38,7 +40,7 @@ class SectionService {
 
         return {
             message: "Section created successfully",
-            section: this._mapSection(section),
+            section: mapSection(section),
         };
     }
 
@@ -58,7 +60,7 @@ class SectionService {
 
         return {
             survey_id,
-            sections: sections.map(s => this._mapSection(s)),
+            sections: sections.map(s => mapSection(s)),
         };
     }
 
@@ -77,7 +79,7 @@ class SectionService {
         if (show_progress !== undefined) section.show_progress = show_progress;
 
         await section.save();
-        return { message: "Section updated", section: this._mapSection(section) };
+        return { message: "Section updated", section: mapSection(section) };
     }
 
     async deleteSection(section_id) {
@@ -125,22 +127,7 @@ class SectionService {
 
         return {
             message: `${created.length} sections created`,
-            sections: created.map(s => this._mapSection(s)),
-        };
-    }
-
-    _mapSection(section) {
-        return {
-            id: section.id,
-            survey_id: section.survey_id,
-            title: section.title,
-            description: section.description,
-            order_index: section.order_index,
-            icon: section.icon,
-            cover_url: section.cover_url,
-            min_required: section.min_required,
-            show_progress: section.show_progress ?? true,
-            question_count: section.questions ? section.questions.length : 0,
+            sections: created.map(s => mapSection(s)),
         };
     }
 }

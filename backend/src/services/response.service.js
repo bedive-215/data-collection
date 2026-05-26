@@ -1,195 +1,33 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import notificationService from "./notification.service.js";
-import starService from "./star.service.js";
-import achievementService from "./achievement.service.js";
-import leaderboardService from "./leaderboard.service.js";
+import { withTransaction } from "../utils/transaction.js";
+
+import eventBus from "../events/eventBus.js";
+import { RESPONSE_EVENTS } from "../events/response/response.event.js";
+
+import { mapAnswerToResponse, buildAnswerRecords, buildMaps, getAnswersWithMap } from "../mappers/response.mapper.js";
 
 class ResponseService {
     constructor() {
-        this.Response = models.Response;
-        this.Answer = models.Answer;
-        this.Question = models.Question;
-        this.QuestionOption = models.QuestionOption;
-        this.Survey = models.Survey;
-        this.SurveyParticipant = models.SurveyParticipant;
-        this.sequelize = models.sequelize;
-        this.User = models.User;
-    }
-
-    _mapAnswerToResponse(answers, optionMap = {}) {
-        return answers.map(a => {
-            const type = a.question?.type || a.type;
-            let answerValue = null;
-
-            if (["TEXT", "PARAGRAPH", "EMAIL"].includes(type)) {
-                answerValue = a.answer_text;
-            }
-
-            else if (["NUMBER", "RATING", "LINEAR_SCALE"].includes(type)) {
-                answerValue = a.answer_number;
-            }
-
-            else if (["SINGLE_CHOICE", "DROPDOWN"].includes(type)) {
-                answerValue = a.option_id
-                    ? optionMap[a.option_id] || a.option?.label || a.option_id
-                    : null;
-            }
-
-            else if (type === "MULTIPLE_CHOICE") {
-                const ids = typeof a.selected_options === "string"
-                    ? JSON.parse(a.selected_options)
-                    : (a.selected_options || []);
-                answerValue = ids
-                    .map(id => optionMap[id] || id)
-                    .filter(Boolean);
-            }
-
-            else if (type === "DATE") {
-                answerValue = a.answer_date
-                    ? new Date(a.answer_date).toISOString().split("T")[0]
-                    : null;
-            }
-
-            else if (type === "TIME") {
-                answerValue = a.answer_text || null;
-            }
-
-            else if (type === "FILE_UPLOAD") {
-                answerValue = a.answer_text || null; // URL stored in answer_text
-            }
-
-            return {
-                question_id: a.question?.id || a.question_id,
-                question: a.question?.content,
-                type,
-                answer: answerValue
-            };
-        });
-    }
-
-    async _buildAnswerRecords(response_id, answers, questionMap, optionMap) {
-        const records = [];
-
-        for (const ans of answers) {
-            const q = questionMap[ans.question_id];
-            if (!q) throw new AppError("Invalid question", 400);
-
-            if (["TEXT", "PARAGRAPH", "EMAIL", "TIME", "FILE_UPLOAD"].includes(q.type)) {
-                records.push({
-                    response_id,
-                    question_id: q.id,
-                    answer_text: ans.answer_text
-                });
-            }
-
-            else if (["NUMBER", "RATING", "LINEAR_SCALE"].includes(q.type)) {
-                const value = ans.answer_number ?? ans.answer_text;
-
-                if (value === undefined || value === null || isNaN(value)) {
-                    throw new AppError("Invalid number answer", 400);
-                }
-
-                records.push({
-                    response_id,
-                    question_id: q.id,
-                    answer_number: Number(value)
-                });
-            }
-
-            else if (["SINGLE_CHOICE", "DROPDOWN"].includes(q.type)) {
-                const option = optionMap[ans.option_id];
-                if (!option || option.question_id !== q.id) {
-                    throw new AppError("Invalid option", 400);
-                }
-
-                records.push({
-                    response_id,
-                    question_id: q.id,
-                    option_id: option.id
-                });
-            }
-
-            else if (q.type === "MULTIPLE_CHOICE") {
-                if (!Array.isArray(ans.option_ids) || !ans.option_ids.length) {
-                    throw new AppError("Options required", 400);
-                }
-
-                ans.option_ids.forEach(id => {
-                    const option = optionMap[id];
-                    if (!option || option.question_id !== q.id) {
-                        throw new AppError("Invalid option", 400);
-                    }
-                });
-
-                records.push({
-                    response_id,
-                    question_id: q.id,
-                    selected_options: ans.option_ids
-                });
-            }
-
-            else if (q.type === "DATE") {
-                const dateValue = new Date(ans.answer_text);
-                if (isNaN(dateValue.getTime())) {
-                    throw new AppError("Invalid date answer", 400);
-                }
-
-                records.push({
-                    response_id,
-                    question_id: q.id,
-                    answer_date: dateValue
-                });
-            }
-
-            else {
-                throw new AppError(`Unsupported question type: ${q.type}`, 400);
-            }
-        }
-
-        return records;
+        const { Response, Answer, Question, QuestionOption, Survey, User, sequelize } = models;
+        Object.assign(this, { Response, Answer, Question, QuestionOption, Survey, User, sequelize });
     }
 
     async startSurvey(user_id, survey_id) {
-        if (!survey_id) {
-            throw new AppError("Survey id is required", 400);
-        }
+        if (!survey_id) throw new AppError("Survey id is required", 400);
 
         const survey = await this.Survey.findByPk(survey_id);
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
+        if (!survey) throw new AppError("Survey not found", 404);
 
-        // Kiểm tra max_responses
         if (survey.max_responses) {
-            const completedCount = await this.Response.count({
-                where: { survey_id, status: "COMPLETED" }
-            });
-            if (completedCount >= survey.max_responses) {
-                throw new AppError("Survey has reached maximum responses", 400);
-            }
+            const completedCount = await this.Response.count({ where: { survey_id, status: "COMPLETED" } });
+            if (completedCount >= survey.max_responses) throw new AppError("Survey has reached maximum responses", 400);
         }
 
-        // Tìm response IN_PROGRESS cũ (để resume)
-        let response = await this.Response.findOne({
-            where: {
-                survey_id,
-                user_id,
-                submitted_at: null
-            }
-        });
-
+        let response = await this.Response.findOne({ where: { survey_id, user_id, submitted_at: null } });
         const isNew = !response;
+        if (isNew) response = await this.Response.create({ survey_id, user_id, started_at: new Date() });
 
-        if (!response) {
-            response = await this.Response.create({
-                survey_id,
-                user_id,
-                started_at: new Date()
-            });
-        }
-
-        // Lấy survey settings để trả về cho frontend
         return {
             message: isNew ? "Survey started" : "Survey resumed",
             response_id: response.id,
@@ -206,7 +44,7 @@ class ResponseService {
                 logo_url: survey.logo_url ?? null,
                 background_url: survey.background_url ?? null,
                 accent_color: survey.accent_color ?? "#6366f1",
-            }
+            },
         };
     }
 
@@ -214,273 +52,101 @@ class ResponseService {
         if (!survey_id) throw new AppError("Survey id is required", 400);
         if (!answers?.length) throw new AppError("Answers are required", 400);
 
-        const transaction = await this.sequelize.transaction();
+        const questionIds = answers.map(a => a.question_id);
+        if (new Set(questionIds).size !== questionIds.length) throw new AppError("Duplicate question", 400);
 
-        try {
+        await withTransaction(this.sequelize, null, async (transaction) => {
             const response = await this.Response.findOne({
-                where: {
-                    user_id,
-                    survey_id,
-                    submitted_at: null
-                },
-                transaction
+                where: { user_id, survey_id, submitted_at: null },
+                transaction,
             });
+            if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.", 400);
 
-            if (!response) {
-                throw new AppError(
-                    "Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.",
-                    400
-                );
-            }
-
-            const questionIds = answers.map(a => a.question_id);
-
-            if (new Set(questionIds).size !== questionIds.length) {
-                throw new AppError("Duplicate question", 400);
-            }
-
-            const questions = await this.Question.findAll({
-                where: { id: questionIds, survey_id },
-                transaction
-            });
-
-            if (questions.length !== questionIds.length) {
-                throw new AppError("Invalid questions", 400);
-            }
-
-            const questionMap = Object.fromEntries(
-                questions.map(q => [q.id, q])
-            );
-
-            const optionIds = answers.flatMap(a =>
-                a.option_id ? [a.option_id] : a.option_ids || []
-            );
-
-            const options = await this.QuestionOption.findAll({
-                where: { id: optionIds },
-                transaction
-            });
-
-            const optionMap = Object.fromEntries(
-                options.map(o => [o.id, o])
-            );
-
-            const answerRecords = await this._buildAnswerRecords(
-                response.id,
-                answers,
-                questionMap,
-                optionMap
-            );
+            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
+            const answerRecords = await buildAnswerRecords(response.id, answers, questionMap, optionMap);
 
             await this.Answer.bulkCreate(answerRecords, { transaction });
+            await response.update({ submitted_at: new Date(), status: "COMPLETED" }, { transaction });
+        });
 
-            await response.update({
-                submitted_at: new Date(),
-                status: "COMPLETED"
-            }, { transaction });
+        // Lấy response sau commit để dùng cho gamification
+        const response = await this.Response.findOne({ where: { user_id, survey_id }, order: [["created_at", "DESC"]] });
+        const survey = await this.Survey.findByPk(survey_id);
+        const isCreator = survey.created_by === user_id;
 
-            await transaction.commit();
+        eventBus.emit(RESPONSE_EVENTS.SUBMITTED, {
+            userId: user_id,
+            surveyId: survey_id,
+            responseId: response.id,
+            isCreator,
+            survey,
+        });
 
-            // ── GAMIFICATION: Cộng sao cho người tham gia ──────────
-            const survey = await this.Survey.findByPk(survey_id);
-            const isCreator = survey.created_by === user_id;
+        return {
+            message: "Submit survey successfully",
+            response_id: response.id,
+        };
+    }
 
-            const starReward = await starService.rewardSubmitSurvey(
-                user_id,
-                survey_id,
-                response.id,
-                isCreator
-            );
+    async autoSave(user_id, survey_id, answers) {
+        if (!survey_id) throw new AppError("Survey id is required", 400);
+        if (!answers?.length) throw new AppError("Answers are required", 400);
 
-            // Cộng sao cho người tạo survey
-            if (!isCreator && survey.created_by) {
-                await starService.rewardCreatorForRespondent(
-                    survey.created_by,
-                    survey_id,
-                    user_id
-                );
-            }
+        return withTransaction(this.sequelize, null, async (transaction) => {
+            const response = await this.Response.findOne({
+                where: { user_id, survey_id, submitted_at: null },
+                transaction,
+            });
+            if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.", 400);
 
-            // Cập nhật weekly/monthly stars
-            await leaderboardService.updatePeriodicStars(user_id, starReward.amount_added);
+            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
 
-            // Kiểm tra achievements
-            const unlockedAchievements = await achievementService.checkAndUnlock(
-                user_id,
-                "survey_completed",
-                {
-                    survey_id,
-                    is_creator: isCreator,
-                    is_first_responder: starReward.order === 1,
-                }
-            );
-
-            // ── GAMIFICATION END ───────────────────────────────────
-
-            // Send notification to survey owner
-            await notificationService.notifySurveyResponse({
-                survey,
-                responder: { id: user_id, full_name: (await this.User.findByPk(user_id))?.full_name },
-                responseId: response.id
+            await this.Answer.destroy({
+                where: { response_id: response.id, question_id: { [models.Sequelize.Op.in]: answers.map(a => a.question_id) } },
+                transaction,
             });
 
-            // Emit real-time update to admins watching this survey
-            if (global.emitToSurveyAdmins) {
-                const responseCount = await this.Response.count({ where: { survey_id, status: "COMPLETED" } });
-                global.emitToSurveyAdmins(survey_id, "survey:new-response", {
-                    survey_id,
-                    response_id: response.id,
-                    total_responses: responseCount,
-                    submitted_at: new Date(),
-                });
-            }
+            const answerRecords = await buildAnswerRecords(response.id, answers, questionMap, optionMap);
+            await this.Answer.bulkCreate(answerRecords, { transaction });
 
-            return {
-                message: "Submit survey successfully",
-                response_id: response.id,
-                stars_earned: starReward.amount_added ?? 0,
-                reward_type: starReward.reward_type || "LATER_RESPONDER",
-                reward_order: starReward.order || 0,
-            };
-
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
-        }
+            return { message: "Progress saved", response_id: response.id, saved_count: answers.length };
+        });
     }
 
     async updateResponse(user_id, survey_id, answers) {
         if (!answers?.length) throw new AppError("Answers required", 400);
 
-        const transaction = await this.sequelize.transaction();
-
-        try {
-            const response = await this.Response.findOne({
-                where: { user_id, survey_id },
-                transaction
-            });
-
+        return withTransaction(this.sequelize, null, async (transaction) => {
+            const response = await this.Response.findOne({ where: { user_id, survey_id }, transaction });
             if (!response) throw new AppError("Response not found", 404);
 
-            const questionIds = answers.map(a => a.question_id);
+            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
 
-            const questions = await this.Question.findAll({
-                where: { id: questionIds, survey_id },
-                transaction
-            });
+            await this.Answer.destroy({ where: { response_id: response.id }, transaction });
 
-            const questionMap = Object.fromEntries(
-                questions.map(q => [q.id, q])
-            );
-
-            const optionIds = answers.flatMap(a =>
-                a.option_id ? [a.option_id] : a.option_ids || []
-            );
-
-            const options = await this.QuestionOption.findAll({
-                where: { id: optionIds },
-                transaction
-            });
-
-            const optionMap = Object.fromEntries(
-                options.map(o => [o.id, o])
-            );
-
-            await this.Answer.destroy({
-                where: { response_id: response.id },
-                transaction
-            });
-
-            const answerRecords = await this._buildAnswerRecords(
-                response.id,
-                answers,
-                questionMap,
-                optionMap
-            );
-
+            const answerRecords = await buildAnswerRecords(response.id, answers, questionMap, optionMap);
             await this.Answer.bulkCreate(answerRecords, { transaction });
 
-            await transaction.commit();
-
             return { message: "Update response successfully" };
-
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
-        }
+        });
     }
 
     async getAllResponsesByUserId(user_id) {
         const responses = await this.Response.findAll({
             where: { user_id },
-            include: [
-                {
-                    model: this.Survey,
-                    as: "survey",
-                    attributes: ["title", "description"]
-                }
-            ],
-            order: [["created_at", "DESC"]]
+            include: [{ model: this.Survey, as: "survey", attributes: ["title", "description"] }],
+            order: [["created_at", "DESC"]],
         });
-
-        return {
-            message: "Get responses successfully",
-            count: responses.length,
-            data: responses
-        };
+        return { message: "Get responses successfully", count: responses.length, data: responses };
     }
 
     async getSurveySubmitByUserId(user_id, survey_id) {
-        if (!survey_id) {
-            throw new AppError("Survey id is required", 400);
-        }
+        if (!survey_id) throw new AppError("Survey id is required", 400);
 
-        const survey = await this.Survey.findByPk(survey_id);
+        const response = await this.Response.findOne({ where: { user_id, survey_id } });
+        if (!response) throw new AppError("Response not found", 404);
 
-        if (!survey) {
-            throw new AppError("Survey not found", 404);
-        }
-
-        const response = await this.Response.findOne({
-            where: {
-                user_id,
-                survey_id
-            }
-        });
-
-        if (!response) {
-            throw new AppError("Response not found", 404);
-        }
-
-        const answers = await this.Answer.findAll({
-            where: { response_id: response.id },
-            include: [
-                {
-                    model: this.Question,
-                    as: "question",
-                    attributes: ["id", "content", "type"]
-                },
-                {
-                    model: this.QuestionOption,
-                    as: "option",
-                    attributes: ["id", "label"]
-                }
-            ]
-        });
-
-        const optionIds = answers.flatMap(a =>
-            a.option_id ? [a.option_id] : a.selected_options || []
-        );
-
-        const options = await this.QuestionOption.findAll({
-            where: { id: optionIds }
-        });
-
-        const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.label])
-        );
-
-        const mappedAnswers = this._mapAnswerToResponse(answers, optionMap);
+        const { answers, optionMap } = await getAnswersWithMap(response.id);
 
         return {
             message: "Get survey response successfully",
@@ -488,158 +154,35 @@ class ResponseService {
                 response_id: response.id,
                 survey_id,
                 submitted_at: response.submitted_at,
-                answers: mappedAnswers
-            }
+                answers: mapAnswerToResponse(answers, optionMap),
+            },
         };
     }
 
     async getAllAnswerByResponseId(user, response_id) {
-        if (!response_id) {
-            throw new AppError("Response id is required", 400);
-        }
+        if (!response_id) throw new AppError("Response id is required", 400);
 
         const response = await this.Response.findByPk(response_id);
+        if (!response) throw new AppError("Response not found", 404);
+        if (response.user_id !== user.id && user.role !== "ADMIN") throw new AppError("Forbidden", 403);
 
-        if (!response) {
-            throw new AppError("Response not found", 404);
-        }
-
-        if (response.user_id !== user.id && user.role !== "ADMIN") {
-            throw new AppError("Forbidden", 403);
-        }
-
-        const answers = await this.Answer.findAll({
-            where: { response_id },
-            include: [
-                {
-                    model: this.Question,
-                    as: "question",
-                    attributes: ["id", "content", "type"]
-                },
-                {
-                    model: this.QuestionOption,
-                    as: "option",
-                    attributes: ["id", "label"]
-                }
-            ]
-        });
-
-        const optionIds = answers.flatMap(a =>
-            a.option_id ? [a.option_id] : a.selected_options || []
-        );
-
-        const options = await this.QuestionOption.findAll({
-            where: { id: optionIds }
-        });
-
-        const optionMap = Object.fromEntries(
-            options.map(o => [o.id, o.label])
-        );
-
-        const mappedAnswers = this._mapAnswerToResponse(answers, optionMap);
+        const { answers, optionMap } = await getAnswersWithMap(response_id);
 
         return {
             message: "Get answers successfully",
-            data: {
-                response_id,
-                answers: mappedAnswers
-            }
+            data: { response_id, answers: mapAnswerToResponse(answers, optionMap) },
         };
     }
 
     async deleteResponse(user_id, response_id) {
-        if (!response_id) {
-            throw new AppError("Response id is required", 400);
-        }
+        if (!response_id) throw new AppError("Response id is required", 400);
 
         const response = await this.Response.findByPk(response_id);
+        if (!response) throw new AppError("Response not found", 404);
+        if (response.user_id !== user_id) throw new AppError("Forbidden", 403);
 
-        if (!response) {
-            throw new AppError("Response not found", 404);
-        }
-
-        if (response.user_id !== user_id) {
-            throw new AppError("Forbidden", 403);
-        }
-
-        response.destroy();
-
-        return {
-            message: "Delete response successfull"
-        }
-    }
-
-    // Auto-save: upsert answers without marking as completed
-    async autoSave(user_id, survey_id, answers) {
-        if (!survey_id) throw new AppError("Survey id is required", 400);
-        if (!answers?.length) throw new AppError("Answers are required", 400);
-
-        const transaction = await this.sequelize.transaction();
-
-        try {
-            // Tìm response IN_PROGRESS
-            const response = await this.Response.findOne({
-                where: { user_id, survey_id, submitted_at: null },
-                transaction
-            });
-
-            if (!response) {
-                throw new AppError(
-                    "Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.",
-                    400
-                );
-            }
-
-            const questionIds = answers.map(a => a.question_id);
-
-            const questions = await this.Question.findAll({
-                where: { id: questionIds, survey_id },
-                transaction
-            });
-
-            const questionMap = Object.fromEntries(questions.map(q => [q.id, q]));
-
-            const optionIds = answers.flatMap(a =>
-                a.option_id ? [a.option_id] : a.option_ids || []
-            );
-
-            const options = await this.QuestionOption.findAll({
-                where: { id: optionIds },
-                transaction
-            });
-
-            const optionMap = Object.fromEntries(options.map(o => [o.id, o]));
-
-            // Xoá answers cũ cho các question_id này (upsert)
-            await this.Answer.destroy({
-                where: {
-                    response_id: response.id,
-                    question_id: { [models.Sequelize.Op.in]: questionIds }
-                },
-                transaction
-            });
-
-            const answerRecords = await this._buildAnswerRecords(
-                response.id,
-                answers,
-                questionMap,
-                optionMap
-            );
-
-            await this.Answer.bulkCreate(answerRecords, { transaction });
-
-            await transaction.commit();
-
-            return {
-                message: "Progress saved",
-                response_id: response.id,
-                saved_count: answers.length,
-            };
-
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
-        }
+        await response.destroy();
+        return { message: "Delete response successfully" };
     }
 }
 

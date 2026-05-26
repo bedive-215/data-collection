@@ -4,9 +4,9 @@ import { ACHIEVEMENT_EVENTS } from "./achivement.event.js";
 import achievementService from "../../services/achievement.service.js";
 import notificationService from "../../services/notification.service.js";
 
-eventBus.on(ACHIEVEMENT_EVENTS.UNLOCKED, async ({ userId, achievementKey, data }) => {
+eventBus.on(ACHIEVEMENT_EVENTS.UNLOCKED, async ({ userId, trigger, data }) => {
     try {
-        await achievementService.checkAndUnlock(userId, achievementKey, data);
+        await achievementService.checkAndUnlock(userId, trigger, data);
     } catch (err) {
         console.error("ACHIEVEMENT_EVENTS.UNLOCKED error:", err);
     }
