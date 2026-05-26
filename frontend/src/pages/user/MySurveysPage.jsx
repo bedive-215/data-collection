@@ -706,7 +706,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             </div>
             <div>
               <div style={{fontSize:22, fontWeight:800, color:C.text, lineHeight:1}}>{count}</div>
-              <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Tổng participants</div>
+              <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Tổng người tham gia</div>
             </div>
           </div>
           <button
@@ -842,7 +842,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                       background:roleStyle.bg,
                       border:`1px solid ${roleStyle.border}`,
                     }}>
-                      {p.role}
+                      {p.role === "ADMIN" ? "Quản trị" : p.role === "owner" ? "Chủ sở hữu" : p.role === "editor" ? "Biên tập" : p.role === "viewer" ? "Người xem" : p.role === "respondent" ? "Người trả lời" : p.role}
                     </span>
                   )}
 
@@ -931,7 +931,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={isPublished ? "Ẩn khảo sát" : "Publish khảo sát"} width={400}>
+    <Modal open={open} onClose={onClose} title={isPublished ? "Ẩn khảo sát" : "Công khai khảo sát"} width={400}>
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
         <div style={{
           padding:"16px", borderRadius:12,
@@ -957,7 +957,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
           }}>
             {loading
               ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>
-              : isPublished ? <><PowerOff size={13}/> Ẩn survey</> : <><Globe size={13}/> Publish</>
+              : isPublished ? <><PowerOff size={13}/> Ẩn survey</> : <><Globe size={13}/> Công khai</>
             }
           </button>
         </div>
@@ -1209,7 +1209,7 @@ export default function MySurveysPage() {
         position: "relative", zIndex: 10,
       }}>
         <div style={{ animation: "slideInDown 0.8s ease-out" }}>
-          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0, background: "linear-gradient(135deg, #4f6ef7, #764ba2)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"}}>My Surveys</h1>
+          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0, background: "linear-gradient(135deg, #4f6ef7, #764ba2)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"}}>Khảo sát của tôi</h1>
           <p style={{margin:"4px 0 0", fontSize:13, color:C.textSub}}>Tạo và quản lý survey của bạn</p>
         </div>
 
