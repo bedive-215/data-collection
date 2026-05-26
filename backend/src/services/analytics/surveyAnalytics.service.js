@@ -137,7 +137,7 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         if(completeTotal === 0) {
             return {
                 survey_id,
-                total_responses: 0,
+                total_responses: totalResponses, // Return actual count even if 0 completed
                 generated_at: new Date().toISOString(),
                 filters_applied: filters,
                 questions: [],
@@ -837,7 +837,7 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
                 total_responses: 0,
                 generated_at: new Date().toISOString(),
                 filters_applied: filters,
-                ai_insights: "No responses to analyze.",
+                ai_insights: "Khảo sát này chưa có phản hồi nào. Hãy chia sẻ khảo sát để thu thập dữ liệu trước.",
             };
         }
         const cleaned = cleanSurveyAnalytics(data);
@@ -847,6 +847,7 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
 
         return {
             survey_id,
+            total_responses: data.total_responses,
             generated_at: new Date().toISOString(),
             ai_insights: aiResponse,
         };

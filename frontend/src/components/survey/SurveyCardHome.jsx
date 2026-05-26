@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import {
-  Lock, Share, BarChart3, Edit, Trash2, Globe,
+  Lock, Share, BarChart3, Edit2, Trash2, Globe,
   Eye, Clock, CalendarDays,
 } from "lucide-react";
 
@@ -125,6 +125,8 @@ export function SurveyCardHome({
   onPublish,
   onViewAnalytics,
   onViewResponses,
+  onExpiredClick,
+  onSaveEdit,
   isOwner: isOwnerProp = null,
   creatorName = null,
 }) {
@@ -135,10 +137,48 @@ export function SurveyCardHome({
   const expiry   = getExpiry(survey);
   const cat      = getEmoji(survey?.category);
   const [hovered, setHovered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editEndAt, setEditEndAt] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const isExpired = expiry?.isExpired;
 
-  const handleClick = () => {
-    if (onViewResponses) onViewResponses(survey.id, survey.title);
-    else if (onClick)   onClick(survey);
+  const handleCardClick = () => {
+    if (isExpired && isOwner && onExpiredClick) {
+      onExpiredClick(survey);
+    } else if (onViewResponses) {
+      onViewResponses(survey.id, survey.title);
+    } else if (onClick) {
+      onClick(survey);
+    }
+  };
+
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    setEditTitle(survey?.title || "");
+    setEditEndAt(survey?.end_at ? new Date(survey.end_at).toISOString().slice(0, 16) : "");
+    setIsEditing(true);
+  };
+
+  const handleEditSave = async (e) => {
+    e?.stopPropagation();
+    if (!editTitle.trim() || !onSaveEdit) return;
+    if (editEndAt) {
+      const selected = new Date(editEndAt);
+      if (selected <= new Date()) return;
+    }
+    setEditSaving(true);
+    try {
+      await onSaveEdit(survey.id, { title: editTitle.trim(), end_at: editEndAt || undefined });
+      setIsEditing(false);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleEditCancel = (e) => {
+    e?.stopPropagation();
+    setIsEditing(false);
   };
 
   const responseCount = survey?.response_count ?? survey?.responseCount ?? survey?.responses_count ?? 0;
@@ -193,7 +233,7 @@ export function SurveyCardHome({
 
       <article
         className="sc-card"
-        onClick={handleClick}
+        onClick={handleCardClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -248,7 +288,7 @@ export function SurveyCardHome({
           </div>
 
           {/* Status badge — top-left */}
-          <div style={{position:"absolute", top:10, left:10, zIndex:10}}>
+          <div style={{position:"absolute", top:10, left:10, zIndex:10, display:"flex", flexDirection:"column", gap:4}}>
             <div className="sc-badge-pop" style={{
               display:"inline-flex", alignItems:"center", gap:4,
               padding:"3px 8px", borderRadius:6,
@@ -272,7 +312,6 @@ export function SurveyCardHome({
 
             {isPub && (
               <div className="sc-badge-pop" style={{
-                marginTop:4,
                 display:"inline-flex", alignItems:"center", gap:3,
                 padding:"2px 7px", borderRadius:6,
                 background:"rgba(255,255,255,0.55)",
@@ -285,6 +324,11 @@ export function SurveyCardHome({
                 <Globe size={8} /> Công khai
               </div>
             )}
+
+            {/* Edit button — left side */}
+            {isOwner && onSaveEdit && (
+              <Abtn icon={<Edit2 size={11}/>} label="Chỉnh sửa" on={handleEditClick} hovered={hovered} accent="#7c3aed"/>
+            )}
           </div>
 
           {/* Owner action buttons — top-right */}
@@ -292,7 +336,6 @@ export function SurveyCardHome({
             <div style={{position:"absolute", top:10, right:10, display:"flex", flexDirection:"column", gap:4, zIndex:10}} onClick={e => e.stopPropagation()}>
               {onViewAnalytics && <Abtn icon={<BarChart3 size={11}/>} label="Phân tích" on={() => onViewAnalytics(survey.id)} hovered={hovered} accent="#6366f1"/>}
               {onShare        && <Abtn icon={<Share size={11}/>}     label="Chia sẻ"   on={() => onShare(survey.id)}        hovered={hovered} accent="#6366f1"/>}
-              {onEdit         && <Abtn icon={<Edit size={11}/>}       label="Chỉnh sửa" on={() => onEdit(survey.id)}         hovered={hovered} accent="#6366f1"/>}
               {onPublish      && <Abtn icon={isPub ? <Lock size={11}/> : <Globe size={11}/>} label={isPub ? "Bỏ công khai" : "Công khai"} on={() => onPublish(survey.id)} hovered={hovered} accent={isPub ? "#d97706" : "#059669"}/>}
               {onLock         && <Abtn icon={<Lock size={11}/>}      label="Khóa"      on={() => onLock(survey.id)}         hovered={hovered} accent="#d97706"/>}
               {onDelete       && <Abtn icon={<Trash2 size={11}/>}   label="Xóa"       on={() => onDelete(survey.id)}       hovered={hovered} danger/>}
@@ -319,20 +362,41 @@ export function SurveyCardHome({
         }}>
 
           {/* Title */}
-          <h2 style={{
-            margin:0,
-            fontSize:13.5, fontWeight:700,
-            color:"#0f172a", lineHeight:1.3,
-            fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-            overflow:"hidden", display:"-webkit-box",
-            WebkitLineClamp:2, WebkitBoxOrient:"vertical",
-            marginBottom:6,
-          }}>
-            {survey?.title || "Không có tiêu đề"}
-          </h2>
+          {!isEditing ? (
+            <h2 style={{
+              margin:0,
+              fontSize:13.5, fontWeight:700,
+              color:"#0f172a", lineHeight:1.3,
+              fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+              overflow:"hidden", display:"-webkit-box",
+              WebkitLineClamp:2, WebkitBoxOrient:"vertical",
+              marginBottom:6,
+            }}>
+              {survey?.title || "Không có tiêu đề"}
+            </h2>
+          ) : (
+            <input
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              onKeyDown={e => e.key === "Enter" && handleEditSave(e)}
+              placeholder="Tên khảo sát"
+              style={{
+                margin:0, marginBottom:6,
+                fontSize:13.5, fontWeight:700,
+                color:"#0f172a", lineHeight:1.3,
+                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                border:"1.5px solid #7c3aed",
+                borderRadius:6, padding:"4px 8px",
+                outline:"none", width:"100%",
+                background:"#fff",
+                boxShadow:"0 0 0 3px rgba(124,58,237,0.1)",
+              }}
+            />
+          )}
 
           {/* Description */}
-          {survey?.description ? (
+          {!isEditing && survey?.description ? (
             <p style={{
               margin:0,
               fontSize:11.5, color:"#64748b",
@@ -344,8 +408,62 @@ export function SurveyCardHome({
             }}>
               {survey.description}
             </p>
-          ) : (
+          ) : !isEditing ? (
             <div style={{marginBottom:6}}/>
+          ) : null}
+
+          {/* Inline edit: title + end_at */}
+          {isEditing && (
+            <div style={{
+              display:"flex", alignItems:"center", gap:6,
+              padding:"7px 10px",
+              background:"rgba(124,58,237,0.04)",
+              border:"1px solid rgba(124,58,237,0.15)",
+              borderRadius:8, marginBottom:8,
+            }}>
+              <CalendarDays size={11} color="#7c3aed" style={{flexShrink:0}}/>
+              <input
+                type="datetime-local"
+                value={editEndAt}
+                onChange={e => setEditEndAt(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  flex:1, padding:"3px 6px",
+                  border:"1.5px solid #7c3aed",
+                  borderRadius:5, fontSize:11,
+                  outline:"none",
+                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                  color:"#0f172a",
+                  background:"#fff",
+                }}
+              />
+              <button
+                onClick={handleEditSave}
+                style={{
+                  padding:"3px 10px",
+                  background: editSaving ? "#94a3b8" : "linear-gradient(135deg,#7c3aed,#9f67f5)",
+                  border:"none", borderRadius:5,
+                  color:"#fff", fontSize:10, fontWeight:700,
+                  cursor: editSaving ? "not-allowed" : "pointer",
+                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                }}
+              >
+                {editSaving ? "..." : "Lưu"}
+              </button>
+              <button
+                onClick={handleEditCancel}
+                style={{
+                  padding:"3px 8px",
+                  background:"#f4f6f8",
+                  border:"1px solid #e8ecf2", borderRadius:5,
+                  color:"#64748b", fontSize:10, fontWeight:600,
+                  cursor:"pointer",
+                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                }}
+              >
+                Huỷ
+              </button>
+            </div>
           )}
 
           {/* Category tag */}
@@ -450,7 +568,7 @@ function Abtn({ icon, label, on, hovered, accent, danger }) {
   return (
     <button
       aria-label={label}
-      onClick={e => { e.stopPropagation(); on(); }}
+      onClick={e => { e.stopPropagation(); on(e); }}
       title={label}
       style={{
         width:26, height:26, borderRadius:8,

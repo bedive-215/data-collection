@@ -179,7 +179,11 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout().catch(() => {});
     } finally {
-      persistTokens(null, null);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      setAccessToken(null);
+      setRefreshToken(null);
       setUser(null);
       setIsBlocked(false);
     }

@@ -122,6 +122,12 @@ const surveyService = {
     apiClient.post(`/api/v1/sections/surveys/${surveyId}/sections/bulk`, { sections }),
 
   // ─────────────────────────────
+  // EXTEND SURVEY DEADLINE
+  // ─────────────────────────────
+  extendSurvey: (surveyId, payload) =>
+    apiClient.patch(`${BASE_URL}/${surveyId}/extend`, payload),
+
+  // ─────────────────────────────
   // MEDIA UPLOAD
   // ─────────────────────────────
   uploadQuestionMedia: (formData) =>

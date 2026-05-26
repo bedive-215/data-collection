@@ -145,7 +145,7 @@ class ResponseService {
         const response = await this.Response.findOne({ where: { user_id, survey_id } });
         if (!response) throw new AppError("Response not found", 404);
 
-        const { answers, optionMap } = await getAnswersWithMap(response.id);
+        const { answers, optionMap } = await getAnswersWithMap.call(this, response.id);
 
         return {
             message: "Get survey response successfully",
@@ -165,7 +165,7 @@ class ResponseService {
         if (!response) throw new AppError("Response not found", 404);
         if (response.user_id !== user.id && user.role !== "ADMIN") throw new AppError("Forbidden", 403);
 
-        const { answers, optionMap } = await getAnswersWithMap(response_id);
+        const { answers, optionMap } = await getAnswersWithMap.call(this, response_id);
 
         return {
             message: "Get answers successfully",
