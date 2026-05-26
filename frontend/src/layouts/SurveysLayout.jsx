@@ -666,12 +666,31 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
   const { getMySubmission }=useResponse();
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
+  const [expiredWarning,setExpiredWarning]=useState(false);
   const [answers,setAnswers]=useState([]);
   useEffect(()=>{
     let cancelled=false;
     const fetch=async()=>{
-      try{setLoading(true);setError(null);const res=await getMySubmission(surveyId);if(cancelled) return;const raw=res?.data??res??[];const all=Array.isArray(raw)?raw.flatMap(r=>r.answers??[]):(raw.answers??[]);setAnswers(all);}
-      catch{if(!cancelled)setError("Không thể tải câu trả lời.");}
+      try{setLoading(true);setError(null);setExpiredWarning(false);
+        const res=await getMySubmission(surveyId);
+        if(cancelled) return;
+        // Check if response indicates survey is expired
+        if(res?.expired || res?.status === "EXPIRED" || res?.survey_status === "EXPIRED"){
+          setExpiredWarning(true);
+        }
+        const raw=res?.data??res??[];
+        const all=Array.isArray(raw)?raw.flatMap(r=>r.answers??[]):(raw.answers??[]);
+        setAnswers(all);
+      }
+      catch(err){
+        if(cancelled) return;
+        const status = err?.response?.status;
+        if(status === 403 || status === 404){
+          setError("Khảo sát này đã hết hạn hoặc không còn khả dụng.");
+        } else {
+          setError("Không thể tải câu trả lời.");
+        }
+      }
       finally{if(!cancelled)setLoading(false);}
     };
     fetch();return()=>{cancelled=true;};
@@ -689,17 +708,37 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
         </div>
         <div style={{padding:"20px",overflowY:"auto",flex:1}}>
           <div style={{textAlign:"center",marginBottom:24}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:999,background:"rgba(220,252,231,0.8)",border:"1px solid #86efac",marginBottom:10,backdropFilter:"blur(8px)"}}>
-              <CheckCircle2 size={11} color="#16a34a"/>
-              <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#15803d",fontFamily:C.font}}>Đã hoàn thành</span>
-            </div>
-            <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}>{surveyTitle}</h2>
-            {!loading&&<p style={{fontSize:12,color:C.textSub,margin:0,fontFamily:C.font}}>{answers.length} câu hỏi</p>}
+            {(expiredWarning || error) ? (
+              <>
+                <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:999,background:"rgba(245,158,11,0.15)",border:"1px solid #fcd34d",marginBottom:10,backdropFilter:"blur(8px)"}}>
+                  <Clock size={11} color="#d97706"/>
+                  <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#92400e",fontFamily:C.font}}>Hết hạn</span>
+                </div>
+                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}>{surveyTitle}</h2>
+              </>
+            ) : (
+              <>
+                <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:999,background:"rgba(220,252,231,0.8)",border:"1px solid #86efac",marginBottom:10,backdropFilter:"blur(8px)"}}>
+                  <CheckCircle2 size={11} color="#16a34a"/>
+                  <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#15803d",fontFamily:C.font}}>Đã hoàn thành</span>
+                </div>
+                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}>{surveyTitle}</h2>
+                {!loading&&<p style={{fontSize:12,color:C.textSub,margin:0,fontFamily:C.font}}>{answers.length} câu hỏi</p>}
+              </>
+            )}
           </div>
           {loading&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"48px 0",gap:8,color:C.primary}}><Loader2 size={18} style={{animation:"spin 1s linear infinite"}}/><span style={{fontSize:13,fontFamily:C.font}}>Đang tải...</span></div>}
-          {!loading&&error&&<div style={{textAlign:"center",padding:"48px 0",color:C.textSub,fontFamily:C.font}}>{error}</div>}
-          {!loading&&!error&&answers.length===0&&<div style={{textAlign:"center",padding:"48px 0"}}><Inbox size={36} color={C.textDim} style={{marginBottom:8}}/><div style={{fontSize:13,color:C.textSub,fontFamily:C.font}}>Không có câu trả lời.</div></div>}
-          {!loading&&!error&&answers.length>0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{answers.map((item,idx)=><QuestionCard key={item.question_id??idx} item={item} index={idx}/>)}</div>}
+          {!loading&&error&&<div style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:12}}>⏰</div>
+            <div style={{fontSize:14,fontWeight:700,color:"#92400e",marginBottom:8,fontFamily:C.font}}>Khảo sát đã hết hạn</div>
+            <div style={{fontSize:13,color:C.textSub,fontFamily:C.font,lineHeight:1.6}}>{error}</div>
+            <div style={{marginTop:16}}><button onClick={onClose} style={{padding:"8px 20px",borderRadius:10,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.8)",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:C.font}}>Đóng</button></div>
+          </div>}
+          {!loading&&!error&&expiredWarning&&<div style={{textAlign:"center",padding:"32px 20px",background:"rgba(245,158,11,0.08)",borderRadius:14,border:"1px solid rgba(245,158,11,0.2)"}}>
+            <div style={{fontSize:13,color:"#92400e",fontFamily:C.font,lineHeight:1.6,marginBottom:16}}>Khảo sát này đã kết thúc. Kết quả của bạn vẫn được lưu.</div>
+          </div>}
+          {!loading&&!error&&!expiredWarning&&answers.length===0&&<div style={{textAlign:"center",padding:"48px 0"}}><Inbox size={36} color={C.textDim} style={{marginBottom:8}}/><div style={{fontSize:13,color:C.textSub,fontFamily:C.font}}>Không có câu trả lời.</div></div>}
+          {!loading&&!error&&!expiredWarning&&answers.length>0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{answers.map((item,idx)=><QuestionCard key={item.question_id??idx} item={item} index={idx}/>)}</div>}
         </div>
       </div>
     </div>,
@@ -1224,7 +1263,8 @@ export default function SurveysLayout() {
                     survey={{ ...survey, status: computedStatus }}
                     index={index}
                     overrideStatus={isDone ? "COMPLETED" : null}
-                    onClick={() => navigate(`/user/survey/${survey.id}`)}
+                    onClick={() => isDone ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
+                    type="public"
                   />
                 );
               })}
