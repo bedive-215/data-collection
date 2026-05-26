@@ -96,7 +96,7 @@ class SurveyService {
 
         // Emit events for starting survey and unlocking achievement
         eventBus.emit(START_EVENTS.STARTED, { userId: user.id, surveyId: survey.id });
-        eventBus.emit(ACHIEVEMENT_EVENTS.UNLOCKED, { userId: user.id, achievementKey: "survey_created", data: { survey_id: survey.id } });
+        eventBus.emit(ACHIEVEMENT_EVENTS.UNLOCKED, { userId: user.id, trigger: "survey_created", data: { survey_id: survey.id } });
 
         return { message: "Created survey successfully", survey: mapSurvey(survey) };
     }
