@@ -87,17 +87,31 @@ export default function Navbar({ onToggleSidebar }) {
           >
             {/* Avatar */}
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
               style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
                 background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+                fontSize: 12,
                 color: "#000",
+                flexShrink: 0,
+                overflow: "hidden",
               }}
             >
               {user?.avatar ? (
                 <img
                   src={user.avatar}
                   alt={user?.full_name || "User"}
-                  className="w-full h-full object-cover rounded-lg"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
                 />
               ) : (
                 firstChar

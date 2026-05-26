@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSurvey } from "@/providers/SurveyProvider";
 import { useResponse } from "@/providers/ResponseProvider";
 import {
   ChevronLeft, CheckCircle2, Loader2, AlertCircle,
   AlignLeft, FileText, Mail, Calendar, Hash, Star, CheckSquare, ChevronDown,
-  Trophy, Home, Clock,
+  Trophy, Home, Clock, Inbox,
 } from "lucide-react";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
@@ -62,45 +61,35 @@ function SurveyResponsePage() {
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [survey, setSurvey] = useState(null);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
-  const { fetchSurveyById } = useSurvey();
   const { getMySubmission } = useResponse();
 
   useEffect(() => {
     const fetchData = async () => {
-      let surveyRes = null;
-      let responseRes = null;
-      let hasError = false;
-
       try {
         setLoading(true);
         setError(null);
-        surveyRes = await fetchSurveyById(surveyId);
-        setSurvey(surveyRes);
+        const res = await getMySubmission(surveyId);
+        setResponse(res);
       } catch (err) {
-        console.warn("Survey fetch failed (may be expired):", err?.message || err);
-        surveyRes = null;
+        console.warn("Submission fetch failed:", err?.message || err);
+        const status = err?.response?.status;
+        if (status === 403 || status === 404) {
+          setError("Bạn chưa tham gia khảo sát này hoặc không có quyền xem.");
+        } else if (status === 401) {
+          setError("Vui lòng đăng nhập để xem kết quả.");
+        } else {
+          setError("Không thể tải kết quả. Vui lòng thử lại sau.");
+        }
+      } finally {
+        setLoading(false);
       }
-
-      try {
-        responseRes = await getMySubmission(surveyId);
-        setResponse(responseRes);
-      } catch (err) {
-        console.warn("Response fetch failed:", err?.message || err);
-        responseRes = null;
-      }
-
-      hasError = !surveyRes && !responseRes;
-      if (hasError) {
-        setError("Không thể tải dữ liệu khảo sát này.");
-      }
-
-      setLoading(false);
     };
 
-    fetchData();
+    if (surveyId) {
+      fetchData();
+    }
   }, [surveyId]);
 
   if (loading) {
@@ -142,11 +131,27 @@ function SurveyResponsePage() {
                 <AlertCircle size={28} color="#fff" />
               </div>
               <div>
-                <h3 style={{ margin: "0 0 6px", color: "#b91c1c", fontWeight: 800, fontSize: 16 }}>Không tải được</h3>
-                <p style={{ margin: 0, color: PAGE.textSub, fontSize: 13, lineHeight: 1.55 }}>
+                <h3 style={{ margin: "0 0 6px", color: "#b91c1c", fontWeight: 800, fontSize: 16 }}>Không thể xem kết quả</h3>
+                <p style={{ margin: "0 0 8px", color: PAGE.textSub, fontSize: 13, lineHeight: 1.55 }}>
                   {error || "Không thể tải được câu trả lời của bạn"}
                 </p>
+                <p style={{ margin: 0, color: PAGE.textDim, fontSize: 12, lineHeight: 1.5 }}>
+                  Có thể khảo sát đã hết hạn, đã đóng, hoặc bạn không có quyền xem.
+                </p>
               </div>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => navigate("/user/home")}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9,
+                  background: PAGE.primary, border: "none", cursor: "pointer",
+                  fontSize: 12, fontWeight: 700, color: "#fff",
+                }}
+              >
+                ← Quay lại trang chủ
+              </button>
             </div>
           </GlassPanel>
         </div>
@@ -271,7 +276,7 @@ function SurveyResponsePage() {
                 color: PAGE.text,
               }}
             >
-              {survey?.title || response?.data?.survey?.title || "Khảo sát đã hoàn thành"}
+              {response?.data?.survey?.title || response?.data?.title || "Khảo sát đã hoàn thành"}
             </h2>
 
             <p
@@ -283,7 +288,7 @@ function SurveyResponsePage() {
                 color: PAGE.textSub,
               }}
             >
-              {survey?.description || response?.data?.survey?.description || ""}
+              {response?.data?.survey?.description || response?.data?.description || ""}
             </p>
 
             <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", color: PAGE.textSub }}>

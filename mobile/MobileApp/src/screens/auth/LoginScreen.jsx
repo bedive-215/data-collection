@@ -39,15 +39,29 @@ const GoogleIcon = () => (
   </View>
 );
 
-export default function Login({ navigation }) {
+export default function Login({ navigation, route }) {
   const { login, loginWithOAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showExtraForm, setShowExtraForm] = useState(false);
   const [googleToken, setGoogleToken] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
+
+  // Check for redirect reason from navigation params
+  useEffect(() => {
+    const reason = route?.params?.reason;
+    if (reason === "session_expired") {
+      setSessionExpired(true);
+      setErrorMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+    } else if (reason === "blocked") {
+      setIsBlocked(true);
+      setErrorMessage("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+    }
+  }, [route?.params]);
 
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -233,8 +247,17 @@ export default function Login({ navigation }) {
             )}
           />
 
-          {/* Error message */}
-          {errorMessage ? (
+          {/* Session expired warning */}
+          {sessionExpired ? (
+            <View style={styles.warningBanner}>
+              <Text style={styles.warningBannerIcon}>!</Text>
+              <Text style={styles.warningBannerText}>{errorMessage}</Text>
+            </View>
+          ) : isBlocked ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{errorMessage}</Text>
+            </View>
+          ) : errorMessage ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{errorMessage}</Text>
             </View>
@@ -564,6 +587,37 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     fontSize: 16,
+  },
+
+  // Warning Banner (session expired)
+  warningBanner: {
+    backgroundColor: "rgba(59,130,246,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(59,130,246,0.3)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  warningBannerIcon: {
+    color: "#3b82f6",
+    fontSize: 16,
+    fontWeight: "800",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(59,130,246,0.2)",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  warningBannerText: {
+    color: "#3b82f6",
+    fontSize: 13,
+    fontWeight: "500",
+    flex: 1,
   },
 
   // Error

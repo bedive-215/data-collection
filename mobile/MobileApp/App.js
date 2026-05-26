@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createRef } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 
 import RootNavigator from "./src/navigation/RootNavigator";
@@ -12,9 +12,12 @@ import NotificationProvider from "./src/providers/NotificationProvider";
 import GamificationProvider from "./src/providers/GamificationProvider";
 import { ToastProvider }   from "./src/components/common/Toast";
 
+// Navigation ref for accessing navigation from outside components
+export const navigationRef = createRef();
+
 export default function App() {
   return (
-    <AuthProvider>
+    <AuthProvider navigationRef={navigationRef}>
       <UserProvider>
         <OptionProvider>
           <GamificationProvider>
@@ -23,7 +26,7 @@ export default function App() {
                 <QuestionProvider>
                   <NotificationProvider>
                     <ToastProvider>
-                      <NavigationContainer>
+                      <NavigationContainer ref={navigationRef}>
                         <RootNavigator />
                       </NavigationContainer>
                     </ToastProvider>

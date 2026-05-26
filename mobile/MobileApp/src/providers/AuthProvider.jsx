@@ -1,6 +1,8 @@
 // AuthProvider.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CommonActions } from "@react-navigation/native";
+import { navigationRef } from "../../App";
 import authService from "../services/authService";
 import apiClient from "../api/apiClient";
 
@@ -32,12 +34,16 @@ const decodeJWT = (token) => {
 // ============================
 // Provider
 // ============================
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, navigation }) => {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Track if we've already redirected to login (prevent loops)
+  const hasRedirectedRef = useRef(false);
 
   // ============================
   // Persist tokens in AsyncStorage
@@ -144,14 +150,51 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
   // ============================
+  // Navigate to login
+  // ============================
+  const navigateToLogin = useCallback((reason = "session_expired") => {
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+
+    persistTokens(null, null).then(() => {
+      setUser(null);
+      setIsBlocked(reason === "blocked");
+
+      try {
+        // Try using navigationRef first, then fall back to navigation prop
+        const nav = navigationRef?.current;
+        if (nav) {
+          nav.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: "Login", params: { reason } }],
+            })
+          );
+        } else if (navigation?.dispatch) {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: "Login", params: { reason } }],
+            })
+          );
+        }
+      } catch (e) {
+        console.warn("Navigation not available:", e);
+      }
+    });
+  }, [navigation]);
+
+  // ============================
   // Logout
   // ============================
   const logout = async () => {
+    hasRedirectedRef.current = false;
     try {
       await authService.logout().catch(() => {});
     } finally {
       await persistTokens(null, null);
       setUser(null);
+      setIsBlocked(false);
     }
   };
 
@@ -216,6 +259,16 @@ export const AuthProvider = ({ children }) => {
         const originalRequest = error.config;
         if (!originalRequest) return Promise.reject(error);
 
+        // Blocked user - 403
+        if (error.response?.status === 403) {
+          const msg = error.response?.data?.message || "";
+          if (msg.includes("khóa") || msg.includes("bị khóa") || msg.includes("banned") || msg.includes("blocked")) {
+            navigateToLogin("blocked");
+            return Promise.reject(error);
+          }
+        }
+
+        // 401 - try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           const refreshed = await refreshTokens();
@@ -224,7 +277,17 @@ export const AuthProvider = ({ children }) => {
             const newAccess = refreshed?.access_token ?? refreshed?.accessToken ?? accessToken;
             originalRequest.headers["Authorization"] = `Bearer ${newAccess}`;
             return apiClient(originalRequest);
+          } else {
+            // Refresh failed -> redirect to login
+            navigateToLogin("session_expired");
+            return Promise.reject(error);
           }
+        }
+
+        // Already retried but still 401 -> redirect to login
+        if (error.response?.status === 401 && originalRequest._retry) {
+          navigateToLogin("session_expired");
+          return Promise.reject(error);
         }
 
         return Promise.reject(error);
@@ -266,8 +329,9 @@ export const AuthProvider = ({ children }) => {
     accessToken,
     refreshToken,
     loading,
+    isBlocked,
     isAuthenticated: !!user,
- loginWithOAuth,
+    loginWithOAuth,
     login,
     logout,
     register,
@@ -278,6 +342,7 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     refreshTokens,
     setUser,
+    navigateToLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

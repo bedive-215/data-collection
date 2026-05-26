@@ -27,19 +27,46 @@ const font = "'DM Sans', 'Inter', system-ui, sans-serif";
 function UserAvatar({ avatar, size = 32 }) {
   if (avatar) {
     return (
-      <img
-        src={avatar}
-        alt=""
-        width={size}
-        height={size}
-        className="rounded-full object-cover shrink-0 ring-2 ring-white shadow-md shadow-indigo-500/15"
-      />
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          overflow: "hidden",
+          flexShrink: 0,
+          ring: "2px solid white",
+          boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
+        }}
+      >
+        <img
+          src={avatar}
+          alt=""
+          width={size}
+          height={size}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </div>
     );
   }
   return (
     <div
-      style={{ width: size, height: size }}
-      className="rounded-full shrink-0 grid place-items-center text-white text-[0.65em] font-bold ring-2 ring-white shadow-md shadow-indigo-500/25 bg-gradient-to-br from-indigo-500 to-violet-600"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        flexShrink: 0,
+        display: "grid",
+        placeItems: "center",
+        fontSize: size * 0.4,
+        fontWeight: "bold",
+        color: "white",
+        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+        boxShadow: "0 2px 8px rgba(99, 102, 241, 0.25)",
+      }}
     >
       <UserRound size={Math.round(size * 0.52)} strokeWidth={2} />
     </div>

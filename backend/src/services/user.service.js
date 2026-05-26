@@ -1,7 +1,8 @@
 import models from "../models/index.js";
 import { Op } from "sequelize";
 import { AppError } from "../middlewares/handleException.middlware.js";
-import { uploadBufferToCloudinary } from '../utils/uploadImage.js'
+import { uploadBufferToCloudinary, deleteFromCloudinary } from '../utils/uploadImage.js'
+import cloudinary from "../configs/cloudinary.config.js";
 
 class UserService {
     constructor() {
@@ -67,7 +68,7 @@ class UserService {
         const { url, public_id } = await uploadBufferToCloudinary(avatar.buffer);
 
         if (user.avatar_public_id) {
-            await cloudinary.uploader.destroy(user.avatar_public_id);
+            await deleteFromCloudinary(user.avatar_public_id);
         }
 
         user.avatar = url;

@@ -35,7 +35,24 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Check query params for redirect reason
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session") === "expired") {
+      setSessionExpired(true);
+      setErrorMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+      window.history.replaceState({}, "", "/login");
+    }
+    if (params.get("blocked") === "true") {
+      setIsBlocked(true);
+      setErrorMessage("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || null;
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -317,7 +334,32 @@ export default function Login() {
             {errors.password && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{t(errors.password.message)}</p>}
           </div>
 
-          {errorMessage && (
+          {/* Session expired warning */}
+          {sessionExpired && (
+            <div style={{ borderRadius: 14, padding: "13px 16px", background: "#EFF6FF", border: `1px solid #BFDBFE` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p style={{ fontSize: 13, color: "#1E40AF", margin: 0 }}>{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Blocked warning */}
+          {isBlocked && (
+            <div style={{ borderRadius: 14, padding: "13px 16px", background: "#FEF2F2", border: `1px solid #FECACA` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                </svg>
+                <p style={{ fontSize: 13, color: "#991B1B", margin: 0 }}>{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Regular error message */}
+          {!sessionExpired && !isBlocked && errorMessage && (
             <div style={{ borderRadius: 14, padding: "13px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}>
               <p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p>
             </div>

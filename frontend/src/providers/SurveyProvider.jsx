@@ -424,6 +424,12 @@ const SurveyProvider = ({ children }) => {
       setCurrentSurvey(survey);
       return survey;
     } catch (err) {
+      const status = err?.response?.status;
+      // Don't show toast for expired/not found surveys - let the page handle it
+      if (status === 403 || status === 404) {
+        console.warn("Survey expired or not found:", id);
+        return null;
+      }
       handleError(err, "Không tìm thấy khảo sát");
     } finally {
       stopLoading();

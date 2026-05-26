@@ -1,19 +1,25 @@
 // src/services/mediaService.js
 import apiClient from "@/api/apiClient";
 
-export const mediaService = {
+const mediaService = {
   // Upload question media (image/video)
-  uploadQuestionMedia: (file) => {
+  uploadQuestionMedia: async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-    return apiClient.post("/api/v1/media/question-media", formData);
+    const res = await apiClient.post("/api/v1/media/question-media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res?.data?.data ?? res?.data;
   },
 
   // Upload option media (image/video)
-  uploadOptionMedia: (file) => {
+  uploadOptionMedia: async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-    return apiClient.post("/api/v1/option-media/option-media", formData);
+    const res = await apiClient.post("/api/v1/option-media/option-media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res?.data?.data ?? res?.data;
   },
 };
 

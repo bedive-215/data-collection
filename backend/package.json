@@ -16,7 +16,7 @@
     "@google/genai": "^2.2.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
-    "bullmq": "^5.76.10",
+    "bullmq": "^5.77.3",
     "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

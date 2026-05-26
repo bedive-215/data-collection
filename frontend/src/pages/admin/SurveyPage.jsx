@@ -1588,7 +1588,7 @@ function SurveyCard({
           )}
 
           {/* 3-dot menu */}
-          <div ref={menuRef} style={{position:"absolute", top:10, right: isEditing ? 10 : "auto", left: isEditing ? 10 : "auto", display: isEditing ? "block" : "none", zIndex:20}} onClick={e => e.stopPropagation()}>
+          <div ref={menuRef} style={{position:"absolute", top:10, right: editing ? 10 : "auto", left: editing ? 10 : "auto", display: editing ? "block" : "none", zIndex:20}} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(v => !v)}
               style={{

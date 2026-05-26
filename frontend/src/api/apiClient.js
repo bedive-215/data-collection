@@ -63,10 +63,10 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (e) {
-        // refresh failed -> clear and redirect to login (or let app decide)
+        // refresh failed -> clear tokens and redirect to login
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        // optional: window.location.href = "/login";
+        window.location.href = "/login?session=expired";
         return Promise.reject(error);
       }
     }
