@@ -752,15 +752,76 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   EXPIRED MODAL
+════════════════════════════════════════════════════════════════ */
+function ExpiredModal({ open, onClose, survey }) {
+  if (!open || !survey) return null;
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:9999,
+      background:"rgba(15,23,42,0.5)",
+      backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      padding:20, animation:"fadeIn .15s ease",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:"#fff", borderRadius:16,
+        border:"1px solid #e8ecf2",
+        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
+        width:"100%", maxWidth:400, overflow:"hidden",
+        animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
+        fontFamily:"'DM Sans',sans-serif",
+        textAlign:"center", padding:"32px 24px",
+      }}>
+        <div style={{ width:56, height:56, borderRadius:16, background:"rgba(239,68,68,0.08)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+          <Clock size={26} color="#ef4444"/>
+        </div>
+        <h3 style={{ margin:"0 0 8px", fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã kết thúc</h3>
+        <p style={{ margin:"0 0 20px", fontSize:13, color:"#64748b", lineHeight:1.5 }}>
+          Khảo sát <strong>"{survey.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            padding:"10px 32px",
+            background:"#f4f6f8",
+            border:"1px solid #e8ecf2", borderRadius:10,
+            color:"#64748b", fontSize:14, fontWeight:600,
+            cursor:"pointer", fontFamily:"'DM Sans',sans-serif",
+          }}
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
    PUBLIC SURVEY CARD — hover nhẹ (không nghiêng theo chuột)
 ════════════════════════════════════════════════════════════════ */
-function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index }) {
+function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onExpiredClick }) {
   const thumb=C.thumbGrads[index%C.thumbGrads.length];
   const createdDate=survey?.created_at?new Date(survey.created_at).toLocaleDateString("vi-VN"):"";
+  const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+
+  const handleClick = () => {
+    if (isExpired) {
+      if (done) {
+        onViewSubmission(survey.id);
+      } else {
+        onExpiredClick(survey);
+      }
+    } else if (done) {
+      onViewSubmission(survey.id);
+    } else {
+      onStart(survey.id);
+    }
+  };
 
   return (
     <div
-      onClick={()=>done&&onViewSubmission(survey.id,survey.title)}
+      onClick={handleClick}
       onMouseEnter={e=>{
         const el=e.currentTarget;
         el.style.transform="translateY(-4px)";
@@ -1133,7 +1194,8 @@ export default function SurveysLayout() {
   const [doneSurveyIds,setDoneSurveyIds]=useState(new Set());
   const [publicLoading,setPublicLoading]=useState(true);
   const [publicError,setPublicError]=useState(null);
-  const [modalSurvey,setModalSurvey]=useState(null);
+  const [extendModal,setExtendModal]=useState({open:false,survey:null});
+  const [expiredModal,setExpiredModal]=useState({open:false,survey:null});
   const [publicSearch,setPublicSearch]=useState("");
   const [activeTab,setActiveTab]=useState("all");
   const [sortBy,setSortBy]=useState("newest");
@@ -1141,7 +1203,6 @@ export default function SurveysLayout() {
   const [showFilter,setShowFilter]=useState(false);
   const [globalSearch,setGlobalSearch]=useState("");
   const [shareModal,setShareModal]=useState({open:false,surveyId:null,surveyTitle:"",shareUrl:"",loading:false,error:""});
-  const [extendModal,setExtendModal]=useState({open:false,survey:null});
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -1399,8 +1460,21 @@ export default function SurveysLayout() {
                     survey={{ ...survey, status: computedStatus }}
                     index={index}
                     overrideStatus={isDone ? "COMPLETED" : null}
-                    onClick={() => isDone ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
+                    onClick={() => {
+                      if (isExpired) {
+                        if (isDone) {
+                          navigate(`/user/survey/${survey.id}/response`);
+                        } else {
+                          setExpiredModal({ open: true, survey });
+                        }
+                      } else if (isDone) {
+                        navigate(`/user/survey/${survey.id}/response`);
+                      } else {
+                        navigate(`/user/survey/${survey.id}`);
+                      }
+                    }}
                     type="public"
+                    onExpiredClick={(s) => setExpiredModal({ open: true, survey: s })}
                   />
                 );
               })}
@@ -1483,8 +1557,6 @@ export default function SurveysLayout() {
             </GlassCard>
           )}
 
-          {modalSurvey&&<SubmissionModal surveyId={modalSurvey.id} surveyTitle={modalSurvey.title} onClose={()=>setModalSurvey(null)}/>}
-
           {publicLoading&&(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,280px))",gap:14}}>
               {Array(6).fill(0).map((_,i)=><PublicCardSkeleton key={i}/>)}
@@ -1511,16 +1583,33 @@ export default function SurveysLayout() {
                 {doneCount>0&&<span style={{marginLeft:8,color:C.success,fontWeight:600}}>· {doneCount} đã hoàn thành</span>}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:18}}>
-                {displayed.map((survey,i)=>(
-                  <SurveyCardHome
-                    key={survey.id}
-                    survey={survey}
-                    index={i}
-                    overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
-                    onClick={() => doneSurveyIds.has(survey.id) ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
-                    type="public"
-                  />
-                ))}
+                {displayed.map((survey,i)=>{
+                  const isDone = doneSurveyIds.has(survey.id);
+                  const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+                  return (
+                    <SurveyCardHome
+                      key={survey.id}
+                      survey={survey}
+                      index={i}
+                      overrideStatus={isDone ? "COMPLETED" : null}
+                      onClick={() => {
+                        if (isExpired) {
+                          if (isDone) {
+                            navigate(`/user/survey/${survey.id}/response`);
+                          } else {
+                            setExpiredModal({ open: true, survey });
+                          }
+                        } else if (isDone) {
+                          navigate(`/user/survey/${survey.id}/response`);
+                        } else {
+                          navigate(`/user/survey/${survey.id}`);
+                        }
+                      }}
+                      type="public"
+                      onExpiredClick={(s) => setExpiredModal({ open: true, survey: s })}
+                    />
+                  );
+                })}
               </div>
             </>
           )}
@@ -1543,6 +1632,12 @@ export default function SurveysLayout() {
         onClose={() => setExtendModal({ open: false, survey: null })}
         survey={extendModal.survey}
         onExtend={handleExtendLayout}
+      />
+
+      <ExpiredModal
+        open={expiredModal.open}
+        onClose={() => setExpiredModal({ open: false, survey: null })}
+        survey={expiredModal.survey}
       />
 
       <style>{`

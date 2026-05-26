@@ -1019,7 +1019,7 @@ export default function DashboardPage() {
   }, []);
 
   const surveyPath = (id) => ROUTERS.USER.SURVEY_TAKE.replace(":surveyId", id);
-  const responsePath = (id) => ROUTERS.USER.MY_RESPONSE.replace(":surveyId", id);
+  const responsePath = (id) => ROUTERS.USER.SURVEY_RESPONSE.replace(":surveyId", id);
 
   const handleStart = (id) => navigate(surveyPath(id));
 
