@@ -1,5 +1,5 @@
 import leaderboardService from "../services/leaderboard.service.js";
-import { LEADERBOARD_PERIODS } from "../services/leaderboard.service.js";
+import { LEADERBOARD_PERIODS } from "../domain/leaderboard.domain.js";
 
 class LeaderboardController {
     async getLeaderboard(req, res, next) {
