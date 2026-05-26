@@ -1,7 +1,8 @@
 import models from "../models/index.js";
 import { AppError } from "../middlewares/handleException.middlware.js";
 import { mapAchievement } from "../mappers/achivement.mapper.js";
-import { evaluateCondition } from "../helpers/evaluateCondition.js";
+import { evaluateCondition } from "../helpers/evaluateCondition.helper.js";
+import { withTransaction } from "../utils/transaction.js";
 
 import { ACHIEVEMENTS_DEF, ACHIEVEMENT_CATEGORY_ORDER } from "../domain/achivement.domain.js";
 
@@ -9,7 +10,7 @@ import starService from "./star.service.js";
 
 import eventBus from "../events/eventBus.js";
 import { ACHIEVEMENT_EVENTS } from "../events/achivenent/achivement.event.js";
-import { START_EVENTS } from "../events/start/start.event.js";
+import { STAR_EVENTS } from "../events/star/star.event.js";
 
 class AchievementService {
     constructor() {
@@ -31,15 +32,10 @@ class AchievementService {
     }
 
     async checkAndUnlock(userId, trigger, data = {}, options = {}) {
-        const { externalTransaction = null } = options;
-        const isOwnTransaction = !externalTransaction;
-        const transaction = externalTransaction || await this.sequelize.transaction();
-
-        try {
+        return withTransaction(this.sequelize, options.externalTransaction, async (transaction) => {
             const user = await this.User.findByPk(userId, { transaction });
             if (!user) throw new AppError("User not found", 404);
 
-            // Lấy tất cả achievements chưa unlock của user
             const allAchievements = await this.Achievement.findAll({
                 where: { is_active: true },
                 include: [{
@@ -50,32 +46,22 @@ class AchievementService {
                 }],
             });
 
-            const lockedAchievements = allAchievements.filter(
-                a => !a.user_achievements?.length
-            );
+            const lockedAchievements = allAchievements.filter(a => !a.user_achievements?.length);
+            if (!lockedAchievements.length) return { unlocked: [], count: 0 };
 
-            if (!lockedAchievements.length) {
-                if (isOwnTransaction) await transaction.commit();
-                return { unlocked: [], count: 0 };
-            }
-
-            // Pre-fetch counts 1 lần thay vì query trong loop
             const [surveyCount, responseCount] = await Promise.all([
                 this.Survey.count({ where: { created_by: userId } }),
                 this.Response.count({ where: { user_id: userId, status: "COMPLETED" } }),
             ]);
 
-            const starBalance = user.total_stars_earned || 0;
-            const streakCount = user.streak_count || 0;
-
             const unlockedAchievements = [];
 
             for (const achievement of lockedAchievements) {
-                const { shouldUnlock, progress } = evaluateCondition(achievement, {
+                const { shouldUnlock, progress } = this._evaluateCondition(achievement, {
                     surveyCount,
                     responseCount,
-                    starBalance,
-                    streakCount,
+                    starBalance: user.total_stars_earned || 0,
+                    streakCount: user.streak_count || 0,
                     data,
                 });
 
@@ -90,31 +76,28 @@ class AchievementService {
                     notification_sent: false,
                 }, { transaction });
 
-                await starService.addStars(
-                    userId,
-                    achievement.star_reward,
-                    "ACHIEVEMENT_REWARD",
-                    `Mở khóa huy hiệu: ${achievement.name}`,
-                    { achievement_code: achievement.code, achievement_id: achievement.id },
-                    { externalTransaction: transaction },
-                );
-
-                eventBus.emit(ACHIEVEMENT_EVENTS.NOTIFY_UNLOCKED, {
-                    userId,
-                    achievement: this._mapAchievement(achievement),
-                });
-
-                unlockedAchievements.push(mapAchievement(achievement));
+                unlockedAchievements.push(this._mapAchievement(achievement));
             }
 
-            if (isOwnTransaction) await transaction.commit();
+            if (!unlockedAchievements.length) return { unlocked: [], count: 0 };
+
+            // Cộng tổng sao 1 lần sau khi xác định hết achievements
+            const totalStarReward = unlockedAchievements.reduce((sum, a) => sum + a.star_reward, 0);
+            await starService.addStars(
+                userId,
+                totalStarReward,
+                "ACHIEVEMENT_REWARD",
+                `Mở khóa ${unlockedAchievements.length} huy hiệu`,
+                { achievements: unlockedAchievements.map(a => a.code) },
+                { externalTransaction: transaction }
+            );
+
+            unlockedAchievements.forEach(achievement =>
+                eventBus.emit(ACHIEVEMENT_EVENTS.NOTIFY_UNLOCKED, { userId, achievement })
+            );
 
             return { unlocked: unlockedAchievements, count: unlockedAchievements.length };
-
-        } catch (err) {
-            if (isOwnTransaction) await transaction.rollback();
-            throw err;
-        }
+        });
     }
 
     async getUserAchievements(userId) {

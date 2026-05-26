@@ -8,9 +8,8 @@ import { withTransaction } from "../utils/transaction.js";
 
 import { mapTransaction } from "../mappers/star.mapper.js";
 
-import notificationService from "./notification.service.js";
-import leaderboardService from "./leaderboard.service.js";
-
+import eventBus from "../events/eventBus.js";
+import { STAR_EVENTS } from "../events/star/star.event.js";
 class StarService {
     constructor() {
         const { User, StarTransaction, sequelize } = models;
@@ -52,31 +51,30 @@ class StarService {
 
             // Side effects sau commit
             if (amount > 0) {
-                leaderboardService.updatePeriodicStars(userId, amount)
-                    .catch(err => console.error("updatePeriodicStars error:", err));
+                eventBus.emit(STAR_EVENTS.PERIODIC_UPDATE, { userId, amount });
 
-                notificationService.notifyStarEarned({
+                eventBus.emit(STAR_EVENTS.EARNED, {
                     userId, amount, type, description, balanceAfter,
                     multiplier: metadata?.multiplier || 1,
-                }).catch(err => console.error("notifyStarEarned error:", err));
+                });
 
                 if (rankChanged) {
-                    notificationService.notifyRankUp({
+                    eventBus.emit(STAR_EVENTS.RANK_UP, {
                         userId,
                         oldRank: user.current_rank,
                         newRank: newRank.name,
                         starsNeeded: 0,
                         totalStars: totalEarnedAfter,
-                    }).catch(err => console.error("notifyRankUp error:", err));
+                    });
                 }
             } else {
-                notificationService.createNotification({
+                eventBus.emit(STAR_EVENTS.PENALTY, { 
                     userId,
                     type: "STAR_PENALTY",
                     title: `⚠️ ${amount} sao`,
                     message: `${description} | Số dư: ${balanceAfter} sao`,
                     data: { amount, balance_after: balanceAfter, description },
-                }).catch(err => console.error("notify penalty error:", err));
+                });
             }
 
             return {
@@ -148,9 +146,9 @@ class StarService {
         });
 
         const RESPONDER_REWARDS = [
-            { stars: STAR_REWARDS.FIRST_RESPONDER,  type: "FIRST_RESPONDER",  desc: "Người tham gia đầu tiên - Phần thưởng đặc biệt!" },
+            { stars: STAR_REWARDS.FIRST_RESPONDER, type: "FIRST_RESPONDER", desc: "Người tham gia đầu tiên - Phần thưởng đặc biệt!" },
             { stars: STAR_REWARDS.SECOND_RESPONDER, type: "SECOND_RESPONDER", desc: "Người tham gia thứ 2 - Rất nhanh!" },
-            { stars: STAR_REWARDS.THIRD_RESPONDER,  type: "THIRD_RESPONDER",  desc: "Người tham gia thứ 3" },
+            { stars: STAR_REWARDS.THIRD_RESPONDER, type: "THIRD_RESPONDER", desc: "Người tham gia thứ 3" },
         ];
 
         const reward = RESPONDER_REWARDS[completedCount - 1] || {
