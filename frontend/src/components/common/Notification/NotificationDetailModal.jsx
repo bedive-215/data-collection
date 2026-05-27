@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     X, Mail, Clock, AlertCircle, FileText, Users, Bell,
-    Calendar, Award, ExternalLink, Edit3, Loader2, Check, Sparkles
+    Calendar, Award, ExternalLink, Edit3, Loader2, Check, Sparkles, Eye
 } from 'lucide-react';
 
 /* ─── Helpers (dùng chung với các file khác) ─── */
@@ -199,8 +199,20 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
         }
     };
 
-    const handleAction     = () => { onMarkRead(notification.id); onClose(); if (data.surveyId) navigate(`/user/survey/${data.surveyId}`); };
-    const handleViewDetail = () => { onMarkRead(notification.id); onClose(); if (data.surveyId) navigate(`/user/my-surveys/${data.surveyId}`); };
+    const role = data.role;
+
+    const getInviteTarget = () => {
+        if (!data.surveyId) return null;
+        if (role === "editor")   return `/user/my-surveys/${data.surveyId}/studio`;
+        if (role === "viewer")   return `/user/survey/${data.surveyId}/invited`;
+        return `/user/survey/${data.surveyId}/invited`; // respondent
+    };
+
+    const getInviteActionLabel = () => {
+        if (role === "editor")   return { text: "Mở trang chỉnh sửa", icon: Edit3 };
+        if (role === "viewer")   return { text: "Xem câu hỏi", icon: Eye };
+        return { text: "Làm khảo sát", icon: FileText };
+    };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -365,13 +377,19 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
 
                 {/* Footer actions */}
                 <div className="px-6 py-4 border-t border-[var(--admin-border)] bg-[var(--admin-bg-secondary)] flex flex-wrap gap-2">
-                    {data.surveyId && type === 'SURVEY_INVITATION' && (
-                        <button onClick={handleAction} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
-                            Làm khảo sát
-                        </button>
-                    )}
+                    {data.surveyId && type === 'SURVEY_INVITATION' && (() => {
+                        const { text, icon: ActionIcon } = getInviteActionLabel();
+                        return (
+                            <button
+                                onClick={() => { onMarkRead(notification.id); onClose(); navigate(getInviteTarget()); }}
+                                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}
+                            >
+                                <ActionIcon className="w-4 h-4" />{text}
+                            </button>
+                        );
+                    })()}
                     {data.surveyId && ['SURVEY_RESPONSE', 'NEW_PARTICIPANT', 'SURVEY_PUBLISHED', 'SURVEY_CLOSED'].includes(type) && (
-                        <button onClick={handleViewDetail} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
+                        <button onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
                             <ExternalLink className="w-4 h-4" />Xem chi tiết
                         </button>
                     )}
@@ -380,7 +398,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                             <button onClick={() => setShowExtendForm(!showExtendForm)} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
                                 <Edit3 className="w-4 h-4" />{showExtendForm ? 'Ẩn form' : 'Gia hạn'}
                             </button>
-                            <button onClick={handleViewDetail} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-[var(--admin-surface-hover)] text-white transition-all shadow-lg">
+                            <button onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-[var(--admin-surface-hover)] text-white transition-all shadow-lg">
                                 <ExternalLink className="w-4 h-4" />Xem chi tiết
                             </button>
                         </>

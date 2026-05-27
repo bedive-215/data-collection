@@ -62,7 +62,7 @@ class ResponseService {
             });
             if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.", 400);
 
-            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
+            const { questionMap, optionMap } = await buildMaps.call(this, answers, survey_id, transaction);
             const answerRecords = await buildAnswerRecords(response.id, answers, questionMap, optionMap);
 
             await this.Answer.bulkCreate(answerRecords, { transaction });
@@ -99,7 +99,7 @@ class ResponseService {
             });
             if (!response) throw new AppError("Bạn chưa bắt đầu khảo sát. Vui lòng mở trang khảo sát trước khi nộp bài.", 400);
 
-            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
+            const { questionMap, optionMap } = await buildMaps.call(this, answers, survey_id, transaction);
 
             await this.Answer.destroy({
                 where: { response_id: response.id, question_id: { [models.Sequelize.Op.in]: answers.map(a => a.question_id) } },
@@ -120,7 +120,7 @@ class ResponseService {
             const response = await this.Response.findOne({ where: { user_id, survey_id }, transaction });
             if (!response) throw new AppError("Response not found", 404);
 
-            const { questionMap, optionMap } = await buildMaps(answers, survey_id, transaction);
+            const { questionMap, optionMap } = await buildMaps.call(this, answers, survey_id, transaction);
 
             await this.Answer.destroy({ where: { response_id: response.id }, transaction });
 

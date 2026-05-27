@@ -19,6 +19,7 @@ import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import CreateSurveyComposer from "@/components/survey/CreateSurveyComposer";
 import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 import { ShareModal } from "@/components/survey/SurveyCardHome";
+import EditorInviteModal from "@/components/survey/EditorInviteModal";
 import { ROUTERS } from "@/utils/constants";
 
 /* ════════════════════════════════════════════════════════════════
@@ -1203,6 +1204,7 @@ export default function SurveysLayout() {
   const [showFilter,setShowFilter]=useState(false);
   const [globalSearch,setGlobalSearch]=useState("");
   const [shareModal,setShareModal]=useState({open:false,surveyId:null,surveyTitle:"",shareUrl:"",loading:false,error:""});
+  const [editorInviteModal,setEditorInviteModal]=useState(null); // { open: true, survey: {...} }
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -1460,8 +1462,11 @@ export default function SurveysLayout() {
                     survey={{ ...survey, status: computedStatus }}
                     index={index}
                     overrideStatus={isDone ? "COMPLETED" : null}
+                    participantRole={survey.role || null}
                     onClick={() => {
-                      if (isExpired) {
+                      if (survey.role === "editor") {
+                        setEditorInviteModal({ open: true, survey });
+                      } else if (isExpired) {
                         if (isDone) {
                           navigate(`/user/survey/${survey.id}/response`);
                         } else {
@@ -1470,7 +1475,7 @@ export default function SurveysLayout() {
                       } else if (isDone) {
                         navigate(`/user/survey/${survey.id}/response`);
                       } else {
-                        navigate(`/user/survey/${survey.id}`);
+                        navigate(`/user/survey/${survey.id}/invited`);
                       }
                     }}
                     type="public"
@@ -1639,6 +1644,13 @@ export default function SurveysLayout() {
         onClose={() => setExpiredModal({ open: false, survey: null })}
         survey={expiredModal.survey}
       />
+
+      {editorInviteModal?.open && (
+        <EditorInviteModal
+          survey={editorInviteModal.survey}
+          onClose={() => setEditorInviteModal({ open: false, survey: null })}
+        />
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');

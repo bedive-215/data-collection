@@ -8,7 +8,7 @@ eventBus.on(SURVEY_EVENTS.CLOSED, async (payload) => {
 });
 
 eventBus.on(SURVEY_EVENTS.DELETED, async (payload) => {
-    await notificationService.notifySurveyDeleted(payload);
+    await notificationService.notifySurveyDeleted({ userId: payload.survey.created_by, surveyTitle: payload.survey.title });
 });
 
 eventBus.on(SURVEY_EVENTS.INVITATION, async (payload) => {

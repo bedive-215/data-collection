@@ -129,46 +129,64 @@ const sendInviteEmail = async ({
     surveyLink,
     senderName,
     senderEmail,
+    role = "respondent",
 }) => {
+    const roleConfig = {
+        respondent: { ctaText: "Làm khảo sát", ctaColor: "#4CAF50", ctaBg: "#e8f5e9" },
+        viewer:      { ctaText: "Xem câu hỏi", ctaColor: "#1976D2", ctaBg: "#e3f2fd" },
+        editor:      { ctaText: "Chỉnh sửa", ctaColor: "#F59E0B", ctaBg: "#fff8e1" },
+    };
+    const { ctaText, ctaColor, ctaBg } = roleConfig[role] || roleConfig.respondent;
+    const roleNote = {
+        respondent: "Bạn được mời làm khảo sát này. Nhấn nút bên dưới để bắt đầu.",
+        viewer:      "Bạn được mời xem câu hỏi của khảo sát này. Nhấn nút bên dưới để xem.",
+        editor:      "Bạn được mời tham gia chỉnh sửa khảo sát này. Nhấn nút bên dưới để bắt đầu.",
+    };
+    const note = roleNote[role] || roleNote.respondent;
+
     await sendEmail({
         to,
-        subject: `You're invited to participate in a survey`,
+        subject: `Bạn được mời tham gia khảo sát: ${surveyTitle}`,
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          
-          <h2 style="color: #333;">Survey Invitation</h2>
-          
-          <p>Hello,</p>
-          
-          <p>
-            You have been invited by 
-            <strong>${senderName}</strong> 
-            (${senderEmail})
-            to participate in a survey.
-          </p>
-
-          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-size: 14px; color: #666;">Survey Title:</p>
-            <h3 style="margin: 5px 0; color: #222;">${surveyTitle}</h3>
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px 12px 0 0; padding: 24px 20px; text-align: center;">
+            <h1 style="color: #fff; margin: 0; font-size: 22px;">📋 Lời mời tham gia khảo sát</h1>
           </div>
 
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${surveyLink}" 
-               style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-               Take Survey
-            </a>
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 12px 12px;">
+            <p style="font-size: 15px; color: #333; margin: 0 0 8px;">
+              Xin chào,
+            </p>
+            <p style="font-size: 14px; color: #555; margin: 0 0 4px;">
+              <strong>${senderName}</strong> (${senderEmail}) đã mời bạn tham gia khảo sát.
+            </p>
+
+            <div style="background-color: #fff; padding: 15px; border-radius: 8px; margin: 16px 0; border-left: 4px solid ${ctaColor};">
+              <p style="margin: 0 0 4px; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.05em;">Tên khảo sát</p>
+              <h3 style="margin: 0; color: #222; font-size: 18px;">${surveyTitle}</h3>
+            </div>
+
+            <div style="background-color: ${ctaBg}; padding: 12px 15px; border-radius: 8px; margin: 16px 0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #555;">
+                <strong style="color: ${ctaColor};">Vai trò của bạn:</strong> ${role === "respondent" ? "📋 Người trả lời" : role === "viewer" ? "👁️ Người xem" : "✏️ Biên tập viên"}
+              </p>
+            </div>
+
+            <p style="font-size: 14px; color: #555; margin: 0 0 20px; line-height: 1.6;">
+              ${note}
+            </p>
+
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${surveyLink}"
+                 style="display: inline-block; background-color: ${ctaColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                 ${ctaText}
+              </a>
+            </div>
+
+            <p style="font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 16px; margin: 20px 0 0;">
+              Email này được gửi tự động bởi Data Collection System thay mặt ${senderName}.
+            </p>
           </div>
-
-          <p style="color: #666;">
-            Click the button above to start the survey. Your responses are valuable!
-          </p>
-
-          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
-
-          <p style="font-size: 12px; color: #999;">
-            This email was sent via Data Collection System on behalf of ${senderName}.
-          </p>
-
         </div>
         `,
     }).catch((error) => {

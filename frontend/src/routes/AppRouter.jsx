@@ -48,6 +48,7 @@ import SurveyStudio from "@/pages/user/SurveyStudio";
 import LeaderboardPage from "@/pages/user/LeaderboardPage";
 import AchievementsPage from "@/pages/user/AchievementsPage";
 import StarWalletPage from "@/pages/user/StarWalletPage";
+import InvitedSurveyPage from "@/pages/user/InvitedSurveyPage";
 
 // ANALYSIS - separate from survey
 import AnalysisHubPage from "@/pages/user/AnalysisHubPage";
@@ -106,6 +107,12 @@ const routeConfig = [
 {
   path: ROUTERS.USER.SURVEY_TAKE,
     element: SurveyTakePage,
+    layout: HomeLayout,
+    guard: GenderGuard,
+  },
+  {
+    path: "/user/survey/:surveyId/invited",
+    element: InvitedSurveyPage,
     layout: HomeLayout,
     guard: GenderGuard,
   },
