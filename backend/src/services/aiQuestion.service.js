@@ -195,7 +195,8 @@ class AiQuestionService {
     }
 
     const rawList = await callGeminiJson(system, userPrompt);
-    const questions = rawList
+    const normalizedList = Array.isArray(rawList) ? rawList : (rawList?.questions ?? []);
+    const questions = normalizedList
       .map((q, i) => normalizeQuestion(q, i))
       .filter(Boolean)
       .slice(0, 40)

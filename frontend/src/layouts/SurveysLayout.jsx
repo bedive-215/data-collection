@@ -19,6 +19,7 @@ import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import CreateSurveyComposer from "@/components/survey/CreateSurveyComposer";
 import { SurveyCardHome } from "@/components/survey/SurveyCardHome";
 import { ShareModal } from "@/components/survey/SurveyCardHome";
+import EditorInviteModal from "@/components/survey/EditorInviteModal";
 import { ROUTERS } from "@/utils/constants";
 
 /* ════════════════════════════════════════════════════════════════
@@ -492,7 +493,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             </div>
             <div>
               <div style={{fontSize:22,fontWeight:800,color:C.text,lineHeight:1,fontFamily:C.font}}>{count}</div>
-              <div style={{fontSize:11,color:C.textSub,marginTop:2,fontFamily:C.font}}>Tổng participants</div>
+              <div style={{fontSize:11,color:C.textSub,marginTop:2,fontFamily:C.font}}>Tổng người tham gia</div>
             </div>
           </div>
           <button onClick={load} disabled={loading} style={{padding:"0 14px",borderRadius:12,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,fontSize:11,fontWeight:600,color:C.textSub,flexShrink:0,fontFamily:C.font}}>
@@ -535,7 +536,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                     {p.name&&<div style={{fontSize:11,color:C.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{p.email}</div>}
                     {!p.name&&<div style={{fontSize:10,color:C.textDim,fontFamily:C.font}}>ID: {p.id?p.id.slice(0,8)+"...":"—"}</div>}
                   </div>
-                  {p.role&&<span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:999,flexShrink:0,color:roleStyle.color,background:roleStyle.bg,border:`1px solid ${roleStyle.border}`,fontFamily:C.font}}>{p.role}</span>}
+                  {p.role&&<span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:999,flexShrink:0,color:roleStyle.color,background:roleStyle.bg,border:`1px solid ${roleStyle.border}`,fontFamily:C.font}}>{p.role==="ADMIN"?"Quản trị":p.role==="owner"?"Chủ sở hữu":p.role==="editor"?"Biên tập":p.role==="viewer"?"Người xem":p.role==="respondent"?"Người trả lời":p.role}</span>}
                   {isConfirming?(
                     <div style={{display:"flex",gap:5,flexShrink:0}}>
                       <button onClick={()=>setConfirmPid(null)} style={{padding:"4px 9px",borderRadius:7,fontSize:11,fontWeight:600,border:`1px solid rgba(0,0,0,0.1)`,background:"rgba(255,255,255,0.8)",color:C.textSub,cursor:"pointer",fontFamily:C.font}}>Huỷ</button>
@@ -569,7 +570,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
   const isPublished=survey?.is_published;
   const handleConfirm=async()=>{setLoading(true);try{await onPublish(survey.id,{is_published:!isPublished});onClose();}finally{setLoading(false);}};
   return (
-    <Modal open={open} onClose={onClose} title={isPublished?"Ẩn khảo sát":"Publish khảo sát"} width={400}>
+    <Modal open={open} onClose={onClose} title={isPublished?"Ẩn khảo sát":"Công khai khảo sát"} width={400}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div style={{padding:"20px",borderRadius:14,background:isPublished?"rgba(245,158,11,0.08)":"rgba(67,97,238,0.08)",border:`1px solid ${isPublished?"rgba(245,158,11,0.3)":"rgba(67,97,238,0.3)"}`,textAlign:"center"}}>
           <div style={{fontSize:36,marginBottom:10}}>{isPublished?"🔒":"🌐"}</div>
@@ -578,7 +579,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
         <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
           <button onClick={onClose} style={sharedCancelBtn}>Huỷ</button>
           <button onClick={handleConfirm} disabled={loading} style={{...sharedPrimaryBtn(loading),background:loading?"rgba(0,0,0,0.05)":isPublished?"rgba(245,158,11,0.9)":"linear-gradient(135deg,#4361ee,#6c7ef7)"}}>
-            {loading?<><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>:isPublished?<><PowerOff size={13}/> Ẩn survey</>:<><Globe size={13}/> Publish</>}
+            {loading?<><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>:isPublished?<><PowerOff size={13}/> Ẩn survey</>:<><Globe size={13}/> Công khai</>}
           </button>
         </div>
       </div>
@@ -752,15 +753,76 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   EXPIRED MODAL
+════════════════════════════════════════════════════════════════ */
+function ExpiredModal({ open, onClose, survey }) {
+  if (!open || !survey) return null;
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:9999,
+      background:"rgba(15,23,42,0.5)",
+      backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      padding:20, animation:"fadeIn .15s ease",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:"#fff", borderRadius:16,
+        border:"1px solid #e8ecf2",
+        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
+        width:"100%", maxWidth:400, overflow:"hidden",
+        animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
+        fontFamily:"'DM Sans',sans-serif",
+        textAlign:"center", padding:"32px 24px",
+      }}>
+        <div style={{ width:56, height:56, borderRadius:16, background:"rgba(239,68,68,0.08)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+          <Clock size={26} color="#ef4444"/>
+        </div>
+        <h3 style={{ margin:"0 0 8px", fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã kết thúc</h3>
+        <p style={{ margin:"0 0 20px", fontSize:13, color:"#64748b", lineHeight:1.5 }}>
+          Khảo sát <strong>"{survey.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            padding:"10px 32px",
+            background:"#f4f6f8",
+            border:"1px solid #e8ecf2", borderRadius:10,
+            color:"#64748b", fontSize:14, fontWeight:600,
+            cursor:"pointer", fontFamily:"'DM Sans',sans-serif",
+          }}
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
    PUBLIC SURVEY CARD — hover nhẹ (không nghiêng theo chuột)
 ════════════════════════════════════════════════════════════════ */
-function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index }) {
+function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onExpiredClick }) {
   const thumb=C.thumbGrads[index%C.thumbGrads.length];
   const createdDate=survey?.created_at?new Date(survey.created_at).toLocaleDateString("vi-VN"):"";
+  const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+
+  const handleClick = () => {
+    if (isExpired) {
+      if (done) {
+        onViewSubmission(survey.id);
+      } else {
+        onExpiredClick(survey);
+      }
+    } else if (done) {
+      onViewSubmission(survey.id);
+    } else {
+      onStart(survey.id);
+    }
+  };
 
   return (
     <div
-      onClick={()=>done&&onViewSubmission(survey.id,survey.title)}
+      onClick={handleClick}
       onMouseEnter={e=>{
         const el=e.currentTarget;
         el.style.transform="translateY(-4px)";
@@ -908,7 +970,7 @@ function MySurveyCard({
           <FileText size={48} color={isClosed?"rgba(0,0,0,0.08)":"rgba(255,255,255,0.2)"} strokeWidth={0.8}/>
           <div style={{position:"absolute",top:10,left:10,display:"flex",flexDirection:"column",gap:4}}>
             <StatusBadge status={survey.status}/>
-            {isPublished&&<span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:999,color:"#4361ee",background:"rgba(67,97,238,0.15)",display:"flex",alignItems:"center",gap:3,fontFamily:C.font}}><Globe size={8}/> Live</span>}
+            {isPublished&&<span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:999,color:"#4361ee",background:"rgba(67,97,238,0.15)",display:"flex",alignItems:"center",gap:3,fontFamily:C.font}}><Globe size={8}/> Đang live</span>}
           </div>
         </div>
 
@@ -957,7 +1019,7 @@ function MySurveyCard({
 ════════════════════════════════════════════════════════════════ */
 function StatsStrip({ mySurveys, total, done, pending, loading }) {
   const stats=[
-    {label:"My Surveys",value:mySurveys,icon:FileText,color:"#6366f1",grad:"linear-gradient(135deg,#6366f1,#a855f7)"},
+    {label:"Khảo sát của tôi",value:mySurveys,icon:FileText,color:"#6366f1",grad:"linear-gradient(135deg,#6366f1,#a855f7)"},
     {label:"Đã hoàn thành",value:done,icon:CheckCircle2,color:"#10b981",grad:"linear-gradient(135deg,#34d399,#059669)"},
     {label:"Chưa làm",value:pending,icon:Zap,color:"#f59e0b",grad:"linear-gradient(135deg,#fbbf24,#ea580c)"},
     {label:"Tổng khảo sát",value:total,icon:TrendingUp,color:"#ec4899",grad:"linear-gradient(135deg,#f472b6,#db2777)"},
@@ -1133,7 +1195,8 @@ export default function SurveysLayout() {
   const [doneSurveyIds,setDoneSurveyIds]=useState(new Set());
   const [publicLoading,setPublicLoading]=useState(true);
   const [publicError,setPublicError]=useState(null);
-  const [modalSurvey,setModalSurvey]=useState(null);
+  const [extendModal,setExtendModal]=useState({open:false,survey:null});
+  const [expiredModal,setExpiredModal]=useState({open:false,survey:null});
   const [publicSearch,setPublicSearch]=useState("");
   const [activeTab,setActiveTab]=useState("all");
   const [sortBy,setSortBy]=useState("newest");
@@ -1141,7 +1204,7 @@ export default function SurveysLayout() {
   const [showFilter,setShowFilter]=useState(false);
   const [globalSearch,setGlobalSearch]=useState("");
   const [shareModal,setShareModal]=useState({open:false,surveyId:null,surveyTitle:"",shareUrl:"",loading:false,error:""});
-  const [extendModal,setExtendModal]=useState({open:false,survey:null});
+  const [editorInviteModal,setEditorInviteModal]=useState(null); // { open: true, survey: {...} }
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -1264,7 +1327,7 @@ export default function SurveysLayout() {
                     display:"flex",alignItems:"center",justifyContent:"center",
                     boxShadow:"0 10px 26px rgba(99,102,241,0.5)",
                   }}><Rocket size={18} color="#fff" strokeWidth={1.9}/></div>
-                  <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.18em",color:"#4f46e5",textTransform:"uppercase"}}>Survey studio</span>
+                  <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.18em",color:"#4f46e5",textTransform:"uppercase"}}>Không gian khảo sát</span>
                 </div>
                 <h1 style={{
                   margin:0,fontSize:"clamp(1.6rem, 3.8vw, 2.35rem)",fontWeight:900,lineHeight:1.1,fontFamily:C.font,
@@ -1304,7 +1367,7 @@ export default function SurveysLayout() {
               <input placeholder="Tìm nhanh toàn trang..." style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,fontFamily:C.font,color:C.text}} value={globalSearch} onChange={e=>handleGlobalSearch(e.target.value)}/>
               {globalSearch&&<button type="button" onClick={()=>handleGlobalSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:C.textDim,display:"flex",padding:0}}><X size={14}/></button>}
             </div>
-            <p style={{margin:0,fontSize:11,color:C.textDim,paddingLeft:6,lineHeight:1.4}}>Đồng bộ ô tìm với My Surveys và khảo sát công khai</p>
+            <p style={{margin:0,fontSize:11,color:C.textDim,paddingLeft:6,lineHeight:1.4}}>Đồng bộ ô tìm với Khảo sát của tôi và khảo sát công khai</p>
           </div>
         </div>
 
@@ -1314,7 +1377,7 @@ export default function SurveysLayout() {
         <section style={{marginBottom:40}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <h2 style={{fontSize:16,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>My Surveys</h2>
+              <h2 style={{fontSize:16,fontWeight:800,color:C.text,margin:0,fontFamily:C.font}}>Khảo sát của tôi</h2>
               <span style={{fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:999,background:"rgba(67,97,238,0.12)",color:C.primary,border:`1px solid rgba(67,97,238,0.25)`,fontFamily:C.font}}>{myFiltered.length}</span>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1399,8 +1462,24 @@ export default function SurveysLayout() {
                     survey={{ ...survey, status: computedStatus }}
                     index={index}
                     overrideStatus={isDone ? "COMPLETED" : null}
-                    onClick={() => isDone ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
+                    participantRole={survey.role || null}
+                    onClick={() => {
+                      if (survey.role === "editor") {
+                        setEditorInviteModal({ open: true, survey });
+                      } else if (isExpired) {
+                        if (isDone) {
+                          navigate(`/user/survey/${survey.id}/response`);
+                        } else {
+                          setExpiredModal({ open: true, survey });
+                        }
+                      } else if (isDone) {
+                        navigate(`/user/survey/${survey.id}/response`);
+                      } else {
+                        navigate(`/user/survey/${survey.id}/invited`);
+                      }
+                    }}
                     type="public"
+                    onExpiredClick={(s) => setExpiredModal({ open: true, survey: s })}
                   />
                 );
               })}
@@ -1478,12 +1557,10 @@ export default function SurveysLayout() {
                     ))}
                   </div>
                 </div>
-                <button onClick={()=>{setPublicSearch("");setSortBy("newest");setActiveTab("all");setShowFilter(false);}} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:8,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font}}>Reset</button>
+                <button onClick={()=>{setPublicSearch("");setSortBy("newest");setActiveTab("all");setShowFilter(false);}} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:8,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font}}>Đặt lại</button>
               </div>
             </GlassCard>
           )}
-
-          {modalSurvey&&<SubmissionModal surveyId={modalSurvey.id} surveyTitle={modalSurvey.title} onClose={()=>setModalSurvey(null)}/>}
 
           {publicLoading&&(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,280px))",gap:14}}>
@@ -1511,16 +1588,33 @@ export default function SurveysLayout() {
                 {doneCount>0&&<span style={{marginLeft:8,color:C.success,fontWeight:600}}>· {doneCount} đã hoàn thành</span>}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(5, 1fr)",gap:18}}>
-                {displayed.map((survey,i)=>(
-                  <SurveyCardHome
-                    key={survey.id}
-                    survey={survey}
-                    index={i}
-                    overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
-                    onClick={() => doneSurveyIds.has(survey.id) ? navigate(`/user/survey/${survey.id}/response`) : navigate(`/user/survey/${survey.id}`)}
-                    type="public"
-                  />
-                ))}
+                {displayed.map((survey,i)=>{
+                  const isDone = doneSurveyIds.has(survey.id);
+                  const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+                  return (
+                    <SurveyCardHome
+                      key={survey.id}
+                      survey={survey}
+                      index={i}
+                      overrideStatus={isDone ? "COMPLETED" : null}
+                      onClick={() => {
+                        if (isExpired) {
+                          if (isDone) {
+                            navigate(`/user/survey/${survey.id}/response`);
+                          } else {
+                            setExpiredModal({ open: true, survey });
+                          }
+                        } else if (isDone) {
+                          navigate(`/user/survey/${survey.id}/response`);
+                        } else {
+                          navigate(`/user/survey/${survey.id}`);
+                        }
+                      }}
+                      type="public"
+                      onExpiredClick={(s) => setExpiredModal({ open: true, survey: s })}
+                    />
+                  );
+                })}
               </div>
             </>
           )}
@@ -1544,6 +1638,19 @@ export default function SurveysLayout() {
         survey={extendModal.survey}
         onExtend={handleExtendLayout}
       />
+
+      <ExpiredModal
+        open={expiredModal.open}
+        onClose={() => setExpiredModal({ open: false, survey: null })}
+        survey={expiredModal.survey}
+      />
+
+      {editorInviteModal?.open && (
+        <EditorInviteModal
+          survey={editorInviteModal.survey}
+          onClose={() => setEditorInviteModal({ open: false, survey: null })}
+        />
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');

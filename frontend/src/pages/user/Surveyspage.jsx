@@ -576,18 +576,84 @@ function CardSkeleton() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Expired Modal
+// ─────────────────────────────────────────────────────────────
+function ExpiredModal({ open, onClose, survey }) {
+  if (!open || !survey) return null;
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(15,23,42,0.5)",
+      backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 20, animation: "smFade .15s ease",
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: "#fff", borderRadius: 16,
+        border: "1px solid #e8ecf2",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
+        width: "100%", maxWidth: 400, overflow: "hidden",
+        animation: "smUp .22s cubic-bezier(.16,1,.3,1)",
+        fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+        textAlign: "center", padding: "32px 24px",
+      }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Clock size={26} color="#ef4444"/>
+        </div>
+        <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+          Khảo sát <strong>"{survey.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            padding: "10px 32px",
+            background: "#f4f6f8",
+            border: "1px solid #e8ecf2", borderRadius: 10,
+            color: "#64748b", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+          }}
+        >
+          Đóng
+        </button>
+      </div>
+      <style>{`
+        @keyframes smFade { from{opacity:0} to{opacity:1} }
+        @keyframes smUp   { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // SurveyCardWrapper — adapts SurveyCardHome for SurveysPage
 // ─────────────────────────────────────────────────────────────
-function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index }) {
+function SurveyCardWrapper({ survey, done, onStart, onViewSubmission, index, onExpiredClick }) {
+  const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+
+  const handleClick = () => {
+    if (isExpired) {
+      if (done) {
+        onViewSubmission(survey.id);
+      } else {
+        onExpiredClick(survey);
+      }
+    } else if (done) {
+      onViewSubmission(survey.id);
+    } else {
+      onStart(survey.id);
+    }
+  };
+
   return (
     <SurveyCardHome
       survey={survey}
       index={index}
       overrideStatus={done ? "COMPLETED" : null}
-      onClick={done ? null : () => onStart(survey.id)}
-      onViewResponses={done ? onViewSubmission : null}
+      onClick={handleClick}
       type="public"
       isOwner={false}
+      onExpiredClick={onExpiredClick}
     />
   );
 }
@@ -602,7 +668,7 @@ export default function SurveysPage() {
   const { getAllMyResponses } = useResponse();
 
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
-  const [modalSurvey, setModalSurvey] = useState(null);
+  const [expiredModal, setExpiredModal] = useState({ open: false, survey: null });
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -674,8 +740,12 @@ export default function SurveysPage() {
     navigate(`/user/survey/${surveyId}`);
   };
 
-  const handleViewSubmission = (surveyId, title) => {
-    setModalSurvey({ id: surveyId, title });
+  const handleViewSubmission = (surveyId) => {
+    navigate(`/user/survey/${surveyId}/response`);
+  };
+
+  const handleExpiredClick = (survey) => {
+    setExpiredModal({ open: true, survey });
   };
 
   return (
@@ -686,14 +756,12 @@ export default function SurveysPage() {
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* Modal */}
-      {modalSurvey && (
-        <SubmissionModal
-          surveyId={modalSurvey.id}
-          surveyTitle={modalSurvey.title}
-          onClose={() => setModalSurvey(null)}
-        />
-      )}
+      {/* Expired Modal */}
+      <ExpiredModal
+        open={expiredModal.open}
+        onClose={() => setExpiredModal({ open: false, survey: null })}
+        survey={expiredModal.survey}
+      />
 
       {/* Header */}
       <header className="mb-8">
@@ -950,6 +1018,7 @@ export default function SurveysPage() {
               onStart={handleStart}
               onViewSubmission={handleViewSubmission}
               index={index}
+              onExpiredClick={handleExpiredClick}
             />
           ))}
         </div>

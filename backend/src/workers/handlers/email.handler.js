@@ -1,4 +1,6 @@
 // workers/handlers/email.handler.js
+import { sendInviteEmail } from "../../utils/sendMail.js";
+
 export const emailHandlers = {
     "invite-email": async (data) => {
         return sendInviteEmail(data);

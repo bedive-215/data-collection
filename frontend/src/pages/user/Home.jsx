@@ -792,7 +792,7 @@ function CheckinBanner() {
               Điểm danh thành công!
             </div>
             <div style={{ fontFamily: C.font, fontSize: 14, color: "#059669", marginTop: 2 }}>
-              Streak {result.streak_count} ngày {streakEmoji}
+              Chuỗi {result.streak_count} ngày {streakEmoji}
             </div>
           </div>
         </div>
@@ -827,7 +827,7 @@ function CheckinBanner() {
           <div>
             <div style={{ fontWeight: 800, fontSize: 17, color: "#065f46" }}>Đã điểm danh hôm nay!</div>
             <div style={{ fontSize: 13, color: "#059669", marginTop: 2 }}>
-              Streak {streak} ngày {streakEmoji} · Hẹn gặp bạn ngày mai
+              Chuỗi {streak} ngày {streakEmoji} · Hẹn gặp bạn ngày mai
             </div>
           </div>
         </div>
@@ -871,7 +871,7 @@ function CheckinBanner() {
           <div style={{ fontWeight: 800, fontSize: 17, color: "#92400e" }}>Điểm danh hôm nay</div>
           <div style={{ fontSize: 13, color: "#b45309", marginTop: 2 }}>
             {streak > 0
-              ? `Streak ${streak} ngày → nhận +${starsToEarn} sao`
+              ? `Chuỗi ${streak} ngày → nhận +${starsToEarn} sao`
               : "Nhận ngay +50 sao khi điểm danh!"
             }
             {multiplier > 1 && (
@@ -1019,7 +1019,7 @@ export default function DashboardPage() {
   }, []);
 
   const surveyPath = (id) => ROUTERS.USER.SURVEY_TAKE.replace(":surveyId", id);
-  const responsePath = (id) => ROUTERS.USER.MY_RESPONSE.replace(":surveyId", id);
+  const responsePath = (id) => ROUTERS.USER.SURVEY_RESPONSE.replace(":surveyId", id);
 
   const handleStart = (id) => navigate(surveyPath(id));
 
@@ -1140,7 +1140,7 @@ export default function DashboardPage() {
 
         <div style={{ marginBottom: 36 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
-            <SectionHeading>My Surveys</SectionHeading>
+            <SectionHeading>Khảo sát của tôi</SectionHeading>
             <button
               type="button"
               onClick={() => navigate(ROUTERS.USER.MY_SURVEYS)}

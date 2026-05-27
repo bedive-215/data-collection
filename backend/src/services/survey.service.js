@@ -95,7 +95,7 @@ class SurveyService {
         });
 
         // Emit events for starting survey and unlocking achievement
-        eventBus.emit(START_EVENTS.STARTED, { userId: user.id, surveyId: survey.id });
+        eventBus.emit(SURVEY_EVENTS.SENT, { userId: user.id, surveyId: survey.id });
         eventBus.emit(ACHIEVEMENT_EVENTS.UNLOCKED, { userId: user.id, trigger: "survey_created", data: { survey_id: survey.id } });
 
         return { message: "Created survey successfully", survey: mapSurvey(survey) };
@@ -167,7 +167,6 @@ class SurveyService {
         if (!survey) throw new AppError("Survey not found", 404);
 
         if (survey.created_by === user.id) {
-            eventBus.emit(START_EVENTS.DELETED, { owner: survey.created_by, surveyId: survey.id });
             eventBus.emit(SURVEY_EVENTS.DELETED, { survey, deleter: user });
         }
 
@@ -321,6 +320,7 @@ class SurveyService {
             surveyLink: `${process.env.FRONTEND_URL}/user/survey/${survey.id}`,
             senderName: user.full_name,
             senderEmail: user.email,
+            role,
         });
 
         eventBus.emit(SURVEY_EVENTS.INVITATION, { survey, inviteeEmail: email, inviter: user, role });
@@ -361,6 +361,7 @@ class SurveyService {
                     surveyLink: `${process.env.FRONTEND_URL}/survey/${survey.id}`,
                     senderName: user.full_name,
                     senderEmail: user.email,
+                    role,
                 },
             }))
         );
@@ -413,7 +414,7 @@ class SurveyService {
 
         const surveys = rows.map(row => {
             const s = row.survey;
-            return { id: s.id, title: s.title, description: s.description, created_at: s.created_at, created_by: s.created_by, start_at: s.start_at, end_at: s.end_at, invitedAt: row.created_at };
+            return { id: s.id, title: s.title, description: s.description, created_at: s.created_at, created_by: s.created_by, start_at: s.start_at, end_at: s.end_at, invitedAt: row.created_at, role: row.role };
         });
 
         return { total: count, page, totalPages: Math.ceil(count / limit), data: surveys };

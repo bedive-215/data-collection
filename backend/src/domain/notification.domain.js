@@ -20,6 +20,7 @@ export const RANK_META = {
 };
 
 export const ROLE_LABEL = (role) =>
-    role === "editor" ? "Biên tập viên (có thể chỉnh sửa)"
-        : role === "viewer" ? "Người xem (chỉ xem)"
-            : role;
+    role === "editor"    ? "Biên tập viên (chỉnh sửa)"
+        : role === "viewer"  ? "Người xem (chỉ xem)"
+            : role === "respondent" ? "Người trả lời (làm khảo sát)"
+                : role;

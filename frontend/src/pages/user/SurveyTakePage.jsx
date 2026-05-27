@@ -455,7 +455,7 @@ export default function SurveyTakePage() {
       const payload = buildPayloadForAutoSave(answers);
       if (!payload.length) return;
       try {
-        await fetch(`/api/v1/responses/${surveyId}/autosave`, {
+        await fetch(`/api/v1/responses/surveys/${surveyId}/autosave`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",

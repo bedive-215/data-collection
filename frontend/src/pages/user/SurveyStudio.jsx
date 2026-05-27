@@ -233,8 +233,9 @@ function InviteModal({ open, onClose, survey, onInvite }) {
   const [error,setError]=useState("");
   useEffect(()=>{ if(!open){setEmails("");setSuccess(false);setError("");setSentCount(0);setRole("viewer");} },[open]);
   const ROLES=[
-    {value:"viewer",label:"👁️ Viewer",desc:"Chỉ xem"},
-    {value:"editor",label:"✏️ Editor",desc:"Có thể chỉnh sửa"},
+    {value:"respondent",label:"Trả lời",desc:"Chỉ trả lời",icon:"📋"},
+    {value:"viewer",label:"Xem",desc:"Chỉ xem",icon:"👁️"},
+    {value:"editor",label:"Chỉnh sửa",desc:"Xem & chỉnh sửa",icon:"✏️"},
   ];
   const handleSubmit=async e=>{
     e.preventDefault();
@@ -258,11 +259,12 @@ function InviteModal({ open, onClose, survey, onInvite }) {
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             <div>
               <label style={{fontSize:11,fontWeight:700,color:C.textSub,letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:7,display:"block",fontFamily:C.font}}>Vai trò</label>
-              <div style={{display:"flex",gap:8}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:8}}>
                 {ROLES.map(r=>(
-                  <button key={r.value} type="button" onClick={()=>setRole(r.value)} style={{flex:1,padding:"9px 10px",borderRadius:11,border:`1.5px solid ${role===r.value?C.primary:"rgba(0,0,0,0.08)"}`,background:role===r.value?"rgba(67,97,238,0.1)":"rgba(255,255,255,0.6)",cursor:"pointer",textAlign:"center",transition:"all .15s",backdropFilter:"blur(8px)"}}>
+                  <button key={r.value} type="button" onClick={()=>setRole(r.value)} style={{padding:"10px 8px",borderRadius:12,border:`1.5px solid ${role===r.value?C.primary:"rgba(0,0,0,0.08)"}`,background:role===r.value?"rgba(67,97,238,0.1)":"rgba(255,255,255,0.6)",cursor:"pointer",textAlign:"center",transition:"all .15s",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                    <div style={{fontSize:16,lineHeight:1}}>{r.icon}</div>
                     <div style={{fontSize:12,fontWeight:700,color:role===r.value?C.primary:C.text,fontFamily:C.font}}>{r.label}</div>
-                    <div style={{fontSize:10,color:C.textSub,marginTop:2,fontFamily:C.font}}>{r.desc}</div>
+                    <div style={{fontSize:10,color:C.textSub,fontFamily:C.font}}>{r.desc}</div>
                   </button>
                 ))}
               </div>

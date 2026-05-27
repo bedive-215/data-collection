@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import {
   Lock, Share, BarChart3, Edit2, Trash2, Globe,
-  Eye, Clock, CalendarDays,
+  Eye, Clock, CalendarDays, FileText,
 } from "lucide-react";
 
 export const C = {
@@ -15,6 +15,13 @@ export const C = {
   textSub: "#64748b",
   textDim: "#94a3b8",
   font:    "'Plus Jakarta Sans','DM Sans',sans-serif",
+};
+
+/* ── Participant role themes ─────────────────────────────── */
+export const ROLE_THEME = {
+  editor:    { label:"Chỉnh sửa",  accent:"#7c3aed", bg:"rgba(124,58,237,0.12)",  text:"#6d28d9", border:"rgba(124,58,237,0.22)" },
+  viewer:    { label:"Xem câu hỏi", accent:"#0284c7", bg:"rgba(2,132,199,0.10)",  text:"#0369a1", border:"rgba(2,132,199,0.20)" },
+  respondent:{ label:"Làm khảo sát", accent:"#059669", bg:"rgba(5,150,105,0.10)",   text:"#047857", border:"rgba(5,150,105,0.20)" },
 };
 
 /* ── Status themes ─────────────────────────────────────────────── */
@@ -129,6 +136,7 @@ export function SurveyCardHome({
   onSaveEdit,
   isOwner: isOwnerProp = null,
   creatorName = null,
+  participantRole = null,
 }) {
   const isOwner  = isOwnerProp !== null ? isOwnerProp : (type === "my");
   const status   = overrideStatus || survey?.status;
@@ -136,6 +144,7 @@ export function SurveyCardHome({
   const isPub    = survey?.is_published;
   const expiry   = getExpiry(survey);
   const cat      = getEmoji(survey?.category);
+  const roleTheme = participantRole ? (ROLE_THEME[participantRole.toLowerCase()] || null) : null;
   const [hovered, setHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -322,6 +331,26 @@ export function SurveyCardHome({
                 letterSpacing:"0.02em",
               }}>
                 <Globe size={8} /> Công khai
+              </div>
+            )}
+
+            {/* Participant role badge */}
+            {roleTheme && (
+              <div className="sc-badge-pop" style={{
+                display:"inline-flex", alignItems:"center", gap:3,
+                padding:"3px 8px", borderRadius:6,
+                background: roleTheme.bg,
+                border:`1px solid ${roleTheme.border}`,
+                fontSize:9, fontWeight:700,
+                color: roleTheme.text,
+                letterSpacing:"0.02em",
+                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                whiteSpace:"nowrap",
+              }}>
+                {participantRole === "editor" && <Edit2 size={8} />}
+                {participantRole === "viewer" && <Eye size={8} />}
+                {participantRole === "respondent" && <FileText size={8} />}
+                {roleTheme.label}
               </div>
             )}
 

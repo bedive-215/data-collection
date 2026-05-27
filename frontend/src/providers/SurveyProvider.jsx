@@ -390,7 +390,7 @@ const SurveyProvider = ({ children }) => {
       const res = await surveyService.getInvitedSurveys({ page, limit });
       const data = res?.data ?? res;
       const now = new Date();
-      const list = (data?.data?.data || []).map((s) => {
+        const list = (data?.data?.data || []).map((s) => {
         let computedStatus = null;
         if (s.end_at && new Date(s.end_at) < now) computedStatus = "EXPIRED";
         return {
@@ -403,6 +403,7 @@ const SurveyProvider = ({ children }) => {
           status: computedStatus || s.status || null,
           access_type: "PRIVATE",
           created_by: s.created_by || null,
+          role: s.role || null,
         };
       });
       setInvitedSurveys(list);
@@ -421,7 +422,9 @@ const SurveyProvider = ({ children }) => {
       const data = res?.data ?? res;
       const raw = pickSurveyFromResponseBody(data);
       const survey = normalizeSurvey(raw || {});
-      setCurrentSurvey(survey);
+      // Backend trả về role ở top-level response
+      const role = data?.role ?? null;
+      setCurrentSurvey({ ...survey, role });
       return survey;
     } catch (err) {
       const status = err?.response?.status;
