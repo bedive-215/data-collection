@@ -10,6 +10,7 @@ import { mapTransaction } from "../mappers/star.mapper.js";
 
 import eventBus from "../events/eventBus.js";
 import { STAR_EVENTS } from "../events/star/star.event.js";
+
 class StarService {
     constructor() {
         const { User, StarTransaction, sequelize } = models;

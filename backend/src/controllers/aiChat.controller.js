@@ -10,7 +10,6 @@ class AiChatController {
         throw new AppError("Tin nhắn không được để trống", 400);
       }
 
-      // Lấy user từ auth middleware (đã được attach vào req.user)
       const user = req.user || null;
 
       const result = await aiChatService.chat(message, history, user);
