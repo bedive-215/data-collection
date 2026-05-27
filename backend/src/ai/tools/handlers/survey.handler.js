@@ -9,11 +9,13 @@ import { mapSurveyList } from "../../../mappers/aiChat.mapper.js";
 
 import SurveyService from "../../../services/survey.service.js";
 
-import { buildSurveyListMessage, 
-  buildSearchSurveyMessage, 
-  buildSurveyDetailMessage, 
-  buildAddQuestionsMessage, 
-  buildCreateSurveyMessage } from "../builders/survey.builder.js";
+import {
+  buildSurveyListMessage,
+  buildSearchSurveyMessage,
+  buildSurveyDetailMessage,
+  buildAddQuestionsMessage,
+  buildCreateSurveyMessage
+} from "../builders/survey.builder.js";
 import { getSurveyStatus } from "../../../domain/survey.domain.js";
 
 export async function listMySurveys({ args, user }) {
@@ -32,10 +34,10 @@ export async function listMySurveys({ args, user }) {
   const mapped = mapSurveyList(surveys);
 
   console.log("Mapped surveys:", mapped);
-  
+
   return {
     data: { surveys: mapped, total: mapped.length },
-    message: buildSurveyListMessage(mapped),
+    _reply: buildSurveyListMessage(mapped), // ✅ đổi từ message → _reply
     meta: { tool: "list_my_surveys" },
   };
 }
@@ -66,7 +68,7 @@ export async function searchSurveys({ args, user }) {
 
   return {
     data: { surveys: mapped, total: mapped.length },
-    message: buildSearchSurveyMessage(keyword, mapped),
+    _reply: buildSurveyListMessage(mapped), // ✅ đổi từ message → _reply
     meta: { tool: "search_surveys" },
   };
 }

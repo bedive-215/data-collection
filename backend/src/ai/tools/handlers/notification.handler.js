@@ -19,7 +19,7 @@ export async function getNotificationList({ args, user }) {
       notifications: mapped,
       unread_count: unreadCount,
     },
-    message: buildNotificationListMessage(mapped, unreadCount),
+    _reply: buildNotificationListMessage(mapped, unreadCount),
     meta: { tool: "get_notifications" },
   };
 }
