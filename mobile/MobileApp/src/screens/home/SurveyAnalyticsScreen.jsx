@@ -665,31 +665,30 @@ export default function SurveyAnalyticsScreen() {
       </View>
 
       {/* ── TAB BAR ── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
-        <View style={styles.tabBar}>
-          {TABS.map(tab => {
-            const is = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[styles.tab, is && styles.tabActive]}
-                onPress={() => setActiveTab(tab.id)}
-              >
-                <Text style={{ fontSize: 12 }}>{tab.icon}</Text>
-                <Text style={[styles.tabText, is && styles.tabTextActive]}>{tab.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ backgroundColor: "#fff", maxHeight: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 4 }}
+      >
+        {TABS.map(tab => {
+          const is = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginRight: 6,
+                backgroundColor: is ? COLORS.primary : "#f1f5f9",
+              }}
+              onPress={() => setActiveTab(tab.id)}
+            >
+              <Text style={{ fontSize: 11, fontWeight: "600", color: is ? "#fff" : COLORS.textSub }}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
-
-      {/* ── DATE PRESET ── */}
-      {activeTab !== "export" && (
-        <View style={styles.presetRow}>
-          <Text style={styles.presetLabel}>Khoảng thời gian:</Text>
-          <DatePresetPicker active={datePreset} onChange={applyPreset} />
-        </View>
-      )}
 
       {/* ── CONTENT ── */}
       <ScrollView

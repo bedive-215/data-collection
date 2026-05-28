@@ -194,17 +194,17 @@ export default function AchievementsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ backgroundColor: "#fff" }}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 10 }}
+        style={{ backgroundColor: "#fff", maxHeight: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 4 }}
       >
         <TouchableOpacity
           onPress={() => setActiveCategory("ALL")}
           style={{
-            paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginRight: 8,
+            paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginRight: 6,
             backgroundColor: activeCategory === "ALL" ? C.primary : "#f1f5f9",
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: "600", color: activeCategory === "ALL" ? "#fff" : C.textSub }}>
+          <Text style={{ fontSize: 11, fontWeight: "600", color: activeCategory === "ALL" ? "#fff" : C.textSub }}>
             Tất cả
           </Text>
         </TouchableOpacity>
@@ -213,11 +213,11 @@ export default function AchievementsScreen() {
             key={cat.key}
             onPress={() => setActiveCategory(cat.key)}
             style={{
-              paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginRight: 8,
+              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginRight: 6,
               backgroundColor: activeCategory === cat.key ? C.primary : "#f1f5f9",
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: activeCategory === cat.key ? "#fff" : C.textSub }}>
+            <Text style={{ fontSize: 11, fontWeight: "600", color: activeCategory === cat.key ? "#fff" : C.textSub }}>
               {cat.label}
             </Text>
           </TouchableOpacity>

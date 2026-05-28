@@ -29,7 +29,6 @@ import { useSurvey }   from "../providers/SurveyProvider";
 import { useResponse } from "../providers/ResponseProvider";
 import CreateSurveyComposer from "../components/survey/CreateSurveyComposer";
 import { SurveyCardHome } from "../components/survey/SurveyCardHome";
-import AiChatbox from "../components/common/AiChatbox";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -1556,9 +1555,6 @@ export default function SurveysLayout() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* ── EchoAI Chatbox ── */}
-      <AiChatbox navigation={navigation} />
     </View>
   );
 }
