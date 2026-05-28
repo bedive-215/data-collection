@@ -4,7 +4,7 @@ import models from "../../models/index.js";
 import { formatDuration, calculateAge, ageGroup, normalizeGender, cleanSurveyAnalytics } from "./helpers.js";
 import QuestionAnalyticsService from "./questionAnalytics.service.js";
 import { buildAnalyticsPrompt } from "../../utils/buildPrompt.js";
-import { generateGeminiContent } from "../../utils/genAI.js";
+import { generateGeminiContent } from "../../configs/ai.config.js";
 
 class SurveyAnalyticsService extends QuestionAnalyticsService {
     constructor() {

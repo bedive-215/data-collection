@@ -1,52 +1,43 @@
-import { formatDate } from "../../../helpers/aiChat.helper.js";
+import { Op } from "sequelize";
 import models from "../../../models/index.js";
-import { buildSurveyAnalytics, buildTrendResponse, buildCompletionStats } from "../builders/analytics.builder.js";
+import {
+  buildSurveyAnalytics,
+  buildTrendResponse,
+  buildCompletionStats
+} from "../builders/analytics.builder.js";
 
 const { Survey, Response, SurveyParticipant } = models;
 
 export async function getSurveyAnalytics({ args, user }) {
-  const { survey_id } = args;
+  let survey;
 
-  if (!survey_id) {
-    return {
-      _reply: "Bạn cho mình biết tên khảo sát muốn xem thống kê được không?",
-      need_search: true
-    };
+  if (args.survey_id) {
+    survey = await Survey.findByPk(args.survey_id);
+  } else if (args.keyword) {
+    survey = await Survey.findOne({
+      where: {
+        created_by: user.id,
+        title: { [Op.like]: `%${args.keyword}%` }
+      }
+    });
   }
-
-  const survey = await Survey.findOne({
-    where: { id: survey_id, created_by: user.id },
-    attributes: ["id", "title", "created_at"],
-  });
 
   if (!survey) {
     return {
-      _reply: "Không tìm thấy khảo sát.",
+      _reply: "Mình không tìm thấy khảo sát phù hợp.",
       need_search: true
     };
   }
 
-  const [respCount, partCount] = await Promise.all([
-    Response.count({ where: { survey_id } }),
-    SurveyParticipant.count({ where: { survey_id } }),
-  ]);
-
-  const rate = partCount > 0
-    ? Math.round((respCount / partCount) * 100)
-    : 0;
-
-  const data = {
-    title: survey.title,
-    created_at: survey.created_at,
-    response_count: respCount,
-    participant_count: partCount,
-    completion_rate: rate
-  };
+  console.log("Found survey for analytics:", survey);
 
   return {
     id: survey.id,
-    ...data,
-    _reply: buildSurveyAnalytics(data)
+    _reply: buildSurveyAnalytics({
+      title: survey.title,
+      created_at: survey.createdAt,
+      response_count: responseCount,
+    }),
   };
 }
 

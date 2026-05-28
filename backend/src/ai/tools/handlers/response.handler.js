@@ -1,6 +1,8 @@
-import Response from "../../../models/index.js";
+import models from "../../../models/index.js";
 
 import { buildResponseList } from "../builders/response.builder.js";
+
+const { Response, Survey } = models;
 
 export async function getResponseDetail({ args, user }) {
     const responses = await Response.findAll({

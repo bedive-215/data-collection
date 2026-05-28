@@ -3,40 +3,40 @@ import { DataTypes } from "sequelize";
 export default (sequelize) => {
     const Notification = sequelize.define("Notification", {
 
-    id: {
-        type: DataTypes.UUID,
-        primaryKey: true,
-        defaultValue: DataTypes.UUIDV4,
-    },
+        id: {
+            type: DataTypes.UUID,
+            primaryKey: true,
+            defaultValue: DataTypes.UUIDV4,
+        },
 
-    user_id: {
-        type: DataTypes.UUID,
-        allowNull: false,
-    },
+        user_id: {
+            type: DataTypes.UUID,
+            allowNull: false,
+        },
 
-    survey_id: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-            model: "surveys",
-            key: "id"
-        }
-    },
+        survey_id: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: {
+                model: "surveys",
+                key: "id"
+            }
+        },
 
-    type: {
-        type: DataTypes.ENUM(
-            "SURVEY_INVITATION",
-            "SURVEY_INVITATION_SENT",
-            "SURVEY_RESPONSE",
-            "SURVEY_EXPIRED",
-            "SURVEY_PUBLISHED",
-            "SURVEY_CLOSED",
-            "NEW_PARTICIPANT",
-            "SURVEY_TIMEOUT",
-            "SYSTEM"
-        ),
-        allowNull: false
-    },
+        type: {
+            type: DataTypes.ENUM(
+                "SURVEY_INVITATION",
+                "SURVEY_INVITATION_SENT",
+                "SURVEY_RESPONSE",
+                "SURVEY_EXPIRED",
+                "SURVEY_PUBLISHED",
+                "SURVEY_CLOSED",
+                "NEW_PARTICIPANT",
+                "SURVEY_TIMEOUT",
+                "SYSTEM"
+            ),
+            allowNull: false
+        },
 
         title: {
             type: DataTypes.STRING(255),
