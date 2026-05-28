@@ -465,10 +465,8 @@ const SurveyProvider = ({ children }) => {
   const shareLink = useCallback(async (id) => {
     try {
       const res = await surveyService.shareSurveyLink(id);
-      console.log("DEBUG shareLink API res:", JSON.stringify(res?.data ?? res));
       const body = res?.data ?? res;
       const url = normalizeShareUrlForRN(extractShareUrlFromBody(body), id);
-      console.log("DEBUG shareLink extracted url:", url);
       if (url) return url;
       return undefined;
     } catch (err) {
