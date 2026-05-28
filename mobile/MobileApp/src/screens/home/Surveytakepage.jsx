@@ -32,7 +32,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ─── Replace these with your actual providers ────────────────────────────────
-import { useQuestion } from "../../providers/QuestionProvider";
+import { useQuestion } from "../../providers/Questionprovider";
 import { useResponse } from "../../providers/ResponseProvider";
 import { useOption } from "../../providers/OptionProvider";
 import { useSurvey } from "../../providers/SurveyProvider";

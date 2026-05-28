@@ -1142,7 +1142,11 @@ export default function SurveysLayout() {
     try {
       const result = await shareLink(shareModal.surveyId);
       const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
-      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+      if (url) {
+        setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+      } else {
+        setShareModal(p => ({ ...p, loading: false, error: "Không tạo được link. Vui lòng thử lại." }));
+      }
     } catch {
       setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
     }

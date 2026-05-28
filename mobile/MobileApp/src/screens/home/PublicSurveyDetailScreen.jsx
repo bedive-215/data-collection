@@ -12,7 +12,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSurvey } from "../../providers/SurveyProvider";
-import { useQuestion } from "../../providers/QuestionProvider";
+import { useQuestion } from "../../providers/Questionprovider";
 import { useResponse } from "../../providers/ResponseProvider";
 import { COLORS, STATUS_MAP } from "../../utils/constants";
 
