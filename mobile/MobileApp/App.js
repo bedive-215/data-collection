@@ -11,6 +11,7 @@ import UserProvider        from "./src/providers/UserProvider";
 import NotificationProvider from "./src/providers/NotificationProvider";
 import GamificationProvider from "./src/providers/GamificationProvider";
 import { ToastProvider }   from "./src/components/common/Toast";
+import { SubmittedProvider } from "./src/contexts/SubmittedContext";
 import AiChatbox           from "./src/components/common/AiChatbox";
 
 // Navigation ref for accessing navigation from outside components
@@ -27,10 +28,12 @@ export default function App() {
                 <QuestionProvider>
                   <NotificationProvider>
                     <ToastProvider>
-                      <NavigationContainer ref={navigationRef}>
-                        <RootNavigator />
-                        <AiChatbox navigation={navigationRef} />
-                      </NavigationContainer>
+                      <SubmittedProvider>
+                        <NavigationContainer ref={navigationRef}>
+                          <RootNavigator />
+                          <AiChatbox navigation={navigationRef} />
+                        </NavigationContainer>
+                      </SubmittedProvider>
                     </ToastProvider>
                   </NotificationProvider>
                 </QuestionProvider>

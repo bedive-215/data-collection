@@ -234,14 +234,11 @@ function MessageBubble({ msg, onViewSurvey, onStats }) {
 }
 
 // ── Main Chatbox ──────────────────────────────────────────────────────
-export default function AiChatbox({ navigation }) {
-  const { user } = useAuth();
+function AiChatboxInner({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-
-  if (!user) return null;
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -458,6 +455,13 @@ export default function AiChatbox({ navigation }) {
       </Modal>
     </>
   );
+}
+
+// Wrap with auth check so hooks always render in same order
+export default function AiChatbox({ navigation }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <AiChatboxInner navigation={navigation} />;
 }
 
 const styles = StyleSheet.create({

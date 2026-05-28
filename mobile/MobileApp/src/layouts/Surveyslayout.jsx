@@ -1544,7 +1544,7 @@ export default function SurveysLayout() {
                     overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
                     onClick={() =>
                       doneSurveyIds.has(survey.id)
-                        ? navigation.navigate("SurveyResponse", { surveyId: survey.id })
+                        ? navigation.navigate("PublicSurveyDetail", { surveyId: survey.id, forceResponse: true })
                         : navigation.navigate("SurveyTake", { surveyId: survey.id })
                     }
                     type="public"

@@ -11,6 +11,22 @@ const analyticsService = {
     });
   },
 
+  // AI Insights
+  getAiInsights: (surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`/api/v1/analytics/surveys/${surveyId}/ai-insights`, {
+      params: { ...params, _t: ts },
+    });
+  },
+
+  // Survey stats
+  getSurveyStats: (surveyId, params = {}) => {
+    const ts = Date.now();
+    return apiClient.get(`/api/v1/analytics/surveys/${surveyId}/stats`, {
+      params: { ...params, _t: ts },
+    });
+  },
+
   // Survey analytics - full per-question
   getSurveyAnalytics: (surveyId, params = {}) => {
     const ts = Date.now();

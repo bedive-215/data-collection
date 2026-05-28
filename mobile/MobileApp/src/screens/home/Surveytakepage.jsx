@@ -36,6 +36,7 @@ import { useQuestion } from "../../providers/QuestionProvider";
 import { useResponse } from "../../providers/ResponseProvider";
 import { useOption } from "../../providers/OptionProvider";
 import { useSurvey } from "../../providers/SurveyProvider";
+import { useSubmitted } from "../../contexts/SubmittedContext";
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 // Using React Navigation. Adjust if you use a different router.
@@ -554,7 +555,8 @@ function QuestionCard({ question, answer, onChange }) {
 }
 
 // ─── SuccessScreen ────────────────────────────────────────────────────────────
-function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl }) {
+function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl, surveyId, responseId }) {
+  const navigation = useNavigation();
   const [countdown, setCountdown] = useState(5);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -608,7 +610,16 @@ function SuccessScreen({ onGoHome, thankYouMessage, logoUrl, redirectUrl }) {
         )}
 
         <View style={styles.divider} />
-        <TouchableOpacity style={styles.primaryBtn} onPress={onGoHome} activeOpacity={0.85}>
+        {surveyId && (
+          <TouchableOpacity
+            style={[styles.primaryBtn, { backgroundColor: C.primary }]}
+            onPress={() => navigation.navigate("SurveyResponse", { surveyId })}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.primaryBtnText}>📋 Xem câu trả lời của bạn</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={[styles.primaryBtn, { marginTop: 0 }]} onPress={onGoHome} activeOpacity={0.85}>
           <Text style={styles.primaryBtnText}>🏠 Về trang chủ</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -720,10 +731,12 @@ export default function SurveyTakePage() {
   const { options, fetchOptions } = useOption();
   const { startSurvey, submitSurvey, submitting } = useResponse();
   const { fetchSurveyById, currentSurvey } = useSurvey();
+  const { markSubmitted } = useSubmitted();
 
   const [answers, setAnswers] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedResponseId, setSubmittedResponseId] = useState(null);
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const [timeUp, setTimeUp] = useState(false);
@@ -746,13 +759,19 @@ export default function SurveyTakePage() {
   // ── Fetch survey ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!surveyId) return;
-    fetchSurveyById(surveyId);
+    fetchSurveyById(surveyId).catch((err) => {
+      const status = err?.response?.status;
+      if ([403, 404, 410].includes(status)) {
+        setSurveyStatus("expired");
+      }
+    });
   }, [surveyId]);
 
   // ── Fetch questions + options ───────────────────────────────────────────────
   useEffect(() => {
     if (!surveyId) return;
-    fetchQuestionsBySurvey(surveyId).then(async (list) => {
+    fetchQuestionsBySurvey(surveyId)
+      .then(async (list) => {
       if (!Array.isArray(list)) return;
       const choiceQs = list.filter((q) =>
         ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "DROPDOWN"].includes(q.type)
@@ -764,6 +783,10 @@ export default function SurveyTakePage() {
       } finally {
         setOptionsLoading(false);
       }
+    })
+    .catch((err) => {
+      const status = err?.response?.status;
+      if ([403, 404, 410].includes(status)) setSurveyStatus("expired");
     });
   }, [surveyId]);
 
@@ -931,7 +954,10 @@ export default function SurveyTakePage() {
       return;
     }
     try {
-      await submitSurvey(surveyId, { answers: payload });
+      const res = await submitSurvey(surveyId, { answers: payload });
+      const rid = res?.response_id || res?.data?.response_id || res?.data?.id || null;
+      setSubmittedResponseId(rid);
+      markSubmitted(surveyId);
       setSubmitted(true);
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Gửi khảo sát thất bại. Vui lòng thử lại.";
@@ -985,6 +1011,8 @@ export default function SurveyTakePage() {
         thankYouMessage={currentSurvey?.thank_you_message}
         logoUrl={currentSurvey?.logo_url}
         redirectUrl={currentSurvey?.thank_you_redirect_url}
+        surveyId={surveyId}
+        responseId={submittedResponseId}
       />
     );
   }

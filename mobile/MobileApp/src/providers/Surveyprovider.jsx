@@ -146,11 +146,12 @@ const SurveyProvider = ({ children }) => {
   const clearError   = () => setError(null);
 
   const handleError = (err, fallback) => {
+    const status = err?.response?.status;
+    if (status === 403 || status === 404 || status === 410) return;
     console.error(err);
     const message = err?.response?.data?.message || err?.message || fallback;
     setError(message);
     showToast(message, "error");
-    throw err;
   };
 
   // ─── CREATE ──────────────────────────────────────────────────────

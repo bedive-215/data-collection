@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSurvey } from "../../providers/SurveyProvider";
 import { useQuestion } from "../../providers/QuestionProvider";
+import { useResponse } from "../../providers/ResponseProvider";
 import { COLORS, STATUS_MAP } from "../../utils/constants";
 
 const { width: SW } = Dimensions.get("window");
@@ -60,16 +61,26 @@ export default function PublicSurveyDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const surveyId = route.params?.surveyId;
+  const forceResponse = route.params?.forceResponse; // skip API fetch, go straight to response
 
   const { fetchSurveyById, currentSurvey } = useSurvey();
   const { questions, fetchQuestionsBySurvey } = useQuestion();
+  const { getMySubmission } = useResponse();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [started, setStarted] = useState(false);
 
+  // If forced to show response (survey already done), skip fetch entirely
   useEffect(() => {
-    if (!surveyId) return;
+    if (forceResponse) {
+      navigation.replace("SurveyResponse", { surveyId });
+      return;
+    }
+  }, [forceResponse, surveyId]);
+
+  useEffect(() => {
+    if (!surveyId || forceResponse) return;
     let cancelled = false;
     (async () => {
       try {
@@ -77,7 +88,21 @@ export default function PublicSurveyDetailScreen() {
         await fetchSurveyById(surveyId);
         await fetchQuestionsBySurvey(surveyId);
       } catch (err) {
-        if (!cancelled) setError("Không thể tải thông tin khảo sát.");
+        if (!cancelled) {
+          const status = err?.response?.status;
+          if (status === 403 || status === 404 || status === 410) {
+            // Survey expired/closed/forbidden — check if user already submitted
+            try {
+              const submission = await getMySubmission(surveyId);
+              if (!cancelled && submission) {
+                // User has a submission — show response instead
+                navigation.replace("SurveyResponse", { surveyId });
+                return;
+              }
+            } catch {}
+          }
+          setError("Không thể tải thông tin khảo sát.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
