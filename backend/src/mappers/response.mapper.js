@@ -1,5 +1,9 @@
 import { AppError } from "../middlewares/handleException.middlware.js";
 
+import models from "../models/index.js";
+
+const { Question, QuestionOption, Answer } = models;
+
 export function mapAnswerToResponse(answers, optionMap = {}) {
     return answers.map(a => {
         const type = a.question?.type || a.type;
@@ -67,14 +71,14 @@ export async function buildAnswerRecords(response_id, answers, questionMap, opti
 
 export async function buildMaps(answers, survey_id, transaction = null) {
     const questionIds = answers.map(a => a.question_id);
-    const questions = await this.Question.findAll({
+    const questions = await Question.findAll({
         where: { id: questionIds, survey_id },
         ...(transaction && { transaction }),
     });
     if (questions.length !== new Set(questionIds).size) throw new AppError("Invalid questions", 400);
 
     const optionIds = answers.flatMap(a => a.option_id ? [a.option_id] : a.option_ids || []);
-    const options = await this.QuestionOption.findAll({
+    const options = await QuestionOption.findAll({
         where: { id: optionIds },
         ...(transaction && { transaction }),
     });
@@ -86,16 +90,16 @@ export async function buildMaps(answers, survey_id, transaction = null) {
 }
 
 export async function getAnswersWithMap(response_id) {
-    const answers = await this.Answer.findAll({
+    const answers = await Answer.findAll({
         where: { response_id },
         include: [
-            { model: this.Question, as: "question", attributes: ["id", "content", "type"] },
-            { model: this.QuestionOption, as: "option", attributes: ["id", "label"] },
+            { model: Question, as: "question", attributes: ["id", "content", "type"] },
+            { model: QuestionOption, as: "option", attributes: ["id", "label"] },
         ],
     });
 
     const optionIds = answers.flatMap(a => a.option_id ? [a.option_id] : a.selected_options || []);
-    const options = await this.QuestionOption.findAll({ where: { id: optionIds } });
+    const options = await QuestionOption.findAll({ where: { id: optionIds } });
     const optionMap = Object.fromEntries(options.map(o => [o.id, o.label]));
 
     return { answers, optionMap };
