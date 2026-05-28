@@ -33,17 +33,22 @@ export async function listMySurveys({ args, user }) {
 
   const mapped = mapSurveyList(surveys);
 
-  console.log("Mapped surveys:", mapped);
-
   return {
     data: { surveys: mapped, total: mapped.length },
-    _reply: buildSurveyListMessage(mapped), // ✅ đổi từ message → _reply
+    _reply: buildSurveyListMessage(mapped),
     meta: { tool: "list_my_surveys" },
   };
 }
 
 export async function searchSurveys({ args, user }) {
   const { keyword } = args;
+
+  if (!keyword) {
+    return {
+      _reply: "Bạn muốn tìm khảo sát nào?",
+      need_input: true
+    };
+  }
 
   const surveys = await Survey.findAll({
     where: {
@@ -53,51 +58,70 @@ export async function searchSurveys({ args, user }) {
         { description: { [Op.like]: `%${keyword}%` } },
       ],
     },
+    limit: 10,
     order: [["created_at", "DESC"]],
-    limit: 20,
-    attributes: ["id", "title", "description", "created_at", "start_at", "end_at"],
-    include: [
-      { model: Question, as: "questions", attributes: ["id"], required: false },
-      { model: Response, as: "responses", attributes: ["id"], required: false },
-      { model: SurveyParticipant, as: "participants", attributes: ["id"], required: false },
-    ],
   });
 
-
-  const mapped = mapSurveyList(surveys);
+  if (!surveys.length) {
+    return {
+      _reply: `Không tìm thấy khảo sát nào với từ khóa "${keyword}"`,
+    };
+  }
 
   return {
-    data: { surveys: mapped, total: mapped.length },
-    _reply: buildSurveyListMessage(mapped), // ✅ đổi từ message → _reply
-    meta: { tool: "search_surveys" },
+    data: surveys,
+    _reply: buildSurveyListMessage(mapSurveyList(surveys)),
   };
 }
 
 
 export async function getSurveyDetail({ args, user }) {
-  const { survey_id } = args;
+  const { survey_id, keyword } = args;
 
-  if (!survey_id) {
-    return { _reply: "Mình cần biết bạn muốn xem khảo sát nào.", need_search: true };
+  let survey;
+
+  if (survey_id) {
+    survey = await Survey.findByPk(survey_id);
   }
 
-  const survey = await Survey.findOne({
-    where: { id: survey_id, created_by: user.id },
-    include: [{ model: Question, as: "questions", order: [["order_index", "ASC"]] }],
-  });
+  if (!survey && keyword) {
+    const candidates = await Survey.findAll({
+      where: {
+        created_by: user.id,
+        title: { [Op.like]: `%${keyword}%` },
+      },
+      limit: 5,
+      order: [["created_at", "DESC"]],
+    });
+
+    if (candidates.length > 1) {
+      return {
+        _reply: buildSurveyListMessage(mapSurveyList(candidates)),
+        need_selection: true,
+        candidates: candidates.map(c => ({
+          id: c.id,
+          title: c.title,
+        })),
+      };
+    }
+
+    survey = candidates[0];
+  }
 
   if (!survey) {
-    return { _reply: "Không tìm thấy khảo sát.", need_search: true };
+    return {
+      _reply: "Không tìm thấy khảo sát nào.",
+      need_search: true,
+    };
   }
 
   const [responseCount, participantCount] = await Promise.all([
-    Response.count({ where: { survey_id } }),
-    SurveyParticipant.count({ where: { survey_id } }),
+    Response.count({ where: { survey_id: survey.id } }),
+    SurveyParticipant.count({ where: { survey_id: survey.id } }),
   ]);
 
   return {
     id: survey.id,
-    title: survey.title,
     _reply: buildSurveyDetailMessage(survey, {
       responseCount,
       participantCount,

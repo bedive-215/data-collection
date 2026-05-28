@@ -1,5 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
-import { getGeminiConfig } from "../helpers/getAiConfig.helper.js";
+
+export function getGeminiConfig() {
+  const key = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return { key, model };
+}
 
 const { key, model } = getGeminiConfig();
 const ai = new GoogleGenAI({ apiKey: key });

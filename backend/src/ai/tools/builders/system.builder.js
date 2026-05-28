@@ -8,13 +8,11 @@ export function buildSystemOverviewMessage(stats) {
   } = stats;
 
   return [
-    `📊 **Tổng quan hệ thống EchoForm**`,
-    `━━━━━━━━━━━━━━━━━━`,
-    `👥 Người dùng: **${totalUsers}**`,
-    `📋 Tổng survey: **${totalSurveys}**`,
-    `🟢 Survey đang hoạt động: **${activeSurveys}**`,
-    `❓ Tổng câu hỏi: **${totalQuestions}**`,
-    `💬 Tổng phản hồi: **${totalResponses}**`,
-    `━━━━━━━━━━━━━━━━━━`,
+    `**Tổng quan hệ thống**`,
+    ``,
+    `Người dùng: ${totalUsers}`,
+    `Survey: ${totalSurveys} (${activeSurveys} đang hoạt động)`,
+    `Câu hỏi: ${totalQuestions}`,
+    `Phản hồi: ${totalResponses}`,
   ].join("\n");
 }

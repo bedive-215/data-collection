@@ -1,7 +1,14 @@
 export function mapNotification(n) {
-    return {
-        id: n.id, type: n.type, title: n.title,
-        message: n.message, data: n.data,
-        read: n.read, readAt: n.read_at, createdAt: n.created_at,
-    };
+  const d = n.dataValues || n;
+
+  return {
+    id: d.id,
+    type: d.type ?? null,
+    title: d.title,
+    message: d.message,
+    data: d.data ?? null,
+    read: d.read,
+    readAt: d.read_at ?? d.readAt ?? null,
+    created_at: d.created_at ?? d.createdAt ?? null,
+  };
 }
