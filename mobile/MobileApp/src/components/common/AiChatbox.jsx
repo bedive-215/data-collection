@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from "react-native";
 import { Sparkles, X, Send, Bot, User, Eye, BarChart3 } from "lucide-react-native";
+import { useAuth } from "../../providers/AuthProvider";
 import { chatWithAI } from "../../services/aiChatService";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -233,7 +234,7 @@ function MessageBubble({ msg, onViewSurvey, onStats }) {
 }
 
 // ── Main Chatbox ──────────────────────────────────────────────────────
-export default function AiChatbox({ navigation }) {
+function AiChatboxInner({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -302,12 +303,12 @@ export default function AiChatbox({ navigation }) {
 
   const navigateToSurvey = (surveyId) => {
     setIsOpen(false);
-    navigation?.navigate("SurveyStudio", { surveyId });
+    if (navigation?.current?.navigate) navigation.current.navigate("SurveyStudio", { surveyId });
   };
 
   const navigateToStats = (surveyId) => {
     setIsOpen(false);
-    navigation?.navigate("SurveyResponse", { surveyId });
+    if (navigation?.current?.navigate) navigation.current.navigate("SurveyResponse", { surveyId });
   };
 
   return (
@@ -456,6 +457,13 @@ export default function AiChatbox({ navigation }) {
   );
 }
 
+// Wrap with auth check so hooks always render in same order
+export default function AiChatbox({ navigation }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <AiChatboxInner navigation={navigation} />;
+}
+
 const styles = StyleSheet.create({
   // ── FAB
   fab: {
@@ -472,8 +480,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 6,
-    zIndex: 998,
+    elevation: 9999,
+    zIndex: 9999,
+    borderWidth: 4,
+    borderColor: "#ffff00",
   },
   fabFloat: {},
 

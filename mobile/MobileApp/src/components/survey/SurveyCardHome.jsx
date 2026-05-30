@@ -46,6 +46,12 @@ const STATUS_COLORS = {
   SCHEDULED: { color: "#d97706" },
 };
 
+export const ROLE_THEME = {
+  editor:     { label: "Chỉnh sửa",    accent: "#7c3aed", bg: "rgba(124,58,237,0.12)",  text: "#6d28d9", border: "rgba(124,58,237,0.22)" },
+  viewer:     { label: "Xem câu hỏi", accent: "#0284c7", bg: "rgba(2,132,199,0.10)",  text: "#0369a1", border: "rgba(2,132,199,0.20)" },
+  respondent: { label: "Làm khảo sát", accent: "#059669", bg: "rgba(5,150,105,0.10)",   text: "#047857", border: "rgba(5,150,105,0.20)" },
+};
+
 const AVATAR_COLORS = [
   { bg: "#dbeafe", color: "#1d4ed8" },
   { bg: "#dcfce7", color: "#15803d" },
@@ -135,6 +141,7 @@ export function SurveyCardHome({
   overrideStatus = null,
   onShare,
   onLock,
+  participantRole = null,
 }) {
   const slideAnim   = useRef(new Animated.Value(24)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -144,6 +151,8 @@ export function SurveyCardHome({
   const isActive   = effectiveStatus === "ACTIVE";
   const isOwner    = type === "my";
   const statusColor = STATUS_COLORS[effectiveStatus]?.color || "#6b7280";
+
+  const roleTheme = participantRole ? ROLE_THEME[participantRole] : null;
 
   React.useEffect(() => {
     // Entry animation
@@ -233,6 +242,15 @@ export function SurveyCardHome({
                   <Share size={11} color="#374151" />
                 </TouchableOpacity>
               )}
+            </View>
+          )}
+
+          {/* Role Badge (for invited surveys) */}
+          {roleTheme && (
+            <View style={[cardStyles.actions, { right: 8 }]}>
+              <View style={[cardStyles.roleBadge, { backgroundColor: roleTheme.bg, borderColor: roleTheme.border }]}>
+                <Text style={[cardStyles.roleBadgeText, { color: roleTheme.text }]}>{roleTheme.label}</Text>
+              </View>
             </View>
           )}
 
@@ -351,6 +369,16 @@ const cardStyles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.5)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 1,
+  },
+  roleBadgeText: {
+    fontSize: 9,
+    fontWeight: "700",
   },
   centerIcon: {
     width: 48,

@@ -36,7 +36,7 @@ import {
 } from "react-native-image-picker";
 import { Sparkles } from "lucide-react-native";
 
-import { useQuestion }  from "../../providers/QuestionProvider";
+import { useQuestion }  from "../../providers/Questionprovider";
 import { useSurvey }    from "../../providers/SurveyProvider";
 import surveyService    from "../../services/surveyService";
 import AiQuestionAssistant from "../../components/survey/AiQuestionAssistant";

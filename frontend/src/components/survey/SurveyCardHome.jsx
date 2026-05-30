@@ -1,6 +1,6 @@
 // ─── SurveyCardHome.jsx ────────────────────────────────────────────────
-// Compact portrait survey card — gradient header, glassmorphism icon,
-// clean content panel. Used in Home.jsx and MySurveysPage.jsx.
+// Compact portrait survey card — premium flat design with glassmorphism
+// icon area, status badge, centered content. Used in Home.jsx and MySurveysPage.jsx.
 // ─────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
@@ -11,9 +11,9 @@ import {
 
 export const C = {
   surface: "#ffffff",
-  text:    "#0f172a",
-  textSub: "#64748b",
-  textDim: "#94a3b8",
+  text:    "#0b1c30",
+  textSub: "#464554",
+  textDim: "#767586",
   font:    "'Plus Jakarta Sans','DM Sans',sans-serif",
 };
 
@@ -26,12 +26,12 @@ export const ROLE_THEME = {
 
 /* ── Status themes ─────────────────────────────────────────────── */
 const STATUS_THEME = {
-  ACTIVE:    { label:"Đang mở",      accent:"#6366f1", mesh:"linear-gradient(135deg, #f0f2ff 0%, #e8ebff 50%, #dde2ff 100%)", pillBg:"rgba(99,102,241,0.10)",  pillText:"#4f46e5", pillBorder:"rgba(99,102,241,0.18)" },
-  DRAFT:     { label:"Nháp",          accent:"#94a3b8", mesh:"linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 50%, #e8ecf2 100%)",              pillBg:"rgba(148,163,184,0.10)", pillText:"#64748b", pillBorder:"rgba(148,163,184,0.18)" },
-  EXPIRED:   { label:"Hết hạn",       accent:"#ef4444", mesh:"linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #ffd9d9 100%)",              pillBg:"rgba(239,68,68,0.10)",   pillText:"#dc2626", pillBorder:"rgba(239,68,68,0.18)" },
-  CLOSED:    { label:"Đã đóng",        accent:"#9ca3af", mesh:"linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #eceef1 100%)",              pillBg:"rgba(156,163,175,0.08)", pillText:"#6b7280", pillBorder:"rgba(156,163,175,0.15)" },
-  SCHEDULED: { label:"Lên lịch",       accent:"#0284c7", mesh:"linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #cce9fb 100%)",              pillBg:"rgba(2,132,199,0.10)",   pillText:"#0369a1", pillBorder:"rgba(2,132,199,0.18)" },
-  COMPLETED: { label:"Đã hoàn thành",  accent:"#059669", mesh:"linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #c4e4ce 100%)",              pillBg:"rgba(5,150,105,0.10)",   pillText:"#047857", pillBorder:"rgba(5,150,105,0.18)" },
+  ACTIVE:    { label:"Đang mở",      accent:"#6366f1", bg:"rgba(99,102,241,0.10)",  pillBg:"rgba(99,102,241,0.10)", pillText:"#4648d4", pillBorder:"rgba(99,102,241,0.18)", mesh:"linear-gradient(135deg, #f0f2ff 0%, #e8ebff 50%, #dde2ff 100%)" },
+  DRAFT:     { label:"Nháp",          accent:"#94a3b8", bg:"rgba(148,163,184,0.10)", pillBg:"rgba(148,163,184,0.10)", pillText:"#64748b", pillBorder:"rgba(148,163,184,0.18)", mesh:"linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 50%, #e8ecf2 100%)" },
+  EXPIRED:   { label:"Hết hạn",       accent:"#ef4444", bg:"rgba(239,68,68,0.10)",   pillBg:"rgba(239,68,68,0.10)",   pillText:"#dc2626", pillBorder:"rgba(239,68,68,0.18)", mesh:"linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #ffd9d9 100%)" },
+  CLOSED:    { label:"Đã đóng",        accent:"#9ca3af", bg:"rgba(156,163,175,0.08)", pillBg:"rgba(156,163,175,0.08)", pillText:"#6b7280", pillBorder:"rgba(156,163,175,0.15)", mesh:"linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #eceef1 100%)" },
+  SCHEDULED: { label:"Lên lịch",       accent:"#0284c7", bg:"rgba(2,132,199,0.10)",   pillBg:"rgba(2,132,199,0.10)",   pillText:"#0369a1", pillBorder:"rgba(2,132,199,0.18)", mesh:"linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #cce9fb 100%)" },
+  COMPLETED: { label:"Đã hoàn thành",  accent:"#059669", bg:"rgba(5,150,105,0.10)",   pillBg:"rgba(5,150,105,0.10)",   pillText:"#047857", pillBorder:"rgba(5,150,105,0.18)", mesh:"linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #c4e4ce 100%)" },
 };
 export const STATUS_MAP = STATUS_THEME;
 
@@ -89,11 +89,11 @@ export function ParticipantsAvatars({ participants, max = 3 }) {
         const av = AV_COLORS[i % AV_COLORS.length];
         return (
           <div key={p.id || i} style={{
-            width:20, height:20, borderRadius:"50%",
+            width:24, height:24, borderRadius:"50%",
             border:"2px solid #fff",
             background:av.bg, color:av.color,
             display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:7, fontWeight:700,
+            fontSize:9, fontWeight:700,
             marginLeft: i === 0 ? 0 : -6,
             zIndex: vis.length - i, position:"relative",
             fontFamily:C.font,
@@ -104,11 +104,11 @@ export function ParticipantsAvatars({ participants, max = 3 }) {
       })}
       {extra > 0 && (
         <div style={{
-          width:20, height:20, borderRadius:"50%",
+          width:24, height:24, borderRadius:"50%",
           border:"2px solid #fff",
           background:"#f4f6f8", color:"#64748b",
           display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:7, fontWeight:700, marginLeft:-6,
+          fontSize:9, fontWeight:700, marginLeft:-6,
           fontFamily:C.font,
         }}>+{extra}</div>
       )}
@@ -116,8 +116,29 @@ export function ParticipantsAvatars({ participants, max = 3 }) {
   );
 }
 
+/* ── Status dot ─────────────────────────────────────────── */
+function StatusDot() {
+  return (
+    <span style={{
+      width:6, height:6, borderRadius:"50%",
+      background:"#10b981", flexShrink:0,
+      display:"inline-block",
+      boxShadow:"0 0 8px rgba(16, 185, 129, 0.4)",
+    }}/>
+  );
+}
+
+/* ── Icon type → SVG path (file icon, amber) ──────────────── */
+function SurveyIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#f59e0b" style={{ filter:"drop-shadow(0 1px 2px rgba(245,158,11,0.3))" }}>
+      <path d="M14,2H6C4.89,2 4,2.89 4,4V20C4,21.11 4.89,22 6,22H18C19.11,22 20,21.11 20,20V8L14,2M13,9V3.5L18.5,9H13Z"/>
+    </svg>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════
-   SurveyCardHome — compact portrait card
+   SurveyCardHome — premium portrait card (matching Lumina Elite template)
    ═══════════════════════════════════════════════════════════════════ */
 export function SurveyCardHome({
   survey,
@@ -195,10 +216,10 @@ export function SurveyCardHome({
   return (
     <>
       <style>{`
-        .sc-card {
+        .sch-card {
           background: #ffffff;
+          border: 1px solid rgba(199, 196, 215, 0.3);
           border-radius: 12px;
-          border: 1px solid #e8ecf2;
           overflow: hidden;
           cursor: pointer;
           transition:
@@ -209,306 +230,388 @@ export function SurveyCardHome({
           display: flex;
           flex-direction: column;
           height: 100%;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+          box-shadow: 0 4px 24px -2px rgba(11, 28, 48, 0.05), 0 2px 8px -2px rgba(11, 28, 48, 0.03);
           position: relative;
         }
-        .sc-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.09), 0 3px 8px rgba(0,0,0,0.04);
-          border-color: #d0d7e8;
+        .sch-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 32px rgba(11, 28, 48, 0.09), 0 3px 8px rgba(11, 28, 48, 0.04);
+          border-color: rgba(99, 102, 241, 0.3);
         }
-        .sc-pulse {
-          animation: sc-pulse-anim 2.4s ease-in-out infinite;
+        .sch-action-btn {
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          border: 1px solid rgba(199, 196, 215, 0.4);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
         }
-        @keyframes sc-pulse-anim {
+        .sch-action-btn:hover {
+          background: #ffffff;
+          border-color: #4648d4;
+          color: #4648d4;
+          transform: translateY(-1px);
+        }
+        .sch-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 10px;
+          border-radius: 9999px;
+          background: #e5eeff;
+          border: 1px solid rgba(99, 102, 241, 0.18);
+          font-size: 10px;
+          font-weight: 700;
+          color: #464554;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          font-family: 'Plus Jakarta Sans','DM Sans',sans-serif;
+        }
+        .sch-badge-pop {
+          animation: sch-pop 0.4s cubic-bezier(.34,1.56,0.64,1) both;
+        }
+        @keyframes sch-pop {
+          from { transform: scale(0.6); opacity: 0; }
+          to   { transform: scale(1); opacity: 1; }
+        }
+        .sch-pulse {
+          animation: sch-pulse-anim 2.4s ease-in-out infinite;
+        }
+        @keyframes sch-pulse-anim {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.3; }
         }
-        .sc-float {
-          animation: sc-float 5s ease-in-out infinite;
+        .sch-edit-btn {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1px solid rgba(199, 196, 215, 0.4);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #464554;
         }
-        @keyframes sc-float {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-          50%       { transform: translate(-50%, -50%) translateY(-3px); }
+        .sch-edit-btn:hover {
+          color: #4648d4;
+          border-color: #4648d4;
+          transform: scale(1.05);
         }
-        .sc-badge-pop {
-          animation: sc-pop 0.4s cubic-bezier(.34,1.56,0.64,1) both;
+        .sch-icon-wrap {
+          width: 56px;
+          height: 56px;
+          border-radius: 12px;
+          background: #e5eeff;
+          border: 1px solid rgba(199, 196, 215, 0.2);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        @keyframes sc-pop {
-          from { transform: scale(0.6); opacity: 0; }
-          to   { transform: scale(1); opacity: 1; }
+        .sch-divider {
+          height: 1px;
+          width: 100%;
+          background: linear-gradient(to right, transparent, rgba(118, 117, 134, 0.4), transparent);
+          margin: 4px 0;
         }
       `}</style>
 
       <article
-        className="sc-card"
+        className="sch-card"
         onClick={handleCardClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        style={{
+          background: "radial-gradient(circle at top left, #f8faff, #f1f3ff 50%, #fcfaff 100%)",
+        }}
       >
-        {/* ── HEADER: gradient + icon ───────────────────────────── */}
-        <div style={{
-          height: 96,
-          background: theme.mesh,
-          position: "relative",
-          overflow: "hidden",
-          flexShrink: 0,
+        {/* ── HEADER: Status + Actions ──────────────────────────────── */}
+        <header style={{
+          padding: "16px 16px 10px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}>
-          {/* Top-left radial glow */}
-          <div style={{
-            position:"absolute", inset:0,
-            background:"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.5) 0%, transparent 65%)",
-            pointerEvents:"none",
-          }} />
-
-          {/* Bottom fade */}
-          <div style={{
-            position:"absolute", bottom:0, left:0, right:0,
-            height: 28,
-            background:"linear-gradient(to top, #fff 20%, transparent)",
-            pointerEvents:"none",
-          }} />
-
-          {/* Floating icon */}
-          <div className="sc-float" style={{
-            position:"absolute", top:"50%", left:"50%",
-            transform:"translate(-50%, -50%)",
-          }}>
-            <div style={{
-              width:52, height:52,
-              borderRadius:14,
-              background:"rgba(255,255,255,0.55)",
-              backdropFilter:"blur(8px)",
-              WebkitBackdropFilter:"blur(8px)",
-              border:"1.5px solid rgba(255,255,255,0.7)",
-              boxShadow:"0 6px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
-              <div style={{
-                width:28, height:28,
-                borderRadius:8,
-                background:"rgba(255,255,255,0.55)",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:18,
-              }}>
-                {cat.emoji}
-              </div>
-            </div>
-          </div>
-
-          {/* Status badge — top-left */}
-          <div style={{position:"absolute", top:10, left:10, zIndex:10, display:"flex", flexDirection:"column", gap:4}}>
-            <div className="sc-badge-pop" style={{
-              display:"inline-flex", alignItems:"center", gap:4,
-              padding:"3px 8px", borderRadius:6,
+          {/* Status badge */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="sch-badge-pop sch-status-pill" style={{
               background: theme.pillBg,
-              border:`1px solid ${theme.pillBorder}`,
+              borderColor: theme.pillBorder,
+              color: theme.pillText,
             }}>
               {status === "ACTIVE" && (
                 <span style={{
-                  width:5, height:5, borderRadius:"50%",
-                  background:theme.accent, flexShrink:0,
-                  display:"inline-block", className:"sc-pulse",
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#10b981", flexShrink: 0,
+                  display: "inline-block",
+                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.4)",
+                  animation: "sch-pulse-anim 2.4s ease-in-out infinite",
                 }}/>
               )}
-              <span style={{
-                fontSize:9.5, fontWeight:700, color:theme.pillText,
-                letterSpacing:"0.04em",
-                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                whiteSpace:"nowrap",
-              }}>{theme.label}</span>
+              {status === "COMPLETED" && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#059669", flexShrink: 0,
+                  display: "inline-block",
+                  boxShadow: "0 0 8px rgba(5, 150, 105, 0.4)",
+                }}/>
+              )}
+              {status === "EXPIRED" && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#ef4444", flexShrink: 0,
+                  display: "inline-block",
+                  boxShadow: "0 0 8px rgba(239, 68, 68, 0.4)",
+                }}/>
+              )}
+              {status === "DRAFT" && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#94a3b8", flexShrink: 0,
+                  display: "inline-block",
+                }}/>
+              )}
+              {status === "SCHEDULED" && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#0284c7", flexShrink: 0,
+                  display: "inline-block",
+                  boxShadow: "0 0 8px rgba(2, 132, 199, 0.4)",
+                }}/>
+              )}
+              {status === "CLOSED" && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#9ca3af", flexShrink: 0,
+                  display: "inline-block",
+                }}/>
+              )}
+              {theme.label}
             </div>
 
+            {/* Public badge */}
             {isPub && (
-              <div className="sc-badge-pop" style={{
-                display:"inline-flex", alignItems:"center", gap:3,
-                padding:"2px 7px", borderRadius:6,
-                background:"rgba(255,255,255,0.55)",
-                backdropFilter:"blur(6px)",
-                WebkitBackdropFilter:"blur(6px)",
-                border:"1px solid rgba(255,255,255,0.7)",
-                fontSize:8.5, fontWeight:700, color:"#059669",
-                letterSpacing:"0.02em",
+              <div className="sch-badge-pop" style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "2px 8px", borderRadius: 9999,
+                background: "rgba(5,150,105,0.08)",
+                border: "1px solid rgba(5,150,105,0.18)",
+                fontSize: 9, fontWeight: 700, color: "#059669",
+                letterSpacing: "0.02em",
               }}>
-                <Globe size={8} /> Công khai
+                <Globe size={9} /> Công khai
               </div>
             )}
 
             {/* Participant role badge */}
             {roleTheme && (
-              <div className="sc-badge-pop" style={{
-                display:"inline-flex", alignItems:"center", gap:3,
-                padding:"3px 8px", borderRadius:6,
+              <div className="sch-badge-pop" style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "3px 8px", borderRadius: 9999,
                 background: roleTheme.bg,
-                border:`1px solid ${roleTheme.border}`,
-                fontSize:9, fontWeight:700,
+                border: `1px solid ${roleTheme.border}`,
+                fontSize: 9, fontWeight: 700,
                 color: roleTheme.text,
-                letterSpacing:"0.02em",
-                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                whiteSpace:"nowrap",
+                letterSpacing: "0.02em",
+                fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
               }}>
-                {participantRole === "editor" && <Edit2 size={8} />}
-                {participantRole === "viewer" && <Eye size={8} />}
-                {participantRole === "respondent" && <FileText size={8} />}
+                {participantRole === "editor" && <Edit2 size={9} />}
+                {participantRole === "viewer" && <Eye size={9} />}
+                {participantRole === "respondent" && <FileText size={9} />}
                 {roleTheme.label}
               </div>
             )}
+          </div>
 
-            {/* Edit button — left side */}
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
+            {onViewAnalytics && (
+              <button
+                className="sch-action-btn"
+                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                title="Phân tích"
+                onClick={() => onViewAnalytics(survey.id)}
+              >
+                <BarChart3 size={13} />
+              </button>
+            )}
+            {onShare && (
+              <button
+                className="sch-action-btn"
+                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                title="Chia sẻ"
+                onClick={() => onShare(survey.id)}
+              >
+                <Share size={13} />
+              </button>
+            )}
+            {onLock && (
+              <button
+                className="sch-action-btn"
+                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                title="Bảo mật"
+                onClick={() => onLock(survey.id)}
+              >
+                <Lock size={13} />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* ── MAIN: Icon + Title + Description ──────────────────────── */}
+        <main style={{
+          padding: "8px 24px 16px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+        }}>
+          {/* Icon + Edit overlay */}
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <div className="sch-icon-wrap">
+              {survey?.category ? (
+                <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+              ) : (
+                <SurveyIcon />
+              )}
+            </div>
             {isOwner && onSaveEdit && (
-              <Abtn icon={<Edit2 size={11}/>} label="Chỉnh sửa" on={handleEditClick} hovered={hovered} accent="#7c3aed"/>
+              <button
+                className="sch-edit-btn"
+                style={{ position: "absolute", bottom: -4, right: -4 }}
+                title="Chỉnh sửa"
+                onClick={handleEditClick}
+              >
+                <Edit2 size={11} />
+              </button>
             )}
           </div>
 
-          {/* Owner action buttons — top-right */}
-          {isOwner && (
-            <div style={{position:"absolute", top:10, right:10, display:"flex", flexDirection:"column", gap:4, zIndex:10}} onClick={e => e.stopPropagation()}>
-              {onViewAnalytics && <Abtn icon={<BarChart3 size={11}/>} label="Phân tích" on={() => onViewAnalytics(survey.id)} hovered={hovered} accent="#6366f1"/>}
-              {onShare        && <Abtn icon={<Share size={11}/>}     label="Chia sẻ"   on={() => onShare(survey.id)}        hovered={hovered} accent="#6366f1"/>}
-              {onPublish      && <Abtn icon={isPub ? <Lock size={11}/> : <Globe size={11}/>} label={isPub ? "Bỏ công khai" : "Công khai"} on={() => onPublish(survey.id)} hovered={hovered} accent={isPub ? "#d97706" : "#059669"}/>}
-              {onLock         && <Abtn icon={<Lock size={11}/>}      label="Khóa"      on={() => onLock(survey.id)}         hovered={hovered} accent="#d97706"/>}
-              {onDelete       && <Abtn icon={<Trash2 size={11}/>}   label="Xóa"       on={() => onDelete(survey.id)}       hovered={hovered} danger/>}
-            </div>
-          )}
-          {!isOwner && onViewResponses && status === "COMPLETED" && (
-            <div style={{position:"absolute", top:10, right:10, zIndex:10}} onClick={e => e.stopPropagation()}>
-              <Abtn icon={<Eye size={11}/>} label="Xem đáp án" on={() => onViewResponses(survey.id, survey.title)} hovered={hovered} accent="#059669"/>
-            </div>
-          )}
-          {!isOwner && onDelete && (
-            <div style={{position:"absolute", top:10, right:10, zIndex:10}} onClick={e => e.stopPropagation()}>
-              <Abtn icon={<Trash2 size={11}/>} label="Xóa" on={() => onDelete(survey.id)} hovered={hovered} danger/>
-            </div>
-          )}
-        </div>
-
-        {/* ── CONTENT PANEL ─────────────────────────────────────── */}
-        <div style={{
-          background:"#fff",
-          display:"flex", flexDirection:"column",
-          padding:"12px 14px 12px",
-          flex:1,
-        }}>
-
           {/* Title */}
           {!isEditing ? (
-            <h2 style={{
-              margin:0,
-              fontSize:13.5, fontWeight:700,
-              color:"#0f172a", lineHeight:1.3,
-              fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-              overflow:"hidden", display:"-webkit-box",
-              WebkitLineClamp:2, WebkitBoxOrient:"vertical",
-              marginBottom:6,
-            }}>
-              {survey?.title || "Không có tiêu đề"}
-            </h2>
+            <div style={{ width: "100%", marginBottom: 6 }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: 18, fontWeight: 700,
+                color: "#0b1c30", lineHeight: 1.3,
+                fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                overflow: "hidden", display: "-webkit-box",
+                WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                marginBottom: 4,
+              }}>
+                {survey?.title || "Không có tiêu đề"}
+              </h2>
+            </div>
           ) : (
-            <input
-              value={editTitle}
-              onChange={e => setEditTitle(e.target.value)}
-              onClick={e => e.stopPropagation()}
-              onKeyDown={e => e.key === "Enter" && handleEditSave(e)}
-              placeholder="Tên khảo sát"
-              style={{
-                margin:0, marginBottom:6,
-                fontSize:13.5, fontWeight:700,
-                color:"#0f172a", lineHeight:1.3,
-                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                border:"1.5px solid #7c3aed",
-                borderRadius:6, padding:"4px 8px",
-                outline:"none", width:"100%",
-                background:"#fff",
-                boxShadow:"0 0 0 3px rgba(124,58,237,0.1)",
-              }}
-            />
+            <div style={{ width: "100%", marginBottom: 8, textAlign: "left" }}>
+              <input
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                onKeyDown={e => e.key === "Enter" && handleEditSave(e)}
+                placeholder="Tên khảo sát"
+                style={{
+                  width: "100%",
+                  marginBottom: 6,
+                  fontSize: 18, fontWeight: 700,
+                  color: "#0b1c30", lineHeight: 1.3,
+                  fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                  border: "1.5px solid #4648d4",
+                  borderRadius: 8, padding: "6px 10px",
+                  outline: "none",
+                  background: "#fff",
+                  boxShadow: "0 0 0 3px rgba(70,72,212,0.1)",
+                }}
+              />
+              {/* Inline date edit */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 10px",
+                background: "rgba(70,72,212,0.04)",
+                border: "1px solid rgba(70,72,212,0.15)",
+                borderRadius: 8, marginBottom: 8,
+              }}>
+                <CalendarDays size={11} color="#4648d4" style={{ flexShrink: 0 }}/>
+                <input
+                  type="datetime-local"
+                  value={editEndAt}
+                  onChange={e => setEditEndAt(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    flex: 1, padding: "3px 6px",
+                    border: "1.5px solid #4648d4",
+                    borderRadius: 5, fontSize: 11,
+                    outline: "none",
+                    fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                    color: "#0b1c30",
+                    background: "#fff",
+                  }}
+                />
+                <button
+                  onClick={handleEditSave}
+                  style={{
+                    padding: "3px 10px",
+                    background: editSaving ? "#94a3b8" : "linear-gradient(135deg,#4648d4,#6366f1)",
+                    border: "none", borderRadius: 5,
+                    color: "#fff", fontSize: 10, fontWeight: 700,
+                    cursor: editSaving ? "not-allowed" : "pointer",
+                    fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                  }}
+                >
+                  {editSaving ? "..." : "Lưu"}
+                </button>
+                <button
+                  onClick={handleEditCancel}
+                  style={{
+                    padding: "3px 8px",
+                    background: "#f4f6f8",
+                    border: "1px solid #e8ecf2", borderRadius: 5,
+                    color: "#64748b", fontSize: 10, fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                  }}
+                >
+                  Huỷ
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Description */}
           {!isEditing && survey?.description ? (
             <p style={{
-              margin:0,
-              fontSize:11.5, color:"#64748b",
-              lineHeight:1.55,
-              overflow:"hidden", display:"-webkit-box",
-              WebkitLineClamp:2, WebkitBoxOrient:"vertical",
-              fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-              marginBottom:8,
+              margin: 0,
+              fontSize: 12, color: "#464554",
+              lineHeight: 1.55,
+              overflow: "hidden", display: "-webkit-box",
+              WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+              fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+              marginBottom: 8,
             }}>
               {survey.description}
             </p>
-          ) : !isEditing ? (
-            <div style={{marginBottom:6}}/>
           ) : null}
 
-          {/* Inline edit: title + end_at */}
-          {isEditing && (
-            <div style={{
-              display:"flex", alignItems:"center", gap:6,
-              padding:"7px 10px",
-              background:"rgba(124,58,237,0.04)",
-              border:"1px solid rgba(124,58,237,0.15)",
-              borderRadius:8, marginBottom:8,
-            }}>
-              <CalendarDays size={11} color="#7c3aed" style={{flexShrink:0}}/>
-              <input
-                type="datetime-local"
-                value={editEndAt}
-                onChange={e => setEditEndAt(e.target.value)}
-                onClick={e => e.stopPropagation()}
-                style={{
-                  flex:1, padding:"3px 6px",
-                  border:"1.5px solid #7c3aed",
-                  borderRadius:5, fontSize:11,
-                  outline:"none",
-                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                  color:"#0f172a",
-                  background:"#fff",
-                }}
-              />
-              <button
-                onClick={handleEditSave}
-                style={{
-                  padding:"3px 10px",
-                  background: editSaving ? "#94a3b8" : "linear-gradient(135deg,#7c3aed,#9f67f5)",
-                  border:"none", borderRadius:5,
-                  color:"#fff", fontSize:10, fontWeight:700,
-                  cursor: editSaving ? "not-allowed" : "pointer",
-                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                }}
-              >
-                {editSaving ? "..." : "Lưu"}
-              </button>
-              <button
-                onClick={handleEditCancel}
-                style={{
-                  padding:"3px 8px",
-                  background:"#f4f6f8",
-                  border:"1px solid #e8ecf2", borderRadius:5,
-                  color:"#64748b", fontSize:10, fontWeight:600,
-                  cursor:"pointer",
-                  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                }}
-              >
-                Huỷ
-              </button>
-            </div>
-          )}
-
           {/* Category tag */}
-          {survey?.category && (
+          {survey?.category && !isEditing && (
             <div style={{
-              display:"inline-flex", alignItems:"center", gap:4,
-              padding:"3px 8px", borderRadius:6,
-              background:cat.bg,
-              border:`1px solid ${cat.color}28`,
-              marginBottom:8, alignSelf:"flex-start",
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 6,
+              background: cat.bg,
+              border: `1px solid ${cat.color}28`,
+              marginBottom: 8, alignSelf: "center",
             }}>
-              <span style={{fontSize:10}}>{cat.emoji}</span>
+              <span style={{ fontSize: 10 }}>{cat.emoji}</span>
               <span style={{
-                fontSize:10, fontWeight:700, color:cat.color,
-                fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-                textTransform:"capitalize",
+                fontSize: 10, fontWeight: 700, color: cat.color,
+                fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+                textTransform: "capitalize",
               }}>
                 {survey.category}
               </span>
@@ -518,113 +621,75 @@ export function SurveyCardHome({
           {/* "View your answers" — completed, public */}
           {!isOwner && status === "COMPLETED" && (
             <div style={{
-              display:"inline-flex", alignItems:"center", gap:4,
-              padding:"3px 8px", borderRadius:6,
-              background:"rgba(5,150,105,0.06)",
-              border:"1px solid rgba(5,150,105,0.14)",
-              marginBottom:8, alignSelf:"flex-start",
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 6,
+              background: "rgba(5,150,105,0.06)",
+              border: "1px solid rgba(5,150,105,0.14)",
+              marginBottom: 8, alignSelf: "center",
             }}>
               <Eye size={10} color="#059669"/>
-              <span style={{fontSize:10, fontWeight:700, color:"#059669", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif"}}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#059669", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
                 Xem đáp án của bạn
               </span>
             </div>
           )}
 
-          {/* Spacer */}
-          <div style={{flex:1, minHeight:4}}/>
+          {/* Divider */}
+          <div className="sch-divider" style={{ marginTop: 4, marginBottom: 2 }}/>
+        </main>
 
-          {/* ── Footer ────────────────────────────────────────────── */}
-          <div style={{
-            display:"flex", alignItems:"center", justifyContent:"space-between",
-            paddingTop:8,
-            borderTop:"1px solid #f4f6f8",
-            marginTop:"auto",
-          }}>
-            <div style={{display:"flex", flexDirection:"column", gap:2}}>
-              <div style={{display:"flex", alignItems:"center", gap:3}}>
-                <CalendarDays size={9} color="#cbd5e1"/>
-                <span style={{fontSize:9.5, fontWeight:600, color:"#94a3b8", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif"}}>
-                  {survey?.updated_at ? fmtDate(survey.updated_at) : survey?.created_at ? fmtDate(survey.created_at) : ""}
-                </span>
-              </div>
-              {expiry && (
-                <div style={{display:"flex", alignItems:"center", gap:3}}>
-                  <Clock size={9} color={expiry.isExpired ? "#f472b6" : "#cbd5e1"}/>
-                  <span style={{fontSize:9.5, fontWeight:600, color: expiry.isExpired ? "#ec4899" : "#94a3b8", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif"}}>
-                    Hết hạn {expiry.text}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div style={{display:"flex", alignItems:"center", gap:6}}>
-              {responseCount > 0 && (
-                <div style={{
-                  display:"flex", alignItems:"center", gap:2,
-                  padding:"2px 7px", borderRadius:6,
-                  background:"rgba(99,102,241,0.05)",
-                  border:"1px solid rgba(99,102,241,0.10)",
-                }}>
-                  <svg width={8} height={8} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span style={{fontSize:9.5, fontWeight:700, color:"#6366f1", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif"}}>
-                    {responseCount}
-                  </span>
-                </div>
-              )}
-              <ParticipantsAvatars participants={survey?.participants}/>
+        {/* ── FOOTER: Deadline + Assignee ────────────────────────────── */}
+        <footer style={{
+          padding: "8px 24px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+          {/* Deadline */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{
+              fontSize: 9, color: "#767586",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              marginBottom: 2,
+            }}>
+              {isExpired ? "Đã hết hạn" : "Hết hạn"}
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Clock size={13} color={expiry?.isExpired ? "#ef4444" : "#767586"} style={{ opacity: 0.6 }}/>
+              <span style={{
+                fontSize: 13, fontWeight: 600,
+                color: expiry?.isExpired ? "#ef4444" : "#0b1c30",
+                fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+              }}>
+                {expiry?.text || "—"}
+              </span>
             </div>
           </div>
-        </div>
+
+          {/* Right side: responses + avatars */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {responseCount > 0 && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 4,
+                padding: "4px 10px", borderRadius: 8,
+                background: "rgba(70,72,212,0.06)",
+                border: "1px solid rgba(70,72,212,0.12)",
+              }}>
+                <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#4648d4" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#4648d4", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
+                  {responseCount}
+                </span>
+              </div>
+            )}
+            <ParticipantsAvatars participants={survey?.participants}/>
+          </div>
+        </footer>
       </article>
     </>
-  );
-}
-
-/* ── Action button ─────────────────────────────────────────── */
-function Abtn({ icon, label, on, hovered, accent, danger }) {
-  const color   = danger ? (hovered ? "#ef4444" : "#d1d5db")
-    : accent ? (hovered ? accent : "#e2e8f0") : "#e2e8f0";
-  const bg      = danger ? (hovered ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.55)")
-    : accent ? (hovered ? accent + "12" : "rgba(255,255,255,0.55)") : "rgba(255,255,255,0.55)";
-  const border  = danger ? (hovered ? "rgba(239,68,68,0.20)" : "rgba(255,255,255,0.55)")
-    : accent ? (hovered ? accent + "30" : "rgba(255,255,255,0.55)") : "rgba(255,255,255,0.55)";
-  const backdrop = hovered ? "blur(10px)" : "blur(6px)";
-  const webkitBackdrop = hovered ? "blur(10px)" : "blur(6px)";
-
-  return (
-    <button
-      aria-label={label}
-      onClick={e => { e.stopPropagation(); on(e); }}
-      title={label}
-      style={{
-        width:26, height:26, borderRadius:8,
-        border:`1px solid ${border}`,
-        background:bg,
-        backdropFilter:backdrop, WebkitBackdropFilter:webkitBackdrop,
-        cursor:"pointer", display:"flex",
-        alignItems:"center", justifyContent:"center",
-        color, padding:0, flexShrink:0,
-        transition:"all 0.15s ease",
-        boxShadow:"0 1px 4px rgba(0,0,0,0.04)",
-      }}
-      onMouseEnter={e => {
-        if (accent && !danger) {
-          e.currentTarget.style.background = accent + "18";
-          e.currentTarget.style.borderColor = accent + "40";
-          e.currentTarget.style.boxShadow = `0 3px 10px ${accent}25`;
-        }
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = bg;
-        e.currentTarget.style.borderColor = border;
-        e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
-      }}
-    >
-      {icon}
-    </button>
   );
 }
 
@@ -661,14 +726,13 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
         animation:"smUp .2s cubic-bezier(.16,1,.3,1)",
         fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
       }}>
-        {/* Header */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #f4f6f8" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#6366f1,#818cf8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 3px 12px rgba(99,102,241,0.28)" }}>
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={18} cy={5} r={3}/><circle cx={6} cy={12} r={3}/><circle cx={18} cy={19} r={3}/><line x1={8.59} y1={13.51} x2={15.42} y2={17.49}/><line x1={15.41} y1={6.51} x2={8.59} y2={10.49}/></svg>
             </div>
             <div>
-              <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>Chia sẻ khảo sát</div>
+              <div style={{ fontSize:14, fontWeight:700, color:"#0b1c30" }}>Chia sẻ khảo sát</div>
               <div style={{ fontSize:11.5, color:"#94a3b8", maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{surveyTitle}</div>
             </div>
           </div>
@@ -684,7 +748,6 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
           </button>
         </div>
 
-        {/* Body */}
         <div style={{ padding:"18px 20px" }}>
           {error && (
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 12px", borderRadius:10, background:"rgba(239,68,68,0.05)", border:"1px solid rgba(239,68,68,0.12)", marginBottom:12 }}>

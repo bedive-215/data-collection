@@ -36,10 +36,11 @@ const ResponseProvider = ({ children }) => {
   const unwrap = (res) => res?.data ?? res;
 
   const handleError = (err, defaultMsg) => {
+    const status = err?.response?.status;
+    if (status === 403 || status === 404 || status === 410) return;
     const msg = err.response?.data?.message || err.message || defaultMsg;
     setError(msg);
     showToast(msg, "error");
-    throw err;
   };
 
   // ─── START SURVEY SESSION ────────────────────────────────────────

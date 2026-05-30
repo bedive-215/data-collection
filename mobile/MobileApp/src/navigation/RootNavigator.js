@@ -17,6 +17,7 @@ import QuestionScreen from '../screens/home/Questionscreen';
 import SurveyStudioScreen from '../screens/home/SurveyStudioScreen';
 import SurveyAnalyticsScreen from '../screens/home/SurveyAnalyticsScreen';
 import PublicSurveyDetailScreen from '../screens/home/PublicSurveyDetailScreen';
+import InvitedSurveyDetailScreen from '../screens/home/InvitedSurveyDetailScreen';
 
 // Notifications
 import NotificationsScreen from '../screens/home/NotificationsScreen';
@@ -80,6 +81,13 @@ export default function RootNavigator() {
       <Stack.Screen
         name='PublicSurveyDetail'
         component={PublicSurveyDetailScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* ── Invited survey detail (role-based) ── */}
+      <Stack.Screen
+        name='InvitedSurveyDetail'
+        component={InvitedSurveyDetailScreen}
         options={{ headerShown: false }}
       />
 

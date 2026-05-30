@@ -21,11 +21,12 @@ const { width: SW } = Dimensions.get("window");
    TABS
 ════════════════════════════════════════════════════════════════ */
 const TABS = [
-  { id: "overview",  label: "Tổng quan",  icon: "📈" },
-  { id: "questions", label: "Câu hỏi",    icon: "🎯" },
-  { id: "responses", label: "Phản hồi",   icon: "👥" },
-  { id: "crosstab",  label: "Cross Tab",  icon: "🔗" },
-  { id: "export",    label: "Xuất dữ liệu", icon: "📥" },
+  { id: "overview",  label: "Tổng quan" },
+  { id: "questions", label: "Câu hỏi" },
+  { id: "responses", label: "Phản hồi" },
+  { id: "ai",       label: "AI" },
+  { id: "crosstab", label: "Cross Tab" },
+  { id: "export",    label: "Xuất dữ liệu" },
 ];
 
 /* ════════════════════════════════════════════════════════════════
@@ -532,6 +533,13 @@ export default function SurveyAnalyticsScreen() {
 
   const [ctModal, setCtModal] = useState(false);
 
+  // AI states
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiLoad, setAiLoad] = useState(false);
+  const [aiErr, setAiErr] = useState(null);
+  const [aiStats, setAiStats] = useState(null);
+  const [aiStatsLoad, setAiStatsLoad] = useState(false);
+
   const getParams = () => {
     const p = {};
     if (dateFrom) p.date_from = dateFrom;
@@ -588,6 +596,34 @@ export default function SurveyAnalyticsScreen() {
     } finally { setRLoad(false); }
   }, [surveyId, rSearch, rStatus]);
 
+  const fetchAiInsights = useCallback(async () => {
+    setAiLoad(true); setAiErr(null); setAiInsights(null);
+    try {
+      const r = await analyticsService.getAiInsights(surveyId);
+      setAiInsights(r.data?.data?.ai_insights || null);
+    } catch (e) {
+      setAiErr(e?.response?.data?.message || e?.message || "Không tải được AI insights");
+    } finally { setAiLoad(false); }
+  }, [surveyId]);
+
+  const fetchAiStats = useCallback(async () => {
+    setAiStatsLoad(true);
+    try {
+      const [statsR, compR, trendR] = await Promise.allSettled([
+        analyticsService.getSurveyStats(surveyId),
+        analyticsService.getCompletionStats(surveyId),
+        analyticsService.getResponseTrend(surveyId, "day"),
+      ]);
+      setAiStats({
+        stats: statsR.status === "fulfilled" ? statsR.value?.data?.data : null,
+        comp:  compR.status === "fulfilled" ? compR.value?.data?.data : null,
+        trend: trendR.status === "fulfilled" ? trendR.value?.data?.data : null,
+      });
+    } finally { setAiStatsLoad(false); }
+  }, [surveyId]);
+
+  useEffect(() => { if (activeTab === "ai") { fetchAiInsights(); fetchAiStats(); } }, [activeTab]);
+
   useEffect(() => {
     fetchStats(); fetchComp(); fetchSurvey();
   }, [fetchStats, fetchComp, fetchSurvey]);
@@ -599,6 +635,7 @@ export default function SurveyAnalyticsScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([fetchStats(), fetchComp(), fetchSurvey(), fetchTrend(), fetchHeatmap()]);
+    if (activeTab === "ai") { await fetchAiInsights(); await fetchAiStats(); }
     setRefreshing(false);
   };
 
@@ -665,31 +702,30 @@ export default function SurveyAnalyticsScreen() {
       </View>
 
       {/* ── TAB BAR ── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
-        <View style={styles.tabBar}>
-          {TABS.map(tab => {
-            const is = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[styles.tab, is && styles.tabActive]}
-                onPress={() => setActiveTab(tab.id)}
-              >
-                <Text style={{ fontSize: 12 }}>{tab.icon}</Text>
-                <Text style={[styles.tabText, is && styles.tabTextActive]}>{tab.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ backgroundColor: "#fff", maxHeight: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 4 }}
+      >
+        {TABS.map(tab => {
+          const is = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginRight: 6,
+                backgroundColor: is ? COLORS.primary : "#f1f5f9",
+              }}
+              onPress={() => setActiveTab(tab.id)}
+            >
+              <Text style={{ fontSize: 11, fontWeight: "600", color: is ? "#fff" : COLORS.textSub }}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
-
-      {/* ── DATE PRESET ── */}
-      {activeTab !== "export" && (
-        <View style={styles.presetRow}>
-          <Text style={styles.presetLabel}>Khoảng thời gian:</Text>
-          <DatePresetPicker active={datePreset} onChange={applyPreset} />
-        </View>
-      )}
 
       {/* ── CONTENT ── */}
       <ScrollView
@@ -859,6 +895,143 @@ export default function SurveyAnalyticsScreen() {
                 <Text style={{ fontSize: 32, marginBottom: 10 }}>📭</Text>
                 <Text style={styles.emptyTitle}>Chưa có phản hồi</Text>
                 <Text style={styles.emptyText}>{rSearch || rStatus ? "Thử thay đổi bộ lọc" : "Survey chưa có phản hồi nào"}</Text>
+              </GlassCard>
+            )}
+          </View>
+        )}
+
+        {/* ════════════ AI ════════════ */}
+        {activeTab === "ai" && (
+          <View style={styles.tabContent}>
+            {/* Quick Stats */}
+            {aiStatsLoad ? (
+              <View style={styles.statsGrid}>
+                {[1,2,3,4].map(i => <View key={i} style={styles.statSkeleton} />)}
+              </View>
+            ) : aiStats && (
+              <View style={styles.statsGrid}>
+                <StatCard
+                  label="Tổng phản hồi"
+                  value={fmt(aiStats.stats?.overview?.total_completed || 0)}
+                  sub={`${aiStats.stats?.overview?.total_started || 0} bắt đầu`}
+                  color="indigo"
+                />
+                <StatCard
+                  label="Hoàn thành"
+                  value={fmt(aiStats.stats?.overview?.total_completed || 0)}
+                  sub={aiStats.comp?.total_started
+                    ? `${Math.round((aiStats.comp.total_completed / aiStats.comp.total_started) * 100)}% hoàn thành`
+                    : null}
+                  color="emerald"
+                />
+                <StatCard
+                  label="Thời gian TB"
+                  value={aiStats.comp?.avg_completion_time_display || "—"}
+                  color="amber"
+                />
+                <StatCard
+                  label="Xu hướng"
+                  value={
+                    (() => {
+                      const t = aiStats.trend?.trend || [];
+                      if (t.length < 2) return "—";
+                      const last = t[t.length - 1]?.count || 0;
+                      const first = t[0]?.count || 0;
+                      return last >= first ? "Tăng ↑" : "Giảm ↓";
+                    })()
+                  }
+                  color={
+                    (() => {
+                      const t = aiStats.trend?.trend || [];
+                      if (t.length < 2) return "slate";
+                      return (t[t.length - 1]?.count || 0) >= (t[0]?.count || 0) ? "emerald" : "rose";
+                    })()
+                  }
+                />
+              </View>
+            )}
+
+            {/* Trend Chart */}
+            {!aiStatsLoad && aiStats?.trend?.trend?.length > 0 && (
+              <GlassCard>
+                <Text style={styles.cardTitle}>Xu hướng phản hồi (7 ngày)</Text>
+                <View style={{ height: 100, marginTop: 12 }}>
+                  <SimpleBarChart
+                    data={aiStats.trend.trend.slice(-7).map(t => ({ label: t.period?.slice(5) || t.date || "", value: t.count || 0 }))}
+                    height={100}
+                    barColor={COLORS.primary}
+                  />
+                </View>
+              </GlassCard>
+            )}
+
+            {/* AI Insights Card */}
+            <GlassCard>
+              <View style={styles.aiHeader}>
+                <View style={styles.aiHeaderLeft}>
+                  <View style={[styles.aiAvatar]}>
+                    <Text style={{ fontSize: 14 }}>🤖</Text>
+                  </View>
+                  <Text style={styles.aiTitle}>AI Insights</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.aiBtn, aiLoad && styles.aiBtnDisabled]}
+                  onPress={fetchAiInsights}
+                  disabled={aiLoad}
+                >
+                  <Text style={[styles.aiBtnText, aiLoad && styles.aiBtnTextDisabled]}>
+                    {aiLoad ? "Đang phân tích..." : "Phân tích lại"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {aiLoad ? (
+                <View style={styles.aiSkeleton}>
+                  <View style={styles.skeletonLine} />
+                  <View style={[styles.skeletonLine, { width: "80%" }]} />
+                  <View style={[styles.skeletonLine, { width: "60%" }]} />
+                  <View style={[styles.skeletonLine, { width: "90%" }]} />
+                  <View style={[styles.skeletonLine, { width: "70%" }]} />
+                </View>
+              ) : aiErr ? (
+                <View style={styles.aiError}>
+                  <Text style={styles.aiErrorText}>{aiErr}</Text>
+                  <TouchableOpacity onPress={fetchAiInsights}>
+                    <Text style={styles.aiRetryText}>Thử lại</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : aiInsights ? (
+                <View style={styles.aiContent}>
+                  <Text style={styles.aiInsightsText}>{aiInsights}</Text>
+                </View>
+              ) : (
+                <View style={styles.aiEmpty}>
+                  <Text style={styles.aiEmptyIcon}>🤖</Text>
+                  <Text style={styles.aiEmptyTitle}>Nhấn nút để bắt đầu</Text>
+                  <Text style={styles.aiEmptySub}>AI sẽ phân tích dữ liệu khảo sát và đưa ra các insights, xu hướng và đề xuất cải tiến.</Text>
+                </View>
+              )}
+            </GlassCard>
+
+            {/* Survey Info */}
+            {survey && (
+              <GlassCard>
+                <Text style={styles.cardTitle}>Thông tin khảo sát</Text>
+                <View style={styles.infoList}>
+                  {[
+                    { label: "Tiêu đề", value: survey.title },
+                    { label: "Số câu hỏi", value: (survey.questions?.length || 0).toString() },
+                    { label: "Trạng thái", value: survey.is_published ? "Đã công khai" : "Riêng tư" },
+                    { label: "Tạo lúc", value: survey.created_at
+                      ? new Date(survey.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" })
+                      : "—" },
+                  ].map(item => (
+                    <View key={item.label} style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>{item.label}</Text>
+                      <Text style={styles.infoValue}>{item.value}</Text>
+                    </View>
+                  ))}
+                </View>
               </GlassCard>
             )}
           </View>
@@ -1134,4 +1307,39 @@ const styles = StyleSheet.create({
   chiValue: { fontSize: 18, fontWeight: "900", color: COLORS.text },
   chiConclusion: { backgroundColor: COLORS.primaryLight, borderRadius: 10, padding: 12 },
   chiConclusionText: { fontSize: 12, fontWeight: "600", color: COLORS.primary, textAlign: "center" },
+
+  // AI
+  aiHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  aiHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  aiAvatar: {
+    width: 32, height: 32, borderRadius: 10,
+    backgroundColor: "#fce7f3",
+    alignItems: "center", justifyContent: "center",
+  },
+  aiTitle: { fontSize: 14, fontWeight: "700", color: COLORS.text },
+  aiBtn: {
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16,
+    backgroundColor: COLORS.primary,
+  },
+  aiBtnDisabled: { backgroundColor: COLORS.gray200 },
+  aiBtnText: { fontSize: 11, fontWeight: "700", color: COLORS.white },
+  aiBtnTextDisabled: { color: COLORS.textDim },
+  aiSkeleton: { gap: 10 },
+  skeletonLine: { height: 14, backgroundColor: COLORS.gray100, borderRadius: 8, width: "100%" },
+  aiError: { alignItems: "center", paddingVertical: 20, gap: 8 },
+  aiErrorText: { fontSize: 12, color: COLORS.error, textAlign: "center" },
+  aiRetryText: { fontSize: 12, fontWeight: "700", color: COLORS.primary },
+  aiContent: {
+    backgroundColor: "#fafafa", borderRadius: 12,
+    padding: 14, borderWidth: 1, borderColor: COLORS.gray200,
+  },
+  aiInsightsText: { fontSize: 13, color: COLORS.text, lineHeight: 20 },
+  aiEmpty: { alignItems: "center", paddingVertical: 20, paddingHorizontal: 16, gap: 8 },
+  aiEmptyIcon: { fontSize: 36 },
+  aiEmptyTitle: { fontSize: 14, fontWeight: "700", color: COLORS.textDim },
+  aiEmptySub: { fontSize: 12, color: COLORS.textDim, textAlign: "center", lineHeight: 18 },
+  infoList: { gap: 8, marginTop: 4 },
+  infoRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  infoLabel: { fontSize: 11, color: COLORS.textDim, fontWeight: "600", minWidth: 80 },
+  infoValue: { fontSize: 12, color: COLORS.text, flex: 1 },
 });

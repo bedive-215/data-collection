@@ -243,14 +243,26 @@ export default function SurveyResponsePage() {
     const fetchData = async () => {
       try {
         setLoading(true); setError(null);
-        const [surveyRes, responseRes] = await Promise.all([
-          fetchSurveyById(surveyId),
-          getMySubmission(surveyId).catch(() => null),
-        ]);
+        let surveyData = null;
+        let responseData = null;
+        try {
+          surveyData = await fetchSurveyById(surveyId);
+          surveyData = surveyData?.data ?? surveyData ?? null;
+        } catch (sErr) {
+          console.warn("Survey fetch failed:", sErr?.response?.status, sErr?.message);
+        }
+        try {
+          responseData = await getMySubmission(surveyId);
+          responseData = responseData?.data ?? responseData ?? null;
+        } catch (rErr) {
+          console.warn("Response fetch failed:", rErr?.response?.status, rErr?.message);
+        }
         if (cancelled) return;
-        setSurvey(surveyRes?.data ?? surveyRes ?? null);
-        const rawResponse = responseRes?.data ?? responseRes ?? null;
-        setResponse(rawResponse);
+        setSurvey(surveyData);
+        setResponse(responseData);
+        if (!responseData) {
+          setError("Không tìm thấy câu trả lời của bạn cho khảo sát này.");
+        }
       } catch (err) {
         if (!cancelled) setError(err?.message || "Không thể tải dữ liệu");
       } finally {
@@ -261,8 +273,8 @@ export default function SurveyResponsePage() {
     return () => { cancelled = true; };
   }, [surveyId]);
 
-  if (loading)                        return <LoadingScreen />;
-  if (error || !survey || !response)  return <ErrorScreen message={error} onBack={handleBack} />;
+  if (loading)                          return <LoadingScreen />;
+  if (error || !response)               return <ErrorScreen message={error} onBack={handleBack} />;
 
   const submittedDate = response.submitted_at
     ? new Date(response.submitted_at).toLocaleDateString("vi-VN")
@@ -301,10 +313,10 @@ export default function SurveyResponsePage() {
               </View>
 
               {/* Title */}
-              <Text style={ss.heroTitle}>{survey.title}</Text>
+              <Text style={ss.heroTitle}>{survey?.title || response?.survey_title || "Khảo sát"}</Text>
 
               {/* Description */}
-              {!!survey.description && (
+              {!!survey?.description && (
                 <Text style={ss.heroDesc}>{survey.description}</Text>
               )}
 

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Animated, Dimensions, RefreshControl, ActivityIndicator, Alert,
-  Modal, Clipboard, Linking,
+  Modal, Clipboard, Linking, Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -16,6 +16,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useResponse } from "../../providers/ResponseProvider";
 import { useSurvey } from "../../providers/SurveyProvider";
+import surveyService from "../../services/surveyService";
 import { CheckinBanner } from "../../components/gamification/CheckinBanner";
 import { GamificationDashboard } from "../../components/gamification/GamificationDashboard";
 import { SurveyCard } from "../../components/survey/SurveyCard";
@@ -384,18 +385,32 @@ const divStyles = StyleSheet.create({
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { getAllMyResponses } = useResponse();
-  const { mySurveys, publicSurveys, fetchMySurveys, fetchPublicSurveys, shareLink, closeSurvey } = useSurvey();
+  const { mySurveys, publicSurveys, fetchMySurveys, fetchPublicSurveys, closeSurvey } = useSurvey();
 
   const [doneSurveyIds, setDoneSurveyIds] = useState(new Set());
+  const [expiredSurveyIds, setExpiredSurveyIds] = useState(new Set());
   const [loading,       setLoading]       = useState(true);
   const [refreshing,    setRefreshing]    = useState(false);
+
+  const isSurveyExpired = (survey) => {
+    const now = new Date();
+    if (survey.end_at) {
+      const end = new Date(survey.end_at);
+      if (now > end) return true;
+    }
+    if (survey.start_at) {
+      const start = new Date(survey.start_at);
+      if (now < start) return true;
+    }
+    return false;
+  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const responsesRes = await getAllMyResponses().catch(() => null);
-      const responsesList = responsesRes?.data ?? [];
-      setDoneSurveyIds(new Set(responsesList.map(r => r.survey_id ?? r.surveyId)));
+      const responsesList = Array.isArray(responsesRes) ? responsesRes : (responsesRes?.data ?? []);
+      setDoneSurveyIds(new Set(responsesList.map(r => r.survey_id ?? r.survey?.id)));
       await Promise.all([
         fetchMySurveys(1, 20),
         fetchPublicSurveys(),
@@ -407,6 +422,17 @@ export default function HomeScreen() {
     }
   };
 
+  // After publicSurveys loads, check expiry (but not if already done)
+  useEffect(() => {
+    const expired = new Set();
+    publicSurveys.forEach(s => {
+      if (isSurveyExpired(s) && !doneSurveyIds.has(s.id)) {
+        expired.add(s.id);
+      }
+    });
+    setExpiredSurveyIds(expired);
+  }, [publicSurveys, doneSurveyIds]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -417,8 +443,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const [shareModal, setShareModal] = useState({ visible: false, url: "", loading: false, id: null });
-  const [loadingShare, setLoadingShare] = useState(false);
+  const [shareModal, setShareModal] = useState({ visible: false, surveyId: null, surveyTitle: "", url: "", loading: false, error: "" });
 
   // ── Handlers ──
   const handleStartSurvey = (id) => navigation.navigate("PublicSurveyDetail", { surveyId: id });
@@ -426,6 +451,13 @@ export default function HomeScreen() {
   const handleViewAllMy = () => navigation.navigate("MainApp", { screen: "OrdersTab", params: { initialTab: "my" } });
   const handleViewAllPublic = () => navigation.navigate("MainApp", { screen: "OrdersTab", params: { initialTab: "public" } });
   const handleViewResult = (id) => navigation.navigate("SurveyResponse", { surveyId: id });
+  const handleExpiredSurvey = (id) => {
+    Alert.alert(
+      "Khảo sát đã hết hạn",
+      "Khảo sát này đã hết hạn và không thể tham gia.",
+      [{ text: "Đóng", style: "cancel" }]
+    );
+  };
 
   const handleLockSurvey = (id) => {
     Alert.alert(
@@ -448,14 +480,27 @@ export default function HomeScreen() {
     );
   };
 
-  const handleShareSurvey = async (id) => {
-    setShareModal({ visible: true, url: "", loading: true, id });
+  const handleShareSurvey = (id) => {
+    const s = mySurveys.find(x => x.id === id);
+    setShareModal({ visible: true, surveyId: id, surveyTitle: s?.title || "", url: "", loading: false, error: "" });
+  };
+
+  const handleGenerateLink = async () => {
+    if (!shareModal.surveyId) return;
+    setShareModal(prev => ({ ...prev, loading: true, error: "", url: "" }));
     try {
-      const url = await shareLink(id);
-      setShareModal(prev => ({ ...prev, url: url || "", loading: false }));
-    } catch {
-      setShareModal(prev => ({ ...prev, url: "", loading: false }));
-      Alert.alert("Lỗi", "Không tạo được link chia sẻ.");
+      const res = await surveyService.shareSurveyLink(shareModal.surveyId);
+      const body = res?.data ?? res;
+      const rawUrl = body?.url ?? body?.data?.url ?? body?.share_url ?? null;
+      if (rawUrl) {
+        const finalUrl = rawUrl.startsWith("http") ? rawUrl : `https://unrestfully-nonforbearing-carlie.ngrok-free.dev${rawUrl}`;
+        setShareModal(prev => ({ ...prev, url: finalUrl, loading: false }));
+      } else {
+        setShareModal(prev => ({ ...prev, loading: false, error: "Không lấy được link. Thử lại." }));
+      }
+    } catch (err) {
+      console.log("Share error:", err);
+      setShareModal(prev => ({ ...prev, loading: false, error: "Không tạo được link. Vui lòng thử lại." }));
     }
   };
 
@@ -596,15 +641,26 @@ export default function HomeScreen() {
             <View style={styles.surveyGrid}>
               {recentPublic.map((survey, i) => {
                 const done = doneSurveyIds.has(survey.id);
+                const expired = expiredSurveyIds.has(survey.id);
                 return (
                   <View key={survey.id} style={styles.gridCardWrap}>
                     <SurveyCard
                       survey={survey}
                       done={done}
+                      expired={expired}
                       index={i}
                       viewMode="grid"
                       onStart={handleStartSurvey}
                       onViewSubmission={handleViewResult}
+                      onExpired={handleExpiredSurvey}
+                      overrideStatus={done ? "COMPLETED" : expired ? "EXPIRED" : null}
+                      onClick={() =>
+                        done
+                          ? handleViewResult(survey.id)
+                          : expired
+                          ? handleExpiredSurvey(survey.id)
+                          : handleStartSurvey(survey.id)
+                      }
                     />
                   </View>
                 );
@@ -624,8 +680,8 @@ export default function HomeScreen() {
 
       {/* ── Share Modal ── */}
       <Modal visible={shareModal.visible} transparent animationType="fade" onRequestClose={() => setShareModal(v => ({ ...v, visible: false }))}>
-        <View style={shareStyles.overlay}>
-          <View style={shareStyles.box}>
+        <Pressable style={shareStyles.overlay} onPress={() => setShareModal(v => ({ ...v, visible: false }))}>
+          <TouchableOpacity activeOpacity={1} style={shareStyles.box}>
             <View style={shareStyles.header}>
               <Text style={shareStyles.title}>Chia sẻ khảo sát</Text>
               <TouchableOpacity onPress={() => setShareModal(v => ({ ...v, visible: false }))} style={shareStyles.closeBtn}>
@@ -633,10 +689,14 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
             <View style={shareStyles.body}>
-              {shareModal.loading ? (
-                <View style={shareStyles.loading}>
-                  <ActivityIndicator size="large" color={C.primary} />
-                  <Text style={shareStyles.loadingText}>Đang tạo link...</Text>
+              <Text style={shareStyles.surveyTitleText}>{shareModal.surveyTitle}</Text>
+
+              {shareModal.error ? (
+                <View style={shareStyles.errorRow}>
+                  <Text style={shareStyles.errorText}>{shareModal.error}</Text>
+                  <TouchableOpacity onPress={handleGenerateLink}>
+                    <Text style={shareStyles.retryText}>Thử lại</Text>
+                  </TouchableOpacity>
                 </View>
               ) : shareModal.url ? (
                 <>
@@ -661,13 +721,21 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </>
               ) : (
-                <View style={shareStyles.loading}>
-                  <Text style={shareStyles.errorText}>Không tạo được link. Vui lòng thử lại.</Text>
-                </View>
+                <TouchableOpacity
+                  style={[shareStyles.primaryBtn, shareModal.loading && styles.btnDisabled]}
+                  onPress={handleGenerateLink}
+                  disabled={shareModal.loading}
+                >
+                  {shareModal.loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={shareStyles.primaryBtnText}>Tạo link chia sẻ</Text>
+                  )}
+                </TouchableOpacity>
               )}
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
@@ -769,4 +837,12 @@ const shareStyles = StyleSheet.create({
     borderWidth: 1, borderColor: "#e8ecf0",
   },
   openBtnText: { fontSize: 15, fontWeight: "600", color: C.text },
+  surveyTitleText: { fontSize: 14, fontWeight: "600", color: C.text, textAlign: "center", marginBottom: 4 },
+  errorRow: { alignItems: "center", paddingVertical: 16, gap: 8 },
+  retryText: { fontSize: 14, fontWeight: "700", color: C.primary },
+  primaryBtn: {
+    backgroundColor: C.primary, borderRadius: 12,
+    paddingVertical: 14, alignItems: "center",
+  },
+  primaryBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
 });

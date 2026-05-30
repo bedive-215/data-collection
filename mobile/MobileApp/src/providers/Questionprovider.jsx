@@ -107,6 +107,8 @@ const QuestionProvider = ({ children }) => {
       setQuestions(list);
       return list;
     } catch (err) {
+      const status = err?.response?.status;
+      if (status === 403 || status === 404 || status === 410) return null;
       const msg = err.response?.data?.message || "Lấy danh sách câu hỏi thất bại";
       setError(msg);
       showToast(msg, "error");

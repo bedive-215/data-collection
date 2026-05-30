@@ -29,7 +29,6 @@ import { useSurvey }   from "../providers/SurveyProvider";
 import { useResponse } from "../providers/ResponseProvider";
 import CreateSurveyComposer from "../components/survey/CreateSurveyComposer";
 import { SurveyCardHome } from "../components/survey/SurveyCardHome";
-import AiChatbox from "../components/common/AiChatbox";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -201,15 +200,22 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 /* ════════════════════════════════════════════════════════════════
    INVITE MODAL
 ════════════════════════════════════════════════════════════════ */
+const ROLES = [
+  { value: "viewer",     label: "👁 Viewer",     desc: "Chỉ xem câu hỏi" },
+  { value: "respondent", label: "📝 Respondent", desc: "Trả lời khảo sát" },
+  { value: "editor",     label: "✏️ Editor",     desc: "Chỉnh sửa khảo sát" },
+];
+
 function InviteModal({ open, onClose, survey, onInvite }) {
   const [emails, setEmails]     = useState("");
   const [loading, setLoading]   = useState(false);
   const [success, setSuccess]   = useState(false);
   const [sentCount, setSentCount] = useState(0);
   const [error, setError]       = useState("");
+  const [role, setRole]         = useState("respondent");
 
   useEffect(() => {
-    if (!open) { setEmails(""); setSuccess(false); setError(""); setSentCount(0); }
+    if (!open) { setEmails(""); setSuccess(false); setError(""); setSentCount(0); setRole("respondent"); }
   }, [open]);
 
   const handleSubmit = async () => {
@@ -217,7 +223,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
     if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
     setLoading(true); setError(""); setSuccess(false);
     try {
-      await Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })));
+      await Promise.all(list.map(email => onInvite(survey.id, { email, role })));
       setSentCount(list.length); setSuccess(true); setEmails("");
     } catch { setError("Mời không thành công."); }
     finally { setLoading(false); }
@@ -239,6 +245,21 @@ function InviteModal({ open, onClose, survey, onInvite }) {
                 <Text style={styles.successText}>✓ Đã gửi lời mời đến {sentCount} địa chỉ email.</Text>
               </View>
             )}
+
+            <Text style={styles.fieldLabel}>Vai trò</Text>
+            <View style={styles.roleRow}>
+              {ROLES.map(r => (
+                <TouchableOpacity
+                  key={r.value}
+                  style={[styles.roleBtn, role === r.value && styles.roleBtnActive]}
+                  onPress={() => setRole(r.value)}
+                >
+                  <Text style={[styles.roleBtnLabel, role === r.value && styles.roleBtnLabelActive]}>{r.label}</Text>
+                  <Text style={styles.roleBtnDesc}>{r.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <Text style={styles.fieldLabel}>Địa chỉ email</Text>
             <TextInput
               style={[styles.textarea, !!error && styles.inputError]}
@@ -275,7 +296,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
 /* ════════════════════════════════════════════════════════════════
    BULK INVITE MODAL
 ════════════════════════════════════════════════════════════════ */
-const ROLES = [
+const BULK_ROLES = [
   { value: "viewer",     label: "👁 Viewer",     desc: "Chỉ xem" },
   { value: "respondent", label: "✏️ Respondent", desc: "Trả lời" },
   { value: "editor",     label: "🛠 Editor",     desc: "Chỉnh sửa" },
@@ -283,7 +304,7 @@ const ROLES = [
 
 function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
   const [emails, setEmails]   = useState("");
-  const [role, setRole]       = useState("viewer");
+  const [role, setRole]       = useState("respondent");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [error, setError]     = useState("");
@@ -342,7 +363,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             {/* Role selector */}
             <Text style={styles.fieldLabel}>Vai trò</Text>
             <View style={styles.roleRow}>
-              {ROLES.map(r => (
+              {BULK_ROLES.map(r => (
                 <TouchableOpacity
                   key={r.value}
                   style={[styles.roleBtn, role === r.value && styles.roleBtnActive]}
@@ -1108,10 +1129,11 @@ const PUBLIC_TABS = [
 export default function SurveysLayout() {
   const navigation = useNavigation();
   const {
-    mySurveys, publicSurveys: providerPublicSurveys, loading: myLoading,
+    mySurveys, publicSurveys: providerPublicSurveys,
+    invitedSurveys, loading: myLoading,
     fetchMySurveys, updateSurvey, deleteSurvey,
     closeSurvey, publishSurvey, shareLink, inviteSurvey,
-    fetchPublicSurveys, bulkInviteSurvey, getParticipants, deleteParticipant,
+    fetchPublicSurveys, fetchInvitedSurveys, bulkInviteSurvey, getParticipants, deleteParticipant,
   } = useSurvey();
   const { getAllMyResponses } = useResponse();
 
@@ -1132,6 +1154,7 @@ export default function SurveysLayout() {
   const [shareModal, setShareModal]       = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
 
   useEffect(() => { fetchMySurveys(1, 20); }, []);
+  useEffect(() => { fetchInvitedSurveys(1, 20); }, []);
 
   const handleShare = useCallback((surveyId) => {
     const s = mySurveys.find(x => x.id === surveyId);
@@ -1143,7 +1166,11 @@ export default function SurveysLayout() {
     try {
       const result = await shareLink(shareModal.surveyId);
       const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
-      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+      if (url) {
+        setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
+      } else {
+        setShareModal(p => ({ ...p, loading: false, error: "Không tạo được link. Vui lòng thử lại." }));
+      }
     } catch {
       setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
     }
@@ -1175,7 +1202,7 @@ export default function SurveysLayout() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.allSettled([fetchMySurveys(1, 20), fetchPublicData()]);
+    await Promise.allSettled([fetchMySurveys(1, 20), fetchPublicData(), fetchInvitedSurveys(1, 20)]);
     setRefreshing(false);
   };
 
@@ -1365,7 +1392,7 @@ export default function SurveysLayout() {
                   <Text style={styles.infoBoxSub}>{mySearch ? "Thử từ khoá khác" : "Hãy tạo survey đầu tiên"}</Text>
                 </GlassCard>
               ) : (
-                <>
+                <View>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 14 }}>
                     {visibleMySurveys.map((survey, index) => (
                       <SurveyCardHome
@@ -1390,8 +1417,35 @@ export default function SurveysLayout() {
                       </Text>
                     </TouchableOpacity>
                   )}
-                </>
+                </View>
               )}
+            </>
+          )}
+
+          {/* ════ INVITED SURVEYS ════ */}
+          {invitedSurveys.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={styles.sectionTitle}>Được mời</Text>
+                  <View style={[styles.countBadge, { backgroundColor: "rgba(124,58,237,0.12)", borderColor: "rgba(124,58,237,0.25)" }]}>
+                    <Text style={[styles.countBadgeText, { color: "#7c3aed" }]}>{invitedSurveys.length}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 14, marginBottom: 16 }}>
+                {invitedSurveys.map((survey, index) => (
+                  <SurveyCardHome
+                    key={survey.id}
+                    survey={survey}
+                    index={index}
+                    onClick={() => navigation.navigate("InvitedSurveyDetail", { surveyId: survey.id })}
+                    type="invited"
+                    participantRole={survey.role}
+                  />
+                ))}
+              </View>
             </>
           )}
 
@@ -1530,7 +1584,7 @@ export default function SurveysLayout() {
               <Text style={styles.emptyTitle}>{publicSearch ? `Không tìm thấy "${publicSearch}"` : "Không có khảo sát nào"}</Text>
             </GlassCard>
           ) : (
-            <>
+            <View>
               <Text style={styles.resultCount}>
                 {displayed.length} khảo sát
                 {!!publicSearch && ` · "${publicSearch}"`}
@@ -1545,20 +1599,17 @@ export default function SurveysLayout() {
                     overrideStatus={doneSurveyIds.has(survey.id) ? "COMPLETED" : null}
                     onClick={() =>
                       doneSurveyIds.has(survey.id)
-                        ? navigation.navigate("SurveyResponse", { surveyId: survey.id })
+                        ? navigation.navigate("PublicSurveyDetail", { surveyId: survey.id, forceResponse: true })
                         : navigation.navigate("SurveyTake", { surveyId: survey.id })
                     }
                     type="public"
                   />
                 ))}
               </View>
-            </>
+            </View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* ── EchoAI Chatbox ── */}
-      <AiChatbox navigation={navigation} />
     </View>
   );
 }

@@ -136,6 +136,7 @@ const normalizeSurvey = (survey = {}) => ({
 const SurveyProvider = ({ children }) => {
   const [mySurveys, setMySurveys] = useState([]);
   const [publicSurveys, setPublicSurveys] = useState([]);
+  const [invitedSurveys, setInvitedSurveys] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [currentSurvey, setCurrentSurvey] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -146,11 +147,12 @@ const SurveyProvider = ({ children }) => {
   const clearError   = () => setError(null);
 
   const handleError = (err, fallback) => {
+    const status = err?.response?.status;
+    if (status === 403 || status === 404 || status === 410) return;
     console.error(err);
     const message = err?.response?.data?.message || err?.message || fallback;
     setError(message);
     showToast(message, "error");
-    throw err;
   };
 
   // ─── CREATE ──────────────────────────────────────────────────────
@@ -348,6 +350,38 @@ const SurveyProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchInvitedSurveys = useCallback(async (page = 1, limit = 20) => {
+    try {
+      startLoading();
+      const res = await surveyService.getInvitedSurveys({ page, limit });
+      const data = res?.data ?? res;
+      const now = new Date();
+      const list = (data?.data?.data || []).map((s) => {
+        let computedStatus = null;
+        if (s.end_at && new Date(s.end_at) < now) computedStatus = "EXPIRED";
+        return {
+          id: s.id,
+          title: s.title || "",
+          description: s.description || "",
+          start_at: s.start_at || null,
+          end_at: s.end_at || null,
+          created_at: s.created_at || null,
+          status: computedStatus || s.status || null,
+          access_type: "PRIVATE",
+          created_by: s.created_by || null,
+          role: s.role || null,
+          invitedAt: s.invitedAt || null,
+        };
+      });
+      setInvitedSurveys(list);
+      return list;
+    } catch (err) {
+      handleError(err, "Không tải được khảo sát được mời");
+    } finally {
+      stopLoading();
+    }
+  }, []);
+
   const fetchSurveyById = useCallback(async (id, token = null) => {
     try {
       startLoading();
@@ -357,7 +391,8 @@ const SurveyProvider = ({ children }) => {
       const data = res?.data ?? res;
       const raw = pickSurveyFromResponseBody(data);
       const survey = normalizeSurvey(raw || {});
-      setCurrentSurvey(survey);
+      const role = data?.role ?? null;
+      setCurrentSurvey({ ...survey, role });
       return survey;
     } catch (err) {
       handleError(err, "Không tìm thấy khảo sát");
@@ -466,11 +501,7 @@ const SurveyProvider = ({ children }) => {
       const res = await surveyService.shareSurveyLink(id);
       const body = res?.data ?? res;
       const url = normalizeShareUrlForRN(extractShareUrlFromBody(body), id);
-      if (url) {
-        showToast("Tạo link thành công");
-        return url;
-      }
-      showToast("Không lấy được link chia sẻ", "error");
+      if (url) return url;
       return undefined;
     } catch (err) {
       handleError(err, "Share thất bại");
@@ -528,18 +559,18 @@ const SurveyProvider = ({ children }) => {
   // ─── MEMO ────────────────────────────────────────────────────────
   const value = useMemo(
     () => ({
-      surveys, mySurveys, publicSurveys, currentSurvey, loading, error,
+      surveys, mySurveys, publicSurveys, invitedSurveys, currentSurvey, loading, error,
       createSurvey, createSurveyFlow,
-      fetchMySurveys, fetchPublicSurveys, fetchSurveyById,
+      fetchMySurveys, fetchPublicSurveys, fetchInvitedSurveys, fetchSurveyById,
       updateSurvey, deleteSurvey, closeSurvey, publishSurvey,
       shareLink, inviteSurvey, bulkInviteSurvey,
       getParticipants, deleteParticipant,
       setCurrentSurvey, clearError,
     }),
     [
-      surveys, mySurveys, publicSurveys, currentSurvey, loading, error,
+      surveys, mySurveys, publicSurveys, invitedSurveys, currentSurvey, loading, error,
       createSurvey, createSurveyFlow,
-      fetchMySurveys, fetchPublicSurveys, fetchSurveyById,
+      fetchMySurveys, fetchPublicSurveys, fetchInvitedSurveys, fetchSurveyById,
       updateSurvey, deleteSurvey, closeSurvey, publishSurvey,
       shareLink, inviteSurvey, bulkInviteSurvey,
       getParticipants, deleteParticipant,
