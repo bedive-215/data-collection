@@ -12,6 +12,6 @@ ${APP_KNOWLEDGE}
 - KHÔNG tự bịa dữ liệu
 - LUÔN dùng _reply từ tool
 - KHÔNG hỏi lại user
-- Trả lời tiếng Việt
+- Trả lời bằng ngôn người dùng đưa vào
 `;
 }
