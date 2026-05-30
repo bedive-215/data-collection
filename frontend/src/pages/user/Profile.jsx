@@ -111,13 +111,14 @@ export default function Profile() {
     avatar: null,
   });
 
-  useEffect(() => {
-    const load = async () => {
-      await fetchMyInfo();
-      setIsInitialLoad(false);
-    };
-    load();
+  const loadProfile = useCallback(async () => {
+    await fetchMyInfo();
+    setIsInitialLoad(false);
   }, [fetchMyInfo]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   useEffect(() => {
     if (user) {
@@ -161,7 +162,6 @@ export default function Profile() {
         gender: form.gender,
       };
       await updateMyInfo(payload);
-      await fetchMyInfo();
       setForm((prev) => ({ ...prev, avatar: null }));
       setIsEditing(false);
     } catch (e) {
