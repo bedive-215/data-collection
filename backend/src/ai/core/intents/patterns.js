@@ -3,8 +3,22 @@ export const FAST_PATTERNS = [
     tool: "list_my_surveys",
     priority: 100,
     match: (t) =>
-      /(danh sách|liệt kê|list|show list)\s*(khảo sát|survey)?\s*(của tôi|my|mine)?/.test(t),
-    extract: () => ({})
+      /(danh sách|liệt kê|list|show list)\s*(khảo sát|survey)?\s*(của tôi|my|mine)?/.test(t) ||
+      /(khảo sát|survey).*(đang hoạt động|active|đang chạy|đang mở)/.test(t) ||
+      /(đang hoạt động|active|đang chạy).*(khảo sát|survey)/.test(t) ||
+      /(khảo sát|survey).*(hết hạn|expired|đã hết|quá hạn|không hoạt động)/.test(t) ||
+      /(không hoạt động|hết hạn|expired).*(khảo sát|survey)/.test(t) ||  // ← thêm chiều ngược
+      /(khảo sát|survey).*(chưa bắt đầu|scheduled|lên lịch|sắp tới)/.test(t) ||
+      /(bao nhiêu|how many)\s*(khảo sát|survey)/.test(t),  // ← bắt câu hỏi "bao nhiêu"
+    extract: (t) => {
+      if (/(không hoạt động|hết hạn|expired|đã hết|quá hạn)/.test(t))
+        return { status: "EXPIRED" };
+      if (/(đang hoạt động|active|đang chạy|đang mở)/.test(t))
+        return { status: "ACTIVE" };
+      if (/(chưa bắt đầu|scheduled|lên lịch|sắp tới)/.test(t))
+        return { status: "SCHEDULED" };
+      return {};
+    }
   },
   {
     tool: "search_surveys",
@@ -34,13 +48,13 @@ export const FAST_PATTERNS = [
     tool: "get_survey_analytics",
     priority: 90,
     match: (t) =>
-      /(thống kê|phân tích|analytics|stats)/.test(t) &&
+      /(thống kê|phân tích|analytics|stats|xem thống kê)/.test(t) &&
       /(khảo sát|survey)/.test(t),
     extract: (t) => {
-      const m = t.match(/(?:thống kê|phân tích|analytics|stats)\s*(.+)/);
-      return {
-        keyword: m?.[1]?.trim()
-      };
+      const keyword = t
+        .replace(/(thống kê|phân tích|analytics|stats|xem|của tôi|khảo sát|survey)/g, "")
+        .trim();
+      return { keyword: keyword || "" };
     }
   },
   {

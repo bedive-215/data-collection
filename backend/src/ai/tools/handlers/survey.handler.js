@@ -19,8 +19,22 @@ import {
 import { getSurveyStatus } from "../../../domain/survey.domain.js";
 
 export async function listMySurveys({ args, user }) {
+  const where = { created_by: user.id };
+  const now = new Date();
+
+  if (args.status === "ACTIVE") {
+    where[Op.and] = [
+      { [Op.or]: [{ start_at: null }, { start_at: { [Op.lte]: now } }] },
+      { [Op.or]: [{ end_at: null }, { end_at: { [Op.gte]: now } }] },
+    ];
+  } else if (args.status === "SCHEDULED") {
+    where.start_at = { [Op.gt]: now };
+  } else if (args.status === "EXPIRED") {
+    where.end_at = { [Op.lt]: now };
+  }
+
   const surveys = await Survey.findAll({
-    where: { created_by: user.id },
+    where,
     order: [["created_at", "DESC"]],
     limit: 50,
     attributes: ["id", "title", "description", "created_at", "start_at", "end_at"],
@@ -32,14 +46,12 @@ export async function listMySurveys({ args, user }) {
   });
 
   const mapped = mapSurveyList(surveys);
-
   return {
     data: { surveys: mapped, total: mapped.length },
     _reply: buildSurveyListMessage(mapped),
     meta: { tool: "list_my_surveys" },
   };
 }
-
 export async function searchSurveys({ args, user }) {
   const { keyword } = args;
 

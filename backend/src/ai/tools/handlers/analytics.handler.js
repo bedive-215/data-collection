@@ -10,7 +10,6 @@ const { Survey, Response, SurveyParticipant } = models;
 
 export async function getSurveyAnalytics({ args, user }) {
   let survey;
-
   if (args.survey_id) {
     survey = await Survey.findByPk(args.survey_id);
   } else if (args.keyword) {
@@ -29,7 +28,9 @@ export async function getSurveyAnalytics({ args, user }) {
     };
   }
 
-  console.log("Found survey for analytics:", survey);
+  const responseCount = await Response.count({
+    where: { survey_id: survey.id }
+  });
 
   return {
     id: survey.id,
