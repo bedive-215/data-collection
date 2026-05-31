@@ -109,7 +109,6 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         };
     }
 
-    // ─── Survey-level ────────────────────────────────────────────────────────
 
     async getSurveyAnalytics(survey_id, filters = {}, options = {}) {
         const questions = await this.Question.findAll({
@@ -178,7 +177,6 @@ class SurveyAnalyticsService extends QuestionAnalyticsService {
         };
     }
 
-    // ─── Completion ──────────────────────────────────────────────────────────
 
     async getCompletionStats(survey_id, filters = {}) {
         const baseFilters = { ...filters };
