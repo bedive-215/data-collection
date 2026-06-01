@@ -1,8 +1,7 @@
-import { jsonToToon } from "../helpers/jsonToToon.helper.js";
+import { jsonToToon } from "../jsonToToon.js";
 
 export function buildAnalyticsPrompt(cleanedData) {
     const optimizedData = jsonToToon(cleanedData);
-    console.log("Dữ liệu đã được tối ưu hóa thành TOON:", optimizedData);
     return `
         Dưới đây là dữ liệu khảo sát. Hãy phân tích và trả lời:
         1. Tóm tắt ngắn gọn kết quả từng câu hỏi (1–2 dòng/câu)

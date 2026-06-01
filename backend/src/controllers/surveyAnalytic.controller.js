@@ -1,5 +1,5 @@
 import { AppError } from "../middlewares/handleException.middlware.js";
-import SurveyAnalyticsService from "../services/analytics/surveyAnalytics.service.js";
+import SurveyAnalyticsService from "../services/surveyAnalytics.service.js";
 import models from "../models/index.js";
 
 const parseFilters = (query) => {
