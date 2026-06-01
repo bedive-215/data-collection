@@ -5,7 +5,7 @@ import {
   AI_QUESTION_SYSTEM_PROMPT,
   clampQuestionCount,
 } from "../domain/aiQuestion.domain.js";
-import { callGeminiJson } from "../utils/aiQuestion/geminiJson.js";
+import { generateJsonQuestions } from "../ai/gemini/geminiClient.js";
 import { normalizeQuestionList } from "../utils/aiQuestion/normalize.js";
 import { buildAiQuestionPrompt } from "../utils/aiQuestion/prompts.js";
 
@@ -35,7 +35,7 @@ class AiQuestionService {
       ...body,
       count: clampQuestionCount(body.count),
     });
-    const rawList = await callGeminiJson(AI_QUESTION_SYSTEM_PROMPT, userPrompt);
+    const rawList = await generateJsonQuestions({AI_QUESTION_SYSTEM_PROMPT, userPrompt});
     const questions = normalizeQuestionList(rawList);
 
     if (questions.length === 0) {

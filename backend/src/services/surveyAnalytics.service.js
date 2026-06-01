@@ -3,15 +3,16 @@ import { AppError } from "../middlewares/handleException.middlware.js";
 
 import models from "../models/index.js";
 
-import { formatDuration, 
-    calculateAge, 
-    ageGroup, 
-    normalizeGender, 
+import {
+    formatDuration,
+    calculateAge,
+    ageGroup,
+    normalizeGender,
     cleanSurveyAnalytics,
     computeWordFrequency
 } from "../helpers/surveyAnalytic.helper.js";
 import { buildAnalyticsPrompt } from "../utils/surveyAnalytics/buildPrompt.js";
-import { generateGeminiContent } from "../configs/ai.config.js";
+import { generateText } from "../ai/gemini/geminiClient.js";
 import { cache } from "../helpers/cache.helper.js";
 import { buildAiAnalyticsCacheKey, buildResponseWhere } from "../helpers/surveyAnalyticsQuery.helper.js";
 import { textAnalytics } from "../utils/surveyAnalytics/textAnalytics.js";
@@ -315,7 +316,7 @@ class SurveyAnalyticsService {
             where: buildResponseWhere(survey_id, { ...filters, status: "COMPLETED" }),
         });
 
-        if(completeTotal === 0) {
+        if (completeTotal === 0) {
             return {
                 survey_id,
                 total_responses: totalResponses, // Return actual count even if 0 completed
@@ -326,7 +327,7 @@ class SurveyAnalyticsService {
         }
 
         const analytics = await Promise.all(
-            questions.map((q) => this.getQuestionAnalytics(q.id, { ...filters, survey_id }, {...options}))
+            questions.map((q) => this.getQuestionAnalytics(q.id, { ...filters, survey_id }, { ...options }))
         );
 
         return {
@@ -705,8 +706,8 @@ class SurveyAnalyticsService {
     }
 
     async _generateAiAnalytics(survey_id, filters = {}) {
-        const data = await this.getSurveyAnalytics(survey_id, filters, {ai_mode: true});
-        if(data.total_responses === 0) {
+        const data = await this.getSurveyAnalytics(survey_id, filters, { ai_mode: true });
+        if (data.total_responses === 0) {
             return {
                 survey_id,
                 total_responses: 0,
@@ -718,7 +719,7 @@ class SurveyAnalyticsService {
         const cleaned = cleanSurveyAnalytics(data);
 
         const prompt = buildAnalyticsPrompt(cleaned);
-        const aiResponse = await generateGeminiContent(prompt);
+        const aiResponse = await generateText({ contents: prompt });
 
         return {
             survey_id,
