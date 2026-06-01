@@ -4,6 +4,8 @@ import { AppError } from "../middlewares/handleException.middlware.js";
 import { STAR_TYPE_LABELS, RANK_META, ROLE_LABEL } from "../domain/notification.domain.js";
 
 import { mapNotification } from "../mappers/notification.mapper.js";
+import { cache } from "../helpers/cache.helper.js";
+
 
 const fmtDate = (date) =>
     new Date(date).toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" });
@@ -33,6 +35,13 @@ class NotificationService {
                 survey_id: data?.surveyId || null,
                 type, title, message, data,
             });
+
+            // Invalidate best-effort caches: unread count + common first-page list
+            await cache.del([
+                `notif:unreadCount:${userId}`,
+                `notif:list:${userId}:p1:l20:unread:1`,
+                `notif:list:${userId}:p1:l20:unread:0`,
+            ]);
 
             console.log(`[NotificationService] Created ${n.id} for user ${userId}, type: ${type}`);
 
@@ -66,6 +75,7 @@ class NotificationService {
             console.error("Error creating notification:", err);
         }
     }
+
 
 
     async notifySurveyResponse({ survey, responder, responseId }) {
@@ -224,24 +234,48 @@ class NotificationService {
     }
 
     async getNotifications(userId, { page = 1, limit = 20, unreadOnly = false }) {
-        const where = { user_id: userId, ...(unreadOnly && { read: false }) };
-        const [{ rows, count }, unreadCount] = await Promise.all([
-            this.Notification.findAndCountAll({
-                where, order: [["created_at", "DESC"]],
-                limit, offset: (page - 1) * limit,
-            }),
-            this.Notification.count({ where: { user_id: userId, read: false } }),
-        ]);
-        return {
-            notifications: rows.map(n => mapNotification(n)),
-            total: count, unreadCount, page,
-            totalPages: Math.ceil(count / limit),
-        };
+        const safePage = Math.max(1, Number(page) || 1);
+        const safeLimit = Math.max(1, Math.min(50, Number(limit) || 20));
+        const unreadFlag = unreadOnly === true || unreadOnly === "true";
+
+        const cacheKey = `notif:list:${userId}:p${safePage}:l${safeLimit}:unread:${unreadFlag ? 1 : 0}`;
+        const ttlSeconds = 60 * 2;
+
+        return cache.getOrSetJSON({
+            key: cacheKey,
+            ttlSeconds,
+            fetcher: async () => {
+                const where = { user_id: userId, ...(unreadFlag && { read: false }) };
+                const [{ rows, count }, unreadCount] = await Promise.all([
+                    this.Notification.findAndCountAll({
+                        where, order: [["created_at", "DESC"]],
+                        limit: safeLimit, offset: (safePage - 1) * safeLimit,
+                    }),
+                    this.Notification.count({ where: { user_id: userId, read: false } }),
+                ]);
+
+                return {
+                    notifications: rows.map(n => mapNotification(n)),
+                    total: count, unreadCount, page: safePage,
+                    totalPages: Math.ceil(count / safeLimit),
+                };
+            },
+        });
     }
 
+
     async getUnreadCount(userId) {
-        return this.Notification.count({ where: { user_id: userId, read: false } });
+        const cacheKey = `notif:unreadCount:${userId}`;
+        const ttlSeconds = 60 * 1;
+
+        return cache.getOrSetJSON({
+            key: cacheKey,
+            ttlSeconds,
+            fetcher: async () => await this.Notification.count({ where: { user_id: userId, read: false } }),
+        });
     }
+
+
 
     async _findOwned(userId, notificationId) {
         const n = await this.Notification.findOne({ where: { id: notificationId, user_id: userId } });
@@ -251,26 +285,59 @@ class NotificationService {
 
     async markAsRead(userId, notificationId) {
         await (await this._findOwned(userId, notificationId)).update({ read: true, read_at: new Date() });
+
+        await cache.del([
+            `notif:unreadCount:${userId}`,
+            // best-effort invalidate common first page caches (covers đa số UI)
+            `notif:list:${userId}:p1:l20:unread:1`,
+            `notif:list:${userId}:p1:l20:unread:0`,
+        ]);
+
         return { message: "Notification marked as read" };
     }
+
 
     async markAllAsRead(userId) {
         await this.Notification.update(
             { read: true, read_at: new Date() },
             { where: { user_id: userId, read: false } }
         );
+
+        await cache.del([
+            `notif:unreadCount:${userId}`,
+            `notif:list:${userId}:p1:l20:unread:1`,
+            `notif:list:${userId}:p1:l20:unread:0`,
+        ]);
+
         return { message: "All notifications marked as read" };
     }
 
+
     async deleteNotification(userId, notificationId) {
         await (await this._findOwned(userId, notificationId)).destroy();
+
+        await cache.del([
+            `notif:unreadCount:${userId}`,
+            `notif:list:${userId}:p1:l20:unread:1`,
+            `notif:list:${userId}:p1:l20:unread:0`,
+        ]);
+
         return { message: "Notification deleted" };
     }
 
+
     async deleteReadNotifications(userId) {
         const count = await this.Notification.destroy({ where: { user_id: userId, read: true } });
+
+        await cache.del([
+            `notif:unreadCount:${userId}`,
+            `notif:list:${userId}:p1:l20:unread:1`,
+            `notif:list:${userId}:p1:l20:unread:0`,
+        ]);
+
         return { message: "Read notifications deleted", count };
     }
+
 
     async notifyStarEarned({ userId, amount, type, description, balanceAfter, multiplier = 1 }) {
         const label = STAR_TYPE_LABELS[type] || "Nhận sao";
