@@ -267,14 +267,21 @@ function ShareLinkModal({ visible, onClose, survey, onShare }) {
 /* ────────────────────────────────────────────────────────────────
    INVITE MODAL
 ──────────────────────────────────────────────────────────────── */
+const ROLES = [
+  { value: "respondent", label: "✏️ Trả lời",    desc: "Làm khảo sát" },
+  { value: "viewer",     label: "👁️ Xem",         desc: "Chỉ xem câu hỏi" },
+  { value: "editor",     label: "🛠️ Làm bài",     desc: "Chỉnh sửa survey" },
+];
+
 function InviteModal({ visible, onClose, survey, onInvite }) {
   const [emails,  setEmails]  = useState("");
+  const [role,    setRole]    = useState("respondent");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
 
   useEffect(() => {
-    if (!visible) { setEmails(""); setSuccess(false); setError(""); }
+    if (!visible) { setEmails(""); setSuccess(false); setError(""); setRole("respondent"); }
   }, [visible]);
 
   const handleSubmit = async () => {
@@ -282,7 +289,7 @@ function InviteModal({ visible, onClose, survey, onInvite }) {
     if (list.length === 0) { setError("Vui lòng nhập ít nhất 1 email."); return; }
     setLoading(true); setError("");
     try {
-      await Promise.all(list.map(email => onInvite?.(survey.id, { email, role: "viewer" })));
+      await Promise.all(list.map(email => onInvite?.(survey.id, { email, role })));
       setSuccess(true); setEmails("");
     } catch { setError("Mời không thành công, vui lòng thử lại."); }
     finally { setLoading(false); }
@@ -305,6 +312,21 @@ function InviteModal({ visible, onClose, survey, onInvite }) {
             <Text style={[ss.successText, { marginLeft: 6 }]}>Đã gửi lời mời thành công!</Text>
           </View>
         )}
+
+        {/* Role selector */}
+        <Text style={ss.label}>VAI TRÒ</Text>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {ROLES.map(r => (
+            <TouchableOpacity
+              key={r.value}
+              onPress={() => setRole(r.value)}
+              style={[ss.roleBtn, role === r.value && { borderColor: C.primary, backgroundColor: C.primaryDim }]}
+            >
+              <Text style={[ss.roleBtnLabel, role === r.value && { color: C.primary }]}>{r.label}</Text>
+              <Text style={ss.roleBtnDesc}>{r.desc}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={ss.label}>ĐỊA CHỈ EMAIL</Text>
         <TextInput
@@ -357,9 +379,9 @@ function BulkInviteModal({ visible, onClose, survey, onBulkInvite }) {
   const [error,   setError]   = useState("");
 
   const ROLES = [
-    { value: "viewer",     label: "👁️ Viewer",     desc: "Chỉ xem" },
-    { value: "respondent", label: "✏️ Respondent", desc: "Trả lời survey" },
-    { value: "editor",     label: "🛠️ Editor",     desc: "Chỉnh sửa" },
+    { value: "respondent", label: "✏️ Trả lời",  desc: "Làm khảo sát" },
+    { value: "viewer",     label: "👁️ Xem",       desc: "Chỉ xem câu hỏi" },
+    { value: "editor",     label: "🛠️ Làm bài",   desc: "Chỉnh sửa survey" },
   ];
 
   const parseEmails = () => emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
