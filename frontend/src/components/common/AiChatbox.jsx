@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-  MessageCircle, X, Send, Loader2, Sparkles, Minimize2,
+  MessageCircle, X, Send, Loader2, Sparkles,
   Bot, User, FileText, CheckCircle2, TrendingUp, Users,
   Eye, Plus, ExternalLink, BarChart3, Clock, AlertCircle
 } from "lucide-react";
@@ -341,7 +341,6 @@ function SurveyListCard({ surveys, onView, onStats }) {
 export default function AiChatbox() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -422,13 +421,15 @@ export default function AiChatbox() {
   };
 
   const handleViewSurvey = (surveyId) => {
-    navigate(`/user/my-surveys/${surveyId}`);
     setIsOpen(false);
+    document.body.style.overflow = "";
+    navigate(`/user/my-surveys/${surveyId}`);
   };
 
   const handleSurveyStats = (surveyId) => {
-    navigate(`/user/surveys/${surveyId}/analytics`);
     setIsOpen(false);
+    document.body.style.overflow = "";
+    navigate(`/user/surveys/${surveyId}/analytics`);
   };
 
   // Parse action from message (simple heuristic — check if message mentions survey data)
@@ -438,7 +439,15 @@ export default function AiChatbox() {
     return null;
   };
 
-  if (typeof document === "undefined") return null;
+  const handleClose = () => {
+    setIsOpen(false);
+    document.body.style.overflow = "";
+  };
+
+  const handleOpen = () => {
+    document.body.style.overflow = "hidden";
+    setIsOpen(true);
+  };
 
   return (
     <>
@@ -469,7 +478,7 @@ export default function AiChatbox() {
 
       {/* ── Floating button ── */}
       <button
-        onClick={() => { setIsOpen(true); setIsMinimized(false); }}
+        onClick={() => { isOpen ? handleClose() : handleOpen(); }}
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 9998,
           width: 60, height: 60, borderRadius: "50%", border: "none",
@@ -508,7 +517,7 @@ export default function AiChatbox() {
         <div style={{
           position: "fixed", bottom: 96, right: 24, zIndex: 9999,
           width: 390, maxWidth: "calc(100vw - 48px)",
-          height: isMinimized ? 56 : 580,
+          height: 580,
           display: "flex", flexDirection: "column",
           background: C.surface,
           backdropFilter: "blur(28px) saturate(190%)",
@@ -518,7 +527,6 @@ export default function AiChatbox() {
           boxShadow: "0 24px 64px rgba(15,23,42,0.18), 0 4px 0 rgba(255,255,255,0.9) inset",
           overflow: "hidden",
           animation: "slideInUp 0.3s cubic-bezier(.16,1,.3,1)",
-          transition: "height 0.3s cubic-bezier(.16,1,.3,1)",
         }}>
 
           {/* Header */}
@@ -553,8 +561,8 @@ export default function AiChatbox() {
             </div>
 
             <button
-              onClick={clearChat}
-              title="Xóa cuộc trò chuyện"
+              onClick={handleClose}
+              title="Đóng"
               style={{
                 width: 32, height: 32, borderRadius: 9,
                 border: "none", background: "rgba(255,255,255,0.2)",
@@ -569,34 +577,17 @@ export default function AiChatbox() {
             >
               ✕
             </button>
-
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              title={isMinimized ? "Mở rộng" : "Thu nhỏ"}
-              style={{
-                width: 32, height: 32, borderRadius: 9,
-                border: "none", background: "rgba(255,255,255,0.2)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", color: "rgba(255,255,255,0.8)",
-                flexShrink: 0, position: "relative", zIndex: 1,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.3)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
-            >
-              <Minimize2 size={14} />
-            </button>
           </div>
 
           {/* Messages */}
-          {!isMinimized && (
-            <>
-              <div style={{
-                flex: 1, overflowY: "auto", padding: "12px 14px",
-                display: "flex", flexDirection: "column", gap: 2,
-                background: "rgba(248,250,252,0.5)",
-              }}>
-                {messages.length === 0 && (
+          <div style={{
+            flex: 1, overflowY: "auto", padding: "12px 14px",
+            display: "flex", flexDirection: "column", gap: 2,
+            background: "rgba(248,250,252,0.5)",
+            maxHeight: "calc(580px - 56px - 64px - 62px)",
+            overflowX: "hidden",
+          }}>
+            {messages.length === 0 && (
                   <div style={{ textAlign: "center", padding: "20px 12px 24px" }}>
                     <div style={{
                       width: 52, height: 52, borderRadius: 16,
@@ -952,8 +943,6 @@ export default function AiChatbox() {
                   }
                 </button>
               </div>
-            </>
-          )}
         </div>,
         document.body
       )}
