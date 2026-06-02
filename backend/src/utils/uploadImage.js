@@ -1,4 +1,4 @@
-import cloudinary from "../configs/cloudinary.config.js";
+import cloudinary from "#configs/cloudinary.config.js";
 import streamifier from "streamifier";
 
 export const uploadBufferToCloudinary = (buffer, folder = "avatar_images") => {

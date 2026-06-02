@@ -1,8 +1,8 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
-import { withTransaction } from "../utils/transaction.js";
-import { getSurveyStatus } from "../domain/survey.domain.js";
-import { prepareQuestionData, validateSettingsByType, validateOptions } from "../helpers/question.helper.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
+import { withTransaction } from "#utils/transaction.js";
+import { getSurveyStatus } from "#domain/survey.domain.js";
+import { prepareQuestionData, validateSettingsByType, validateOptions } from "#helpers/question.helper.js";
 
 
 class QuestionService {

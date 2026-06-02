@@ -1,4 +1,4 @@
-import sequelize from "../configs/db.config.js";
+import sequelize from "../infrastructure/configs/db.config.js";
 import UserModel from "./user.model.js";
 import UserOAuthModel from "./userOauth.model.js";
 import SurveyModel from "./survey.model.js";

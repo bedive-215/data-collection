@@ -1,6 +1,6 @@
 import express from "express";
-import aiChatController from "../controllers/aiChat.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import aiChatController from "#controllers/aiChat.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 
 const router = express.Router();
 

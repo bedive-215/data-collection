@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import route from "./routes/app.route.js";
-import "./events/eventListenerIndex.js";
-import { errorHandler } from "./middlewares/handleException.middlware.js";
+import route from "#routes/app.route.js";
+import "#infrastructure/events/eventListenerIndex.js";
+import { errorHandler } from "#middlewares/handleException.middlware.js";
 
 const app = express();
 

@@ -1,5 +1,5 @@
-import { getSurveyStatus } from "../domain/survey.domain.js";
-import { formatDate } from "../helpers/aiChat.helper.js";
+import { getSurveyStatus } from "#domain/survey.domain.js";
+import { formatDate } from "#helpers/aiChat.helper.js";
 
 export function mapSurveyList(surveys) {
   return surveys.map((s) => ({

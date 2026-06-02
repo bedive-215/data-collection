@@ -1,4 +1,4 @@
-import { STAR_REWARDS, RANK_CONFIG } from "../domain/star.domain.js";
+import { STAR_REWARDS, RANK_CONFIG } from "#domain/star.domain.js";
 
 export function calculateStreakMultiplier(streakCount) {
     if (streakCount >= 7) return 2.0;

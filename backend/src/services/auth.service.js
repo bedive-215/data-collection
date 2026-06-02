@@ -1,14 +1,14 @@
-import { AppError } from '../middlewares/handleException.middlware.js';
+import { AppError } from '#middlewares/handleException.middlware.js';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import 'dotenv/config';
 
-import models from '../models/index.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/token.js';
-import { makeCode } from '../utils/makeCode.js';
+import models from '#models/index.js';
+import { generateAccessToken, generateRefreshToken } from '#utils/token.js';
+import { makeCode } from '#utils/makeCode.js';
 
-import { emailQueue } from '../queues/email.queue.js';
+import { emailQueue } from '#queues/email.queue.js';
 
 class AuthService {
   constructor() {

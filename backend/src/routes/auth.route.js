@@ -1,16 +1,16 @@
-import AuthController from "../controllers/auth.controller.js";
+import AuthController from "#controllers/auth.controller.js";
 
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
+import { validate } from "#middlewares/validate.middleware.js";
 
-import { registerSchema } from "../validates/register.validate.js";
-import { loginSchema } from "../validates/login.validate.js";
-import { oauthLoginRequest } from "../validates/oauthLogin.validate.js";
-import { verifyEmailRequest } from "../validates/verifyEmail.validate.js";
-import { reSendVerifyCodeRequest } from "../validates/resendVerifyEmail.validate.js";
+import { registerSchema } from "#validates/register.validate.js";
+import { loginSchema } from "#validates/login.validate.js";
+import { oauthLoginRequest } from "#validates/oauthLogin.validate.js";
+import { verifyEmailRequest } from "#validates/verifyEmail.validate.js";
+import { reSendVerifyCodeRequest } from "#validates/resendVerifyEmail.validate.js";
 import { forgotPasswordRequest, 
         verifyResetCodeRequest, 
-        resetPasswordRequest } from "../validates/forgotPassword.validate.js";
+        resetPasswordRequest } from "#validates/forgotPassword.validate.js";
 
 import { Router } from 'express';
 

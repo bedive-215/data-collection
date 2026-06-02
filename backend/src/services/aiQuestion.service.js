@@ -1,13 +1,13 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
-import _checkSurveyAccess from "../utils/checkSurveyAccess.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
+import _checkSurveyAccess from "#utils/checkSurveyAccess.js";
 import {
   AI_QUESTION_SYSTEM_PROMPT,
   clampQuestionCount,
-} from "../domain/aiQuestion.domain.js";
-import { generateJsonQuestions } from "../ai/gemini/geminiClient.js";
-import { normalizeQuestionList } from "../utils/aiQuestion/normalize.js";
-import { buildAiQuestionPrompt } from "../utils/aiQuestion/prompts.js";
+} from "#domain/aiQuestion.domain.js";
+import { generateJsonQuestions } from "#ai/gemini/geminiClient.js";
+import { normalizeQuestionList } from "#utils/aiQuestion/normalize.js";
+import { buildAiQuestionPrompt } from "#utils/aiQuestion/prompts.js";
 
 class AiQuestionService {
   constructor() {

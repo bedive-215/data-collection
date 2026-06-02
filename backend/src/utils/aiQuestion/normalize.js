@@ -1,4 +1,4 @@
-import { AI_CHOICE_QUESTION_TYPES, AI_QUESTION_TYPES } from "../../domain/aiQuestion.domain.js";
+import { AI_CHOICE_QUESTION_TYPES, AI_QUESTION_TYPES } from "#domain/aiQuestion.domain.js";
 
 const VALID_TYPES = new Set(AI_QUESTION_TYPES);
 

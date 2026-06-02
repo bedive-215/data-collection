@@ -1,10 +1,10 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
-import { STAR_TYPE_LABELS, RANK_META, ROLE_LABEL } from "../domain/notification.domain.js";
+import { STAR_TYPE_LABELS, RANK_META, ROLE_LABEL } from "#domain/notification.domain.js";
 
-import { mapNotification } from "../mappers/notification.mapper.js";
-import { cache } from "../helpers/cache.helper.js";
+import { mapNotification } from "#mappers/notification.mapper.js";
+import { cache } from "#helpers/cache.helper.js";
 
 
 const fmtDate = (date) =>

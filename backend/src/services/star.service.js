@@ -1,15 +1,15 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
-import { STAR_REWARDS, RANK_CONFIG } from "../domain/star.domain.js";
-import { getRankFromStars, getRankProgress } from "../helpers/star.helper.js";
+import { STAR_REWARDS, RANK_CONFIG } from "#domain/star.domain.js";
+import { getRankFromStars, getRankProgress } from "#helpers/star.helper.js";
 
-import { withTransaction } from "../utils/transaction.js";
+import { withTransaction } from "#utils/transaction.js";
 
-import { mapTransaction } from "../mappers/star.mapper.js";
+import { mapTransaction } from "#mappers/star.mapper.js";
 
-import eventBus from "../events/eventBus.js";
-import { STAR_EVENTS } from "../events/star/star.event.js";
+import eventBus from "#events/eventBus.js";
+import { STAR_EVENTS } from "#events/star/star.event.js";
 
 class StarService {
     constructor() {

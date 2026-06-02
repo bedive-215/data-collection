@@ -3,7 +3,7 @@ import { generateAccessToken } from "../utils/token.js";
 import "dotenv/config";
 import models from "../models/index.js";
 import { AppError } from "./handleException.middlware.js";
-import _checkOwnerOrAdmin from "../utils/checkOwnerOrAdmin.js";
+import _checkOwnerOrAdmin from "#utils/checkOwnerOrAdmin.js";
 
 export class authMiddleware {
 

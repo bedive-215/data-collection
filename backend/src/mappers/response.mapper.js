@@ -1,6 +1,6 @@
-import { AppError } from "../middlewares/handleException.middlware.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
-import models from "../models/index.js";
+import models from "#models/index.js";
 
 const { Question, QuestionOption, Answer } = models;
 

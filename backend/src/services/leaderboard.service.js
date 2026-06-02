@@ -1,11 +1,11 @@
 import { Op } from "sequelize";
-import models from "../models/index.js";
-import { WEEKLY_PRIZES } from "../domain/star.domain.js";
+import models from "#models/index.js";
+import { WEEKLY_PRIZES } from "#domain/star.domain.js";
 
-import { weekStart, monthStart, getUserStars } from "../helpers/leaderboard.helper.js";
+import { weekStart, monthStart, getUserStars } from "#helpers/leaderboard.helper.js";
 
-import { PERIOD_FIELD } from "../domain/leaderBoard.domain.js";
-import { cache } from "../helpers/cache.helper.js";
+import { PERIOD_FIELD } from "#domain/leaderBoard.domain.js";
+import { cache } from "#helpers/cache.helper.js";
 
 
 class LeaderboardService {

@@ -1,9 +1,5 @@
-import cloudinary from "../configs/cloudinary.config.js";
+import cloudinary from "#configs/cloudinary.config.js";
 
-/**
- * Upload media file lên Cloudinary, trả về URL.
- * Supported types: image/*, video/*
- */
 async function uploadToCloudinary(file, folder = "survey-media") {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(

@@ -1,4 +1,4 @@
-import { STREAK_BONUS_TIERS } from "../domain/dailyCheckin.domain.js";
+import { STREAK_BONUS_TIERS } from "#domain/dailyCheckin.domain.js";
 
 export function todayUTC() {
     return new Date().toISOString().split("T")[0];

@@ -1,4 +1,4 @@
-import { jsonToToon } from "../jsonToToon.js";
+import { jsonToToon } from "#utils/jsonToToon.js";
 
 export function buildAnalyticsPrompt(cleanedData) {
     const optimizedData = jsonToToon(cleanedData);

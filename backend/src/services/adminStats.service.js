@@ -1,5 +1,5 @@
 import { Op, fn, col, literal } from "sequelize";
-import models from "../models/index.js";
+import models from "#models/index.js";
 
 class AdminStatsService {
     constructor() {

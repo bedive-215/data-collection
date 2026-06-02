@@ -1,8 +1,8 @@
-import models from "../models/index.js";
+import models from "#models/index.js";
 import { Op } from "sequelize";
-import { AppError } from "../middlewares/handleException.middlware.js";
-import { uploadBufferToCloudinary, deleteFromCloudinary } from '../utils/uploadImage.js'
-import cloudinary from "../configs/cloudinary.config.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
+import { uploadBufferToCloudinary, deleteFromCloudinary } from '#utils/uploadImage.js'
+import cloudinary from "#configs/cloudinary.config.js";
 
 class UserService {
     constructor() {
