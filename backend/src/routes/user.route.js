@@ -1,11 +1,11 @@
-import UserController from "../controllers/user.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import upload from "../middlewares/multer.middleware.js";
+import UserController from "#controllers/user.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
+import upload from "#middlewares/multer.middleware.js";
 
-import { validate } from "../middlewares/validate.middleware.js";
-import {updateUserProfileRequest} from "../validates/updateUser.validate.js";
-import { userIdParams } from "../validates/userIdParams.validate.js";
-import { updateUserRoleRequest, blockUserRequest, unblockUserRequest } from "../validates/adminUser.validate.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import {updateUserProfileRequest} from "#validates/updateUser.validate.js";
+import { userIdParams } from "#validates/userIdParams.validate.js";
+import { updateUserRoleRequest, blockUserRequest, unblockUserRequest } from "#validates/adminUser.validate.js";
 
 import { Router } from "express";
 

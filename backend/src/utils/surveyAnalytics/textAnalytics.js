@@ -1,4 +1,4 @@
-import { AppError } from "../../middlewares/handleException.middlware.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
 export function normalizeText(text) {
   return text

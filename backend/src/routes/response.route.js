@@ -1,12 +1,12 @@
 import express from "express";
-import ResponseController from "../controllers/response.controller.js";
-import { validate } from "../middlewares/validate.middleware.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import ResponseController from "#controllers/response.controller.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 
-import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
-import { userIdParams } from "../validates/userIdParams.validate.js";
-import { responseIdParams } from "../validates/responseIdParams.validate.js";
-import { getUserResponse } from "../validates/getUserResponse.validate.js";
+import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
+import { userIdParams } from "#validates/userIdParams.validate.js";
+import { responseIdParams } from "#validates/responseIdParams.validate.js";
+import { getUserResponse } from "#validates/getUserResponse.validate.js";
 import route from "./auth.route.js";
 
 const router = express.Router();

@@ -1,4 +1,4 @@
-import { AppError } from "../middlewares/handleException.middlware.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 import crypto from "crypto";
 
 const VALID_TYPES = [

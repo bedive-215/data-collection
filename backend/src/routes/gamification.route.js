@@ -1,15 +1,12 @@
-import StarController from "../controllers/star.controller.js";
-import DailyCheckinController from "../controllers/dailyCheckin.controller.js";
-import AchievementController from "../controllers/achievement.controller.js";
-import LeaderboardController from "../controllers/leaderboard.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import StarController from "#controllers/star.controller.js";
+import DailyCheckinController from "#controllers/dailyCheckin.controller.js";
+import AchievementController from "#controllers/achievement.controller.js";
+import LeaderboardController from "#controllers/leaderboard.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 import { Router } from "express";
 
 const route = Router();
 
-// ============================================================
-// STAR ROUTES
-// ============================================================
 route.get("/balance", authMiddleware.auth.bind(authMiddleware), StarController.getBalance);
 route.get("/history", authMiddleware.auth.bind(authMiddleware), StarController.getTransactionHistory);
 route.get("/rank-info", authMiddleware.auth.bind(authMiddleware), StarController.getRankInfo);
@@ -22,9 +19,6 @@ route.patch(
     StarController.adminAdjustStars
 );
 
-// ============================================================
-// DAILY CHECKIN ROUTES
-// ============================================================
 route.post(
     "/checkin",
     authMiddleware.auth.bind(authMiddleware),
@@ -46,9 +40,6 @@ route.get(
     DailyCheckinController.getCurrentStreak
 );
 
-// ============================================================
-// ACHIEVEMENT ROUTES
-// ============================================================
 route.get(
     "/achievements",
     authMiddleware.auth.bind(authMiddleware),
@@ -68,9 +59,6 @@ route.post(
     AchievementController.seedAchievements
 );
 
-// ============================================================
-// LEADERBOARD ROUTES
-// ============================================================
 route.get(
     "/leaderboard",
     authMiddleware.auth.bind(authMiddleware),

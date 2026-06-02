@@ -1,7 +1,7 @@
 import { fn, col, literal, Op } from "sequelize";
-import { AppError } from "../middlewares/handleException.middlware.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
-import models from "../models/index.js";
+import models from "#models/index.js";
 
 import {
     formatDuration,
@@ -10,18 +10,18 @@ import {
     normalizeGender,
     cleanSurveyAnalytics,
     computeWordFrequency
-} from "../helpers/surveyAnalytic.helper.js";
-import { buildAnalyticsPrompt } from "../utils/surveyAnalytics/buildPrompt.js";
-import { generateText } from "../ai/gemini/geminiClient.js";
-import { cache } from "../helpers/cache.helper.js";
-import { buildAiAnalyticsCacheKey, buildResponseWhere } from "../helpers/surveyAnalyticsQuery.helper.js";
-import { textAnalytics } from "../utils/surveyAnalytics/textAnalytics.js";
-import { buildSurveyCSV } from "../utils/surveyAnalytics/exportCSV.js";
-import { CHOICE_TYPES } from "../domain/surveyAnalytics/questionTypes.js";
-import { getQuestionTypeHandlers } from "../domain/surveyAnalytics/questionTypeHandlers.js";
-import { baseQuestionResult, emptyQuestionResult, mapOptionsWithCounts } from "../domain/surveyAnalytics/analyticsResult.js";
-import { buildAgeComparison, buildAgeGenderInsight } from "../domain/surveyAnalytics/demographicInsight.js";
-import { buildPaginatedSurveyResponses, mapSurveyResponse, surveyResponseMatchesSearch } from "../mappers/surveyAnalytics.mapper.js";
+} from "#helpers/surveyAnalytic.helper.js";
+import { buildAnalyticsPrompt } from "#utils/surveyAnalytics/buildPrompt.js";
+import { generateText } from "#infrastructure/ai/gemini/geminiClient.js";
+import { cache } from "#helpers/cache.helper.js";
+import { buildAiAnalyticsCacheKey, buildResponseWhere } from "#helpers/surveyAnalyticsQuery.helper.js";
+import { textAnalytics } from "#utils/surveyAnalytics/textAnalytics.js";
+import { buildSurveyCSV } from "#utils/surveyAnalytics/exportCSV.js";
+import { CHOICE_TYPES } from "#domain/surveyAnalytics/questionTypes.js";
+import { getQuestionTypeHandlers } from "#domain/surveyAnalytics/questionTypeHandlers.js";
+import { baseQuestionResult, emptyQuestionResult, mapOptionsWithCounts } from "#domain/surveyAnalytics/analyticsResult.js";
+import { buildAgeComparison, buildAgeGenderInsight } from "#domain/surveyAnalytics/demographicInsight.js";
+import { buildPaginatedSurveyResponses, mapSurveyResponse, surveyResponseMatchesSearch } from "#mappers/surveyAnalytics.mapper.js";
 
 const AI_ANALYTICS_CACHE_TTL_SECONDS = 60 * 10;
 

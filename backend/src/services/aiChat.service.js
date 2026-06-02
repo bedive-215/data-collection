@@ -1,4 +1,4 @@
-import { runChatFlow } from "../ai/chat/chat.flow.js";
+import { runChatFlow } from "#ai/chat/chat.flow.js";
 
 class AIChatService {
   async chat(userMessage, conversationHistory, user) {

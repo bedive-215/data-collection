@@ -1,12 +1,12 @@
 import { Router } from "express";
-import surveyAnalyticController from "../controllers/surveyAnalytic.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
-import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
-import { createOptionParams } from "../validates/createOptionParams.validate.js";
-import { crossTabParams } from "../validates/crossTabParams.validate.js";
-import { trendParams } from "../validates/trendParams.validate.js";
-import { paginationParams } from "../validates/paginationParams.validate.js";
+import surveyAnalyticController from "#controllers/surveyAnalytic.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
+import { createOptionParams } from "#validates/createOptionParams.validate.js";
+import { crossTabParams } from "#validates/crossTabParams.validate.js";
+import { trendParams } from "#validates/trendParams.validate.js";
+import { paginationParams } from "#validates/paginationParams.validate.js";
 
 const route = Router();
 

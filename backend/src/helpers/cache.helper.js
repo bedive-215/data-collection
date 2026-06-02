@@ -1,4 +1,4 @@
-import { connection } from "../configs/redis.js";
+import { connection } from "#configs/redis.js";
 
 const safeStringify = (v) => {
   try {

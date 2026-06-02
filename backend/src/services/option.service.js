@@ -1,7 +1,7 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
-import { getSurveyStatus } from "../domain/survey.domain.js";
-import { normalizeValue } from "../helpers/option.helper.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
+import { getSurveyStatus } from "#domain/survey.domain.js";
+import { normalizeValue } from "#helpers/option.helper.js";
 
 const UPDATABLE_FIELDS = ["label", "value", "order_index", "is_other", "image_url", "media_type"];
 

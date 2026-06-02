@@ -1,8 +1,8 @@
 import express from "express";
-import SectionController from "../controllers/section.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
-import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
+import SectionController from "#controllers/section.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
 
 const router = express.Router();
 

@@ -14,7 +14,7 @@ import routerOptionMedia from './optionMedia.route.js';
 import routerAiChat from './aiChat.route.js';
 import routerGamification from './gamification.route.js';
 
-import authMiddleware from "../middlewares/auth.middleware.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 
 const router = Router();
 

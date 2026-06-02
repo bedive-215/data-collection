@@ -1,8 +1,8 @@
 import { Router } from "express";
-import AdminStatsController from "../controllers/adminStats.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
-import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
+import AdminStatsController from "#controllers/adminStats.controller.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
 
 const router = Router();
 

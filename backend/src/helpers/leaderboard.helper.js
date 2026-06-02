@@ -1,4 +1,4 @@
-import { PERIOD_FIELD } from "../domain/leaderBoard.domain.js";
+import { PERIOD_FIELD } from "#domain/leaderBoard.domain.js";
 
 export const weekStart = () => {
     const d = new Date();

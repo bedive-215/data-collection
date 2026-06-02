@@ -1,12 +1,12 @@
-import SurveyController from "../controllers/survey.controller.js";
+import SurveyController from "#controllers/survey.controller.js";
 
-import authMiddleware from "../middlewares/auth.middleware.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 
-import { validate } from "../middlewares/validate.middleware.js";
-import { createSurveyRequest } from "../validates/createSurvey.validate.js";
-import { surveyIdParams } from "../validates/surveyIdParams.validate.js";
-import { userIdParams } from "../validates/userIdParams.validate.js";
-import { deleteParticipantParams } from "../validates/deleteParticipantParams.validate.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import { createSurveyRequest } from "#validates/createSurvey.validate.js";
+import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
+import { userIdParams } from "#validates/userIdParams.validate.js";
+import { deleteParticipantParams } from "#validates/deleteParticipantParams.validate.js";
 
 import { Router } from "express";
 

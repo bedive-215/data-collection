@@ -1,14 +1,14 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
-import { STAR_REWARDS } from "../domain/star.domain.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
+import { STAR_REWARDS } from "#domain/star.domain.js";
 
 import starService from "./star.service.js";
-import eventBus from "../events/eventBus.js";
-import { CHECKIN_EVENTS } from "../events/dailyCheckin/dailyCheckin.event.js";
+import eventBus from "#events/eventBus.js";
+import { CHECKIN_EVENTS } from "#events/dailyCheckin/dailyCheckin.event.js";
 
-import { withTransaction } from "../utils/transaction.js";
-import { todayUTC, yesterdayUTC, toDateString, getMultiplier } from "../helpers/dailyCheckin.helper.js";
-import { getNextBonusTier, getBonusMessage } from "../domain/dailyCheckin.domain.js";
+import { withTransaction } from "#utils/transaction.js";
+import { todayUTC, yesterdayUTC, toDateString, getMultiplier } from "#helpers/dailyCheckin.helper.js";
+import { getNextBonusTier, getBonusMessage } from "#domain/dailyCheckin.domain.js";
 
 class DailyCheckinService {
     constructor() {

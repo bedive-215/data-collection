@@ -1,7 +1,7 @@
-import models from "../models/index.js";
-import { AppError } from "../middlewares/handleException.middlware.js";
+import models from "#models/index.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 
-import { mapSection } from "../mappers/section.mapper.js";
+import { mapSection } from "#mappers/section.mapper.js";
 
 class SectionService {
     constructor() {

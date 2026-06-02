@@ -1,14 +1,14 @@
 import express from "express";
 
-import QuestionOptionController from "../controllers/option.controller.js";
+import QuestionOptionController from "#controllers/option.controller.js";
 
-import authMiddleware from "../middlewares/auth.middleware.js";
+import authMiddleware from "#middlewares/auth.middleware.js";
 
-import { validate } from "../middlewares/validate.middleware.js";
-import { createOptionParams } from "../validates/createOptionParams.validate.js";
-import { getOptionParams } from "../validates/getOptionParams.validate.js";
-import { updateOptionParams } from "../validates/updateOptionParams.validate.js";
-import { deleteOptionParams } from "../validates/deleteOptionParams.validate.js";
+import { validate } from "#middlewares/validate.middleware.js";
+import { createOptionParams } from "#validates/createOptionParams.validate.js";
+import { getOptionParams } from "#validates/getOptionParams.validate.js";
+import { updateOptionParams } from "#validates/updateOptionParams.validate.js";
+import { deleteOptionParams } from "#validates/deleteOptionParams.validate.js";
 
 const router = express.Router();
 

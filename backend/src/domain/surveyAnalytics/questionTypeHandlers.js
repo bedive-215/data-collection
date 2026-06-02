@@ -1,4 +1,4 @@
-import { AppError } from "../../middlewares/handleException.middlware.js";
+import { AppError } from "#middlewares/handleException.middlware.js";
 import { QUESTION_TYPES } from "./questionTypes.js";
 
 export function getQuestionTypeHandlers({ svc, question, answerWhere, totalResponses, textOpts = {} }) {
