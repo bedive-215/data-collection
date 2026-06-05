@@ -764,18 +764,22 @@ export default function SurveysPage() {
       />
 
       {/* Header */}
-      <header className="mb-8">
+<header className="mb-8">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 mb-1">
-              Khảo sát
+              Khảo sát công khai
             </h1>
             <p className="text-sm text-gray-400">
               {loading
                 ? "Đang tải..."
                 : `${totalCount} khảo sát · ${doneCount} hoàn thành · ${pendingCount} chưa làm`}
             </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Tìm nhanh, tạo mới và tham gia khảo sát công khai — thẻ nổi, kính mờ và ánh sáng mềm.
+            </p>
           </div>
+
 
           <button
             onClick={fetchData}

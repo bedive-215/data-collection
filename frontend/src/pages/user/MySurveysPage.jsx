@@ -5,7 +5,7 @@ import {
   Trash2, Check, Share2, Mail,
   Lock, Globe, Copy, ExternalLink, Power, PowerOff,
   Users, ChevronRight, Link as LinkIcon, Send,
-  UserPlus, UserMinus,   ChevronDown, RefreshCw, Edit2,
+  UserPlus, UserMinus, ChevronDown, RefreshCw, Edit2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
@@ -69,37 +69,6 @@ function RotatingGradient() {
         background: "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
       }}
     />
-  );
-}
-
-function GlassmorphCard({ children, style = {}, delay = 0 }) {
-  return (
-    <div
-      style={{
-        background: "rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        border: "1px solid rgba(255, 255, 255, 0.25)",
-        borderRadius: "20px",
-        padding: "24px",
-        animation: `slideInUp 0.8s ease-out ${delay}s both`,
-        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)",
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-12px) rotateX(8deg) rotateZ(2deg)";
-        e.currentTarget.style.boxShadow = "0 20px 60px rgba(31, 38, 135, 0.3), 0 0 40px rgba(255, 107, 107, 0.2)";
-        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0) rotateX(0) rotateZ(0)";
-        e.currentTarget.style.boxShadow = "0 8px 32px rgba(31, 38, 135, 0.15)";
-        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.25)";
-      }}
-    >
-      {children}
-    </div>
   );
 }
 
@@ -171,6 +140,27 @@ function Modal({ open, onClose, title, children, width = 480 }) {
     </div>
   );
 }
+
+/* shared button styles */
+const cancelBtn = {
+  padding:"9px 16px", borderRadius:10,
+  border:`1px solid #dbe2ea`, background:"transparent",
+  color:"#64748b", fontSize:13, fontWeight:600, cursor:"pointer",
+};
+const saveBtn = {
+  display:"flex", alignItems:"center", gap:6,
+  padding:"9px 18px", borderRadius:10, border:"none",
+  fontSize:13, fontWeight:700, cursor:"pointer",
+};
+const inputStyle = {
+  width:"100%", boxSizing:"border-box",
+  border:`1px solid #dbe2ea`, borderRadius:10,
+  background:"#fff", color:"#111827",
+  fontFamily:"'DM Sans','Inter',sans-serif", outline:"none",
+};
+const textareaStyle = {
+  ...inputStyle, resize:"vertical", lineHeight:1.6,
+};
 
 /* ────────────────────────────────────────────────────────────────
    SHARE LINK MODAL
@@ -445,7 +435,6 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
   return (
     <Modal open={open} onClose={onClose} title="Mời hàng loạt" width={520}>
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
-
         <div style={{
           display:"flex", alignItems:"center", gap:12,
           padding:"12px 14px",
@@ -499,7 +488,6 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
 
         <form onSubmit={handleSubmit}>
           <div style={{display:"flex", flexDirection:"column", gap:12}}>
-
             <div>
               <label style={{
                 display:"block", fontSize:12, fontWeight:600,
@@ -599,7 +587,6 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
 
 /* ────────────────────────────────────────────────────────────────
    PARTICIPANTS MODAL
-   API response: { count: number, participants: [{ participant_id, id, email, role }] }
 ──────────────────────────────────────────────────────────────── */
 function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
   const [participants, setParticipants] = useState([]);
@@ -611,45 +598,43 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   const [error,        setError]        = useState("");
 
   const load = useCallback(async () => {
-  if (!survey?.id) return;
-  setLoading(true);
-  setError("");
-  try {
-    const res = await onGetParticipants(survey.id, {});
-    // Provider giờ trả về { count, participants }
-    const list = res?.participants ?? [];
-    const total = res?.count ?? list.length;
-    setParticipants(list);
-    setCount(total);
-  } catch {
-    setError("Không thể tải danh sách người tham gia.");
-  } finally {
-    setLoading(false);
-  }
-}, [survey?.id, onGetParticipants]);
+    if (!survey?.id) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await onGetParticipants(survey.id, {});
+      const list = res?.participants ?? [];
+      const total = res?.count ?? list.length;
+      setParticipants(list);
+      setCount(total);
+    } catch {
+      setError("Không thể tải danh sách người tham gia.");
+    } finally {
+      setLoading(false);
+    }
+  }, [survey?.id, onGetParticipants]);
 
   useEffect(() => {
-  if (open) {
-    load();
-    setSearch("");
-    setConfirmPid(null);
-    setError("");
-  } else {
-    setParticipants([]);
-    setCount(0);
-  }
-}, [open, load]); // ← thay survey?.id bằng load (vì load đã dep vào survey?.id)
+    if (open) {
+      load();
+      setSearch("");
+      setConfirmPid(null);
+      setError("");
+    } else {
+      setParticipants([]);
+      setCount(0);
+    }
+  }, [open, load]);
 
   const handleDelete = async (participantId) => {
     setDeleting(participantId);
     try {
-      // Dùng participant_id để xoá
       await onDeleteParticipant(survey.id, participantId);
       setParticipants(prev => prev.filter(p => p.participant_id !== participantId));
       setCount(prev => Math.max(0, prev - 1));
       setConfirmPid(null);
     } catch {
-      // giữ nguyên nếu lỗi
+      // keep as is on error
     } finally {
       setDeleting(null);
     }
@@ -689,8 +674,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   return (
     <Modal open={open} onClose={onClose} title="Quản lý người tham gia" width={560}>
       <div style={{display:"flex", flexDirection:"column", gap:14}}>
-
-        {/* Stats row */}
         <div style={{display:"flex", gap:10}}>
           <div style={{
             flex:1, padding:"12px 14px", borderRadius:12,
@@ -726,7 +709,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           </button>
         </div>
 
-        {/* Error */}
         {error && !loading && (
           <div style={{
             display:"flex", alignItems:"center", justifyContent:"space-between",
@@ -742,7 +724,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           </div>
         )}
 
-        {/* Search */}
         <div style={{
           display:"flex", alignItems:"center", gap:8,
           padding:"8px 12px",
@@ -763,7 +744,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           )}
         </div>
 
-        {/* List */}
         <div style={{
           border:`1px solid ${C.border}`, borderRadius:12,
           overflow:"hidden", maxHeight:360, overflowY:"auto",
@@ -788,7 +768,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           ) : (
             filtered.map((p, i) => {
               const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
-              // participant_id dùng để xoá; id là user id
               const deleteKey    = p.participant_id ?? p.id;
               const isConfirming = confirmPid === deleteKey;
               const isDeleting   = deleting === deleteKey;
@@ -805,7 +784,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                     transition:"background .15s",
                   }}
                 >
-                  {/* Avatar */}
                   <div style={{
                     width:36, height:36, borderRadius:"50%",
                     background:av.bg, color:av.color,
@@ -815,8 +793,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                   }}>
                     {getInitials(p.name, p.email)}
                   </div>
-
-                  {/* Info */}
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:13, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
                       {p.name || p.email}
@@ -832,8 +808,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                       </div>
                     )}
                   </div>
-
-                  {/* Role badge */}
                   {p.role && (
                     <span style={{
                       fontSize:11, fontWeight:700, padding:"3px 9px",
@@ -845,8 +819,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                       {p.role === "ADMIN" ? "Quản trị" : p.role === "owner" ? "Chủ sở hữu" : p.role === "editor" ? "Biên tập" : p.role === "viewer" ? "Người xem" : p.role === "respondent" ? "Người trả lời" : p.role}
                     </span>
                   )}
-
-                  {/* Delete actions */}
                   {isConfirming ? (
                     <div style={{display:"flex", gap:6, flexShrink:0}}>
                       <button
@@ -900,7 +872,6 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           )}
         </div>
 
-        {/* Footer */}
         {!loading && !error && filtered.length > 0 && search && (
           <div style={{fontSize:12, color:C.textSub, textAlign:"center"}}>
             Hiển thị {filtered.length} / {participants.length} người
@@ -1119,6 +1090,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
    PAGE
 ──────────────────────────────────────────────────────────────── */
 export default function MySurveysPage() {
+  const navigate = useNavigate();
   const {
     surveys, loading,
     createSurvey, fetchMySurveys,
@@ -1195,42 +1167,64 @@ export default function MySurveysPage() {
   }, [extendSurvey, fetchMySurveys]);
 
   return (
-    <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow:"visible", position:"relative", zIndex:1 }}>
+    <main style={{
+      minHeight:"100vh",
+      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+      fontFamily:C.font,
+      overflow:"visible",
+      position:"relative",
+      zIndex:1,
+    }}>
       <RotatingGradient />
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <div style={{
         background:"rgba(255, 255, 255, 0.7)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderBottom:`1px solid rgba(255, 255, 255, 0.25)`,
-        padding:"0 24px", height:70,
+        padding:"0 24px", height:64,
         display:"flex", alignItems:"center", justifyContent:"space-between", gap:20,
         position: "relative", zIndex: 10,
       }}>
-        <div style={{ animation: "slideInDown 0.8s ease-out" }}>
-          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0, background: "linear-gradient(135deg, #4f6ef7, #764ba2)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"}}>Khảo sát của tôi</h1>
-          <p style={{margin:"4px 0 0", fontSize:13, color:C.textSub}}>Tạo và quản lý survey của bạn</p>
+        {/* Title */}
+        <div style={{ display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+          <h1 style={{
+            fontSize:20, fontWeight:800, color:C.text, margin:0,
+            background: "linear-gradient(135deg, #4f6ef7, #764ba2)",
+            backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>
+            Khảo sát của tôi
+          </h1>
+          {!loading && (
+            <span style={{
+              fontSize:11, fontWeight:700, padding:"2px 10px", borderRadius:999,
+              background:"rgba(79,110,247,0.1)", color:C.primary,
+              border:"1px solid rgba(79,110,247,0.2)",
+            }}>
+              {filtered.length}
+            </span>
+          )}
         </div>
 
         {/* SEARCH */}
         <div style={{
-          flex:1, maxWidth:520, height:42, borderRadius:999,
+          flex:1, maxWidth:480, height:40, borderRadius:999,
           background:"rgba(255, 255, 255, 0.7)",
           backdropFilter: "blur(10px)",
           border:`1px solid rgba(255, 255, 255, 0.5)`,
           display:"flex", alignItems:"center", gap:10, padding:"0 16px",
           transition: "all 0.3s",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)"; e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.3)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)"; e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)"; e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)"; e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)"; }}
         >
-          <Search size={15} color={C.textSub}/>
+          <Search size={14} color={C.textSub}/>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Tìm survey..."
-            style={{flex:1, border:"none", outline:"none", background:"transparent", fontSize:14, fontFamily:C.font, color:C.text}}
+            style={{flex:1, border:"none", outline:"none", background:"transparent", fontSize:13, fontFamily:C.font, color:C.text}}
           />
           {search && (
             <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
@@ -1244,59 +1238,59 @@ export default function MySurveysPage() {
           onClick={() => setShowCreateForm(!showCreateForm)}
           style={{
             display:"flex", alignItems:"center", gap:8,
-            padding:"10px 18px", borderRadius:14,
+            padding:"9px 16px", borderRadius:12,
             border: showCreateForm ? `1px solid ${C.border}` : "none",
             background: showCreateForm ? "rgba(255, 255, 255, 0.9)" : C.primaryGrad,
             color: showCreateForm ? C.textSub : "#fff",
             cursor:"pointer", fontWeight:700, fontFamily:C.font, fontSize:13,
-            boxShadow: showCreateForm ? "none" : "0 8px 20px rgba(79, 110, 247, 0.3)",
-            transition:"all .15s",
+            boxShadow: showCreateForm ? "none" : "0 6px 18px rgba(79, 110, 247, 0.3)",
+            transition:"all .15s", flexShrink:0,
           }}
           onMouseEnter={(e) => { if (!showCreateForm) e.currentTarget.style.transform = "translateY(-2px)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
         >
-          {showCreateForm ? <X size={16}/> : <Plus size={16}/>}
+          {showCreateForm ? <X size={15}/> : <Plus size={15}/>}
           {showCreateForm ? "Huỷ" : "Survey mới"}
         </button>
       </div>
 
-      <div style={{maxWidth:1200, margin:"0 auto", padding:24, position: "relative", zIndex: 1, overflow:"visible"}}>
+      <div style={{maxWidth:1260, margin:"0 auto", padding:"20px 24px 52px", position: "relative", zIndex: 1, overflow:"visible"}}>
 
-        {/* FORM */}
+        {/* ── CREATE FORM ── */}
         {showCreateForm && (
           <div style={{
-            background:"rgba(255, 255, 255, 0.7)",
+            background:"rgba(255, 255, 255, 0.75)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             borderRadius:20,
-            border:`1px solid rgba(255, 255, 255, 0.25)`,
-            padding:24, marginBottom:28,
-            boxShadow:"0 8px 32px rgba(31, 38, 135, 0.15)",
-            animation: "slideInUp 0.6s ease-out",
+            border:`1px solid rgba(255, 255, 255, 0.35)`,
+            padding:24, marginBottom:24,
+            boxShadow:"0 8px 32px rgba(31, 38, 135, 0.12)",
+            animation: "slideInUp 0.5s ease-out",
           }}>
-            <h2 style={{fontSize:18, fontWeight:700, marginBottom:20, color:C.text, marginTop: 0}}>
+            <h2 style={{fontSize:16, fontWeight:700, marginBottom:18, color:C.text, marginTop:0}}>
               Tạo Survey Mới
             </h2>
             <form onSubmit={handleSubmit}>
-              <div style={{display:"flex", flexDirection:"column", gap:16}}>
+              <div style={{display:"flex", flexDirection:"column", gap:14}}>
                 <input
                   type="text" name="title" value={formData.title}
                   onChange={handleChange} placeholder="Tiêu đề survey" required
                   style={{...inputStyle, fontSize:14, padding:"10px 14px"}}
                 />
                 <textarea
-                  rows={4} name="description" value={formData.description}
+                  rows={3} name="description" value={formData.description}
                   onChange={handleChange} placeholder="Mô tả survey"
                   style={{...textareaStyle, fontSize:14, padding:"10px 14px"}}
                 />
-                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
+                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:14}}>
                   <div>
-                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:6}}>Bắt đầu</label>
+                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:5}}>Bắt đầu</label>
                     <input type="datetime-local" name="start_at" value={formData.start_at} onChange={handleChange}
                       style={{...inputStyle, fontSize:13, padding:"9px 12px"}}/>
                   </div>
                   <div>
-                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:6}}>Kết thúc</label>
+                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:5}}>Kết thúc</label>
                     <input type="datetime-local" name="end_at" value={formData.end_at} onChange={handleChange}
                       style={{...inputStyle, fontSize:13, padding:"9px 12px"}}/>
                   </div>
@@ -1321,34 +1315,43 @@ export default function MySurveysPage() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* ── LOADING ── */}
         {loading && (
           <div style={{display:"flex", justifyContent:"center", padding:"80px 0", color:C.textDim}}>
             <Loader2 size={34} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
           </div>
         )}
 
-        {/* EMPTY */}
+        {/* ── EMPTY ── */}
         {!loading && filtered.length === 0 && (
-          <GlassmorphCard style={{ textAlign:"center", padding:"80px 20px" }}>
+          <div style={{
+            background:"rgba(255, 255, 255, 0.7)",
+            backdropFilter:"blur(20px)",
+            WebkitBackdropFilter:"blur(20px)",
+            border:"1px solid rgba(255, 255, 255, 0.25)",
+            borderRadius:20,
+            padding:"80px 20px",
+            textAlign:"center",
+            boxShadow:"0 8px 32px rgba(31, 38, 135, 0.1)",
+          }}>
             <Inbox size={54} color={C.textDim}/>
-            <h3 style={{marginTop:16, color:C.text, fontWeight:700, marginBottom: 8}}>
+            <h3 style={{marginTop:16, color:C.text, fontWeight:700, marginBottom:8}}>
               {search ? `Không tìm thấy "${search}"` : "Chưa có survey nào"}
             </h3>
             <p style={{color:C.textSub, margin:"8px 0 0"}}>
               {search ? "Thử tìm với từ khóa khác" : "Hãy tạo survey đầu tiên"}
             </p>
-          </GlassmorphCard>
+          </div>
         )}
 
-        {/* GRID */}
+        {/* ── GRID ── */}
         {!loading && filtered.length > 0 && (
           <>
             <div style={{
               display:"flex", alignItems:"center", justifyContent:"space-between",
-              marginBottom:16,
+              marginBottom:14,
             }}>
-              <span style={{fontSize:13, color:C.textSub, animation: "slideInUp 0.6s ease-out 0.1s both"}}>
+              <span style={{fontSize:12, color:C.textSub}}>
                 {filtered.length} survey{search ? ` · kết quả cho "${search}"` : ""}
               </span>
             </div>
@@ -1399,7 +1402,6 @@ export default function MySurveysPage() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes spin{to{transform:rotate(360deg);}}
         @keyframes slideInUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes slideInDown { from { opacity:0; transform:translateY(-40px) } to { opacity:1; transform:translateY(0) } }
         @keyframes rotateGradient { 0% { transform:rotate(0deg) } 100% { transform:rotate(360deg) } }
         * { box-sizing:border-box }
         button { font-family:'DM Sans',sans-serif }

@@ -22,6 +22,19 @@ const decodeJWT = (token) => {
 };
 
 /* ============================
+   Check JWT expired
+   ============================ */
+const isTokenExpired = (token) => {
+  try {
+    const decoded = decodeJWT(token);
+    if (!decoded?.exp) return false; // không có exp → coi như còn hạn
+    return decoded.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
+/* ============================
        Auth Provider
    ============================ */
 export const AuthProvider = ({ children }) => {
@@ -79,10 +92,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   /* ============================
-         Refresh Tokens
-     ============================ */
+       Refresh Tokens
+   ============================ */
   const refreshTokens = useCallback(async () => {
-    if (!refreshToken || isRefreshing) return null;
+    // Không có refresh token → báo ngay là "hết hạn"
+    if (!refreshToken) return { expired: true };
+    if (isRefreshing) return { waiting: true };
 
     try {
       setIsRefreshing(true);
@@ -98,21 +113,18 @@ export const AuthProvider = ({ children }) => {
 
       if (newAccess || newRefresh) {
         persistTokens(newAccess, newRefresh);
-
         const newUser = buildUserFromToken(newAccess);
         if (newUser) setUser(newUser);
       }
 
       setIsRefreshing(false);
-      return data;
+      return data; // success → có access_token trong đây
     } catch (err) {
       console.error("Refresh token failed", err);
-
       setIsRefreshing(false);
       persistTokens(null, null);
       setUser(null);
-
-      return null;
+      return { expired: true }; // ← đánh dấu rõ ràng là expired
     }
   }, [refreshToken, isRefreshing]);
 
@@ -171,6 +183,39 @@ export const AuthProvider = ({ children }) => {
 
     return data;
   };
+
+  /* ============================
+       LOGIN FROM OAUTH DATA
+       Dùng khi đã có API response
+       sẵn (không gọi API lại).
+       Sync cả accessToken state
+       để UserProvider fire fetchMyInfo.
+     ============================ */
+  const loginFromOAuthData = useCallback((data) => {
+    const newAccess =
+      data?.access_token ?? data?.accessToken ??
+      data?.token ?? data?.data?.access_token ?? data?.data?.token;
+    const newRefresh =
+      data?.refresh_token ?? data?.refreshToken ?? data?.data?.refresh_token;
+
+    persistTokens(newAccess, newRefresh);
+
+    let newUser = newAccess ? buildUserFromToken(newAccess) : null;
+    const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
+    if (fromBody && typeof fromBody === "object") {
+      newUser = {
+        ...newUser,
+        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id ?? null,
+        email: fromBody.email ?? newUser?.email ?? null,
+        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name ?? null,
+        role: fromBody.role ?? newUser?.role ?? null,
+        gender: fromBody.gender ?? null,
+        phone_number: fromBody.phone_number ?? null,
+        avatar: fromBody.avatar ?? null,
+      };
+    }
+    if (newUser) setUser(newUser);
+  }, []);
 
   /* ============================
               LOGOUT
@@ -246,47 +291,48 @@ export const AuthProvider = ({ children }) => {
         if (!originalRequest) return Promise.reject(error);
 
         if (
-          error.response &&
-          error.response.status === 401 &&
+          error.response?.status === 401 &&
           !originalRequest._retry
         ) {
           originalRequest._retry = true;
 
-          const refreshed = await refreshTokens();
+          const result = await refreshTokens();
 
-          if (refreshed?.access_token || refreshed?.accessToken) {
-            const newAccess =
-              refreshed.access_token ??
-              refreshed.accessToken ??
-              accessToken;
+          // Đang chờ refresh khác → thử lại với token hiện tại
+          if (result?.waiting) {
+            const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+            if (currentToken) {
+              originalRequest.headers["Authorization"] = `Bearer ${currentToken}`;
+              return apiClient(originalRequest);
+            }
+          }
 
+          // Refresh thành công → retry request gốc
+          const newAccess = result?.access_token ?? result?.accessToken;
+          if (newAccess) {
             originalRequest.headers["Authorization"] = `Bearer ${newAccess}`;
             return apiClient(originalRequest);
-          } else {
-            // Refresh failed -> show modal to confirm redirect to login
-            persistTokens(null, null);
-            setUser(null);
-            setShowSessionExpired(true);
-            return Promise.reject(error);
           }
+
+          // Refresh thất bại → show modal
+          setShowSessionExpired(true);
+          return Promise.reject(error);
         }
 
         // Blocked user
         if (error.response?.status === 403) {
           const msg = error.response?.data?.message || "";
-          if (msg.includes("khóa") || msg.includes("bị khóa") || msg.includes("banned") || msg.includes("blocked")) {
+          if (
+            msg.includes("khóa") ||
+            msg.includes("bị khóa") ||
+            msg.includes("banned") ||
+            msg.includes("blocked")
+          ) {
             persistTokens(null, null);
             setUser(null);
             setIsBlocked(true);
             window.location.href = "/login?blocked=true";
           }
-        }
-
-        // Other 401 errors (token invalid without retry opportunity) -> show modal to confirm redirect to login
-        if (error.response?.status === 401 && originalRequest._retry) {
-          persistTokens(null, null);
-          setUser(null);
-          setShowSessionExpired(true);
         }
 
         return Promise.reject(error);
@@ -303,11 +349,26 @@ export const AuthProvider = ({ children }) => {
         Init User From Token
      ============================ */
   useEffect(() => {
-    if (accessToken) {
-      const userObj = buildUserFromToken(accessToken);
-      if (userObj) setUser(userObj);
-    }
-    setLoading(false);
+    const init = async () => {
+      if (accessToken) {
+        if (isTokenExpired(accessToken)) {
+          const result = await refreshTokens();
+          if (result?.expired) {
+            setShowSessionExpired(true);
+          } else if (result?.waiting) {
+            // Trường hợp hiếm gặp lúc mount — fallback: dùng token cũ
+            const userObj = buildUserFromToken(accessToken);
+            if (userObj) setUser(userObj);
+          }
+          // Nếu refresh thành công, refreshTokens() đã setUser rồi
+        } else {
+          const userObj = buildUserFromToken(accessToken);
+          if (userObj) setUser(userObj);
+        }
+      }
+      setLoading(false);
+    };
+    init();
   }, []);
 
   /* ============================
@@ -322,6 +383,7 @@ export const AuthProvider = ({ children }) => {
 
     login,
     loginWithOAuth,
+    loginFromOAuthData,
     logout,
     register,
     verifyEmail,
@@ -336,7 +398,8 @@ export const AuthProvider = ({ children }) => {
     setShowSessionExpired,
   };
 
-  return <AuthContext.Provider value={value}>
+  return (
+    <AuthContext.Provider value={value}>
       {isBlocked ? <BlockedBanner /> : children}
       {showSessionExpired && (
         <div style={{
@@ -407,7 +470,8 @@ export const AuthProvider = ({ children }) => {
           `}</style>
         </div>
       )}
-    </AuthContext.Provider>;
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

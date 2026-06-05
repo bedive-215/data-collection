@@ -20,36 +20,36 @@ function ExpiredModal({ open, onClose, survey }) {
   if (!open) return null;
   return (
     <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:9999,
-      background:"rgba(15,23,42,0.5)",
-      backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
-      display:"flex", alignItems:"center", justifyContent:"center",
-      padding:20, animation:"fadeIn .15s ease",
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(15,23,42,0.5)",
+      backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 20, animation: "fadeIn .15s ease",
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background:"#fff", borderRadius:16,
-        border:"1px solid #e8ecf2",
-        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
-        width:"100%", maxWidth:400, overflow:"hidden",
-        animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
-        fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-        textAlign:"center", padding:"32px 24px",
+        background: "#fff", borderRadius: 16,
+        border: "1px solid #e8ecf2",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
+        width: "100%", maxWidth: 400, overflow: "hidden",
+        animation: "slideUp .2s cubic-bezier(.16,1,.3,1)",
+        fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
+        textAlign: "center", padding: "32px 24px",
       }}>
-        <div style={{ width:56, height:56, borderRadius:16, background:"rgba(239,68,68,0.08)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
-          <Clock size={26} color="#ef4444"/>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Clock size={26} color="#ef4444" />
         </div>
-        <h3 style={{ margin:"0 0 8px", fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã kết thúc</h3>
-        <p style={{ margin:"0 0 20px", fontSize:13, color:"#64748b", lineHeight:1.5 }}>
+        <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
           Khảo sát <strong>"{survey?.title}"</strong> đã kết thúc và không còn nhận phản hồi.
         </p>
         <button
           onClick={onClose}
           style={{
-            padding:"10px 32px",
-            background:"#f4f6f8",
-            border:"1px solid #e8ecf2", borderRadius:10,
-            color:"#64748b", fontSize:14, fontWeight:600,
-            cursor:"pointer", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+            padding: "10px 32px",
+            background: "#f4f6f8",
+            border: "1px solid #e8ecf2", borderRadius: 10,
+            color: "#64748b", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
           }}
         >
           Đóng
@@ -93,78 +93,78 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
 
   return (
     <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:9999,
-      background:"rgba(15,23,42,0.5)",
-      backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
-      display:"flex", alignItems:"center", justifyContent:"center",
-      padding:20, animation:"fadeIn .15s ease",
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(15,23,42,0.5)",
+      backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 20, animation: "fadeIn .15s ease",
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background:"#fff", borderRadius:16,
-        border:"1px solid #e8ecf2",
-        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
-        width:"100%", maxWidth:420, overflow:"hidden",
-        animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
-        fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+        background: "#fff", borderRadius: 16,
+        border: "1px solid #e8ecf2",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
+        width: "100%", maxWidth: 420, overflow: "hidden",
+        animation: "slideUp .2s cubic-bezier(.16,1,.3,1)",
+        fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
       }}>
-        <div style={{ display:"flex", alignItems:"center", gap:14, padding:"20px 24px 0" }}>
-          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,#f59e0b,#fbbf24)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 4px 14px rgba(245,158,11,0.3)" }}>
-            <RefreshCw size={20} color="#fff"/>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "20px 24px 0" }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }}>
+            <RefreshCw size={20} color="#fff" />
           </div>
           <div>
-            <h3 style={{ margin:0, fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã hết hạn</h3>
-            <p style={{ margin:"4px 0 0", fontSize:12, color:"#64748b", maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{survey?.title}</p>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã hết hạn</h3>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{survey?.title}</p>
           </div>
         </div>
 
-        <div style={{ padding:"16px 24px 20px" }}>
-          <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)", marginBottom:20 }}>
-            <p style={{ margin:0, fontSize:13, color:"#dc2626", fontWeight:600 }}>
+        <div style={{ padding: "16px 24px 20px" }}>
+          <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", marginBottom: 20 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "#dc2626", fontWeight: 600 }}>
               Khảo sát này đã hết hạn và không thể nhận phản hồi mới.
             </p>
             {survey?.end_at && (
-              <p style={{ margin:"6px 0 0", fontSize:12, color:"#ef4444" }}>
-                Ngày kết thúc cũ: {new Date(survey.end_at).toLocaleDateString("vi-VN", { day:"2-digit", month:"long", year:"numeric" })}
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#ef4444" }}>
+                Ngày kết thúc cũ: {new Date(survey.end_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" })}
               </p>
             )}
           </div>
 
-          <div style={{ marginBottom:20 }}>
-            <label style={{ display:"block", fontSize:13, fontWeight:600, color:"#0f172a", marginBottom:6 }}>Ngày kết thúc mới</label>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 6 }}>Ngày kết thúc mới</label>
             <input
               type="datetime-local"
               value={newDate}
               onChange={e => { setNewDate(e.target.value); setError(""); }}
               min={new Date().toISOString().slice(0, 16)}
               style={{
-                width:"100%", padding:"10px 14px", borderRadius:10,
-                border:`1.5px solid ${error ? "#fecaca" : "#e8ecf2"}`,
-                background:"#fff", fontSize:14, fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif", color:"#0f172a",
-                outline:"none",
+                width: "100%", padding: "10px 14px", borderRadius: 10,
+                border: `1.5px solid ${error ? "#fecaca" : "#e8ecf2"}`,
+                background: "#fff", fontSize: 14, fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif", color: "#0f172a",
+                outline: "none",
               }}
             />
-            {error && <p style={{ margin:"6px 0 0", fontSize:12, color:"#ef4444" }}>{error}</p>}
+            {error && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#ef4444" }}>{error}</p>}
           </div>
 
-          <div style={{ display:"flex", gap:10 }}>
-            <button onClick={onClose} style={{ flex:1, padding:"10px 16px", borderRadius:10, border:"1.5px solid #e8ecf2", background:"#fff", color:"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif" }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "1.5px solid #e8ecf2", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
               Đóng
             </button>
             <button
               onClick={handleExtend}
               disabled={submitting}
               style={{
-                flex:1, padding:"10px 16px", borderRadius:10,
+                flex: 1, padding: "10px 16px", borderRadius: 10,
                 background: submitting ? "#94a3b8" : "linear-gradient(135deg,#f59e0b,#fbbf24)",
-                border:"none", color:"#fff", fontSize:14, fontWeight:700,
-                cursor: submitting ? "not-allowed" : "pointer", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+                border: "none", color: "#fff", fontSize: 14, fontWeight: 700,
+                cursor: submitting ? "not-allowed" : "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
                 boxShadow: submitting ? "none" : "0 4px 14px rgba(245,158,11,0.3)",
-                display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               }}
             >
               {submitting
-                ? <><Loader2 size={15} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>
-                : <><RefreshCw size={15}/> Gia hạn</>
+                ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang xử lý...</>
+                : <><RefreshCw size={15} /> Gia hạn</>
               }
             </button>
           </div>
@@ -523,36 +523,6 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
           Theo dõi tiến độ khảo sát công khai, mở nhanh bản thảo của bạn và vào không gian khảo sát khi cần.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-          <button
-            type="button"
-            onClick={onOpenSurveys}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 18px",
-              borderRadius: 11,
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 700,
-              fontSize: 12,
-              fontFamily: C.font,
-              color: "#fff",
-              background: "linear-gradient(135deg,#4361ee,#6c7ef7)",
-              boxShadow: "0 4px 14px rgba(67,97,238,0.35)",
-              transition: "transform .15s, box-shadow .15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 22px rgba(67,97,238,0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 14px rgba(67,97,238,0.35)";
-            }}
-          >
-            Không gian khảo sát <ArrowRight size={14} />
-          </button>
           <span style={{ fontSize: 11, color: C.textDim, fontFamily: C.font }}>
             {loading ? "Đang tải…" : `${doneCount}/${totalCount} đã hoàn thành · ${pendingCount} còn lại`}
           </span>
@@ -760,7 +730,7 @@ function CheckinBanner() {
       setResult(res);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   if (loading) {
@@ -900,7 +870,7 @@ function CheckinBanner() {
             ? "#9ca3af"
             : "linear-gradient(135deg, #f59e0b, #ea580c)",
           color: "#fff", fontFamily: C.font,
-          fontSize: 14, fontWeight: 800, fontWeight: 700,
+          fontSize: 14, fontWeight: 700,
           cursor: checkinLoading ? "not-allowed" : "pointer",
           opacity: checkinLoading ? 0.8 : 1,
           boxShadow: checkinLoading ? "none" : "0 6px 20px rgba(245,158,11,0.45)",
@@ -1090,7 +1060,6 @@ export default function DashboardPage() {
       <AnimatedSurveyBackdrop />
 
       <div style={{ maxWidth: 1260, margin: "0 auto", position: "relative", zIndex: 1 }}>
-        {/* ── CHECKIN BANNER: always visible at top ──────────────────── */}
         <CheckinBanner />
 
         <div
@@ -1115,27 +1084,6 @@ export default function DashboardPage() {
             totalCount={publicSurveys.length}
             loading={loading}
           />
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <SectionHeading style={{ marginBottom: 18 }}>Thống kê nhanh</SectionHeading>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 18 }}>
-            <BentoStatCard icon={ClipboardList} label="Đã hoàn thành" value={loading ? "—" : String(doneCount)} sub={`trên ${publicSurveys.length} khảo sát`} color="#4f46e5" delay={0.1} />
-            <BentoStatCard icon={Zap} label="Chưa làm" value={loading ? "—" : String(pendingCount)} sub="Đang chờ bạn" color="#f59e0b" delay={0.15} />
-            <GamificationQuickStatsCard />
-          </div>
-        </div>
-
-        {/* ── GAMIFICATION SECTION ─────────────────────────────────── */}
-        <div style={{ marginBottom: 36 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
-            <SectionHeading>🎮 Phần thưởng & Xếp hạng</SectionHeading>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button type="button" onClick={() => navigate("/user/wallet")} style={{ ...primaryBtn, padding: "8px 16px", fontSize: 12 }}>💰 Ví Sao</button>
-              <button type="button" onClick={() => navigate("/user/leaderboard")} style={{ ...primaryBtn, padding: "8px 16px", fontSize: 12 }}>🏆 Xếp hạng</button>
-            </div>
-          </div>
-          <GamificationDashboard compact={false} />
         </div>
 
         <div style={{ marginBottom: 36 }}>
@@ -1200,23 +1148,24 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Khảo sát công khai */}
         <div style={{ marginBottom: 36 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
-            <SectionHeading>Khảo sát công khai</SectionHeading>
+            <SectionHeading>Khám phá</SectionHeading>
             <button
               type="button"
               onClick={() => navigate(ROUTERS.USER.SURVEYS)}
-              style={successBtn}
+              style={primaryBtn}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 22px rgba(16,185,129,0.35)";
+                e.currentTarget.style.boxShadow = "0 8px 22px rgba(67,97,238,0.38)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.32)";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(67,97,238,0.35)";
               }}
             >
-              Mở không gian khảo sát <ArrowRight size={14} />
+              Xem tất cả <ArrowRight size={14} />
             </button>
           </div>
 
@@ -1239,38 +1188,34 @@ export default function DashboardPage() {
             <GlassmorphCard>
               <div style={{ textAlign: "center", padding: "40px 20px" }}>
                 <Globe size={40} color={C.textDim} style={{ marginBottom: 16 }} />
-                <p style={{ color: C.textSub, fontSize: 14, fontFamily: C.font }}>Hiện không có khảo sát công khai</p>
+                <p style={{ color: C.textSub, fontSize: 14, fontFamily: C.font }}>
+                  Chưa có khảo sát công khai nào
+                </p>
               </div>
             </GlassmorphCard>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
-              {publicSurveys.slice(0, 5).map((survey, i) => {
-                const done = doneSurveyIds.has(survey.id);
-                const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
-                return (
-                  <SurveyCardHome
-                    key={survey.id}
-                    survey={survey}
-                    index={i}
-                    overrideStatus={done ? "COMPLETED" : null}
-                    onClick={() => {
-                      if (isExpired) {
-                        if (done) {
-                          navigate(responsePath(survey.id));
-                        } else {
-                          setExpiredModal({ open: true, survey });
-                        }
-                      } else if (done) {
-                        navigate(responsePath(survey.id));
-                      } else {
-                        handleStart(survey.id);
-                      }
-                    }}
-                    type="public"
-                    onExpiredClick={(s) => setExpiredModal({ open: true, survey: s })}
-                  />
-                );
-              })}
+              {publicSurveys.slice(0, 5).map((survey, i) => (
+                <SurveyCardHome
+                  key={survey.id}
+                  survey={survey}
+                  index={i}
+                  onClick={() => {
+                    const isExpired = survey.end_at && new Date(survey.end_at) < new Date();
+                    if (isExpired) {
+                      setExpiredModal({ open: true, survey });
+                      return;
+                    }
+                    if (doneSurveyIds.has(survey.id)) {
+                      navigate(responsePath(survey.id));
+                    } else {
+                      handleStart(survey.id);
+                    }
+                  }}
+                  type="public"
+                  isDone={doneSurveyIds.has(survey.id)}
+                />
+              ))}
             </div>
           )}
         </div>

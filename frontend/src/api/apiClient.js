@@ -13,11 +13,21 @@ const apiClient = axios.create({
 });
 
 // Attach token if present (use same key your AuthProvider uses)
+// Requirement: đừng check token khi user vừa vào /login.
+// => chỉ gắn Authorization khi URL hiện tại KHÔNG phải trang login.
 apiClient.interceptors.request.use(
   (config) => {
     config.headers = config.headers || {};
+
+    const isOnLoginPage =
+      typeof window !== "undefined" &&
+      window.location &&
+      String(window.location.pathname).startsWith("/login");
+
     const token = localStorage.getItem("access_token") || null;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (!isOnLoginPage && token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
     // If sending FormData, allow browser to set Content-Type including boundary
     if (typeof FormData !== "undefined" && config.data instanceof FormData) {
@@ -35,6 +45,7 @@ apiClient.interceptors.request.use(
   (err) => Promise.reject(err)
 );
 
+
 // Response interceptor: try to refresh token on 401 and retry (basic example)
 apiClient.interceptors.response.use(
   (response) => response, // return full response to keep callers consistent
@@ -42,26 +53,51 @@ apiClient.interceptors.response.use(
     const originalRequest = error?.config;
 
     // If 401 and not retried yet -> try refresh
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    // NOTE: chỉ refresh khi request thực sự cần auth (tránh bắn lúc mở web làm user bị gán session expired giả)
+    const isOnLoginPage =
+      typeof window !== "undefined" &&
+      window.location &&
+      String(window.location.pathname).startsWith("/login");
+
+    if (
+      !isOnLoginPage &&
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      originalRequest?.url &&
+      !String(originalRequest.url).includes("/api/v1/auth/refresh-token")
+    ) {
+
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) throw new Error("No refresh token");
+        // refresh token nằm trong cookie httpOnly (backend đọc cookie)
+        // gọi refresh KHÔNG cần gửi refresh_token trong body.
+        // Quan trọng: endpoint dùng authMiddleware.checkAuth -> phải có access token.
+        // Dùng chính apiClient để đảm bảo interceptors/config nhất quán
+        const refreshRes = await apiClient.post(
+          "/api/v1/auth/refresh-token",
+          {},
+          {
+            withCredentials: true,
+          }
+        );
 
-        // Adjust URL to your refresh endpoint
-        const refreshRes = await axios.post(`${BASE}/api/v1/auth/refresh-token`, { refresh_token: refreshToken });
+
 
         const newAccess = refreshRes?.data?.access_token ?? refreshRes?.data?.accessToken ?? refreshRes?.data?.token;
         const newRefresh = refreshRes?.data?.refresh_token ?? refreshRes?.data?.refreshToken ?? null;
 
+        // Backend refresh endpoint (checkAuth) chỉ trả access token qua body
+        // refresh token vẫn nằm ở cookie httpOnly, không lưu localStorage.
         if (newAccess) {
-          localStorage.setItem("access_token", newAccess);
-          if (newRefresh) localStorage.setItem("refresh_token", newRefresh);
-          // update header and retry original
+          // Không lưu access token vào localStorage để tránh state lệch cookie-only.
+          // Chỉ cập nhật header cho request retry.
           originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${newAccess}`;
           return apiClient(originalRequest);
         }
+
+
       } catch (e) {
         // refresh failed -> clear tokens and redirect to login
         localStorage.removeItem("access_token");
