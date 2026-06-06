@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
 import authService from "@/services/authService";
 import apiClient from "@/api/apiClient";
@@ -6,245 +6,183 @@ import BlockedBanner from "@/components/common/BlockedBanner";
 
 const ACCESS_TOKEN_KEY = "access_token";
 
-/* ============================
-   Decode JWT, safe & tolerant
-   ============================ */
 const decodeJWT = (token) => {
   try {
-    const payloadBase64 = token.split(".")[1];
-    return JSON.parse(atob(payloadBase64));
+    return JSON.parse(atob(token.split(".")[1]));
   } catch (e) {
     console.error("JWT decode error:", e);
     return null;
   }
 };
 
-/* ============================
-       Auth Provider
-   ============================ */
+const buildUserFromToken = (token) => {
+  const decoded = decodeJWT(token);
+  if (!decoded) return null;
+  return {
+    user_id:   decoded.user_id || decoded.id || decoded.sub || null,
+    email:     decoded.email || null,
+    full_name: decoded.full_name || decoded.name || decoded.display_name || decoded.given_name || null,
+    role:      decoded.role || decoded.roles || null,
+  };
+};
+
+// ── Helper extract access token từ nhiều shape response ──────────────
+const extractAccessToken = (data) =>
+  data?.access_token ??
+  data?.accessToken  ??
+  data?.token        ??
+  data?.data?.access_token ??
+  data?.data?.token  ??
+  null;
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(
-    localStorage.getItem(ACCESS_TOKEN_KEY) || null
-  );
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [user, setUser]           = useState(null);
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem(ACCESS_TOKEN_KEY) || null);
+  const [loading, setLoading]     = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
 
-  /* ============================
-        Persist Tokens
-        refresh token nằm trong httpOnly cookie
-        → chỉ lưu access token ở localStorage
-     ============================ */
-  const persistTokens = (access) => {
+  const isRefreshingRef   = useRef(false);
+  const refreshPromiseRef = useRef(null);
+
+  // ── accessTokenRef: luôn sync với state, dùng trong interceptor ───
+  const accessTokenRef = useRef(accessToken);
+
+  const persistTokens = useCallback((access) => {
     if (access) {
       localStorage.setItem(ACCESS_TOKEN_KEY, access);
-      setAccessToken(access);
     } else {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
-      setAccessToken(null);
     }
-  };
+    accessTokenRef.current = access; // sync ref NGAY LẬP TỨC
+    setAccessToken(access);
+  }, []);
 
-  /* ============================
-         Extract user from JWT
-     ============================ */
-  const buildUserFromToken = (token) => {
-    const decoded = decodeJWT(token);
-    if (!decoded) return null;
+  // ── Refresh Tokens ─────────────────────────────────────────────────
+  const refreshTokens = useCallback(async () => {
+    if (isRefreshingRef.current && refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
 
+    isRefreshingRef.current = true;
+
+    refreshPromiseRef.current = authService
+      .refreshToken()
+      .then((res) => {
+        const body      = res?.data ?? res;
+        const newAccess = extractAccessToken(body);
+
+        if (newAccess) {
+          persistTokens(newAccess);
+          const newUser = buildUserFromToken(newAccess);
+          if (newUser) setUser(newUser);
+          return { access_token: newAccess };
+        }
+
+        // Không có token → coi như expired
+        throw new Error("No access token in refresh response");
+      })
+      .catch((err) => {
+        console.warn("Refresh failed:", err?.message);
+        persistTokens(null);
+        setUser(null);
+        return { expired: true };
+      })
+      .finally(() => {
+        isRefreshingRef.current   = false;
+        refreshPromiseRef.current = null;
+      });
+
+    return refreshPromiseRef.current;
+  }, [persistTokens]);
+
+  // ── Merge user từ body response ───────────────────────────────────
+  const mergeUserFromBody = (baseUser, fromBody) => {
+    if (!fromBody || typeof fromBody !== "object") return baseUser;
     return {
-      user_id: decoded.user_id || decoded.id || decoded.sub || null,
-      email: decoded.email || null,
-      full_name:
-        decoded.full_name ||
-        decoded.name ||
-        decoded.display_name ||
-        decoded.given_name ||
-        null,
-      role: decoded.role || decoded.roles || null,
+      ...baseUser,
+      user_id:      fromBody.user_id      ?? fromBody.id   ?? baseUser?.user_id   ?? null,
+      email:        fromBody.email        ?? baseUser?.email                       ?? null,
+      full_name:    fromBody.full_name    ?? fromBody.name ?? baseUser?.full_name  ?? null,
+      role:         fromBody.role         ?? baseUser?.role                        ?? null,
+      gender:       fromBody.gender       ?? baseUser?.gender                      ?? null,
+      phone_number: fromBody.phone_number ?? baseUser?.phone_number               ?? null,
+      avatar:       fromBody.avatar       ?? baseUser?.avatar                      ?? null,
     };
   };
 
-  /* ============================
-       Refresh Tokens
-       Cookie httpOnly tự gửi kèm request
-       → không cần đọc/gửi refresh token thủ công
-   ============================ */
-  const refreshTokens = useCallback(async () => {
-    if (isRefreshing) return { waiting: true };
+  // ── Login ──────────────────────────────────────────────────────────
+  const login = useCallback(async (payload) => {
+    const res       = await authService.login(payload);
+    const data      = res?.data ?? res;
+    const newAccess = extractAccessToken(data);
 
-    try {
-      setIsRefreshing(true);
-
-      // withCredentials: true → browser tự gửi cookie refresh token
-      const res = await authService.refreshToken();
-      const data = res?.data ?? res;
-
-      const newAccess = data?.access_token ?? data?.accessToken;
-
-      if (newAccess) {
-        persistTokens(newAccess);
-        const newUser = buildUserFromToken(newAccess);
-        if (newUser) setUser(newUser);
-      }
-
-      setIsRefreshing(false);
-      return data;
-    } catch (err) {
-      console.error("Refresh token failed", err);
-      setIsRefreshing(false);
-      persistTokens(null);
-      setUser(null);
-      return { expired: true };
-    }
-  }, [isRefreshing]);
-
-  /* ============================
-             LOGIN
-     ============================ */
-  const login = async (payload) => {
-    const res = await authService.login(payload);
-    const data = res?.data ?? res;
-
-    const newAccess = data?.access_token ?? data?.accessToken;
+    // Persist TRƯỚC khi bất kỳ thứ gì khác chạy
     persistTokens(newAccess);
 
-    let newUser = buildUserFromToken(newAccess);
+    let newUser  = buildUserFromToken(newAccess);
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
-    if (fromBody && typeof fromBody === "object") {
-      newUser = {
-        ...newUser,
-        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id,
-        email: fromBody.email ?? newUser?.email,
-        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name,
-        role: fromBody.role ?? newUser?.role,
-      };
-    }
+    newUser = mergeUserFromBody(newUser, fromBody);
     if (newUser) setUser(newUser);
 
     return data;
-  };
+  }, [persistTokens]);
 
-  /* ============================
-            LOGIN OAUTH
-     ============================ */
-  const loginWithOAuth = async (payload) => {
-    const res = await authService.loginWithOAuth(payload);
-    const data = res?.data ?? res;
+  // ── Login OAuth ────────────────────────────────────────────────────
+  const loginWithOAuth = useCallback(async (payload) => {
+    const res       = await authService.loginWithOAuth(payload);
+    const data      = res?.data ?? res;
+    const newAccess = extractAccessToken(data);
 
-    const newAccess = data?.access_token ?? data?.accessToken;
     persistTokens(newAccess);
 
-    let newUser = buildUserFromToken(newAccess);
+    let newUser    = buildUserFromToken(newAccess);
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
-    if (fromBody && typeof fromBody === "object") {
-      newUser = {
-        ...newUser,
-        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id,
-        email: fromBody.email ?? newUser?.email,
-        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name,
-        role: fromBody.role ?? newUser?.role,
-      };
-    }
+    newUser = mergeUserFromBody(newUser, fromBody);
     if (newUser) setUser(newUser);
 
     return data;
-  };
+  }, [persistTokens]);
 
-  /* ============================
-       LOGIN FROM OAUTH DATA
-       Dùng khi đã có API response
-       sẵn (không gọi API lại).
-     ============================ */
+  // ── Login From OAuth Data ─────────────────────────────────────────
   const loginFromOAuthData = useCallback((data) => {
-    const newAccess =
-      data?.access_token ?? data?.accessToken ??
-      data?.token ?? data?.data?.access_token ?? data?.data?.token;
-
+    const newAccess = extractAccessToken(data);
     persistTokens(newAccess);
 
-    let newUser = newAccess ? buildUserFromToken(newAccess) : null;
+    let newUser    = newAccess ? buildUserFromToken(newAccess) : null;
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
-    if (fromBody && typeof fromBody === "object") {
-      newUser = {
-        ...newUser,
-        user_id: fromBody.user_id ?? fromBody.id ?? newUser?.user_id ?? null,
-        email: fromBody.email ?? newUser?.email ?? null,
-        full_name: fromBody.full_name ?? fromBody.name ?? newUser?.full_name ?? null,
-        role: fromBody.role ?? newUser?.role ?? null,
-        gender: fromBody.gender ?? null,
-        phone_number: fromBody.phone_number ?? null,
-        avatar: fromBody.avatar ?? null,
-      };
-    }
+    newUser = mergeUserFromBody(newUser, fromBody);
     if (newUser) setUser(newUser);
-  }, []);
+  }, [persistTokens]);
 
-  /* ============================
-              LOGOUT
-     ============================ */
-  const logout = async () => {
+  // ── Logout ─────────────────────────────────────────────────────────
+  const logout = useCallback(async () => {
     try {
-      // Backend sẽ xóa cookie refresh token khi gọi logout
       await authService.logout().catch(() => {});
     } finally {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
-      setAccessToken(null);
+      persistTokens(null);
       setUser(null);
       setIsBlocked(false);
     }
-  };
+  }, [persistTokens]);
 
-  /* ============================
-          OTHER AUTH ACTIONS
-     ============================ */
-  const register = async (payload) => {
-    const res = await authService.register(payload);
-    return res?.data ?? res;
-  };
+  // ── Other Auth Actions (FIX: không gọi API 2 lần) ─────────────────
+  const register         = useCallback((p) => authService.register(p).then((r) => r?.data ?? r), []);
+  const verifyEmail      = useCallback((p) => authService.verifyEmail(p).then((r) => r?.data ?? r), []);
+  const resendVerifyCode = useCallback((p) => authService.resendVerifyCode(p).then((r) => r?.data ?? r), []);
+  const forgotPassword   = useCallback((p) => authService.forgotPassword(p).then((r) => r?.data ?? r), []);
+  const verifyResetCode  = useCallback((p) => authService.verifyResetCode(p).then((r) => r?.data ?? r), []);
+  const resetPassword    = useCallback((p) => authService.resetPassword(p).then((r) => r?.data ?? r), []);
 
-  const verifyEmail = async (payload) => {
-    const res = await authService.verifyEmail(payload);
-    return res?.data ?? res;
-  };
-
-  const resendVerifyCode = async (payload) => {
-    const res = await authService.resendVerifyCode(payload);
-    return res?.data ?? res;
-  };
-
-  const forgotPassword = async (payload) => {
-    const res = await authService.forgotPassword(payload);
-    return res?.data ?? res;
-  };
-
-  const verifyResetCode = async (payload) => {
-    const res = await authService.verifyResetCode(payload);
-    return res?.data ?? res;
-  };
-
-  const resetPassword = async (payload) => {
-    const res = await authService.resetPassword(payload);
-    return res?.data ?? res;
-  };
-
-  /* ============================
-        Axios Interceptors
-     ============================ */
+  // ── Axios Interceptor ──────────────────────────────────────────────
   useEffect(() => {
-    const reqInterceptor = apiClient.interceptors.request.use(
-      (config) => {
-        if (!config.headers) config.headers = {};
-        const token = accessToken || localStorage.getItem(ACCESS_TOKEN_KEY) || null;
-        if (token) {
-          config.headers["Authorization"] = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
+    // Request interceptor: luôn gắn token mới nhất từ ref (không cần state)
+    const reqInterceptor = apiClient.interceptors.request.use((config) => {
+      const token = accessTokenRef.current;
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+      return config;
+    });
 
     const resInterceptor = apiClient.interceptors.response.use(
       (response) => response,
@@ -257,41 +195,25 @@ export const AuthProvider = ({ children }) => {
 
           const result = await refreshTokens();
 
-          // Đang có refresh khác chạy → thử lại với token hiện tại
-          if (result?.waiting) {
-            const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-            if (currentToken) {
-              originalRequest.headers["Authorization"] = `Bearer ${currentToken}`;
-              return apiClient(originalRequest);
-            }
+          if (result?.expired) {
+            persistTokens(null);
+            setUser(null);
+            window.location.href = "/login?session=expired";
+            return Promise.reject(error);
           }
 
-          // Refresh thành công → retry request gốc
-          const newAccess = result?.access_token ?? result?.accessToken;
+          const newAccess = result?.access_token;
           if (newAccess) {
             originalRequest.headers["Authorization"] = `Bearer ${newAccess}`;
             return apiClient(originalRequest);
           }
-
-          // Refresh thất bại → redirect login (silent)
-          persistTokens(null);
-          setUser(null);
-          window.location.href = "/login?session=expired";
-          return Promise.reject(error);
         }
 
-        // Blocked user
         if (error.response?.status === 403) {
           const msg = error.response?.data?.message || "";
-          if (
-            msg.includes("khóa") ||
-            msg.includes("bị khóa") ||
-            msg.includes("banned") ||
-            msg.includes("blocked")
-          ) {
+          if (msg.includes("khóa") || msg.includes("blocked") || msg.includes("banned")) {
             persistTokens(null);
             setUser(null);
-            setIsBlocked(true);
             window.location.href = "/login?blocked=true";
           }
         }
@@ -304,42 +226,25 @@ export const AuthProvider = ({ children }) => {
       apiClient.interceptors.request.eject(reqInterceptor);
       apiClient.interceptors.response.eject(resInterceptor);
     };
-  }, [accessToken, refreshTokens]);
+  }, [refreshTokens, persistTokens]);
 
-  /* ============================
-        Init User From Token
-     ============================ */
+  // ── Init từ token có sẵn ──────────────────────────────────────────
   useEffect(() => {
-    if (accessToken) {
-      const userObj = buildUserFromToken(accessToken);
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (token) {
+      accessTokenRef.current = token;
+      const userObj = buildUserFromToken(token);
       if (userObj) setUser(userObj);
     }
     setLoading(false);
   }, []);
 
-  /* ============================
-             PROVIDER VALUE
-     ============================ */
   const value = {
-    user,
-    accessToken,
-    loading,
-    isBlocked,
-
-    login,
-    loginWithOAuth,
-    loginFromOAuthData,
-    logout,
-    register,
-    verifyEmail,
-    resendVerifyCode,
-    forgotPassword,
-    verifyResetCode,
-    resetPassword,
-
-    refreshTokens,
-    setUser,
-    setIsBlocked,
+    user, accessToken, loading, isBlocked,
+    login, loginWithOAuth, loginFromOAuthData, logout,
+    register, verifyEmail, resendVerifyCode,
+    forgotPassword, verifyResetCode, resetPassword,
+    refreshTokens, setUser, setIsBlocked,
   };
 
   return (
