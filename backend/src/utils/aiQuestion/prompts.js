@@ -30,6 +30,8 @@ Rules:
 - Each item: { "content": string (plain Vietnamese or bilingual, plain text), "type": TEXT|PARAGRAPH|EMAIL|DATE|NUMBER|RATING|SINGLE_CHOICE|MULTIPLE_CHOICE|DROPDOWN, "required": boolean, "options"?: [...] }
 - For choice questions provide 3-5 sensible options; value lowercase slug.
 - Do not repeat title verbatim in every question; be specific to the topic.
+- Return ONLY valid JSON.
+- Do not include explanation, text, or markdown, only the JSON object.
 `;
 }
 
