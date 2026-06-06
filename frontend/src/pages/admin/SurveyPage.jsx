@@ -76,14 +76,14 @@ const quickBtn = {
   width:28, height:28, borderRadius:8,
   border:"none", background:"rgba(255,255,255,0.08)",
   cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-  color:C.textSub, transition:"all .15s",
+  color:C.textSub, transition:"background .15s, color .15s",
 };
 
 const chipBtn = {
   width:24, height:24, borderRadius:6,
   border:`1px solid ${C.border}`, background:"transparent",
   cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-  color:C.textDim, transition:"all .15s",
+  color:C.textDim, transition:"background .15s, color .15s, border-color .15s",
 };
 
 const inputStyle = {
@@ -103,27 +103,21 @@ function ToggleSwitch({ checked, onChange }) {
       type="button"
       onClick={() => onChange(!checked)}
       style={{
-        width: 38, height: 22,
-        borderRadius: 11,
-         background: checked ? C.primary : C.surfaceHigh,
-  border: `1.5px solid ${checked ? C.primaryBorder : C.border}`,
-        cursor: "pointer",
-        position: "relative",
-        transition: "all .2s",
-        flexShrink: 0,
-        padding: 0,
-        outline: "none",
+        width:38, height:22, borderRadius:11,
+        background: checked ? C.primary : C.surfaceHigh,
+        border:`1.5px solid ${checked ? C.primaryBorder : C.border}`,
+        cursor:"pointer", position:"relative",
+        transition:"background .2s, border-color .2s",
+        flexShrink:0, padding:0, outline:"none",
       }}
     >
       <div style={{
-        width: 14, height: 14,
-        borderRadius: "50%",
+        width:14, height:14, borderRadius:"50%",
         background: checked ? "#fff" : C.textDim,
-        position: "absolute",
-        top: "50%",
-        transform: `translateY(-50%) translateX(${checked ? "20px" : "2px"})`,
-        transition: "all .2s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+        position:"absolute", top:"50%",
+        transform:`translateY(-50%) translateX(${checked ? "20px" : "2px"})`,
+        transition:"transform .2s, background .2s",
+        boxShadow:"0 1px 3px rgba(0,0,0,0.3)",
       }} />
     </button>
   );
@@ -131,11 +125,11 @@ function ToggleSwitch({ checked, onChange }) {
 
 /* ─── Status badge ───────────────────────────────────────────────── */
 const STATUS_MAP = {
-  ACTIVE:    { label: "Đang mở",   color: C.success,  bg: "rgba(34,197,94,0.12)" },
-  DRAFT:     { label: "Nháp",      color: C.textSub,  bg: "rgba(100,116,139,0.12)" },
-  SCHEDULED: { label: "Lên lịch",  color: C.warning,  bg: "rgba(245,158,11,0.12)" },
-  EXPIRED:   { label: "Hết hạn",   color: C.error,    bg: "rgba(239,68,68,0.12)" },
-  CLOSED:    { label: "Đã đóng",   color: "#6b7280",  bg: "rgba(107,114,128,0.12)" },
+  ACTIVE:    { label:"Đang mở",  color:C.success,  bg:"rgba(34,197,94,0.12)" },
+  DRAFT:     { label:"Nháp",     color:C.textSub,  bg:"rgba(100,116,139,0.12)" },
+  SCHEDULED: { label:"Lên lịch", color:C.warning,  bg:"rgba(245,158,11,0.12)" },
+  EXPIRED:   { label:"Hết hạn",  color:C.error,    bg:"rgba(239,68,68,0.12)" },
+  CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,0.12)" },
 };
 
 function StatusBadge({ status }) {
@@ -206,10 +200,10 @@ function Modal({ open, onClose, title, children, width = 480 }) {
 
 /* ─── ShareLinkModal ─────────────────────────────────────────────── */
 function ShareLinkModal({ open, onClose, survey, onShare }) {
-  const [loading,    setLoading]    = useState(false);
-  const [shareUrl,   setShareUrl]   = useState(null);
-  const [copied,     setCopied]     = useState(false);
-  const [activeTab,  setActiveTab]  = useState("link"); // "link" | "qr"
+  const [loading,   setLoading]   = useState(false);
+  const [shareUrl,  setShareUrl]  = useState(null);
+  const [copied,    setCopied]    = useState(false);
+  const [activeTab, setActiveTab] = useState("link");
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -238,9 +232,9 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
   const getSocialShareUrl = (platform) => {
     if (!shareUrl || !survey) return "#";
     const title = encodeURIComponent(survey.title || "Khảo sát");
-    const url = encodeURIComponent(shareUrl);
+    const url   = encodeURIComponent(shareUrl);
     switch (platform) {
-      case "facebook":  return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      case "facebook": return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       case "twitter":  return `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
       case "zalo":     return `https://zalo.me/share?url=${url}`;
       default: return "#";
@@ -256,27 +250,22 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
         <div style={{
           display:"flex", alignItems:"center", gap:12,
-          padding:"14px 16px",
-          background:C.surfaceHigh, borderRadius:12,
-          border:`1px solid ${C.border}`,
+          padding:"14px 16px", background:C.surfaceHigh,
+          borderRadius:12, border:`1px solid ${C.border}`,
         }}>
           <div style={{
             width:40, height:40, borderRadius:10,
             background:C.primaryDim,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            flexShrink:0,
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
           }}>
             <Share2 size={18} color={C.primary}/>
           </div>
           <div>
             <div style={{fontSize:14, fontWeight:600, color:C.text}}>{survey?.title}</div>
-            <div style={{fontSize:12, color:C.textSub, marginTop:2}}>
-              Chia sẻ khảo sát đến mọi người
-            </div>
+            <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Chia sẻ khảo sát đến mọi người</div>
           </div>
         </div>
 
-        {/* Tab switcher */}
         <div style={{display:"flex", gap:8, background:C.surfaceHigh, borderRadius:10, padding:4}}>
           {["link","qr"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -284,8 +273,8 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 flex:1, padding:"7px 0", borderRadius:8, border:"none", cursor:"pointer",
                 fontSize:13, fontWeight:600, fontFamily:C.font,
                 background: activeTab === tab ? C.primary : "transparent",
-                color: activeTab === tab ? "#fff" : C.textSub,
-                transition:"all .15s",
+                color:      activeTab === tab ? "#fff"    : C.textSub,
+                transition:"background .15s, color .15s",
               }}>
               {tab === "link" ? "🔗 Link" : "⬡ QR Code"}
             </button>
@@ -301,9 +290,8 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 </label>
                 <div style={{
                   display:"flex", alignItems:"center", gap:8,
-                  padding:"10px 14px",
-                  background:C.surfaceHigh, borderRadius:10,
-                  border:`1px solid ${C.border}`,
+                  padding:"10px 14px", background:C.surfaceHigh,
+                  borderRadius:10, border:`1px solid ${C.border}`,
                 }}>
                   <LinkIcon size={14} color={C.textSub} style={{flexShrink:0}}/>
                   <span style={{flex:1, fontSize:13, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
@@ -314,7 +302,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                     padding:"5px 10px", borderRadius:7,
                     border:`1px solid ${copied ? C.successBorder : C.border}`,
                     background: copied ? C.successBg : "transparent",
-                    color: copied ? C.success : C.textSub,
+                    color:      copied ? C.success   : C.textSub,
                     fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0,
                     transition:"all .2s",
                   }}>
@@ -323,20 +311,17 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                   </button>
                 </div>
 
-                {/* Social share buttons */}
                 <div style={{display:"flex", gap:8}}>
-                  <a href={getSocialShareUrl("facebook")} target="_blank" rel="noreferrer"
-                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#1877f2", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
-                    f Facebook
-                  </a>
-                  <a href={getSocialShareUrl("twitter")} target="_blank" rel="noreferrer"
-                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#1da1f2", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
-                    𝕏 Twitter
-                  </a>
-                  <a href={getSocialShareUrl("zalo")} target="_blank" rel="noreferrer"
-                    style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:"#0068ff", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
-                    Zalo
-                  </a>
+                  {[
+                    { key:"facebook", bg:"#1877f2", label:"f Facebook" },
+                    { key:"twitter",  bg:"#1da1f2", label:"𝕏 Twitter" },
+                    { key:"zalo",     bg:"#0068ff", label:"Zalo" },
+                  ].map(p => (
+                    <a key={p.key} href={getSocialShareUrl(p.key)} target="_blank" rel="noreferrer"
+                      style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:8, border:"none", background:p.bg, color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"none", fontFamily:C.font}}>
+                      {p.label}
+                    </a>
+                  ))}
                 </div>
 
                 <button onClick={() => window.open(shareUrl, "_blank")} style={{
@@ -354,7 +339,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                 padding:"12px 0", borderRadius:12, border:"none",
                 background: loading ? C.surfaceHigh : C.primaryGrad,
-                color: loading ? C.textSub : "#fff",
+                color:      loading ? C.textSub     : "#fff",
                 fontSize:14, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
                 boxShadow: loading ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
               }}>
@@ -369,7 +354,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
           <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:14}}>
             {shareUrl ? (
               <>
-                <div style={{padding:16, background:"#fff", borderRadius:16, border:`1px solid ${C.border}`, boxShadow:"0 4px 16px rgba(0,0,0,0.08)"}}>
+                <div style={{padding:16, background:"#fff", borderRadius:16, border:`1px solid ${C.border}`}}>
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`}
                     alt="QR Code"
@@ -388,12 +373,6 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 }}>
                   ⬇ Tải mã QR
                 </button>
-                {!shareUrl && (
-                  <button onClick={handleGenerate} disabled={loading}
-                    style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px 20px", borderRadius:10, border:`1px solid ${C.border}`, background:"transparent", color:C.textSub, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:C.font}}>
-                    <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Tạo link trước
-                  </button>
-                )}
               </>
             ) : (
               <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:12, padding:"2rem 0"}}>
@@ -406,10 +385,14 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 <button onClick={handleGenerate} disabled={loading} style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   padding:"10px 20px", borderRadius:10, border:"none",
-                  background: loading ? C.surfaceHigh : C.primaryGrad, color: loading ? C.textSub : "#fff",
+                  background: loading ? C.surfaceHigh : C.primaryGrad,
+                  color:      loading ? C.textSub     : "#fff",
                   fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
                 }}>
-                  {loading ? <><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</> : <><LinkIcon size={14}/> Tạo link</>}
+                  {loading
+                    ? <><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</>
+                    : <><LinkIcon size={14}/> Tạo link</>
+                  }
                 </button>
               </div>
             )}
@@ -440,7 +423,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
       await Promise.all(list.map(email => onInvite(survey.id, { email, role:"viewer" })));
       setSuccess(true); setEmails("");
     } catch { setError("Mời không thành công, vui lòng thử lại."); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   };
 
   return (
@@ -472,9 +455,8 @@ function InviteModal({ open, onClose, survey, onInvite }) {
           <div style={{display:"flex", flexDirection:"column", gap:12}}>
             <div>
               <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
+                display:"block", fontSize:12, fontWeight:600, color:C.textSub,
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
               }}>
                 Địa chỉ email
               </label>
@@ -508,9 +490,10 @@ function InviteModal({ open, onClose, survey, onInvite }) {
                 display:"flex", alignItems:"center", gap:6,
                 padding:"9px 18px", borderRadius:10, border:"none",
                 background: loading ? C.surfaceHigh : C.primaryGrad,
-                color: loading ? C.textSub : "#fff",
-                fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: loading ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
+                color:      loading ? C.textSub     : "#fff",
+                fontSize:13, fontWeight:700,
+                cursor:     loading ? "not-allowed" : "pointer",
+                boxShadow:  loading ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
               }}>
                 {loading
                   ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
@@ -550,7 +533,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
       setSuccess({ sent: res?.sent ?? list.length, failed: res?.failed ?? 0 });
       setEmails("");
     } catch { setError("Bulk invite thất bại, vui lòng thử lại."); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   };
 
   const emailCount = parseEmails().length;
@@ -611,9 +594,8 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
           <div style={{display:"flex", flexDirection:"column", gap:12}}>
             <div>
               <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
+                display:"block", fontSize:12, fontWeight:600, color:C.textSub,
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
               }}>
                 Vai trò
               </label>
@@ -630,7 +612,8 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                       flex:1, padding:"8px 10px", borderRadius:10,
                       border:`1.5px solid ${role === r.value ? C.primary : C.border}`,
                       background: role === r.value ? C.primaryDim : "transparent",
-                      cursor:"pointer", textAlign:"center", transition:"all .15s",
+                      cursor:"pointer", textAlign:"center",
+                      transition:"border-color .15s, background .15s",
                     }}
                   >
                     <div style={{fontSize:12, fontWeight:700, color: role === r.value ? C.primary : C.text}}>
@@ -644,9 +627,8 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
 
             <div>
               <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
+                display:"block", fontSize:12, fontWeight:600, color:C.textSub,
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
               }}>
                 Danh sách email
               </label>
@@ -681,10 +663,10 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                 display:"flex", alignItems:"center", gap:6,
                 padding:"9px 18px", borderRadius:10, border:"none",
                 background: (loading || emailCount === 0) ? C.surfaceHigh : C.primaryGrad,
-                color: (loading || emailCount === 0) ? C.textSub : "#fff",
+                color:      (loading || emailCount === 0) ? C.textSub     : "#fff",
                 fontSize:13, fontWeight:700,
-                cursor: (loading || emailCount === 0) ? "not-allowed" : "pointer",
-                boxShadow: (loading || emailCount === 0) ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
+                cursor:     (loading || emailCount === 0) ? "not-allowed" : "pointer",
+                boxShadow:  (loading || emailCount === 0) ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
               }}>
                 {loading
                   ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
@@ -717,7 +699,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
       setParticipants(res?.participants ?? []);
       setCount(res?.count ?? 0);
     } catch { setError("Không thể tải danh sách người tham gia."); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   }, [survey?.id, onGetParticipants]);
 
   useEffect(() => {
@@ -750,11 +732,11 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   };
 
   const AVATAR_COLORS = [
-    { bg:"rgba(59,130,246,0.15)", color:"#60a5fa" },
-    { bg:"rgba(34,197,94,0.15)",  color:"#4ade80" },
-    { bg:"rgba(236,72,153,0.15)", color:"#f472b6" },
-    { bg:"rgba(245,158,11,0.15)", color:"#fbbf24" },
-    { bg:"rgba(139,92,246,0.15)", color:"#a78bfa" },
+    { bg:"rgba(59,130,246,0.15)",  color:"#60a5fa" },
+    { bg:"rgba(34,197,94,0.15)",   color:"#4ade80" },
+    { bg:"rgba(236,72,153,0.15)",  color:"#f472b6" },
+    { bg:"rgba(245,158,11,0.15)",  color:"#fbbf24" },
+    { bg:"rgba(139,92,246,0.15)",  color:"#a78bfa" },
   ];
 
   const ROLE_STYLE = {
@@ -831,10 +813,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           )}
         </div>
 
-        <div style={{
-          border:`1px solid ${C.border}`, borderRadius:12,
-          overflow:"hidden", maxHeight:360, overflowY:"auto",
-        }}>
+        <div style={{border:`1px solid ${C.border}`, borderRadius:12, overflow:"hidden", maxHeight:360, overflowY:"auto"}}>
           {loading ? (
             <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 20px", gap:12}}>
               <Loader2 size={28} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
@@ -854,10 +833,10 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             </div>
           ) : (
             filtered.map((p, i) => {
-              const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
-              const deleteKey    = p.participant_id ?? p.id;
+              const av        = AVATAR_COLORS[i % AVATAR_COLORS.length];
+              const deleteKey = p.participant_id ?? p.id;
               const isConfirming = confirmPid === deleteKey;
-              const isDeleting   = deleting === deleteKey;
+              const isDeleting   = deleting   === deleteKey;
               const roleStyle    = getRoleStyle(p.role);
 
               return (
@@ -900,8 +879,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                     <span style={{
                       fontSize:11, fontWeight:700, padding:"3px 9px",
                       borderRadius:999, flexShrink:0,
-                      color:roleStyle.color,
-                      background:roleStyle.bg,
+                      color:roleStyle.color, background:roleStyle.bg,
                       border:`1px solid ${roleStyle.border}`,
                     }}>
                       {p.role}
@@ -920,8 +898,8 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                         padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:700,
                         border:"none",
                         background: isDeleting ? C.surfaceHigh : C.error,
-                        color: isDeleting ? C.textSub : "#fff",
-                        cursor: isDeleting ? "not-allowed" : "pointer",
+                        color:      isDeleting ? C.textSub     : "#fff",
+                        cursor:     isDeleting ? "not-allowed" : "pointer",
                       }}>
                         {isDeleting ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/> : <Trash2 size={11}/>}
                         Xoá
@@ -997,7 +975,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
             display:"flex", alignItems:"center", gap:6,
             padding:"9px 18px", borderRadius:10, border:"none",
             background: loading ? C.surfaceHigh : isPublished ? C.warning : C.primaryGrad,
-            color: loading ? C.textSub : "#fff",
+            color:      loading ? C.textSub     : "#fff",
             fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
           }}>
             {loading
@@ -1043,7 +1021,7 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
             display:"flex", alignItems:"center", gap:6,
             padding:"9px 18px", borderRadius:10, border:"none",
             background: loading ? C.surfaceHigh : C.error,
-            color: loading ? C.textSub : "#fff",
+            color:      loading ? C.textSub     : "#fff",
             fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
           }}>
             {loading
@@ -1150,18 +1128,18 @@ function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu..
         padding:"5px 8px", background:C.surface,
         borderBottom:`1px solid ${C.border}`, flexWrap:"wrap",
       }}>
-        {tbBtn("bold",               null, <b style={{fontSize:13}}>B</b>,  "Bold")}
-        {tbBtn("italic",             null, <i style={{fontSize:13}}>I</i>,  "Italic")}
-        {tbBtn("underline",          null, <u style={{fontSize:13}}>U</u>,  "Underline")}
+        {tbBtn("bold",                null, <b style={{fontSize:13}}>B</b>,  "Bold")}
+        {tbBtn("italic",              null, <i style={{fontSize:13}}>I</i>,  "Italic")}
+        {tbBtn("underline",           null, <u style={{fontSize:13}}>U</u>,  "Underline")}
         {sep()}
-        {tbBtn("formatBlock", "h1",  <span style={{fontSize:11}}>H1</span>, "Heading 1")}
-        {tbBtn("formatBlock", "h2",  <span style={{fontSize:11}}>H2</span>, "Heading 2")}
-        {tbBtn("formatBlock", "p",   <span style={{fontSize:13}}>¶</span>,  "Paragraph")}
+        {tbBtn("formatBlock", "h1",   <span style={{fontSize:11}}>H1</span>, "Heading 1")}
+        {tbBtn("formatBlock", "h2",   <span style={{fontSize:11}}>H2</span>, "Heading 2")}
+        {tbBtn("formatBlock", "p",    <span style={{fontSize:13}}>¶</span>,  "Paragraph")}
         {sep()}
         {tbBtn("insertUnorderedList", null, <span style={{fontSize:13,letterSpacing:-1}}>•≡</span>, "Bullet list")}
         {tbBtn("insertOrderedList",   null, <span style={{fontSize:11,letterSpacing:-1}}>1≡</span>, "Numbered list")}
         {sep()}
-        {tbBtn("removeFormat", null, <X size={12}/>, "Clear formatting")}
+        {tbBtn("removeFormat",        null, <X size={12}/>, "Clear formatting")}
       </div>
 
       <div
@@ -1237,8 +1215,7 @@ function ImagePicker({ images, onChange }) {
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.color = C.primary; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}
         >
-          <ImageIcon size={18}/>
-          Ảnh
+          <ImageIcon size={18}/> Ảnh
         </button>
       ) : (
         <div style={{display:"flex", flexDirection:"column", gap:4}}>
@@ -1294,6 +1271,16 @@ function ImagePicker({ images, onChange }) {
 }
 
 /* ─── SurveyCard ─────────────────────────────────────────────────── */
+// Card theme map — defined outside component to avoid re-creation on every render
+const CARD_THEME_MAP = {
+  ACTIVE:    { mesh:"linear-gradient(135deg,#f0f2ff 0%,#e8ebff 50%,#dde2ff 100%)", accent:"#6366f1" },
+  DRAFT:     { mesh:"linear-gradient(135deg,#f8f9fa 0%,#f1f5f9 50%,#e8ecf2 100%)", accent:"#94a3b8" },
+  EXPIRED:   { mesh:"linear-gradient(135deg,#fff5f5 0%,#ffe8e8 50%,#ffd9d9 100%)", accent:"#ef4444" },
+  CLOSED:    { mesh:"linear-gradient(135deg,#f9fafb 0%,#f3f4f6 50%,#eceef1 100%)", accent:"#9ca3af" },
+  SCHEDULED: { mesh:"linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#cce9fb 100%)", accent:"#0284c7" },
+  COMPLETED: { mesh:"linear-gradient(135deg,#f0fdf4 0%,#dcfce7 50%,#c4e4ce 100%)", accent:"#059669" },
+};
+
 function SurveyCard({
   s, index,
   onDelete, onUpdate, onOpen,
@@ -1302,34 +1289,32 @@ function SurveyCard({
   onGetParticipants, onDeleteParticipant,
   deletingId, updatingId, navigate,
 }) {
-  const thumb    = C.thumbColors[index % C.thumbColors.length];
-  const menuRef  = useRef(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
+  const menuRef = useRef(null);
+  // ── PERF: removed rotateX/rotateY state and onMouseMove — replaced with simple CSS translateY
+  const [hovered,    setHovered]    = useState(false);
+  const [menuOpen,   setMenuOpen]   = useState(false);
+  const [editing,    setEditing]    = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
-  const [menuOpen,       setMenuOpen]       = useState(false);
-  const [editing,        setEditing]        = useState(false);
-  const [showSettings,   setShowSettings]   = useState(false);
-  const [title,          setTitle]           = useState(s.title);
-  const [description,    setDescription]     = useState(s.description || "");
-  const [startAt,        setStartAt]        = useState(s.start_at ? s.start_at.slice(0,16) : "");
-  const [endAt,          setEndAt]          = useState(s.end_at   ? s.end_at.slice(0,16)   : "");
-  const [dateError,      setDateError]      = useState("");
-  const [hovered,        setHovered]        = useState(false);
+  const [title,       setTitle]       = useState(s.title);
+  const [description, setDescription] = useState(s.description || "");
+  const [startAt,     setStartAt]     = useState(s.start_at ? s.start_at.slice(0,16) : "");
+  const [endAt,       setEndAt]       = useState(s.end_at   ? s.end_at.slice(0,16)   : "");
+  const [dateError,   setDateError]   = useState("");
 
-  // ── NEW: Advanced settings ──────────────────────────────────────
-  const [isAnonymous,        setIsAnonymous]        = useState(s.is_anonymous ?? false);
-  const [maxResponses,        setMaxResponses]        = useState(s.max_responses ?? "");
-  const [randomizeQuestions,  setRandomizeQuestions]  = useState(s.randomize_questions ?? false);
-  const [randomizeOptions,   setRandomizeOptions]   = useState(s.randomize_options ?? false);
-  const [timeLimit,            setTimeLimit]            = useState(s.time_limit_seconds ?? "");
-  const [allowBack,           setAllowBack]           = useState(s.allow_back ?? true);
-  const [oneQuestionPerPage, setOneQuestionPerPage] = useState(s.one_question_per_page ?? true);
-  const [thankYouMessage,      setThankYouMessage]      = useState(s.thank_you_message ?? "");
-  const [thankYouRedirectUrl,  setThankYouRedirectUrl]  = useState(s.thank_you_redirect_url ?? "");
-  const [logoUrl,             setLogoUrl]             = useState(s.logo_url ?? "");
-  const [backgroundUrl,       setBackgroundUrl]       = useState(s.background_url ?? "");
-  const [accentColor,          setAccentColor]          = useState(s.accent_color ?? "#6366f1");
+  // Advanced settings
+  const [isAnonymous,         setIsAnonymous]         = useState(s.is_anonymous ?? false);
+  const [maxResponses,         setMaxResponses]         = useState(s.max_responses ?? "");
+  const [randomizeQuestions,   setRandomizeQuestions]   = useState(s.randomize_questions ?? false);
+  const [randomizeOptions,     setRandomizeOptions]     = useState(s.randomize_options ?? false);
+  const [timeLimit,             setTimeLimit]             = useState(s.time_limit_seconds ?? "");
+  const [allowBack,            setAllowBack]            = useState(s.allow_back ?? true);
+  const [oneQuestionPerPage,   setOneQuestionPerPage]   = useState(s.one_question_per_page ?? true);
+  const [thankYouMessage,       setThankYouMessage]       = useState(s.thank_you_message ?? "");
+  const [thankYouRedirectUrl,   setThankYouRedirectUrl]   = useState(s.thank_you_redirect_url ?? "");
+  const [logoUrl,              setLogoUrl]              = useState(s.logo_url ?? "");
+  const [backgroundUrl,        setBackgroundUrl]        = useState(s.background_url ?? "");
+  const [accentColor,           setAccentColor]           = useState(s.accent_color ?? "#6366f1");
 
   const [shareOpen,        setShareOpen]        = useState(false);
   const [inviteOpen,       setInviteOpen]       = useState(false);
@@ -1338,6 +1323,7 @@ function SurveyCard({
   const [publishOpen,      setPublishOpen]      = useState(false);
   const [closeOpen,        setCloseOpen]        = useState(false);
 
+  // Close menu on outside click
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e) => {
@@ -1346,12 +1332,6 @@ function SurveyCard({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setRotateX((e.clientY - rect.top - rect.height / 2) / 15);
-    setRotateY((e.clientX - rect.left - rect.width / 2) / 15);
-  };
 
   const startEdit = (e) => {
     e?.stopPropagation();
@@ -1365,7 +1345,7 @@ function SurveyCard({
     setTitle(s.title);
     setDescription(s.description || "");
     setStartAt(s.start_at ? s.start_at.slice(0,16) : "");
-    setEndAt(s.end_at   ? s.end_at.slice(0,16)   : "");
+    setEndAt(s.end_at     ? s.end_at.slice(0,16)   : "");
     setDateError("");
     setIsAnonymous(s.is_anonymous ?? false);
     setMaxResponses(s.max_responses ?? "");
@@ -1389,23 +1369,23 @@ function SurveyCard({
     }
     setDateError("");
     await onUpdate(s.id, {
-      title:       title.trim(),
-      description: description.trim() || null,
-      start_at:    startAt ? new Date(startAt).toISOString() : null,
-      end_at:      endAt   ? new Date(endAt).toISOString()   : null,
-      is_anonymous: isAnonymous,
-      max_responses: maxResponses ? Number(maxResponses) : null,
-      randomize_questions: randomizeQuestions,
-      randomize_options: randomizeOptions,
-      time_limit_seconds: timeLimit ? Number(timeLimit) : null,
-      show_progress_bar: true,
-      allow_back: allowBack,
+      title:                 title.trim(),
+      description:           description.trim() || null,
+      start_at:              startAt ? new Date(startAt).toISOString() : null,
+      end_at:                endAt   ? new Date(endAt).toISOString()   : null,
+      is_anonymous:          isAnonymous,
+      max_responses:         maxResponses ? Number(maxResponses) : null,
+      randomize_questions:   randomizeQuestions,
+      randomize_options:     randomizeOptions,
+      time_limit_seconds:    timeLimit ? Number(timeLimit) : null,
+      show_progress_bar:     true,
+      allow_back:            allowBack,
       one_question_per_page: oneQuestionPerPage,
-      thank_you_message: thankYouMessage.trim() || null,
+      thank_you_message:     thankYouMessage.trim() || null,
       thank_you_redirect_url: thankYouRedirectUrl.trim() || null,
-      logo_url: logoUrl.trim() || null,
-      background_url: backgroundUrl.trim() || null,
-      accent_color: accentColor || "#6366f1",
+      logo_url:              logoUrl.trim() || null,
+      background_url:        backgroundUrl.trim() || null,
+      accent_color:          accentColor || "#6366f1",
     });
     setEditing(false);
     setShowSettings(false);
@@ -1417,16 +1397,16 @@ function SurveyCard({
   const isPublished = s.is_published;
   const isOwner     = s.isOwner;
 
-  const ownerBorderColor = "#6c7ef7";
+  const cardTheme = CARD_THEME_MAP[s.status] ?? CARD_THEME_MAP.DRAFT;
 
   const menuItems = [
-    { icon:<Pencil size={13}/>,    label:"Thiết kế",         action:() => { navigate(`/admin/surveys/${s.id}/studio`); setMenuOpen(false); } },
-    { icon:<Settings size={13}/>,   label:"Cài đặt nâng cao", action:() => { startEdit(); setMenuOpen(false); } },
-    { icon:<BarChart3 size={13}/>,  label:"Phân tích",        action:() => { navigate(`/admin/surveys/${s.id}/studio?tab=analyze`); setMenuOpen(false); } },
-    { icon:<Share2 size={13}/>,    label:"Tạo link chia sẻ", action:() => { setShareOpen(true); setMenuOpen(false); } },
-    { icon:<Mail size={13}/>,      label:"Mời người dùng",   action:() => { setInviteOpen(true); setMenuOpen(false); } },
-    { icon:<UserPlus size={13}/>,  label:"Mời hàng loạt",    action:() => { setBulkInviteOpen(true); setMenuOpen(false); }, color:C.primary },
-    { icon:<Users size={13}/>,     label:"Xem participants",  action:() => { setParticipantsOpen(true); setMenuOpen(false); } },
+    { icon:<Pencil size={13}/>,   label:"Thiết kế",         action:() => { navigate(`/admin/surveys/${s.id}/studio`); setMenuOpen(false); } },
+    { icon:<Settings size={13}/>, label:"Cài đặt nâng cao", action:() => { startEdit(); setMenuOpen(false); } },
+    { icon:<BarChart3 size={13}/>, label:"Phân tích",        action:() => { navigate(`/admin/surveys/${s.id}/studio?tab=analyze`); setMenuOpen(false); } },
+    { icon:<Share2 size={13}/>,   label:"Tạo link chia sẻ", action:() => { setShareOpen(true); setMenuOpen(false); } },
+    { icon:<Mail size={13}/>,     label:"Mời người dùng",   action:() => { setInviteOpen(true); setMenuOpen(false); } },
+    { icon:<UserPlus size={13}/>, label:"Mời hàng loạt",    action:() => { setBulkInviteOpen(true); setMenuOpen(false); }, color:C.primary },
+    { icon:<Users size={13}/>,    label:"Xem participants",  action:() => { setParticipantsOpen(true); setMenuOpen(false); } },
     {
       icon: isPublished ? <Lock size={13}/> : <Globe size={13}/>,
       label: isPublished ? "Ẩn survey" : "Publish",
@@ -1441,42 +1421,37 @@ function SurveyCard({
     { icon:<Trash2 size={13}/>, label:"Xóa", action:() => onDelete(s.id), color:C.error },
   ].filter(Boolean);
 
-  const cardTheme = (() => {
-    const MAP = {
-      ACTIVE:    { mesh:"linear-gradient(135deg, #f0f2ff 0%, #e8ebff 50%, #dde2ff 100%)", accent:"#6366f1" },
-      DRAFT:     { mesh:"linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 50%, #e8ecf2 100%)", accent:"#94a3b8" },
-      EXPIRED:   { mesh:"linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #ffd9d9 100%)", accent:"#ef4444" },
-      CLOSED:    { mesh:"linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #eceef1 100%)", accent:"#9ca3af" },
-      SCHEDULED: { mesh:"linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #cce9fb 100%)", accent:"#0284c7" },
-      COMPLETED: { mesh:"linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #c4e4ce 100%)", accent:"#059669" },
-    };
-    return MAP[s.status] || MAP.DRAFT;
-  })();
+  // ── PERF: stagger delay capped at 0.25s, duration halved to 0.3s
+  const animDelay = Math.min(index * 0.04, 0.25);
 
   return (
     <>
       <div
         onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => { setHovered(false); setRotateX(0); setRotateY(0); }}
-        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHovered(false)}
+        // ── PERF: removed onMouseMove entirely
         style={{
-          background:      C.surface,
+          background:     C.surface,
           borderColor:    hovered ? "#d0d7e8" : "#e8ecf2",
           borderWidth:    "1px",
           borderStyle:    "solid",
           borderRadius:   12,
-          overflow:      "hidden",
-          cursor:        "pointer",
-          transition:    "border-color .2s, box-shadow .25s, transform .5s cubic-bezier(0.34,1.56,0.64,1)",
-          boxShadow:     hovered
-            ? "0 12px 32px rgba(0,0,0,0.09), 0 3px 8px rgba(0,0,0,0.04)"
-            : "0 1px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-          transform:     `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-          display:       "flex",
-          flexDirection: "column",
-          perspective:   "1200px",
-          transformStyle:"preserve-3d",
-          animation:     `slideInUp 0.8s ease-out ${0.1 + index * 0.1}s both`,
+          overflow:       "hidden",
+          cursor:         "pointer",
+          // ── PERF: only GPU-composited properties (transform + opacity + box-shadow)
+          // no rotateX/rotateY — triggers repaint on every mousemove
+          transition:     "border-color .2s, box-shadow .2s, transform .2s",
+          boxShadow:      hovered
+            ? "0 8px 24px rgba(0,0,0,0.10)"
+            : "0 1px 4px rgba(0,0,0,0.04)",
+          // ── PERF: simple translateY instead of 3D rotation
+          transform:      hovered ? "translateY(-4px)" : "translateY(0)",
+          // ── PERF: promote to GPU layer only while hovered, release after
+          willChange:     hovered ? "transform" : "auto",
+          display:        "flex",
+          flexDirection:  "column",
+          // ── PERF: removed perspective + transformStyle (no longer needed)
+          animation:      `slideInUp 0.3s ease-out ${animDelay}s both`,
         }}
         onClick={() => !editing && onOpen(s.id)}
       >
@@ -1490,20 +1465,25 @@ function SurveyCard({
           overflow:"hidden", flexShrink:0,
         }}>
           {/* Radial highlight */}
-          <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.5) 0%, transparent 65%)", pointerEvents:"none" }} />
+          <div style={{
+            position:"absolute", inset:0,
+            background:"radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.5) 0%,transparent 65%)",
+            pointerEvents:"none",
+          }} />
           {/* Bottom fade */}
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:28, background:"linear-gradient(to top, #fff 20%, transparent)", pointerEvents:"none" }} />
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0, height:28,
+            background:"linear-gradient(to top,#fff 20%,transparent)",
+            pointerEvents:"none",
+          }} />
 
           {/* Floating icon */}
           <div style={{
             position:"absolute", top:"50%", left:"50%",
             transform:"translate(-50%,-50%)",
-            width:56, height:56,
-            borderRadius:14,
+            width:56, height:56, borderRadius:14,
             background:"rgba(255,255,255,0.55)",
-            backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
             border:"1.5px solid rgba(255,255,255,0.7)",
-            boxShadow:"0 6px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>
             <div style={{
@@ -1511,7 +1491,7 @@ function SurveyCard({
               background:"rgba(255,255,255,0.55)",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>
-              <FileText size={18} color={cardTheme.accent} strokeWidth={1.5} />
+              <FileText size={18} color={cardTheme.accent} strokeWidth={1.5}/>
             </div>
           </div>
 
@@ -1521,8 +1501,7 @@ function SurveyCard({
               <span style={{
                 fontSize:9.5, fontWeight:700, padding:"3px 8px",
                 borderRadius:6, color:"#fff",
-                background:"linear-gradient(90deg, #6c7ef7, #4f6ef7)",
-                boxShadow:"0 2px 8px rgba(108,126,247,0.4)",
+                background:"linear-gradient(90deg,#6c7ef7,#4f6ef7)",
                 display:"flex", alignItems:"center", gap:3,
               }}>
                 ★ Biểu mẫu của bạn
@@ -1545,40 +1524,48 @@ function SurveyCard({
           {/* Quick action buttons — top-right */}
           {!editing && (
             <div style={{position:"absolute", top:10, right:10, display:"flex", gap:5, zIndex:10}} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShareOpen(true)} title="Chia sẻ" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
-                <Share2 size={12}/>
-              </button>
-              <button onClick={() => setInviteOpen(true)} title="Mời người dùng" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
-                <Mail size={12}/>
-              </button>
-              <button onClick={() => setBulkInviteOpen(true)} title="Mời hàng loạt" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
-                <UserPlus size={12}/>
-              </button>
-              <button onClick={() => setParticipantsOpen(true)} title="Xem participants" style={quickBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
-                <Users size={12}/>
-              </button>
+              {[
+                { onClick:() => setShareOpen(true),       title:"Chia sẻ",       icon:<Share2 size={12}/>,   pub:false },
+                { onClick:() => setInviteOpen(true),      title:"Mời người dùng", icon:<Mail size={12}/>,     pub:false },
+                { onClick:() => setBulkInviteOpen(true),  title:"Mời hàng loạt", icon:<UserPlus size={12}/>, pub:false },
+                { onClick:() => setParticipantsOpen(true),title:"Participants",   icon:<Users size={12}/>,    pub:false },
+              ].map((btn, bi) => (
+                <button key={bi} onClick={btn.onClick} title={btn.title}
+                  style={{
+                    ...quickBtn,
+                    background:"rgba(255,255,255,0.55)",
+                    border:"1px solid rgba(255,255,255,0.7)",
+                    color:"#64748b",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
+                  {btn.icon}
+                </button>
+              ))}
+
+              {/* Publish toggle */}
               <button
                 onClick={() => setPublishOpen(true)} title={isPublished ? "Ẩn survey" : "Publish"}
                 style={{
                   ...quickBtn,
-                  background: isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)",
+                  background:  isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)",
                   borderColor: isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)",
-                  color: isPublished ? "#d97706" : "#64748b",
+                  color:       isPublished ? "#d97706" : "#64748b",
+                  border:"1px solid",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = "#d97706"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#d97706"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)"; e.currentTarget.style.color = isPublished ? "#d97706" : "#64748b"; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)"; }}>
                 {isPublished ? <Lock size={12}/> : <Globe size={12}/>}
               </button>
+
               {!isClosed && (
-                <button onClick={() => setCloseOpen(true)} title="Đóng survey" style={quickBtn}
+                <button onClick={() => setCloseOpen(true)} title="Đóng survey"
+                  style={{
+                    ...quickBtn,
+                    background:"rgba(255,255,255,0.55)",
+                    border:"1px solid rgba(255,255,255,0.7)",
+                    color:"#64748b",
+                  }}
                   onMouseEnter={e => { e.currentTarget.style.background = "#6b7280"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6b7280"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                   <PowerOff size={12}/>
@@ -1587,14 +1574,17 @@ function SurveyCard({
             </div>
           )}
 
-          {/* 3-dot menu */}
-          <div ref={menuRef} style={{position:"absolute", top:10, right: editing ? 10 : "auto", left: editing ? 10 : "auto", display: editing ? "block" : "none", zIndex:20}} onClick={e => e.stopPropagation()}>
+          {/* 3-dot menu (visible only while editing) */}
+          <div
+            ref={menuRef}
+            style={{position:"absolute", top:10, left:10, display: editing ? "block" : "none", zIndex:20}}
+            onClick={e => e.stopPropagation()}
+          >
             <button
               onClick={() => setMenuOpen(v => !v)}
               style={{
                 width:26, height:26, borderRadius:8,
                 background: menuOpen ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.55)",
-                backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
                 border:"1px solid rgba(255,255,255,0.7)",
                 cursor:"pointer", color:"#64748b",
                 display:"flex", alignItems:"center", justifyContent:"center",
@@ -1606,7 +1596,7 @@ function SurveyCard({
             {menuOpen && (
               <div style={{
                 position:"absolute", top:30, right:0, zIndex:20, width:190,
-                background:C.surfaceHigh, border:`1px solid #e8ecf2`,
+                background:C.surfaceHigh, border:"1px solid #e8ecf2",
                 borderRadius:10, overflow:"hidden",
                 boxShadow:"0 8px 24px rgba(0,0,0,0.12)",
                 animation:"slideInUp 0.15s ease-out",
@@ -1619,7 +1609,7 @@ function SurveyCard({
                     fontSize:13, fontWeight:500,
                     color: item.color || C.text,
                     cursor:"pointer", fontFamily:C.font,
-                    borderBottom: i < menuItems.length - 1 ? `1px solid #f4f6f8` : "none",
+                    borderBottom: i < menuItems.length - 1 ? "1px solid #f4f6f8" : "none",
                   }}
                     onMouseEnter={e => e.currentTarget.style.background = "#f4f6f8"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -1674,15 +1664,15 @@ function SurveyCard({
                 </div>
               )}
 
-              {/* ── Advanced settings toggle ─────────────────────────────── */}
+              {/* Advanced settings toggle */}
               <div>
                 <button
                   onClick={() => setShowSettings(v => !v)}
                   style={{
                     display:"flex", alignItems:"center", gap:6,
-                   border:`1px solid ${showSettings ? C.primaryBorder : C.border}`,
+                    border:`1px solid ${showSettings ? C.primaryBorder : C.border}`,
                     borderRadius:8, padding:"6px 12px",
-                    color: showSettings ? C.primary : C.textSub,
+                    color:     showSettings ? C.primary : C.textSub,
                     fontSize:12, fontWeight:600, cursor:"pointer",
                     fontFamily:C.font, transition:"all .15s",
                     background: showSettings ? C.primaryDim : "transparent",
@@ -1692,12 +1682,11 @@ function SurveyCard({
                 </button>
 
                 {showSettings && (
-                  <div style={{ marginTop:12, display:"flex", flexDirection:"column", gap:10, padding:"12px", background:C.bg, borderRadius:10, border:`1px solid ${C.border}` }}>
-                    {/* Row 1 */}
+                  <div style={{marginTop:12, display:"flex", flexDirection:"column", gap:10, padding:"12px", background:C.bg, borderRadius:10, border:`1px solid ${C.border}`}}>
                     <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
                       <div style={{display:"flex", flexDirection:"column", gap:4}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Ẩn danh</label>
-                        <ToggleSwitch checked={isAnonymous} onChange={setIsAnonymous} />
+                        <ToggleSwitch checked={isAnonymous} onChange={setIsAnonymous}/>
                       </div>
                       <div style={{display:"flex", flexDirection:"column", gap:4}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Giới hạn phản hồi</label>
@@ -1707,23 +1696,19 @@ function SurveyCard({
                       </div>
                     </div>
 
-                    {/* Row 2 */}
                     <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
-                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
-                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Xáo trộn câu hỏi</label>
-                        <ToggleSwitch checked={randomizeQuestions} onChange={setRandomizeQuestions} />
-                      </div>
-                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
-                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Xáo trộn lựa chọn</label>
-                        <ToggleSwitch checked={randomizeOptions} onChange={setRandomizeOptions} />
-                      </div>
-                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
-                        <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Cho phép quay lại</label>
-                        <ToggleSwitch checked={allowBack} onChange={setAllowBack} />
-                      </div>
+                      {[
+                        { label:"Xáo trộn câu hỏi", val:randomizeQuestions, set:setRandomizeQuestions },
+                        { label:"Xáo trộn lựa chọn", val:randomizeOptions,   set:setRandomizeOptions },
+                        { label:"Cho phép quay lại", val:allowBack,           set:setAllowBack },
+                      ].map(({ label, val, set }) => (
+                        <div key={label} style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
+                          <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>{label}</label>
+                          <ToggleSwitch checked={val} onChange={set}/>
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Row 3 */}
                     <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
                       <div style={{display:"flex", flexDirection:"column", gap:4}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Giới hạn thời gian (giây)</label>
@@ -1733,7 +1718,7 @@ function SurveyCard({
                       </div>
                       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:6}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>1 câu/trang</label>
-                        <ToggleSwitch checked={oneQuestionPerPage} onChange={setOneQuestionPerPage} />
+                        <ToggleSwitch checked={oneQuestionPerPage} onChange={setOneQuestionPerPage}/>
                       </div>
                       <div style={{display:"flex", flexDirection:"column", gap:4}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Màu chủ đạo</label>
@@ -1745,38 +1730,33 @@ function SurveyCard({
                       </div>
                     </div>
 
-                    {/* Logo URL */}
-                    <div>
-                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Logo URL</label>
-                      <input type="url" value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
-                        placeholder="https://example.com/logo.png"
-                        style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
-                    </div>
+                    {[
+                      { label:"Logo URL",         val:logoUrl,             set:setLogoUrl,             type:"url", placeholder:"https://example.com/logo.png" },
+                      { label:"Ảnh nền URL",       val:backgroundUrl,       set:setBackgroundUrl,       type:"url", placeholder:"https://example.com/bg.jpg" },
+                    ].map(({ label, val, set, type, placeholder }) => (
+                      <div key={label}>
+                        <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>{label}</label>
+                        <input type={type} value={val} onChange={e => set(e.target.value)}
+                          placeholder={placeholder}
+                          style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
+                      </div>
+                    ))}
 
-                    {/* Background URL */}
-                    <div>
-                      <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Ảnh nền URL</label>
-                      <input type="url" value={backgroundUrl} onChange={e => setBackgroundUrl(e.target.value)}
-                        placeholder="https://example.com/bg.jpg"
-                        style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
-                    </div>
-
-                    {/* Thank you message */}
                     <div>
                       <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>Tin nhắn cảm ơn</label>
                       <textarea value={thankYouMessage} onChange={e => setThankYouMessage(e.target.value)}
-                        placeholder="Cảm ơn bạn đã tham gia khảo sát!"
-                        rows={2}
+                        placeholder="Cảm ơn bạn đã tham gia khảo sát!" rows={2}
                         style={{...textareaStyle, fontSize:12, padding:"6px 10px"}}/>
                     </div>
 
-                    {/* Thank you redirect URL */}
                     <div>
                       <label style={{fontSize:11, color:C.textSub, fontWeight:600, display:"block", marginBottom:4}}>URL chuyển hướng sau khi hoàn thành</label>
                       <input type="url" value={thankYouRedirectUrl} onChange={e => setThankYouRedirectUrl(e.target.value)}
                         placeholder="https://example.com/thank-you"
                         style={{...inputStyle, fontSize:12, padding:"6px 10px"}}/>
-                      <p style={{fontSize:11, color:C.textDim, margin:"3px 0 0"}}>Người trả lời sẽ được chuyển đến URL này sau khi gửi khảo sát.</p>
+                      <p style={{fontSize:11, color:C.textDim, margin:"3px 0 0"}}>
+                        Người trả lời sẽ được chuyển đến URL này sau khi gửi khảo sát.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1787,7 +1767,7 @@ function SurveyCard({
                 <button onClick={save} disabled={isSaving} style={{
                   ...saveBtn,
                   background: isSaving ? C.surfaceHigh : C.primaryGrad,
-                  color: isSaving ? C.textSub : "#fff",
+                  color:      isSaving ? C.textSub     : "#fff",
                 }}>
                   {isSaving
                     ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>
@@ -1811,17 +1791,17 @@ function SurveyCard({
                 <div style={{display:"flex", alignItems:"center", gap:4, fontSize:11, color:C.textSub, marginTop:2}}>
                   <Calendar size={10}/>
                   {s.start_at && (
-                    <span>{new Date(s.start_at).toLocaleDateString("vi-VN", {day:"2-digit", month:"2-digit"})}</span>
+                    <span>{new Date(s.start_at).toLocaleDateString("vi-VN", {day:"2-digit",month:"2-digit"})}</span>
                   )}
                   {s.start_at && s.end_at && <span>→</span>}
                   {s.end_at && (
-                    <span>{new Date(s.end_at).toLocaleDateString("vi-VN", {day:"2-digit", month:"2-digit", year:"numeric"})}</span>
+                    <span>{new Date(s.end_at).toLocaleDateString("vi-VN", {day:"2-digit",month:"2-digit",year:"numeric"})}</span>
                   )}
                 </div>
               )}
 
               <div style={{fontSize:12, color:C.textDim, marginTop:1}}>
-                {s.created_at ? new Date(s.created_at).toLocaleDateString("vi-VN", {day:"2-digit", month:"2-digit", year:"numeric"}) : ""}
+                {s.created_at ? new Date(s.created_at).toLocaleDateString("vi-VN", {day:"2-digit",month:"2-digit",year:"numeric"}) : ""}
               </div>
 
               {s.creator && !isOwner && (
@@ -1843,28 +1823,19 @@ function SurveyCard({
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:6}}>
                 <ParticipantBadge surveyId={s.id}/>
 
-                {/* Chip action buttons */}
                 <div style={{display:"flex", gap:5}} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setShareOpen(true)} style={chipBtn} title="Link chia sẻ"
-                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
-                    <LinkIcon size={11}/>
-                  </button>
-                  <button onClick={() => setInviteOpen(true)} style={chipBtn} title="Mời email"
-                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
-                    <Mail size={11}/>
-                  </button>
-                  <button onClick={() => setBulkInviteOpen(true)} style={chipBtn} title="Mời hàng loạt"
-                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
-                    <UserPlus size={11}/>
-                  </button>
-                  <button onClick={() => setParticipantsOpen(true)} style={chipBtn} title="Participants"
-                    onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
-                    <Users size={11}/>
-                  </button>
+                  {[
+                    { onClick:() => setShareOpen(true),        title:"Link chia sẻ",  icon:<LinkIcon size={11}/> },
+                    { onClick:() => setInviteOpen(true),       title:"Mời email",     icon:<Mail size={11}/> },
+                    { onClick:() => setBulkInviteOpen(true),   title:"Mời hàng loạt", icon:<UserPlus size={11}/> },
+                    { onClick:() => setParticipantsOpen(true), title:"Participants",  icon:<Users size={11}/> },
+                  ].map((btn, bi) => (
+                    <button key={bi} onClick={btn.onClick} style={chipBtn} title={btn.title}
+                      onMouseEnter={e => { e.currentTarget.style.background = C.primaryDim; e.currentTarget.style.color = C.primary; e.currentTarget.style.borderColor = C.primaryBorder; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; e.currentTarget.style.borderColor = C.border; }}>
+                      {btn.icon}
+                    </button>
+                  ))}
                 </div>
               </div>
             </>
@@ -1872,16 +1843,16 @@ function SurveyCard({
         </div>
       </div>
 
-      {/* Modals — outside the card div, inside the Fragment */}
-      <ShareLinkModal open={shareOpen} onClose={() => setShareOpen(false)} survey={s} onShare={onShare}/>
-      <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} survey={s} onInvite={onInvite}/>
-      <BulkInviteModal open={bulkInviteOpen} onClose={() => setBulkInviteOpen(false)} survey={s} onBulkInvite={onBulkInvite}/>
+      {/* Modals */}
+      <ShareLinkModal open={shareOpen}        onClose={() => setShareOpen(false)}        survey={s} onShare={onShare}/>
+      <InviteModal    open={inviteOpen}        onClose={() => setInviteOpen(false)}        survey={s} onInvite={onInvite}/>
+      <BulkInviteModal open={bulkInviteOpen}   onClose={() => setBulkInviteOpen(false)}   survey={s} onBulkInvite={onBulkInvite}/>
       <ParticipantsModal
         open={participantsOpen} onClose={() => setParticipantsOpen(false)}
         survey={s} onGetParticipants={onGetParticipants} onDeleteParticipant={onDeleteParticipant}
       />
       <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} survey={s} onPublish={onPublish}/>
-      <CloseModal open={closeOpen} onClose={() => setCloseOpen(false)} survey={s} onCloseSurvey={onCloseSurvey}/>
+      <CloseModal   open={closeOpen}   onClose={() => setCloseOpen(false)}   survey={s} onCloseSurvey={onCloseSurvey}/>
     </>
   );
 }
@@ -1894,12 +1865,12 @@ export default function SurveyPage() {
     shareLink, inviteSurvey, bulkInviteSurvey,
     getParticipants, deleteParticipant,
   } = useSurvey();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
   const { user: currentUser } = useAuth();
 
-  const [surveys,     setSurveys]     = useState([]);
-  const [fetchError,  setFetchError]  = useState(null);
-  const [fetching,    setFetching]    = useState(false);
+  const [surveys,    setSurveys]    = useState([]);
+  const [fetchError, setFetchError] = useState(null);
+  const [fetching,   setFetching]   = useState(false);
 
   const [titleHtml,   setTitleHtml]   = useState("");
   const [description, setDescription] = useState("");
@@ -1913,9 +1884,9 @@ export default function SurveyPage() {
   const [deletingId,  setDeletingId]  = useState(null);
   const [updatingId,  setUpdatingId]  = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+
   const [search,          setSearch]          = useState("");
-  const [creatorFilter,   setCreatorFilter]   = useState(""); // filter by creator name
-  const [selectedCreator, setSelectedCreator]  = useState(""); // filter by creator id
+  const [selectedCreator, setSelectedCreator] = useState("");
 
   const currentUserId = currentUser?.user_id || currentUser?.id || null;
 
@@ -1925,7 +1896,7 @@ export default function SurveyPage() {
     return div.innerText || div.textContent || "";
   };
 
-  const normalize = (s) => ({
+  const normalize = useCallback((s) => ({
     id:           s.id,
     title:        s.title,
     description:  s.description ?? null,
@@ -1935,11 +1906,11 @@ export default function SurveyPage() {
     status:       s.status     ?? null,
     created_at:   s.created_at ?? null,
     created_by:   s.created_by ?? null,
-    creator:      s.creator ?? null,
+    creator:      s.creator    ?? null,
     isOwner:      (s.created_by === currentUserId) || (s.creator?.id === currentUserId),
-  });
+  }), [currentUserId]);
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     setFetchError(null); setFetching(true);
     try {
       const res  = await surveyService.getAllSurveys();
@@ -1947,9 +1918,9 @@ export default function SurveyPage() {
       setSurveys((data.surveys || []).map(normalize));
     } catch { setFetchError("Không thể tải danh sách khảo sát."); }
     finally   { setFetching(false); }
-  };
+  }, [normalize]);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const resetForm = () => {
     setTitleHtml(""); setDescription(""); setStartAt(""); setEndAt("");
@@ -1986,7 +1957,7 @@ export default function SurveyPage() {
     } finally { setFormLoading(false); }
   };
 
-  const handleUpdate = async (id, payload) => {
+  const handleUpdate = useCallback(async (id, payload) => {
     setUpdatingId(id);
     try {
       const updated = await updateSurvey(id, payload);
@@ -1994,65 +1965,16 @@ export default function SurveyPage() {
       setSurveys(prev => prev.map(s => s.id === id ? normalize(updated) : s));
     } catch {}
     finally { setUpdatingId(null); }
-  };
+  }, [updateSurvey, fetchAll, normalize]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     setDeletingId(id);
     try {
       await deleteSurvey(id);
       setSurveys(prev => prev.filter(s => s.id !== id));
     } catch {}
     finally { setDeletingId(null); }
-  };
-
-  const filtered = surveys.filter(s =>
-    s.title.toLowerCase().includes(search.toLowerCase()) &&
-    (!selectedCreator || s.created_by === selectedCreator)
-  );
-
-  // Derived: unique creators from all surveys (for dropdown)
-  const creatorMap2 = new Map();
-  surveys.forEach(s => {
-    if (s.creator && !creatorMap2.has(s.creator.id)) {
-      creatorMap2.set(s.creator.id, s.creator);
-    }
-  });
-  const allCreators = Array.from(creatorMap2.values()).sort((a, b) =>
-    (a.full_name || "").localeCompare(b.full_name || "")
-  );
-
-  // Sort: admin's surveys first (isOwner), then by creator name, then by created_at desc
-  const sortedSurveys = [...filtered].sort((a, b) => {
-    if (a.isOwner && !b.isOwner) return -1;
-    if (!a.isOwner && b.isOwner) return 1;
-    const nameA = a.creator?.full_name || a.creator?.email || "";
-    const nameB = b.creator?.full_name || b.creator?.email || "";
-    if (nameA !== nameB) return nameA.localeCompare(nameB);
-    return new Date(b.created_at) - new Date(a.created_at);
-  });
-
-  const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
-
-  const handleShare = useCallback((surveyId) => {
-    const s = surveys.find(x => x.id === surveyId);
-    setShareModal({ open: true, surveyId, surveyTitle: s?.title || "", shareUrl: "", loading: false, error: "" });
-  }, [surveys]);
-
-  const handleGenerateLink = async () => {
-    setShareModal(p => ({ ...p, loading: true, error: "" }));
-    try {
-      const result = await shareLink(shareModal.surveyId);
-      const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
-      setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
-    } catch {
-      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
-    }
-  };
-
-  const handleClose = useCallback(async (surveyId) => {
-    try { await closeSurvey(surveyId); await fetchAll(); }
-    catch (err) { console.error(err); }
-  }, [closeSurvey, fetchAll]);
+  }, [deleteSurvey]);
 
   const handleOpen = useCallback((surveyId) => {
     navigate(`/admin/surveys/${surveyId}/studio`);
@@ -2066,6 +1988,53 @@ export default function SurveyPage() {
     } catch (err) { console.error(err); }
     finally { setUpdatingId(null); }
   }, [publishSurvey, fetchAll]);
+
+  const handleClose = useCallback(async (surveyId) => {
+    try { await closeSurvey(surveyId); await fetchAll(); }
+    catch (err) { console.error(err); }
+  }, [closeSurvey, fetchAll]);
+
+  // ── Share modal state (page-level) ──────────────────────────────
+  const [shareModal, setShareModal] = useState({ open:false, surveyId:null, surveyTitle:"", shareUrl:"", loading:false, error:"" });
+
+  const handleShare = useCallback((surveyId) => {
+    const s = surveys.find(x => x.id === surveyId);
+    setShareModal({ open:true, surveyId, surveyTitle:s?.title || "", shareUrl:"", loading:false, error:"" });
+  }, [surveys]);
+
+  const handleGenerateLink = async () => {
+    setShareModal(p => ({ ...p, loading:true, error:"" }));
+    try {
+      const result = await shareLink(shareModal.surveyId);
+      const url    = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
+      setShareModal(p => ({ ...p, shareUrl:url, loading:false }));
+    } catch {
+      setShareModal(p => ({ ...p, loading:false, error:"Tạo link thất bại. Vui lòng thử lại." }));
+    }
+  };
+
+  // Derived data
+  const creatorMap = new Map();
+  surveys.forEach(s => {
+    if (s.creator && !creatorMap.has(s.creator.id)) creatorMap.set(s.creator.id, s.creator);
+  });
+  const allCreators = Array.from(creatorMap.values()).sort((a, b) =>
+    (a.full_name || "").localeCompare(b.full_name || "")
+  );
+
+  const filtered = surveys.filter(s =>
+    s.title.toLowerCase().includes(search.toLowerCase()) &&
+    (!selectedCreator || s.created_by === selectedCreator)
+  );
+
+  const sortedSurveys = [...filtered].sort((a, b) => {
+    if (a.isOwner && !b.isOwner) return -1;
+    if (!a.isOwner && b.isOwner) return 1;
+    const nameA = a.creator?.full_name || a.creator?.email || "";
+    const nameB = b.creator?.full_name || b.creator?.email || "";
+    if (nameA !== nameB) return nameA.localeCompare(nameB);
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
 
   const dateInp = {
     width:"100%", boxSizing:"border-box", padding:"9px 12px",
@@ -2097,7 +2066,6 @@ export default function SurveyPage() {
           </span>
         </div>
 
-        {/* Search + Creator filter */}
         <div style={{display:"flex", alignItems:"center", gap:10, flex:1, maxWidth:600}}>
           <div style={{
             flex:1, maxWidth:360,
@@ -2121,7 +2089,6 @@ export default function SurveyPage() {
             )}
           </div>
 
-          {/* Creator filter dropdown */}
           {allCreators.length > 0 && (
             <select
               value={selectedCreator}
@@ -2143,7 +2110,6 @@ export default function SurveyPage() {
           )}
         </div>
 
-        {/* Btn */}
         <div style={{display:"flex", alignItems:"center", gap:12}}>
           {formLoading && <Loader2 size={14} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>}
           <button
@@ -2181,7 +2147,6 @@ export default function SurveyPage() {
             </h2>
             <form onSubmit={handleCreate}>
               <div style={{display:"flex", flexDirection:"column", gap:12}}>
-
                 <div style={{display:"flex", gap:12, alignItems:"flex-start"}}>
                   <div style={{flex:1, minWidth:0}}>
                     <RichEditor
@@ -2247,7 +2212,7 @@ export default function SurveyPage() {
                     color:      formLoading ? C.textSub     : "#fff",
                     border:     formLoading ? `1px solid ${C.border}` : "none",
                     borderRadius:11, fontSize:13, fontWeight:700,
-                    cursor: formLoading ? "not-allowed" : "pointer",
+                    cursor:    formLoading ? "not-allowed" : "pointer",
                     fontFamily:C.font,
                     boxShadow: formLoading ? "none" : "0 2px 12px rgba(79,110,247,0.35)",
                   }}>
@@ -2279,7 +2244,7 @@ export default function SurveyPage() {
         {surveys.length > 0 && !fetching && sortedSurveys.length > 0 && (
           <div style={{
             display:"grid",
-            gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))",
+            gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",
             gap:16,
             marginBottom:32,
           }}>
@@ -2356,7 +2321,7 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* No search/filter results */}
+        {/* No results */}
         {surveys.length > 0 && !fetching && sortedSurveys.length === 0 && (
           <div style={{textAlign:"center", padding:"4rem 0", color:C.textSub}}>
             <Search size={32} style={{opacity:0.3, marginBottom:12}}/>
@@ -2369,7 +2334,7 @@ export default function SurveyPage() {
 
       <ShareModal
         open={shareModal.open}
-        onClose={() => setShareModal(p => ({ ...p, open: false }))}
+        onClose={() => setShareModal(p => ({ ...p, open:false }))}
         surveyTitle={shareModal.surveyTitle}
         shareUrl={shareModal.shareUrl}
         loading={shareModal.loading}
@@ -2380,7 +2345,7 @@ export default function SurveyPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>

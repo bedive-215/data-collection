@@ -14,7 +14,7 @@ class AuthController {
     try {
       const { email, password } = req.body;
       const { refreshToken, ...result } = await AuthService.login(email, password);
-      res.cookie('refreshToken', result.refreshToken, {
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -96,12 +96,12 @@ class AuthController {
   
       res.cookie("refreshToken", data.refreshToken, {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
-  
+
       return res.status(200).json({
         status: "success",
         message: data.message,

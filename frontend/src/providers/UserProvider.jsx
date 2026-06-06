@@ -1,5 +1,5 @@
 // src/context/UserContext.jsx
-import React, { createContext, useState, useContext, useCallback, useEffect } from "react";
+import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { userService } from "@/services/userService";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,9 +18,10 @@ export const useUser = () => {
 
 // Provider chính
 const UserProvider = ({ children }) => {
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState(null);
 
   // helper lấy token (tìm trong user trước, nếu không có thì localStorage)
@@ -64,7 +65,8 @@ const UserProvider = ({ children }) => {
             ? serverUser.avatar.startsWith("http") ||
               serverUser.avatar.startsWith("data:")
               ? serverUser.avatar
-              : `${API_BASE_URL}${serverUser.avatar}`
+              : `${import.meta.env.VITE_API_BASE_URL ?? ""}${serverUser.avatar}`
+
             : null,
 
         address: serverUser.address ?? "",
@@ -79,20 +81,32 @@ const UserProvider = ({ children }) => {
       setError(msg);
       setUser(null);
       toast.error(msg);
-      throw err;
+        throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
+
+  const fetchedRef = useRef(false);
+
+  // luôn reset khi token đổi/không còn token
   useEffect(() => {
+    fetchedRef.current = false;
     if (!accessToken) {
       setUser(null);
       setError(null);
       return;
     }
-    fetchMyInfo().catch(() => {});
+    // gọi /me ngay khi có token để tránh race "lần đầu"
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchMyInfo().catch(() => {
+        // nếu lỗi thì giữ user=null để guard redirect đúng
+      });
+    }
   }, [accessToken, fetchMyInfo]);
+
 
   // Cập nhật thông tin cá nhân + avatar (PATCH /me)
   const updateMyInfo = async (payload) => {

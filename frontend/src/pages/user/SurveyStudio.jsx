@@ -578,7 +578,9 @@ export default function SurveyStudio() {
             </div>
           )}
           <div style={{width:1,height:28,background:"rgba(0,0,0,0.08)",flexShrink:0}}/>
-          <TabBar active={activeTab} onChange={setActiveTab}/>
+          <div style={{ marginLeft: 0 }}>
+            <TabBar active={activeTab} onChange={setActiveTab} />
+          </div>
         </div>
       </div>
 

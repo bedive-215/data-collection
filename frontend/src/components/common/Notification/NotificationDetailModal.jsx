@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
     X, Mail, Clock, AlertCircle, FileText, Users, Bell,
     Calendar, Award, ExternalLink, Edit3, Loader2, Check, Sparkles, Eye
 } from 'lucide-react';
 
-/* ─── Helpers (dùng chung với các file khác) ─── */
+/* ─── Helpers ─── */
 const normalizeType = (t) => (t || '').toUpperCase();
 
 const TYPE_CONFIG = {
@@ -85,7 +86,7 @@ const TYPE_CONFIG = {
     },
 };
 
-const getConfig = (type) => TYPE_CONFIG[normalizeType(type)] || TYPE_CONFIG.SYSTEM;
+const getConfig  = (type) => TYPE_CONFIG[normalizeType(type)] || TYPE_CONFIG.SYSTEM;
 
 const getDisplayTitle = (n) => {
     if (n.title?.trim()) return n.title;
@@ -152,7 +153,6 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
     const data    = notification.data || {};
     const type    = normalizeType(notification.type);
 
-    /* derived values — data đã được normalize trong Context */
     const surveyTitle  = data.surveyTitle || null;
     const personName   = data.inviterName || data.responderName || data.participantName || null;
     const roleLabel    = data.roleLabel || (() => {
@@ -203,53 +203,89 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
 
     const getInviteTarget = () => {
         if (!data.surveyId) return null;
-        if (role === "editor")   return `/user/my-surveys/${data.surveyId}/studio`;
-        if (role === "viewer")   return `/user/survey/${data.surveyId}/invited`;
-        return `/user/survey/${data.surveyId}/invited`; // respondent
+        if (role === 'editor') return `/user/my-surveys/${data.surveyId}/studio`;
+        return `/user/survey/${data.surveyId}/invited`;
     };
 
     const getInviteActionLabel = () => {
-        if (role === "editor")   return { text: "Mở trang chỉnh sửa", icon: Edit3 };
-        if (role === "viewer")   return { text: "Xem câu hỏi", icon: Eye };
-        return { text: "Làm khảo sát", icon: FileText };
+        if (role === 'editor') return { text: 'Mở trang chỉnh sửa', icon: Edit3 };
+        if (role === 'viewer') return { text: 'Xem câu hỏi', icon: Eye };
+        return { text: 'Làm khảo sát', icon: FileText };
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
-            <div className="relative w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+    /* ─── Modal content ─── */
+    const modalContent = (
+        /* ✅ Overlay dùng style inline để tránh bị Tailwind purge hoặc bị override */
+        <div
             style={{
-                background: "var(--admin-surface)",
-                border: "1px solid var(--admin-border)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-                borderRadius: 24,
+                position: 'fixed',
+                inset: 0,
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
             }}
         >
+            {/* Backdrop */}
+            <div
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.75)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                }}
+                onClick={onClose}
+            />
 
+            {/* Card */}
+            <div
+                className="relative w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                style={{
+                    background: 'var(--admin-surface)',
+                    border: '1px solid var(--admin-border)',
+                    boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+                    borderRadius: 24,
+                    /* đảm bảo card không bị đẩy ra ngoài viewport trên mobile */
+                    maxHeight: 'calc(100vh - 32px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+            >
                 {/* Header */}
-                <div className={`px-6 py-5 ${!notification.read ? config.bgAccent : ''}`} style={{ borderBottom: "1px solid var(--admin-border)" }}>
+                <div
+                    className={`px-6 py-5 flex-shrink-0 ${!notification.read ? config.bgAccent : ''}`}
+                    style={{ borderBottom: '1px solid var(--admin-border)' }}
+                >
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
                             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-lg flex-shrink-0`}>
                                 <Icon className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h2 className="font-bold text-base leading-tight" style={{ color: "var(--admin-text)" }}>{displayTitle}</h2>
+                                <h2 className="font-bold text-base leading-tight" style={{ color: 'var(--admin-text)' }}>
+                                    {displayTitle}
+                                </h2>
                                 {timeAgo && (
-                                    <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--admin-text-dim)" }}>
+                                    <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--admin-text-dim)' }}>
                                         <Clock className="w-3 h-3" />{timeAgo}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 rounded-xl transition-colors flex-shrink-0" style={{ color: "var(--admin-text-dim)" }}>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-xl transition-colors flex-shrink-0"
+                            style={{ color: 'var(--admin-text-dim)' }}
+                        >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
-                {/* Body */}
-                <div className="px-6 py-5 space-y-4 max-h-[50vh] overflow-y-auto">
+                {/* Body — scrollable */}
+                <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 
                     {/* Survey card */}
                     {surveyTitle && (
@@ -259,8 +295,8 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                     <FileText className="w-4 h-4 text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--admin-text-dim)" }}>Khảo sát</p>
-                                    <p className="text-sm font-bold truncate" style={{ color: "var(--admin-text)" }}>{surveyTitle}</p>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: 'var(--admin-text-dim)' }}>Khảo sát</p>
+                                    <p className="text-sm font-bold truncate" style={{ color: 'var(--admin-text)' }}>{surveyTitle}</p>
                                 </div>
                             </div>
                         </div>
@@ -347,7 +383,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                     onChange={(e) => { setExtendDate(e.target.value); setExtendError(''); }}
                                     className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-hover)] text-[var(--admin-text)] focus:ring-[var(--admin-primary)] focus:border-[var(--admin-primary)] outline-none"
                                 />
-                                {extendError   && <p className="text-xs text-red-500">{extendError}</p>}
+                                {extendError && <p className="text-xs text-red-500">{extendError}</p>}
                                 {extendSuccess && (
                                     <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
                                         <Check className="w-3 h-3" /> Gia hạn thành công! Đang chuyển hướng...
@@ -359,9 +395,9 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                         disabled={extending || extendSuccess}
                                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all shadow-md ${extending || extendSuccess ? 'opacity-60 cursor-not-allowed' : config.actionColor}`}
                                     >
-                                        {extending    ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang gia hạn...</>
+                                        {extending      ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang gia hạn...</>
                                         : extendSuccess ? <><Check className="w-4 h-4" /> Thành công!</>
-                                        : <><Edit3 className="w-4 h-4" /> Xác nhận gia hạn</>}
+                                        :                 <><Edit3 className="w-4 h-4" /> Xác nhận gia hạn</>}
                                     </button>
                                     <button
                                         onClick={() => { setShowExtendForm(false); setExtendError(''); setExtendDate(''); }}
@@ -375,8 +411,8 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                     )}
                 </div>
 
-                {/* Footer actions */}
-                <div className="px-6 py-4 border-t border-[var(--admin-border)] bg-[var(--admin-bg-secondary)] flex flex-wrap gap-2">
+                {/* Footer */}
+                <div className="px-6 py-4 flex-shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-bg-secondary)] flex flex-wrap gap-2">
                     {data.surveyId && type === 'SURVEY_INVITATION' && (() => {
                         const { text, icon: ActionIcon } = getInviteActionLabel();
                         return (
@@ -389,16 +425,25 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                         );
                     })()}
                     {data.surveyId && ['SURVEY_RESPONSE', 'NEW_PARTICIPANT', 'SURVEY_PUBLISHED', 'SURVEY_CLOSED'].includes(type) && (
-                        <button onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
+                        <button
+                            onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }}
+                            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}
+                        >
                             <ExternalLink className="w-4 h-4" />Xem chi tiết
                         </button>
                     )}
                     {data.surveyId && ['SURVEY_EXPIRED', 'SURVEY_TIMEOUT'].includes(type) && (
                         <>
-                            <button onClick={() => setShowExtendForm(!showExtendForm)} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}>
+                            <button
+                                onClick={() => setShowExtendForm(!showExtendForm)}
+                                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${config.actionColor}`}
+                            >
                                 <Edit3 className="w-4 h-4" />{showExtendForm ? 'Ẩn form' : 'Gia hạn'}
                             </button>
-                            <button onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-[var(--admin-surface-hover)] text-white transition-all shadow-lg">
+                            <button
+                                onClick={() => { onMarkRead(notification.id); onClose(); navigate(`/user/my-surveys/${data.surveyId}`); }}
+                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-[var(--admin-surface-hover)] text-white transition-all shadow-lg"
+                            >
                                 <ExternalLink className="w-4 h-4" />Xem chi tiết
                             </button>
                         </>
@@ -414,6 +459,8 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 export default NotificationDetailModal;

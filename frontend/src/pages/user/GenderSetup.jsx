@@ -75,6 +75,8 @@ export default function GenderSetup() {
     setError("");
     try {
       await updateMyInfo({ gender: selected });
+      // Đảm bảo user state đã cập nhật trước khi điều hướng
+      await new Promise((r) => setTimeout(r, 150));
       navigate(ROUTERS.USER.HOME);
     } catch (e) {
       setError(e?.response?.data?.message || "Cập nhật thất bại. Vui lòng thử lại.");
@@ -82,6 +84,7 @@ export default function GenderSetup() {
       setLoading(false);
     }
   };
+
 
   return (
     <div

@@ -8,6 +8,7 @@ import {
     Users, Calendar, User, Award, Trash2, Eye, BellOff,
     Sparkles, Filter
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 /* ── TYPE_CONFIG — key UPPERCASE, lookup qua normalizeType() ── */
 const TYPE_CONFIG = {
@@ -76,15 +77,15 @@ const TYPE_CONFIG = {
         actionColor: 'bg-gradient-to-r from-slate-500 to-gray-500 hover:from-slate-600 hover:to-gray-600 text-white shadow-lg'
     },
     SURVEY_INVITATION_SENT: {
-    icon: Mail, gradient: 'from-indigo-500 to-purple-600',
-    bgAccent: 'bg-indigo-50 dark:bg-indigo-950/30',
-    textAccent: 'text-indigo-600 dark:text-indigo-400',
-    borderAccent: 'border-indigo-200 dark:border-indigo-800',
-    avatarBg: 'bg-indigo-100 dark:bg-indigo-900/50',
-    lightGradient: 'bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20',
-    actionColor: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg',
-    label: 'Đã gửi lời mời',
-},
+        icon: Mail, gradient: 'from-indigo-500 to-purple-600',
+        bgAccent: 'bg-indigo-50 dark:bg-indigo-950/30',
+        textAccent: 'text-indigo-600 dark:text-indigo-400',
+        borderAccent: 'border-indigo-200 dark:border-indigo-800',
+        avatarBg: 'bg-indigo-100 dark:bg-indigo-900/50',
+        lightGradient: 'bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20',
+        actionColor: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg',
+        label: 'Đã gửi lời mời',
+    },
 };
 
 /* ─── Helpers ─── */
@@ -188,15 +189,15 @@ const NotificationsPage = () => {
     };
 
     const filterOptions = [
-        { value: 'all',    label: 'Tất cả',   count: notifications.length },
+        { value: 'all', label: 'Tất cả', count: notifications.length },
         { value: 'unread', label: 'Chưa đọc', count: unreadCount },
-        { value: 'read',   label: 'Đã đọc',   count: notifications.length - unreadCount }
+        { value: 'read', label: 'Đã đọc', count: notifications.length - unreadCount }
     ];
 
     const emptyMsg = {
-        all:    { title: 'Chưa có thông báo nào',   sub: 'Các thông báo sẽ xuất hiện khi có hoạt động mới' },
-        unread: { title: 'Bạn đã đọc hết rồi!',     sub: 'Không còn thông báo chưa đọc nào' },
-        read:   { title: 'Chưa đọc thông báo nào',  sub: 'Hãy đọc một số thông báo trước' }
+        all: { title: 'Chưa có thông báo nào', sub: 'Các thông báo sẽ xuất hiện khi có hoạt động mới' },
+        unread: { title: 'Bạn đã đọc hết rồi!', sub: 'Không còn thông báo chưa đọc nào' },
+        read: { title: 'Chưa đọc thông báo nào', sub: 'Hãy đọc một số thông báo trước' }
     };
 
     return (
@@ -240,19 +241,17 @@ const NotificationsPage = () => {
                                 <button
                                     key={opt.value}
                                     onClick={() => setFilter(opt.value)}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        filter === opt.value
+                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${filter === opt.value
                                             ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200/60 dark:ring-slate-600/40'
                                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                    }`}
+                                        }`}
                                 >
                                     {opt.label}
                                     {opt.count > 0 && (
-                                        <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
-                                            filter === opt.value
+                                        <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${filter === opt.value
                                                 ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
                                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                                        }`}>{opt.count}</span>
+                                            }`}>{opt.count}</span>
                                     )}
                                 </button>
                             ))}
@@ -275,24 +274,23 @@ const NotificationsPage = () => {
                             </div>
                         ) : (
                             filtered.map((notification) => {
-                                const config    = getConfig(notification.type);
+                                const config = getConfig(notification.type);
                                 const { icon: Icon } = config;
-                                const isUnread  = !notification.read;
-                                const name      = getPersonName(notification);
-                                const sTitle    = getSurveyTitle(notification);
-                                const endDate   = formatEndDate(notification.data?.surveyEndAt);
-                                const time      = formatTime(notification.createdAt);
-                                const dTitle    = getDisplayTitle(notification);
+                                const isUnread = !notification.read;
+                                const name = getPersonName(notification);
+                                const sTitle = getSurveyTitle(notification);
+                                const endDate = formatEndDate(notification.data?.surveyEndAt);
+                                const time = formatTime(notification.createdAt);
+                                const dTitle = getDisplayTitle(notification);
 
                                 return (
                                     <div
                                         key={notification.id}
                                         onClick={() => handleClick(notification)}
-                                        className={`relative rounded-2xl border transition-all duration-300 cursor-pointer group overflow-hidden ${
-                                            isUnread
+                                        className={`relative rounded-2xl border transition-all duration-300 cursor-pointer group overflow-hidden ${isUnread
                                                 ? `${config.cardBg} border-white/90 dark:border-slate-700/60 shadow-lg ${config.glowColor}`
                                                 : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-white/70 dark:border-slate-700/40 hover:shadow-md hover:bg-white/80 dark:hover:bg-slate-800/80'
-                                        } hover:-translate-y-0.5 active:translate-y-0`}
+                                            } hover:-translate-y-0.5 active:translate-y-0`}
                                     >
                                         {/* Left accent bar */}
                                         <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${config.gradient} rounded-l-2xl`} />
@@ -396,13 +394,14 @@ const NotificationsPage = () => {
                 </div>
             </div>
 
-            {selectedNotification && (
+            {selectedNotification && createPortal(
                 <NotificationDetailModal
                     notification={selectedNotification}
                     onClose={() => setSelectedNotification(null)}
                     onMarkRead={markAsRead}
                     onDelete={deleteNotification}
-                />
+                />,
+                document.body
             )}
         </>
     );

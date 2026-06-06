@@ -1,124 +1,57 @@
-// ─── MySurveysPage.jsx ─────────────────────────────────────────────
-import React, { useEffect, useState, useRef, useCallback } from "react";
+// ─── MySurveysPage.jsx — "Của tôi" ───────────────────────────────────
+// Thiết kế: warm off-white, sidebar-style header, card grid đều.
+// Đã bỏ: RotatingGradient, stats "4 của tôi / 1 công khai".
+// Card: grid auto-fill minmax(240px,1fr), gridAutoRows 260px → đều nhau.
+// ─────────────────────────────────────────────────────────────────────
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Plus, X, FileText, Calendar, Loader2, Inbox, Search,
-  Trash2, Check, Share2, Mail,
-  Lock, Globe, Copy, ExternalLink, Power, PowerOff,
-  Users, ChevronRight, Link as LinkIcon, Send,
-  UserPlus, UserMinus,   ChevronDown, RefreshCw, Edit2,
+  Plus, X, Loader2, Inbox, Search,
+  Check, Share2, Lock, Globe, Copy,
+  ExternalLink, PowerOff, Users,
+  Link as LinkIcon, Send, UserPlus, UserMinus,
+  ChevronDown, RefreshCw, Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSurvey } from "@/providers/SurveyProvider";
 import { SurveyCardHome, ShareModal } from "@/components/survey/SurveyCardHome";
 
-/* ────────────────────────────────────────────────────────────────
-   COLORS
-──────────────────────────────────────────────────────────────── */
+/* ── Palette (warm neutral, kontras jelas) ─────────────────────────── */
 const C = {
-  bg:           "#f5f7fb",
+  bg:           "#f5f4f0",
   surface:      "#ffffff",
-  surfaceHigh:  "#f8fafc",
-  border:       "#dbe2ea",
-  borderHover:  "#c7d2fe",
-  primary:      "#4f6ef7",
-  primaryGrad:  "linear-gradient(135deg,#4f6ef7,#6c7ef7)",
-  primaryDim:   "rgba(79,110,247,0.08)",
-  primaryBorder:"#c7d2fe",
-  text:         "#111827",
-  textSub:      "#64748b",
-  textDim:      "#94a3b8",
-  error:        "#ef4444",
+  surfaceHigh:  "#fafaf8",
+  border:       "#e4e2da",
+  borderHover:  "#c7c2b5",
+  primary:      "#1a1a2e",
+  primaryAccent:"#5046e5",
+  primaryGrad:  "linear-gradient(135deg,#5046e5,#7c6ff5)",
+  primaryDim:   "rgba(80,70,229,0.07)",
+  primaryBorder:"rgba(80,70,229,0.2)",
+  text:         "#1a1a2e",
+  textSub:      "#5c5b70",
+  textDim:      "#9896aa",
+  error:        "#dc2626",
   errorBg:      "#fef2f2",
   errorBorder:  "#fecaca",
-  success:      "#22c55e",
+  success:      "#16a34a",
   successBg:    "#f0fdf4",
   successBorder:"#bbf7d0",
-  warning:      "#f59e0b",
+  warning:      "#d97706",
   warningBg:    "#fffbeb",
   warningBorder:"#fde68a",
-  font:         "'DM Sans', 'Inter', sans-serif",
-  thumbColors:  [
-    "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
-    "conic-gradient(from 0deg at 50% 50%, #a8edea, #fed6e3, #ff9999, #a8edea)",
-    "conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #f093fb, #667eea)",
-    "conic-gradient(from 0deg at 50% 50%, #f5af19, #f12711, #fa709a, #f5af19)",
-    "conic-gradient(from 0deg at 50% 50%, #4facfe, #00f2fe, #43e97b, #4facfe)",
-  ],
+  font:         "'Plus Jakarta Sans', 'DM Sans', sans-serif",
 };
 
-/* ────────────────────────────────────────────────────────────────
-   STATUS
-──────────────────────────────────────────────────────────────── */
+/* ── STATUS ────────────────────────────────────────────────────────── */
 const STATUS_MAP = {
-  ACTIVE:    { label:"Đang mở",  color:C.success, bg:"rgba(34,197,94,.12)" },
-  DRAFT:     { label:"Nháp",     color:C.textSub, bg:"rgba(100,116,139,.12)" },
-  EXPIRED:   { label:"Hết hạn",  color:C.error,   bg:"rgba(239,68,68,.12)" },
-  SCHEDULED: { label:"Lên lịch", color:C.warning, bg:"rgba(245,158,11,.12)" },
-  CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,.12)" },
+  ACTIVE:    { label:"Đang mở",  color:C.success,  bg:"rgba(22,163,74,.1)"    },
+  DRAFT:     { label:"Nháp",     color:C.textSub,  bg:"rgba(92,91,112,.1)"    },
+  EXPIRED:   { label:"Hết hạn",  color:C.error,    bg:"rgba(220,38,38,.1)"    },
+  SCHEDULED: { label:"Lên lịch", color:C.warning,  bg:"rgba(217,119,6,.1)"    },
+  CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,.1)"  },
 };
 
-function RotatingGradient() {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: -1,
-        opacity: 0.12,
-        animation: "rotateGradient 15s linear infinite",
-        background: "conic-gradient(from 0deg at 50% 50%, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #ff6b6b)",
-      }}
-    />
-  );
-}
-
-function GlassmorphCard({ children, style = {}, delay = 0 }) {
-  return (
-    <div
-      style={{
-        background: "rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        border: "1px solid rgba(255, 255, 255, 0.25)",
-        borderRadius: "20px",
-        padding: "24px",
-        animation: `slideInUp 0.8s ease-out ${delay}s both`,
-        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)",
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-12px) rotateX(8deg) rotateZ(2deg)";
-        e.currentTarget.style.boxShadow = "0 20px 60px rgba(31, 38, 135, 0.3), 0 0 40px rgba(255, 107, 107, 0.2)";
-        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0) rotateX(0) rotateZ(0)";
-        e.currentTarget.style.boxShadow = "0 8px 32px rgba(31, 38, 135, 0.15)";
-        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.25)";
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  if (!status) return null;
-  const s = STATUS_MAP[status] || STATUS_MAP.DRAFT;
-  return (
-    <span style={{
-      fontSize:10, fontWeight:700, padding:"3px 8px",
-      borderRadius:999, color:s.color, background:s.bg,
-    }}>
-      {s.label}
-    </span>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
-   MODAL BASE
-──────────────────────────────────────────────────────────────── */
+/* ── Modal Base ──────────────────────────────────────────────────────── */
 function Modal({ open, onClose, title, children, width = 480 }) {
   useEffect(() => {
     if (!open) return;
@@ -128,786 +61,94 @@ function Modal({ open, onClose, title, children, width = 480 }) {
   }, [open, onClose]);
 
   if (!open) return null;
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position:"fixed", inset:0, zIndex:999,
-        background:"rgba(0,0,0,0.35)",
-        display:"flex", alignItems:"center", justifyContent:"center",
-        padding:20,
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background:"#fff", borderRadius:20,
-          border:`1px solid ${C.border}`,
-          boxShadow:"0 20px 60px rgba(0,0,0,0.15)",
-          width:"100%", maxWidth:width,
-          overflow:"hidden",
-        }}
-      >
-        <div style={{
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-          padding:"16px 20px",
-          borderBottom:`1px solid ${C.border}`,
-        }}>
-          <h3 style={{margin:0, fontSize:16, fontWeight:700, color:C.text}}>{title}</h3>
-          <button onClick={onClose} style={{
-            width:30, height:30, borderRadius:8,
-            border:`1px solid ${C.border}`, background:"transparent",
-            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-            color:C.textSub,
-          }}>
-            <X size={15}/>
+    <div onClick={onClose} style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#fff", borderRadius:16, border:`1px solid ${C.border}`, boxShadow:"0 20px 60px rgba(0,0,0,0.12)", width:"100%", maxWidth:width, overflow:"hidden" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:`1px solid ${C.border}` }}>
+          <h3 style={{ margin:0, fontSize:15, fontWeight:700, color:C.text, fontFamily:C.font }}>{title}</h3>
+          <button onClick={onClose} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.textSub }}>
+            <X size={14}/>
           </button>
         </div>
-        <div style={{padding:"20px"}}>
-          {children}
-        </div>
+        <div style={{ padding:"20px", fontFamily:C.font }}>{children}</div>
       </div>
     </div>
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
-   SHARE LINK MODAL
-──────────────────────────────────────────────────────────────── */
+const cancelBtn = {
+  padding:"9px 16px", borderRadius:9, border:`1px solid ${C.border}`,
+  background:"transparent", color:C.textSub,
+  fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+};
+const primaryBtn = (disabled) => ({
+  display:"flex", alignItems:"center", gap:6,
+  padding:"9px 18px", borderRadius:9, border:"none",
+  background: disabled ? C.surfaceHigh : C.primaryGrad,
+  color: disabled ? C.textSub : "#fff",
+  fontSize:13, fontWeight:700,
+  cursor: disabled ? "not-allowed" : "pointer",
+  boxShadow: disabled ? "none" : "0 2px 10px rgba(80,70,229,0.28)",
+  fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
+});
+const inputStyle = {
+  width:"100%", boxSizing:"border-box",
+  border:`1px solid ${C.border}`, borderRadius:9,
+  background:"#fff", color:C.text,
+  fontFamily:C.font, outline:"none",
+  padding:"10px 14px", fontSize:13,
+};
+
+/* ── ShareLinkModal ────────────────────────────────────────────────── */
 function ShareLinkModal({ open, onClose, survey, onShare }) {
-  const [loading,  setLoading]  = useState(false);
+  const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState(null);
-  const [copied,   setCopied]   = useState(false);
+  const [copied, setCopied]   = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
-    try {
-      const url = await onShare(survey.id);
-      if (url) setShareUrl(url);
-    } finally { setLoading(false); }
+    try { const url = await onShare(survey.id); if (url) setShareUrl(url); }
+    finally { setLoading(false); }
   };
-
   const handleCopy = () => {
     if (!shareUrl) return;
     navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
-
-  useEffect(() => {
-    if (!open) { setShareUrl(null); setCopied(false); }
-  }, [open]);
+  useEffect(() => { if (!open) { setShareUrl(null); setCopied(false); } }, [open]);
 
   return (
     <Modal open={open} onClose={onClose} title="Chia sẻ khảo sát">
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-        <div style={{
-          display:"flex", alignItems:"center", gap:12,
-          padding:"14px 16px",
-          background:C.surfaceHigh, borderRadius:12,
-          border:`1px solid ${C.border}`,
-        }}>
-          <div style={{
-            width:40, height:40, borderRadius:10,
-            background:C.primaryDim,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            flexShrink:0,
-          }}>
-            <Share2 size={18} color={C.primary}/>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:C.surfaceHigh, borderRadius:10, border:`1px solid ${C.border}` }}>
+          <div style={{ width:38, height:38, borderRadius:10, background:C.primaryDim, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <Share2 size={17} color={C.primaryAccent}/>
           </div>
           <div>
-            <div style={{fontSize:14, fontWeight:600, color:C.text}}>{survey?.title}</div>
-            <div style={{fontSize:12, color:C.textSub, marginTop:2}}>
-              Tạo link để chia sẻ survey với mọi người
-            </div>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{survey?.title}</div>
+            <div style={{ fontSize:11, color:C.textSub, marginTop:2 }}>Tạo link để chia sẻ với mọi người</div>
           </div>
         </div>
-
         {shareUrl ? (
-          <div style={{display:"flex", flexDirection:"column", gap:10}}>
-            <label style={{fontSize:12, fontWeight:600, color:C.textSub, textTransform:"uppercase", letterSpacing:"0.04em"}}>
-              Link chia sẻ
-            </label>
-            <div style={{
-              display:"flex", alignItems:"center", gap:8,
-              padding:"10px 14px",
-              background:C.surfaceHigh, borderRadius:10,
-              border:`1px solid ${C.border}`,
-            }}>
-              <LinkIcon size={14} color={C.textDim} style={{flexShrink:0}}/>
-              <span style={{
-                flex:1, fontSize:13, color:C.text,
-                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-              }}>
-                {shareUrl}
-              </span>
-              <button onClick={handleCopy} style={{
-                display:"flex", alignItems:"center", gap:5,
-                padding:"5px 10px", borderRadius:7,
-                border:`1px solid ${copied ? C.successBorder : C.border}`,
-                background: copied ? C.successBg : "#fff",
-                color: copied ? C.success : C.textSub,
-                fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0,
-                transition:"all .2s",
-              }}>
-                {copied ? <Check size={12}/> : <Copy size={12}/>}
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:C.surfaceHigh, borderRadius:9, border:`1px solid ${C.border}` }}>
+              <LinkIcon size={13} color={C.textDim} style={{ flexShrink:0 }}/>
+              <span style={{ flex:1, fontSize:12, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{shareUrl}</span>
+              <button onClick={handleCopy} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", borderRadius:7, border:`1px solid ${copied ? C.successBorder : C.border}`, background: copied ? C.successBg : "#fff", color: copied ? C.success : C.textSub, fontSize:12, fontWeight:600, cursor:"pointer" }}>
+                {copied ? <Check size={11}/> : <Copy size={11}/>}
                 {copied ? "Đã sao chép" : "Sao chép"}
               </button>
             </div>
-            <button
-              onClick={() => window.open(shareUrl, "_blank")}
-              style={{
-                display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                padding:"8px 0", borderRadius:10,
-                border:`1px solid ${C.primaryBorder}`,
-                background:C.primaryDim, color:C.primary,
-                fontSize:13, fontWeight:600, cursor:"pointer",
-              }}
-            >
+            <button onClick={() => window.open(shareUrl, "_blank")} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 0", borderRadius:9, border:`1px solid ${C.primaryBorder}`, background:C.primaryDim, color:C.primaryAccent, fontSize:13, fontWeight:600, cursor:"pointer" }}>
               <ExternalLink size={13}/> Mở link
             </button>
           </div>
         ) : (
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            style={{
-              display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-              padding:"12px 0", borderRadius:12,
-              border:"none",
-              background: loading ? C.surfaceHigh : C.primaryGrad,
-              color: loading ? C.textSub : "#fff",
-              fontSize:14, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: loading ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
-            }}
-          >
-            {loading
-              ? <><Loader2 size={16} style={{animation:"spin 1s linear infinite"}}/> Đang tạo link...</>
-              : <><LinkIcon size={16}/> Tạo link chia sẻ</>
-            }
+          <button onClick={handleGenerate} disabled={loading} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 0", borderRadius:10, border:"none", background: loading ? C.surfaceHigh : C.primaryGrad, color: loading ? C.textSub : "#fff", fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? <><Loader2 size={15} style={{ animation:"spin 1s linear infinite" }}/> Đang tạo...</> : <><LinkIcon size={15}/> Tạo link chia sẻ</>}
           </button>
         )}
-      </div>
-    </Modal>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
-   INVITE MODAL (single)
-──────────────────────────────────────────────────────────────── */
-function InviteModal({ open, onClose, survey, onInvite }) {
-  const [emails,  setEmails]  = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState("");
-
-  useEffect(() => {
-    if (!open) { setEmails(""); setSuccess(false); setError(""); }
-  }, [open]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
-    if (list.length === 0) { setError("Vui lòng nhập ít nhất 1 email."); return; }
-    setLoading(true); setError("");
-    try {
-      await Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })));
-      setSuccess(true); setEmails("");
-    } catch { setError("Mời không thành công, vui lòng thử lại."); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title="Mời người tham gia">
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-        <div style={{
-          display:"flex", alignItems:"center", gap:12,
-          padding:"12px 14px",
-          background:C.surfaceHigh, borderRadius:10,
-          border:`1px solid ${C.border}`,
-        }}>
-          <Users size={16} color={C.primary}/>
-          <span style={{fontSize:13, color:C.textSub}}>
-            Mời người dùng tham gia survey <strong style={{color:C.text}}>{survey?.title}</strong>
-          </span>
-        </div>
-
-        {success && (
-          <div style={{
-            display:"flex", alignItems:"center", gap:8,
-            padding:"10px 14px", borderRadius:10,
-            background:C.successBg, border:`1px solid ${C.successBorder}`,
-            fontSize:13, color:C.success, fontWeight:600,
-          }}>
-            <Check size={14}/> Đã gửi lời mời thành công!
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div style={{display:"flex", flexDirection:"column", gap:12}}>
-            <div>
-              <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
-              }}>
-                Địa chỉ email
-              </label>
-              <textarea
-                rows={4}
-                value={emails}
-                onChange={e => { setEmails(e.target.value); setError(""); }}
-                placeholder={"example@email.com\nuser2@email.com\n(mỗi dòng hoặc dấu phẩy)"}
-                style={{
-                  width:"100%", boxSizing:"border-box",
-                  padding:"10px 14px",
-                  background:"#fff", border:`1.5px solid ${error ? C.error : C.border}`,
-                  borderRadius:10, color:C.text, fontSize:13,
-                  fontFamily:C.font, outline:"none", resize:"vertical",
-                  lineHeight:1.6,
-                }}
-                onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = "0 0 0 3px rgba(79,110,247,0.1)"; }}
-                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = "none"; }}
-              />
-            </div>
-
-            {error && (
-              <div style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"8px 12px", borderRadius:8,
-                background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-                fontSize:13, color:C.error,
-              }}>
-                <X size={13}/> {error}
-              </div>
-            )}
-
-            <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
-              <button type="submit" disabled={loading} style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"9px 18px", borderRadius:10,
-                border:"none",
-                background: loading ? C.surfaceHigh : C.primaryGrad,
-                color: loading ? C.textSub : "#fff",
-                fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: loading ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
-              }}>
-                {loading
-                  ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
-                  : <><Send size={13}/> Gửi lời mời</>
-                }
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </Modal>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
-   BULK INVITE MODAL
-──────────────────────────────────────────────────────────────── */
-function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
-  const [emails,   setEmails]   = useState("");
-  const [role,     setRole]     = useState("viewer");
-  const [loading,  setLoading]  = useState(false);
-  const [success,  setSuccess]  = useState(null);
-  const [error,    setError]    = useState("");
-
-  useEffect(() => {
-    if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("viewer"); }
-  }, [open]);
-
-  const parseEmails = () =>
-    emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const list = parseEmails();
-    if (list.length === 0) { setError("Vui lòng nhập ít nhất 1 email."); return; }
-    setLoading(true); setError("");
-    try {
-      const res = await onBulkInvite(survey.id, { emails: list, role });
-      setSuccess({
-        sent:   res?.sent   ?? list.length,
-        failed: res?.failed ?? 0,
-      });
-      setEmails("");
-    } catch { setError("Bulk invite thất bại, vui lòng thử lại."); }
-    finally { setLoading(false); }
-  };
-
-  const emailCount = parseEmails().length;
-
-  return (
-    <Modal open={open} onClose={onClose} title="Mời hàng loạt" width={520}>
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-
-        <div style={{
-          display:"flex", alignItems:"center", gap:12,
-          padding:"12px 14px",
-          background:"linear-gradient(135deg,rgba(79,110,247,0.06),rgba(108,126,247,0.06))",
-          borderRadius:10, border:`1px solid ${C.primaryBorder}`,
-        }}>
-          <div style={{
-            width:38, height:38, borderRadius:10,
-            background:C.primaryDim,
-            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-          }}>
-            <UserPlus size={18} color={C.primary}/>
-          </div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13, fontWeight:600, color:C.text}}>{survey?.title}</div>
-            <div style={{fontSize:12, color:C.textSub, marginTop:2}}>
-              Nhập nhiều email cùng lúc để mời hàng loạt
-            </div>
-          </div>
-          {emailCount > 0 && (
-            <div style={{
-              padding:"4px 10px", borderRadius:999,
-              background:C.primaryDim, color:C.primary,
-              fontSize:12, fontWeight:700, flexShrink:0,
-            }}>
-              {emailCount} email
-            </div>
-          )}
-        </div>
-
-        {success && (
-          <div style={{
-            padding:"12px 14px", borderRadius:10,
-            background:C.successBg, border:`1px solid ${C.successBorder}`,
-          }}>
-            <div style={{display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:600, color:C.success}}>
-              <Check size={14}/> Đã gửi lời mời hàng loạt!
-            </div>
-            <div style={{display:"flex", gap:16, marginTop:8}}>
-              <div style={{fontSize:12, color:C.textSub}}>
-                ✅ Thành công: <strong style={{color:C.success}}>{success.sent}</strong>
-              </div>
-              {success.failed > 0 && (
-                <div style={{fontSize:12, color:C.textSub}}>
-                  ❌ Thất bại: <strong style={{color:C.error}}>{success.failed}</strong>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div style={{display:"flex", flexDirection:"column", gap:12}}>
-
-            <div>
-              <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
-              }}>
-                Vai trò
-              </label>
-              <div style={{display:"flex", gap:8}}>
-                {[
-                  { value:"viewer",      label:"👁️ Viewer",      desc:"Chỉ xem" },
-                  { value:"respondent",  label:"✏️ Respondent",  desc:"Trả lời survey" },
-                  { value:"editor",      label:"🛠️ Editor",      desc:"Chỉnh sửa" },
-                ].map(r => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => setRole(r.value)}
-                    style={{
-                      flex:1, padding:"8px 10px", borderRadius:10,
-                      border:`1.5px solid ${role === r.value ? C.primary : C.border}`,
-                      background: role === r.value ? C.primaryDim : "#fff",
-                      cursor:"pointer", textAlign:"center",
-                      transition:"all .15s",
-                    }}
-                  >
-                    <div style={{fontSize:12, fontWeight:700, color: role === r.value ? C.primary : C.text}}>
-                      {r.label}
-                    </div>
-                    <div style={{fontSize:11, color:C.textDim, marginTop:2}}>{r.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label style={{
-                display:"block", fontSize:12, fontWeight:600,
-                color:C.textSub, textTransform:"uppercase",
-                letterSpacing:"0.04em", marginBottom:6,
-              }}>
-                Danh sách email
-              </label>
-              <textarea
-                rows={6}
-                value={emails}
-                onChange={e => { setEmails(e.target.value); setError(""); }}
-                placeholder={"user1@email.com\nuser2@email.com, user3@email.com\nuser4@email.com;user5@email.com\n\n(phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng)"}
-                style={{
-                  width:"100%", boxSizing:"border-box",
-                  padding:"10px 14px",
-                  background:"#fff", border:`1.5px solid ${error ? C.error : C.border}`,
-                  borderRadius:10, color:C.text, fontSize:13,
-                  fontFamily:C.font, outline:"none", resize:"vertical",
-                  lineHeight:1.7,
-                }}
-                onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = "0 0 0 3px rgba(79,110,247,0.1)"; }}
-                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = "none"; }}
-              />
-            </div>
-
-            {error && (
-              <div style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"8px 12px", borderRadius:8,
-                background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-                fontSize:13, color:C.error,
-              }}>
-                <X size={13}/> {error}
-              </div>
-            )}
-
-            <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
-              <button type="submit" disabled={loading || emailCount === 0} style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"9px 18px", borderRadius:10,
-                border:"none",
-                background: (loading || emailCount === 0) ? C.surfaceHigh : C.primaryGrad,
-                color: (loading || emailCount === 0) ? C.textSub : "#fff",
-                fontSize:13, fontWeight:700,
-                cursor: (loading || emailCount === 0) ? "not-allowed" : "pointer",
-                boxShadow: (loading || emailCount === 0) ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
-              }}>
-                {loading
-                  ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
-                  : <><UserPlus size={13}/> Mời {emailCount > 0 ? `${emailCount} người` : "hàng loạt"}</>
-                }
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </Modal>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
-   PARTICIPANTS MODAL
-   API response: { count: number, participants: [{ participant_id, id, email, role }] }
-──────────────────────────────────────────────────────────────── */
-function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
-  const [participants, setParticipants] = useState([]);
-  const [count,        setCount]        = useState(0);
-  const [loading,      setLoading]      = useState(false);
-  const [deleting,     setDeleting]     = useState(null);
-  const [search,       setSearch]       = useState("");
-  const [confirmPid,   setConfirmPid]   = useState(null);
-  const [error,        setError]        = useState("");
-
-  const load = useCallback(async () => {
-  if (!survey?.id) return;
-  setLoading(true);
-  setError("");
-  try {
-    const res = await onGetParticipants(survey.id, {});
-    // Provider giờ trả về { count, participants }
-    const list = res?.participants ?? [];
-    const total = res?.count ?? list.length;
-    setParticipants(list);
-    setCount(total);
-  } catch {
-    setError("Không thể tải danh sách người tham gia.");
-  } finally {
-    setLoading(false);
-  }
-}, [survey?.id, onGetParticipants]);
-
-  useEffect(() => {
-  if (open) {
-    load();
-    setSearch("");
-    setConfirmPid(null);
-    setError("");
-  } else {
-    setParticipants([]);
-    setCount(0);
-  }
-}, [open, load]); // ← thay survey?.id bằng load (vì load đã dep vào survey?.id)
-
-  const handleDelete = async (participantId) => {
-    setDeleting(participantId);
-    try {
-      // Dùng participant_id để xoá
-      await onDeleteParticipant(survey.id, participantId);
-      setParticipants(prev => prev.filter(p => p.participant_id !== participantId));
-      setCount(prev => Math.max(0, prev - 1));
-      setConfirmPid(null);
-    } catch {
-      // giữ nguyên nếu lỗi
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  const filtered = participants.filter(p => {
-    const q = search.toLowerCase();
-    return (
-      p.email?.toLowerCase().includes(q) ||
-      p.name?.toLowerCase().includes(q) ||
-      p.role?.toLowerCase().includes(q)
-    );
-  });
-
-  const getInitials = (name, email) => {
-    if (name) return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-    return (email || "?")[0].toUpperCase();
-  };
-
-  const AVATAR_COLORS = [
-    { bg:"#dbeafe", color:"#1d4ed8" },
-    { bg:"#dcfce7", color:"#15803d" },
-    { bg:"#fce7f3", color:"#be185d" },
-    { bg:"#fef3c7", color:"#92400e" },
-    { bg:"#ede9fe", color:"#6d28d9" },
-  ];
-
-  const ROLE_STYLE = {
-    viewer:     { color:"#1d4ed8", bg:"#eff6ff", border:"#bfdbfe" },
-    respondent: { color:"#059669", bg:"#ecfdf5", border:"#a7f3d0" },
-    editor:     { color:"#7c3aed", bg:"#f5f3ff", border:"#ddd6fe" },
-  };
-
-  const getRoleStyle = (role) =>
-    ROLE_STYLE[role?.toLowerCase()] ?? { color:C.primary, bg:C.primaryDim, border:C.primaryBorder };
-
-  return (
-    <Modal open={open} onClose={onClose} title="Quản lý người tham gia" width={560}>
-      <div style={{display:"flex", flexDirection:"column", gap:14}}>
-
-        {/* Stats row */}
-        <div style={{display:"flex", gap:10}}>
-          <div style={{
-            flex:1, padding:"12px 14px", borderRadius:12,
-            background:C.surfaceHigh, border:`1px solid ${C.border}`,
-            display:"flex", alignItems:"center", gap:10,
-          }}>
-            <div style={{
-              width:36, height:36, borderRadius:9,
-              background:C.primaryDim,
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
-              <Users size={16} color={C.primary}/>
-            </div>
-            <div>
-              <div style={{fontSize:22, fontWeight:800, color:C.text, lineHeight:1}}>{count}</div>
-              <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Tổng người tham gia</div>
-            </div>
-          </div>
-          <button
-            onClick={load}
-            disabled={loading}
-            style={{
-              padding:"0 14px", borderRadius:12,
-              border:`1px solid ${C.border}`, background:"#fff",
-              cursor: loading ? "not-allowed" : "pointer",
-              display:"flex", alignItems:"center", gap:6,
-              fontSize:12, fontWeight:600, color:C.textSub,
-              flexShrink:0,
-            }}
-          >
-            <RefreshCw size={14} style={loading ? {animation:"spin 1s linear infinite"} : {}}/>
-            Tải lại
-          </button>
-        </div>
-
-        {/* Error */}
-        {error && !loading && (
-          <div style={{
-            display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"10px 14px", borderRadius:10,
-            background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-          }}>
-            <span style={{fontSize:13, color:C.error}}>{error}</span>
-            <button onClick={load} style={{
-              padding:"4px 10px", borderRadius:6, fontSize:12, fontWeight:700,
-              border:`1px solid ${C.errorBorder}`, background:"#fff",
-              color:C.error, cursor:"pointer",
-            }}>Thử lại</button>
-          </div>
-        )}
-
-        {/* Search */}
-        <div style={{
-          display:"flex", alignItems:"center", gap:8,
-          padding:"8px 12px",
-          background:"#fff", border:`1px solid ${C.border}`,
-          borderRadius:10,
-        }}>
-          <Search size={14} color={C.textDim}/>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm theo tên, email hoặc vai trò..."
-            style={{flex:1, border:"none", outline:"none", fontSize:13, fontFamily:C.font, color:C.text, background:"transparent"}}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
-              <X size={13}/>
-            </button>
-          )}
-        </div>
-
-        {/* List */}
-        <div style={{
-          border:`1px solid ${C.border}`, borderRadius:12,
-          overflow:"hidden", maxHeight:360, overflowY:"auto",
-        }}>
-          {loading ? (
-            <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 20px", gap:12}}>
-              <Loader2 size={28} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
-              <span style={{fontSize:13, color:C.textSub, fontFamily:C.font}}>Đang tải danh sách...</span>
-            </div>
-          ) : filtered.length === 0 && !error ? (
-            <div style={{textAlign:"center", padding:"40px 20px", color:C.textSub}}>
-              <Users size={32} color={C.textDim} style={{marginBottom:10}}/>
-              <div style={{fontSize:13, fontWeight:600, color:C.text}}>
-                {search ? `Không tìm thấy "${search}"` : "Chưa có người tham gia"}
-              </div>
-              {!search && (
-                <div style={{fontSize:12, color:C.textDim, marginTop:4}}>
-                  Dùng "Mời hàng loạt" để thêm người tham gia
-                </div>
-              )}
-            </div>
-          ) : (
-            filtered.map((p, i) => {
-              const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
-              // participant_id dùng để xoá; id là user id
-              const deleteKey    = p.participant_id ?? p.id;
-              const isConfirming = confirmPid === deleteKey;
-              const isDeleting   = deleting === deleteKey;
-              const roleStyle    = getRoleStyle(p.role);
-
-              return (
-                <div
-                  key={p.participant_id ?? p.id ?? i}
-                  style={{
-                    display:"flex", alignItems:"center", gap:12,
-                    padding:"11px 14px",
-                    borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none",
-                    background: isConfirming ? C.errorBg : "#fff",
-                    transition:"background .15s",
-                  }}
-                >
-                  {/* Avatar */}
-                  <div style={{
-                    width:36, height:36, borderRadius:"50%",
-                    background:av.bg, color:av.color,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:12, fontWeight:700, flexShrink:0,
-                    letterSpacing:"0.02em",
-                  }}>
-                    {getInitials(p.name, p.email)}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{flex:1, minWidth:0}}>
-                    <div style={{fontSize:13, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                      {p.name || p.email}
-                    </div>
-                    {p.name && (
-                      <div style={{fontSize:12, color:C.textSub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                        {p.email}
-                      </div>
-                    )}
-                    {!p.name && (
-                      <div style={{fontSize:11, color:C.textDim}}>
-                        ID: {p.id ? p.id.slice(0, 8) + "…" : "—"}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Role badge */}
-                  {p.role && (
-                    <span style={{
-                      fontSize:11, fontWeight:700, padding:"3px 9px",
-                      borderRadius:999, flexShrink:0,
-                      color:roleStyle.color,
-                      background:roleStyle.bg,
-                      border:`1px solid ${roleStyle.border}`,
-                    }}>
-                      {p.role === "ADMIN" ? "Quản trị" : p.role === "owner" ? "Chủ sở hữu" : p.role === "editor" ? "Biên tập" : p.role === "viewer" ? "Người xem" : p.role === "respondent" ? "Người trả lời" : p.role}
-                    </span>
-                  )}
-
-                  {/* Delete actions */}
-                  {isConfirming ? (
-                    <div style={{display:"flex", gap:6, flexShrink:0}}>
-                      <button
-                        onClick={() => setConfirmPid(null)}
-                        style={{
-                          padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:600,
-                          border:`1px solid ${C.border}`, background:"#fff",
-                          color:C.textSub, cursor:"pointer",
-                        }}
-                      >
-                        Huỷ
-                      </button>
-                      <button
-                        onClick={() => handleDelete(deleteKey)}
-                        disabled={isDeleting}
-                        style={{
-                          display:"flex", alignItems:"center", gap:5,
-                          padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:700,
-                          border:"none",
-                          background: isDeleting ? C.surfaceHigh : C.error,
-                          color: isDeleting ? C.textSub : "#fff",
-                          cursor: isDeleting ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {isDeleting
-                          ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>
-                          : <Trash2 size={11}/>
-                        }
-                        Xoá
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmPid(deleteKey)}
-                      title="Xoá khỏi danh sách"
-                      style={{
-                        width:30, height:30, borderRadius:8, flexShrink:0,
-                        border:`1px solid ${C.border}`, background:"transparent",
-                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                        color:C.textDim, transition:"all .15s",
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = C.errorBorder; e.currentTarget.style.color = C.error; e.currentTarget.style.background = C.errorBg; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; e.currentTarget.style.background = "transparent"; }}
-                    >
-                      <UserMinus size={13}/>
-                    </button>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Footer */}
-        {!loading && !error && filtered.length > 0 && search && (
-          <div style={{fontSize:12, color:C.textSub, textAlign:"center"}}>
-            Hiển thị {filtered.length} / {participants.length} người
-          </div>
-        )}
-
-        <div style={{display:"flex", justifyContent:"flex-end"}}>
+        <div style={{ display:"flex", justifyContent:"flex-end" }}>
           <button onClick={onClose} style={cancelBtn}>Đóng</button>
         </div>
       </div>
@@ -915,50 +156,243 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
-   PUBLISH CONFIRM MODAL
-──────────────────────────────────────────────────────────────── */
+/* ── InviteModal ───────────────────────────────────────────────────── */
+function InviteModal({ open, onClose, survey, onInvite }) {
+  const [emails, setEmails]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError]     = useState("");
+  useEffect(() => { if (!open) { setEmails(""); setSuccess(false); setError(""); } }, [open]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+    if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError("");
+    try {
+      await Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })));
+      setSuccess(true); setEmails("");
+    } catch { setError("Mời không thành công."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Mời người tham gia">
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        {success && <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:9, background:C.successBg, border:`1px solid ${C.successBorder}`, fontSize:13, color:C.success, fontWeight:600 }}><Check size={13}/> Đã gửi lời mời!</div>}
+        <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          <textarea rows={4} value={emails} onChange={e => { setEmails(e.target.value); setError(""); }} placeholder={"example@email.com\nuser2@email.com"} style={{ ...inputStyle, resize:"vertical" }}/>
+          {error && <div style={{ fontSize:12, color:C.error }}>{error}</div>}
+          <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
+            <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
+            <button type="submit" disabled={loading} style={primaryBtn(loading)}>
+              {loading ? <><Loader2 size={13} style={{ animation:"spin 1s linear infinite" }}/> Đang gửi...</> : <><Send size={13}/> Gửi lời mời</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+}
+
+/* ── BulkInviteModal ───────────────────────────────────────────────── */
+function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
+  const [emails, setEmails]   = useState("");
+  const [role, setRole]       = useState("viewer");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError]     = useState("");
+  useEffect(() => { if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("viewer"); } }, [open]);
+
+  const parseEmails = () => emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const list = parseEmails();
+    if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await onBulkInvite(survey.id, { emails: list, role });
+      setSuccess({ sent: res?.sent ?? list.length, failed: res?.failed ?? 0 });
+      setEmails("");
+    } catch { setError("Bulk invite thất bại."); }
+    finally { setLoading(false); }
+  };
+
+  const emailCount = parseEmails().length;
+  return (
+    <Modal open={open} onClose={onClose} title="Mời hàng loạt" width={520}>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        {success && (
+          <div style={{ padding:"12px 14px", borderRadius:10, background:C.successBg, border:`1px solid ${C.successBorder}` }}>
+            <div style={{ fontSize:13, fontWeight:600, color:C.success, display:"flex", alignItems:"center", gap:6 }}><Check size={13}/> Đã gửi lời mời!</div>
+            <div style={{ fontSize:12, color:C.textSub, marginTop:6 }}>✅ {success.sent} thành công{success.failed > 0 ? ` · ❌ ${success.failed} thất bại` : ""}</div>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ display:"flex", gap:6 }}>
+            {[{ value:"viewer", label:"Viewer" }, { value:"respondent", label:"Respondent" }, { value:"editor", label:"Editor" }].map(r => (
+              <button key={r.value} type="button" onClick={() => setRole(r.value)} style={{ flex:1, padding:"8px 6px", borderRadius:9, border:`1.5px solid ${role === r.value ? C.primaryAccent : C.border}`, background: role === r.value ? C.primaryDim : "#fff", cursor:"pointer", fontSize:12, fontWeight:700, color: role === r.value ? C.primaryAccent : C.text }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <textarea rows={5} value={emails} onChange={e => { setEmails(e.target.value); setError(""); }} placeholder={"user1@email.com\nuser2@email.com, user3@email.com"} style={{ ...inputStyle, resize:"vertical" }}/>
+          {error && <div style={{ fontSize:12, color:C.error }}>{error}</div>}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            {emailCount > 0 && <span style={{ fontSize:12, color:C.textSub }}>{emailCount} email</span>}
+            <div style={{ display:"flex", gap:8, marginLeft:"auto" }}>
+              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
+              <button type="submit" disabled={loading || !emailCount} style={primaryBtn(loading || !emailCount)}>
+                {loading ? <><Loader2 size={13} style={{ animation:"spin 1s linear infinite" }}/> Đang gửi...</> : <><UserPlus size={13}/> Mời {emailCount > 0 ? `${emailCount} người` : ""}</>}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+}
+
+/* ── ParticipantsModal ─────────────────────────────────────────────── */
+function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteParticipant }) {
+  const [participants, setParticipants] = useState([]);
+  const [count, setCount]               = useState(0);
+  const [loading, setLoading]           = useState(false);
+  const [deleting, setDeleting]         = useState(null);
+  const [search, setSearch]             = useState("");
+  const [confirmPid, setConfirmPid]     = useState(null);
+  const [error, setError]               = useState("");
+
+  const load = useCallback(async () => {
+    if (!survey?.id) return;
+    setLoading(true); setError("");
+    try {
+      const res  = await onGetParticipants(survey.id, {});
+      const list = res?.participants ?? [];
+      setParticipants(list); setCount(res?.count ?? list.length);
+    } catch { setError("Không thể tải danh sách."); }
+    finally { setLoading(false); }
+  }, [survey?.id, onGetParticipants]);
+
+  useEffect(() => {
+    if (open) { load(); setSearch(""); setConfirmPid(null); setError(""); }
+    else { setParticipants([]); setCount(0); }
+  }, [open, load]);
+
+  const handleDelete = async (pid) => {
+    setDeleting(pid);
+    try {
+      await onDeleteParticipant(survey.id, pid);
+      setParticipants(p => p.filter(x => (x.participant_id ?? x.id) !== pid));
+      setCount(p => Math.max(0, p - 1));
+      setConfirmPid(null);
+    } finally { setDeleting(null); }
+  };
+
+  const filtered = participants.filter(p => {
+    const q = search.toLowerCase();
+    return p.email?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q);
+  });
+
+  const AV = [
+    { bg:"#dbeafe", color:"#1d4ed8" },
+    { bg:"#dcfce7", color:"#15803d" },
+    { bg:"#fce7f3", color:"#be185d" },
+    { bg:"#fef3c7", color:"#92400e" },
+    { bg:"#ede9fe", color:"#6d28d9" },
+  ];
+  const initials = (name, email) => name ? name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (email || "?")[0].toUpperCase();
+
+  return (
+    <Modal open={open} onClose={onClose} title="Người tham gia" width={540}>
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+        <div style={{ display:"flex", gap:8 }}>
+          <div style={{ flex:1, padding:"12px 14px", borderRadius:10, background:C.surfaceHigh, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:10 }}>
+            <Users size={16} color={C.primaryAccent}/>
+            <div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.text, lineHeight:1 }}>{count}</div>
+              <div style={{ fontSize:11, color:C.textSub, marginTop:2 }}>Tổng người tham gia</div>
+            </div>
+          </div>
+          <button onClick={load} disabled={loading} style={{ padding:"0 14px", borderRadius:10, border:`1px solid ${C.border}`, background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:600, color:C.textSub }}>
+            <RefreshCw size={13} style={loading ? { animation:"spin 1s linear infinite" } : {}}/>
+          </button>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:"#fff", border:`1px solid ${C.border}`, borderRadius:9 }}>
+          <Search size={13} color={C.textDim}/>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên, email..." style={{ flex:1, border:"none", outline:"none", fontSize:12, fontFamily:C.font, color:C.text, background:"transparent" }}/>
+          {search && <button onClick={() => setSearch("")} style={{ background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0 }}><X size={12}/></button>}
+        </div>
+        <div style={{ border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden", maxHeight:340, overflowY:"auto" }}>
+          {loading ? (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"40px", gap:10 }}>
+              <Loader2 size={22} style={{ animation:"spin 1s linear infinite" }} color={C.primaryAccent}/>
+              <span style={{ fontSize:13, color:C.textSub }}>Đang tải...</span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"36px", color:C.textSub }}>
+              <Users size={28} color={C.textDim} style={{ marginBottom:8 }}/>
+              <div style={{ fontSize:13, fontWeight:600 }}>{search ? `Không tìm thấy "${search}"` : "Chưa có người tham gia"}</div>
+            </div>
+          ) : filtered.map((p, i) => {
+            const av = AV[i % AV.length];
+            const key = p.participant_id ?? p.id;
+            const isConfirm = confirmPid === key;
+            const isDel     = deleting === key;
+            return (
+              <div key={key ?? i} style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 14px", borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none", background: isConfirm ? C.errorBg : "#fff" }}>
+                <div style={{ width:34, height:34, borderRadius:"50%", background:av.bg, color:av.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, flexShrink:0 }}>{initials(p.name, p.email)}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name || p.email}</div>
+                  {p.name && <div style={{ fontSize:11, color:C.textSub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.email}</div>}
+                </div>
+                {isConfirm ? (
+                  <div style={{ display:"flex", gap:5, flexShrink:0 }}>
+                    <button onClick={() => setConfirmPid(null)} style={{ padding:"4px 8px", borderRadius:6, fontSize:11, fontWeight:600, border:`1px solid ${C.border}`, background:"#fff", color:C.textSub, cursor:"pointer" }}>Huỷ</button>
+                    <button onClick={() => handleDelete(key)} disabled={isDel} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 9px", borderRadius:6, fontSize:11, fontWeight:700, border:"none", background: isDel ? C.surfaceHigh : C.error, color: isDel ? C.textSub : "#fff", cursor: isDel ? "not-allowed" : "pointer" }}>
+                      {isDel ? <Loader2 size={10} style={{ animation:"spin 1s linear infinite" }}/> : <Trash2 size={10}/>} Xoá
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmPid(key)} style={{ width:28, height:28, borderRadius:7, border:`1px solid ${C.border}`, background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.textDim }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="#fecaca"; e.currentTarget.style.color=C.error; e.currentTarget.style.background=C.errorBg; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=C.border; e.currentTarget.style.color=C.textDim; e.currentTarget.style.background="transparent"; }}>
+                    <UserMinus size={12}/>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display:"flex", justifyContent:"flex-end" }}>
+          <button onClick={onClose} style={cancelBtn}>Đóng</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ── PublishModal ──────────────────────────────────────────────────── */
 function PublishModal({ open, onClose, survey, onPublish }) {
   const [loading, setLoading] = useState(false);
-  const isPublished = survey?.is_published;
-
+  const isPub = survey?.is_published;
   const handleConfirm = async () => {
     setLoading(true);
-    try {
-      await onPublish(survey.id, { is_published: !isPublished });
-      onClose();
-    } finally { setLoading(false); }
+    try { await onPublish(survey.id, { is_published: !isPub }); onClose(); }
+    finally { setLoading(false); }
   };
-
   return (
-    <Modal open={open} onClose={onClose} title={isPublished ? "Ẩn khảo sát" : "Công khai khảo sát"} width={400}>
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-        <div style={{
-          padding:"16px", borderRadius:12,
-          background: isPublished ? C.warningBg : C.primaryDim,
-          border:`1px solid ${isPublished ? C.warningBorder : C.primaryBorder}`,
-          textAlign:"center",
-        }}>
-          <div style={{fontSize:32, marginBottom:8}}>{isPublished ? "🔒" : "🌐"}</div>
-          <div style={{fontSize:14, fontWeight:600, color:C.text}}>
-            {isPublished
-              ? "Khảo sát sẽ bị ẩn và không còn nhận được câu trả lời mới."
-              : "Khảo sát sẽ được công khai và có thể nhận câu trả lời."}
-          </div>
+    <Modal open={open} onClose={onClose} title={isPub ? "Ẩn khảo sát" : "Công khai khảo sát"} width={400}>
+      <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+        <div style={{ padding:16, borderRadius:10, background: isPub ? C.warningBg : C.primaryDim, border:`1px solid ${isPub ? C.warningBorder : C.primaryBorder}`, textAlign:"center" }}>
+          <div style={{ fontSize:28, marginBottom:8 }}>{isPub ? "🔒" : "🌐"}</div>
+          <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{isPub ? "Khảo sát sẽ bị ẩn và không nhận thêm câu trả lời." : "Khảo sát sẽ được công khai."}</div>
         </div>
-        <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
+        <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
           <button onClick={onClose} style={cancelBtn}>Huỷ</button>
-          <button onClick={handleConfirm} disabled={loading} style={{
-            display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10, border:"none",
-            background: loading ? C.surfaceHigh : isPublished ? C.warning : C.primaryGrad,
-            color: loading ? C.textSub : "#fff",
-            fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-          }}>
-            {loading
-              ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>
-              : isPublished ? <><PowerOff size={13}/> Ẩn survey</> : <><Globe size={13}/> Công khai</>
-            }
+          <button onClick={handleConfirm} disabled={loading} style={primaryBtn(loading)}>
+            {loading ? <><Loader2 size={13} style={{ animation:"spin 1s linear infinite" }}/> Đang xử lý...</> : isPub ? <><PowerOff size={13}/> Ẩn</> : <><Globe size={13}/> Công khai</>}
           </button>
         </div>
       </div>
@@ -966,68 +400,15 @@ function PublishModal({ open, onClose, survey, onPublish }) {
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
-   CLOSE CONFIRM MODAL
-──────────────────────────────────────────────────────────────── */
-function CloseModal({ open, onClose, survey, onCloseSurvey }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleConfirm = async () => {
-    setLoading(true);
-    try {
-      await onCloseSurvey(survey.id);
-      onClose();
-    } finally { setLoading(false); }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title="Đóng khảo sát" width={400}>
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-        <div style={{
-          padding:"16px", borderRadius:12,
-          background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-          textAlign:"center",
-        }}>
-          <div style={{fontSize:32, marginBottom:8}}>⛔</div>
-          <div style={{fontSize:14, fontWeight:600, color:C.text}}>
-            Sau khi đóng, survey sẽ không nhận thêm câu trả lời.
-          </div>
-          <div style={{fontSize:12, color:C.textSub, marginTop:6}}>
-            Hành động này không thể hoàn tác.
-          </div>
-        </div>
-        <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-          <button onClick={onClose} style={cancelBtn}>Huỷ</button>
-          <button onClick={handleConfirm} disabled={loading} style={{
-            display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10, border:"none",
-            background: loading ? C.surfaceHigh : C.error,
-            color: loading ? C.textSub : "#fff",
-            fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-          }}>
-            {loading
-              ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang đóng...</>
-              : <><PowerOff size={13}/> Đóng survey</>
-            }
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
-   EXTEND MODAL
-──────────────────────────────────────────────────────────────── */
+/* ── ExtendModal ───────────────────────────────────────────────────── */
 function ExtendModal({ open, onClose, survey, onExtend }) {
   const [submitting, setSubmitting] = useState(false);
-  const [newDate, setNewDate] = useState("");
-  const [error, setError] = useState("");
+  const [newDate, setNewDate]       = useState("");
+  const [error, setError]           = useState("");
 
   useEffect(() => {
     if (open && survey?.end_at) {
-      const d = new Date(survey.end_at);
-      d.setDate(d.getDate() + 7);
+      const d = new Date(survey.end_at); d.setDate(d.getDate() + 7);
       setNewDate(d.toISOString().slice(0, 16));
     }
     setError("");
@@ -1035,138 +416,93 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
 
   const handleExtend = async () => {
     if (!newDate) { setError("Vui lòng chọn ngày"); return; }
-    const selected = new Date(newDate);
-    if (selected <= new Date()) { setError("Ngày phải lớn hơn hiện tại"); return; }
+    if (new Date(newDate) <= new Date()) { setError("Ngày phải lớn hơn hiện tại"); return; }
     setSubmitting(true);
-    try {
-      await onExtend(survey.id, newDate);
-      onClose();
-    } catch {
-      setError("Gia hạn thất bại");
-    } finally {
-      setSubmitting(false);
-    }
+    try { await onExtend(survey.id, newDate); onClose(); }
+    catch { setError("Gia hạn thất bại"); }
+    finally { setSubmitting(false); }
   };
 
   if (!open) return null;
   return (
-    <Modal open={open} onClose={onClose}>
-      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-        <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,#f59e0b,#fbbf24)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 4px 14px rgba(245,158,11,0.3)" }}>
-          <RefreshCw size={20} color="#fff"/>
+    <Modal open={open} onClose={onClose} title="Gia hạn khảo sát" width={420}>
+      <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+        <div style={{ padding:"12px 14px", borderRadius:10, background:C.errorBg, border:`1px solid ${C.errorBorder}` }}>
+          <div style={{ fontSize:13, fontWeight:600, color:C.error }}>Khảo sát đã hết hạn và không nhận phản hồi mới.</div>
+          {survey?.end_at && <div style={{ fontSize:12, color:C.error, marginTop:4 }}>Ngày kết thúc: {new Date(survey.end_at).toLocaleDateString("vi-VN", { day:"2-digit", month:"long", year:"numeric" })}</div>}
         </div>
         <div>
-          <h3 style={{ margin:0, fontSize:17, fontWeight:700, color:C.text }}>Khảo sát đã hết hạn</h3>
-          <p style={{ margin:"4px 0 0", fontSize:12, color:C.textSub, maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{survey?.title}</p>
+          <label style={{ display:"block", fontSize:12, fontWeight:600, color:C.textSub, marginBottom:6 }}>Ngày kết thúc mới</label>
+          <input type="datetime-local" value={newDate} onChange={e => { setNewDate(e.target.value); setError(""); }} min={new Date().toISOString().slice(0, 16)} style={{ ...inputStyle, borderRadius:9 }}/>
+          {error && <p style={{ margin:"6px 0 0", fontSize:12, color:C.error }}>{error}</p>}
         </div>
-      </div>
-
-      <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)", marginBottom:20 }}>
-        <p style={{ margin:0, fontSize:13, color:"#dc2626", fontWeight:600 }}>
-          Khảo sát này đã hết hạn và không thể nhận phản hồi mới.
-        </p>
-        {survey?.end_at && (
-          <p style={{ margin:"6px 0 0", fontSize:12, color:"#ef4444" }}>
-            Ngày kết thúc: {new Date(survey.end_at).toLocaleDateString("vi-VN", { day:"2-digit", month:"long", year:"numeric" })}
-          </p>
-        )}
-      </div>
-
-      <div style={{ marginBottom:20 }}>
-        <label style={{ display:"block", fontSize:13, fontWeight:600, color:C.text, marginBottom:6 }}>Ngày kết thúc mới</label>
-        <input
-          type="datetime-local"
-          value={newDate}
-          onChange={e => { setNewDate(e.target.value); setError(""); }}
-          min={new Date().toISOString().slice(0, 16)}
-          style={{
-            width:"100%", padding:"10px 14px", borderRadius:10,
-            border:`1.5px solid ${error ? C.errorBorder : C.border}`,
-            background:C.surface, fontSize:14, fontFamily:C.font, color:C.text,
-            outline:"none",
-          }}
-        />
-        {error && <p style={{ margin:"6px 0 0", fontSize:12, color:C.error }}>{error}</p>}
-      </div>
-
-      <div style={{ display:"flex", gap:10 }}>
-        <button onClick={onClose} style={{ ...cancelBtn, flex:1 }}>
-          Đóng
-        </button>
-        <button
-          onClick={handleExtend}
-          disabled={submitting}
-          style={{
-            flex:1, padding:"10px 16px", borderRadius:10,
-            background: submitting ? C.textDim : "linear-gradient(135deg,#f59e0b,#fbbf24)",
-            border:"none", color:"#fff", fontSize:14, fontWeight:700,
-            cursor: submitting ? "not-allowed" : "pointer", fontFamily:C.font,
-            boxShadow: submitting ? "none" : "0 4px 14px rgba(245,158,11,0.3)",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-          }}
-        >
-          {submitting
-            ? <><Loader2 size={15} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>
-            : <><RefreshCw size={15}/> Gia hạn</>
-          }
-        </button>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={onClose} style={{ ...cancelBtn, flex:1 }}>Đóng</button>
+          <button onClick={handleExtend} disabled={submitting} style={{ ...primaryBtn(submitting), flex:1, justifyContent:"center" }}>
+            {submitting ? <><Loader2 size={14} style={{ animation:"spin 1s linear infinite" }}/> Đang xử lý...</> : <><RefreshCw size={14}/> Gia hạn</>}
+          </button>
+        </div>
       </div>
     </Modal>
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
-   PAGE
-──────────────────────────────────────────────────────────────── */
+/* ── CardSkeleton ──────────────────────────────────────────────────── */
+function CardSkeleton() {
+  return (
+    <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, height:260, overflow:"hidden", animation:"skPulse 1.4s ease-in-out infinite", display:"flex", flexDirection:"column" }}>
+      <div style={{ height:8, background:"#e8e4dc" }}/>
+      <div style={{ padding:16, flex:1, display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ height:11, background:"#f0ede8", borderRadius:6, width:"60%" }}/>
+        <div style={{ height:14, background:"#ede9e3", borderRadius:6, width:"85%" }}/>
+        <div style={{ height:11, background:"#f0ede8", borderRadius:6, width:"70%" }}/>
+        <div style={{ marginTop:"auto", height:28, background:"#f0ede8", borderRadius:8, width:"40%" }}/>
+      </div>
+      <style>{`@keyframes skPulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MySurveysPage
+   ══════════════════════════════════════════════════════════════════ */
 export default function MySurveysPage() {
+  const navigate = useNavigate();
   const {
     surveys, loading,
     createSurvey, fetchMySurveys,
-    updateSurvey, deleteSurvey,
-    closeSurvey, publishSurvey, extendSurvey,
-    shareLink, inviteSurvey,
-    bulkInviteSurvey,
-    getParticipants,
-    deleteParticipant,
+    closeSurvey, extendSurvey,
+    shareLink,
+    getParticipants, deleteParticipant,
   } = useSurvey();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [submitting,     setSubmitting]     = useState(false);
-  const [search,         setSearch]         = useState("");
-  const [formData, setFormData] = useState({
-    title:"", description:"", start_at:"", end_at:"",
-  });
-  const [extendModal, setExtendModal] = useState({ open: false, survey: null });
+  const [submitting, setSubmitting]         = useState(false);
+  const [search, setSearch]                 = useState("");
+  const [formData, setFormData]             = useState({ title:"", description:"", start_at:"", end_at:"" });
+  const [extendModal, setExtendModal]       = useState({ open: false, survey: null });
+  const [shareModal, setShareModal]         = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
 
-  useEffect(() => { fetchMySurveys(1, 20); }, []);
+  useEffect(() => { fetchMySurveys(1, 50); }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(p => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await createSurvey({
-        title:       formData.title,
-        description: formData.description || null,
-        start_at:    formData.start_at    || null,
-        end_at:      formData.end_at      || null,
-      });
+      await createSurvey({ title: formData.title, description: formData.description || null, start_at: formData.start_at || null, end_at: formData.end_at || null });
       setFormData({ title:"", description:"", start_at:"", end_at:"" });
       setShowCreateForm(false);
-      await fetchMySurveys(1, 20);
+      await fetchMySurveys(1, 50);
     } catch (err) { console.error(err); }
     finally { setSubmitting(false); }
   };
 
-  const filtered = surveys.filter(s =>
-    s.title?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const [shareModal, setShareModal] = useState({ open: false, surveyId: null, surveyTitle: "", shareUrl: "", loading: false, error: "" });
+  const filtered = surveys.filter(s => s.title?.toLowerCase().includes(search.toLowerCase()));
 
   const handleShare = useCallback((surveyId) => {
     const s = surveys.find(x => x.id === surveyId);
@@ -1180,140 +516,94 @@ export default function MySurveysPage() {
       const url = typeof result === "string" ? result : result?.url ?? result?.data?.url ?? "";
       setShareModal(p => ({ ...p, shareUrl: url, loading: false }));
     } catch {
-      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại. Vui lòng thử lại." }));
+      setShareModal(p => ({ ...p, loading: false, error: "Tạo link thất bại." }));
     }
   };
 
-  const handleClose = useCallback(async (surveyId) => {
-    try { await closeSurvey(surveyId); await fetchMySurveys(1, 20); }
-    catch (err) { console.error(err); }
-  }, [closeSurvey, fetchMySurveys]);
-
-  const handleExtend = useCallback(async (surveyId, new_end_at) => {
-    try { await extendSurvey(surveyId, new_end_at); await fetchMySurveys(1, 20); }
-    catch (err) { console.error(err); }
-  }, [extendSurvey, fetchMySurveys]);
+  const handleClose  = useCallback(async (id) => { try { await closeSurvey(id); await fetchMySurveys(1, 50); } catch {} }, [closeSurvey, fetchMySurveys]);
+  const handleExtend = useCallback(async (id, new_end_at) => { try { await extendSurvey(id, new_end_at); await fetchMySurveys(1, 50); } catch {} }, [extendSurvey, fetchMySurveys]);
 
   return (
-    <main style={{ minHeight:"100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", fontFamily:C.font, overflow:"visible", position:"relative", zIndex:1 }}>
-      <RotatingGradient />
+    <main style={{ minHeight:"100vh", background:C.bg, fontFamily:C.font }}>
 
-      {/* HEADER */}
+      {/* ── TOP BAR ─────────────────────────────────────────────── */}
       <div style={{
-        background:"rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom:`1px solid rgba(255, 255, 255, 0.25)`,
-        padding:"0 24px", height:70,
-        display:"flex", alignItems:"center", justifyContent:"space-between", gap:20,
-        position: "relative", zIndex: 10,
+        background: "#fff",
+        borderBottom: `1px solid ${C.border}`,
+        padding: "0 32px",
+        height: 64,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 20,
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
       }}>
-        <div style={{ animation: "slideInDown 0.8s ease-out" }}>
-          <h1 style={{fontSize:24, fontWeight:800, color:C.text, margin:0, background: "linear-gradient(135deg, #4f6ef7, #764ba2)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"}}>Khảo sát của tôi</h1>
-          <p style={{margin:"4px 0 0", fontSize:13, color:C.textSub}}>Tạo và quản lý survey của bạn</p>
-        </div>
-
-        {/* SEARCH */}
-        <div style={{
-          flex:1, maxWidth:520, height:42, borderRadius:999,
-          background:"rgba(255, 255, 255, 0.7)",
-          backdropFilter: "blur(10px)",
-          border:`1px solid rgba(255, 255, 255, 0.5)`,
-          display:"flex", alignItems:"center", gap:10, padding:"0 16px",
-          transition: "all 0.3s",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)"; e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.3)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)"; e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)"; }}
-        >
-          <Search size={15} color={C.textSub}/>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm survey..."
-            style={{flex:1, border:"none", outline:"none", background:"transparent", fontSize:14, fontFamily:C.font, color:C.text}}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
-              <X size={14}/>
-            </button>
+        {/* Title + count */}
+        <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+          <h1 style={{ margin:0, fontSize:18, fontWeight:800, color:C.text, letterSpacing:"-0.02em" }}>Khảo sát của tôi</h1>
+          {!loading && (
+            <span style={{ fontSize:11, fontWeight:700, padding:"2px 10px", borderRadius:999, background:C.primaryDim, color:C.primaryAccent, border:`1px solid ${C.primaryBorder}` }}>
+              {filtered.length}
+            </span>
           )}
         </div>
 
-        {/* CREATE BTN */}
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          style={{
-            display:"flex", alignItems:"center", gap:8,
-            padding:"10px 18px", borderRadius:14,
-            border: showCreateForm ? `1px solid ${C.border}` : "none",
-            background: showCreateForm ? "rgba(255, 255, 255, 0.9)" : C.primaryGrad,
-            color: showCreateForm ? C.textSub : "#fff",
-            cursor:"pointer", fontWeight:700, fontFamily:C.font, fontSize:13,
-            boxShadow: showCreateForm ? "none" : "0 8px 20px rgba(79, 110, 247, 0.3)",
-            transition:"all .15s",
-          }}
-          onMouseEnter={(e) => { if (!showCreateForm) e.currentTarget.style.transform = "translateY(-2px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
-        >
-          {showCreateForm ? <X size={16}/> : <Plus size={16}/>}
-          {showCreateForm ? "Huỷ" : "Survey mới"}
-        </button>
+        {/* Search */}
+        <div style={{ flex:1, maxWidth:440, position:"relative" }}>
+          <Search size={14} style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"#94a3b8" }}/>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Tìm khảo sát..."
+            style={{ width:"100%", height:38, paddingLeft:36, paddingRight: search ? 36 : 14, border:`1.5px solid ${C.border}`, borderRadius:10, fontSize:13, outline:"none", background:"#fafaf8", color:C.text, fontFamily:C.font, boxSizing:"border-box" }}
+            onFocus={e => { e.target.style.borderColor = C.primaryAccent; e.target.style.background = "#fff"; }}
+            onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.background = "#fafaf8"; }}
+          />
+          {search && <button onClick={() => setSearch("")} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#94a3b8", display:"flex", padding:0 }}><X size={14}/></button>}
+        </div>
+
+        {/* Right actions */}
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <button onClick={() => fetchMySurveys(1, 50)} style={{ width:36, height:36, borderRadius:9, border:`1px solid ${C.border}`, background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.textSub }}>
+            <RefreshCw size={15}/>
+          </button>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            style={{ display:"flex", alignItems:"center", gap:7, padding:"0 16px", height:36, borderRadius:9, border: showCreateForm ? `1px solid ${C.border}` : "none", background: showCreateForm ? "#fff" : C.primaryGrad, color: showCreateForm ? C.textSub : "#fff", cursor:"pointer", fontWeight:700, fontFamily:C.font, fontSize:13, boxShadow: showCreateForm ? "none" : "0 4px 14px rgba(80,70,229,0.28)" }}
+          >
+            {showCreateForm ? <X size={14}/> : <Plus size={14}/>}
+            {showCreateForm ? "Huỷ" : "Tạo mới"}
+          </button>
+        </div>
       </div>
 
-      <div style={{maxWidth:1200, margin:"0 auto", padding:24, position: "relative", zIndex: 1, overflow:"visible"}}>
+      {/* ── BODY ─────────────────────────────────────────────────── */}
+      <div style={{ maxWidth:1320, margin:"0 auto", padding:"28px 32px 60px" }}>
 
-        {/* FORM */}
+        {/* Create form */}
         {showCreateForm && (
-          <div style={{
-            background:"rgba(255, 255, 255, 0.7)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            borderRadius:20,
-            border:`1px solid rgba(255, 255, 255, 0.25)`,
-            padding:24, marginBottom:28,
-            boxShadow:"0 8px 32px rgba(31, 38, 135, 0.15)",
-            animation: "slideInUp 0.6s ease-out",
-          }}>
-            <h2 style={{fontSize:18, fontWeight:700, marginBottom:20, color:C.text, marginTop: 0}}>
-              Tạo Survey Mới
-            </h2>
+          <div style={{ background:"#fff", borderRadius:14, border:`1px solid ${C.border}`, padding:24, marginBottom:24, boxShadow:"0 2px 16px rgba(0,0,0,0.05)" }}>
+            <h2 style={{ margin:"0 0 18px", fontSize:15, fontWeight:700, color:C.text }}>Tạo khảo sát mới</h2>
             <form onSubmit={handleSubmit}>
-              <div style={{display:"flex", flexDirection:"column", gap:16}}>
-                <input
-                  type="text" name="title" value={formData.title}
-                  onChange={handleChange} placeholder="Tiêu đề survey" required
-                  style={{...inputStyle, fontSize:14, padding:"10px 14px"}}
-                />
-                <textarea
-                  rows={4} name="description" value={formData.description}
-                  onChange={handleChange} placeholder="Mô tả survey"
-                  style={{...textareaStyle, fontSize:14, padding:"10px 14px"}}
-                />
-                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
+              <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Tiêu đề khảo sát" required style={{ ...inputStyle }}/>
+                <textarea rows={3} name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả (tuỳ chọn)" style={{ ...inputStyle, resize:"vertical" }}/>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                   <div>
-                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:6}}>Bắt đầu</label>
-                    <input type="datetime-local" name="start_at" value={formData.start_at} onChange={handleChange}
-                      style={{...inputStyle, fontSize:13, padding:"9px 12px"}}/>
+                    <label style={{ fontSize:11, color:C.textSub, display:"block", marginBottom:5, fontWeight:600 }}>Bắt đầu</label>
+                    <input type="datetime-local" name="start_at" value={formData.start_at} onChange={handleChange} style={{ ...inputStyle }}/>
                   </div>
                   <div>
-                    <label style={{fontSize:12, color:C.textSub, display:"block", marginBottom:6}}>Kết thúc</label>
-                    <input type="datetime-local" name="end_at" value={formData.end_at} onChange={handleChange}
-                      style={{...inputStyle, fontSize:13, padding:"9px 12px"}}/>
+                    <label style={{ fontSize:11, color:C.textSub, display:"block", marginBottom:5, fontWeight:600 }}>Kết thúc</label>
+                    <input type="datetime-local" name="end_at" value={formData.end_at} onChange={handleChange} style={{ ...inputStyle }}/>
                   </div>
                 </div>
-                <div style={{display:"flex", justifyContent:"flex-end", gap:10}}>
+                <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:4 }}>
                   <button type="button" onClick={() => setShowCreateForm(false)} style={cancelBtn}>Huỷ</button>
-                  <button type="submit" disabled={submitting} style={{
-                    ...saveBtn,
-                    padding:"10px 20px",
-                    background: submitting ? C.surfaceHigh : C.primaryGrad,
-                    color: submitting ? C.textSub : "#fff",
-                    boxShadow: submitting ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
-                  }}>
-                    {submitting
-                      ? <><Loader2 size={15} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</>
-                      : <><Plus size={15}/> Tạo Survey</>
-                    }
+                  <button type="submit" disabled={submitting} style={primaryBtn(submitting)}>
+                    {submitting ? <><Loader2 size={14} style={{ animation:"spin 1s linear infinite" }}/> Đang tạo...</> : <><Plus size={14}/> Tạo khảo sát</>}
                   </button>
                 </div>
               </div>
@@ -1321,43 +611,40 @@ export default function MySurveysPage() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* Loading */}
         {loading && (
-          <div style={{display:"flex", justifyContent:"center", padding:"80px 0", color:C.textDim}}>
-            <Loader2 size={34} style={{animation:"spin 1s linear infinite"}} color={C.primary}/>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))", gridAutoRows:260, gap:16 }}>
+            {Array(8).fill(0).map((_, i) => <CardSkeleton key={i}/>)}
           </div>
         )}
 
-        {/* EMPTY */}
+        {/* Empty */}
         {!loading && filtered.length === 0 && (
-          <GlassmorphCard style={{ textAlign:"center", padding:"80px 20px" }}>
-            <Inbox size={54} color={C.textDim}/>
-            <h3 style={{marginTop:16, color:C.text, fontWeight:700, marginBottom: 8}}>
-              {search ? `Không tìm thấy "${search}"` : "Chưa có survey nào"}
+          <div style={{ background:"#fff", borderRadius:16, border:`1px solid ${C.border}`, padding:"80px 20px", textAlign:"center" }}>
+            <Inbox size={48} color={C.textDim}/>
+            <h3 style={{ marginTop:16, color:C.text, fontWeight:700, marginBottom:6 }}>
+              {search ? `Không tìm thấy "${search}"` : "Chưa có khảo sát nào"}
             </h3>
-            <p style={{color:C.textSub, margin:"8px 0 0"}}>
-              {search ? "Thử tìm với từ khóa khác" : "Hãy tạo survey đầu tiên"}
+            <p style={{ color:C.textSub, margin:0, fontSize:13 }}>
+              {search ? "Thử từ khoá khác" : "Nhấn \"Tạo mới\" để bắt đầu"}
             </p>
-          </GlassmorphCard>
+          </div>
         )}
 
-        {/* GRID */}
+        {/* Grid — card đều kích thước */}
         {!loading && filtered.length > 0 && (
           <>
-            <div style={{
-              display:"flex", alignItems:"center", justifyContent:"space-between",
-              marginBottom:16,
-            }}>
-              <span style={{fontSize:13, color:C.textSub, animation: "slideInUp 0.6s ease-out 0.1s both"}}>
-                {filtered.length} survey{search ? ` · kết quả cho "${search}"` : ""}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+              <span style={{ fontSize:12, color:C.textSub, fontWeight:500 }}>
+                {filtered.length} khảo sát{search ? ` · "${search}"` : ""}
               </span>
             </div>
             <div style={{
-              display:"grid",
-              gridTemplateColumns:"repeat(5, 1fr)",
-              gap:20,
-              overflow:"visible",
-              position:"relative",
+              display: "grid",
+              /* card đều nhau, tối thiểu 240px, tự co giãn số cột */
+              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+              gridAutoRows: "260px",
+              gap: 16,
             }}>
               {filtered.map((survey, index) => (
                 <SurveyCardHome
@@ -1378,6 +665,7 @@ export default function MySurveysPage() {
         )}
       </div>
 
+      {/* Modals */}
       <ShareModal
         open={shareModal.open}
         onClose={() => setShareModal(p => ({ ...p, open: false }))}
@@ -1387,7 +675,6 @@ export default function MySurveysPage() {
         error={shareModal.error}
         onGenerate={handleGenerateLink}
       />
-
       <ExtendModal
         open={extendModal.open}
         onClose={() => setExtendModal({ open: false, survey: null })}
@@ -1396,13 +683,9 @@ export default function MySurveysPage() {
       />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
-        @keyframes spin{to{transform:rotate(360deg);}}
-        @keyframes slideInUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes slideInDown { from { opacity:0; transform:translateY(-40px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes rotateGradient { 0% { transform:rotate(0deg) } 100% { transform:rotate(360deg) } }
-        * { box-sizing:border-box }
-        button { font-family:'DM Sans',sans-serif }
+        *{box-sizing:border-box}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        button{font-family:'Plus Jakarta Sans','DM Sans',sans-serif}
       `}</style>
     </main>
   );
