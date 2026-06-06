@@ -33,7 +33,28 @@ export async function generateText({ contents, model, config } = {}) {
   return response.text;
 }
 
-export async function generateJsonQuestions({ system, userContent, model, config } = {}) {
+function extractJSON(text) {
+  const cleaned = text
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+
+  if (start === -1 || end === -1) {
+    throw new Error("No JSON object found");
+  }
+
+  return cleaned.substring(start, end + 1);
+}
+
+export async function generateJsonQuestions({
+  system,
+  userContent,
+  model,
+  config,
+} = {}) {
   const text = await generateText({
     model,
     contents: `${system}\n\n${userContent}`,
@@ -42,11 +63,16 @@ export async function generateJsonQuestions({ system, userContent, model, config
 
   if (!text) throw new Error("Gemini khong tra ve noi dung");
 
-  const cleaned = text
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
-
-  return JSON.parse(cleaned).questions;
+  try {
+    const parsed = JSON.parse(text);
+    return parsed.questions;
+  } catch {
+    try {
+      const extracted = extractJSON(text);
+      const parsed = JSON.parse(extracted);
+      return parsed.questions;
+    } catch (err) {
+      throw new Error("AI response is not valid JSON");
+    }
+  }
 }
-

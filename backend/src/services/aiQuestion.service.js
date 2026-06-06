@@ -35,7 +35,10 @@ class AiQuestionService {
       ...body,
       count: clampQuestionCount(body.count),
     });
-    const rawList = await generateJsonQuestions({AI_QUESTION_SYSTEM_PROMPT, userPrompt});
+    const rawList = await generateJsonQuestions({
+      system: AI_QUESTION_SYSTEM_PROMPT,
+      userContent: userPrompt,
+    }); 
     const questions = normalizeQuestionList(rawList);
 
     if (questions.length === 0) {
