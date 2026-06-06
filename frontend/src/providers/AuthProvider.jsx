@@ -3,10 +3,8 @@ import { AuthContext } from "@/contexts/AuthContext";
 import authService from "@/services/authService";
 import apiClient from "@/api/apiClient";
 import BlockedBanner from "@/components/common/BlockedBanner";
-import { AlertTriangle, LogIn, X } from "lucide-react";
 
 const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
 
 /* ============================
    Decode JWT, safe & tolerant
@@ -22,19 +20,6 @@ const decodeJWT = (token) => {
 };
 
 /* ============================
-   Check JWT expired
-   ============================ */
-const isTokenExpired = (token) => {
-  try {
-    const decoded = decodeJWT(token);
-    if (!decoded?.exp) return false; // không có exp → coi như còn hạn
-    return decoded.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
-};
-
-/* ============================
        Auth Provider
    ============================ */
 export const AuthProvider = ({ children }) => {
@@ -42,32 +27,22 @@ export const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(
     localStorage.getItem(ACCESS_TOKEN_KEY) || null
   );
-  const [refreshToken, setRefreshToken] = useState(
-    localStorage.getItem(REFRESH_TOKEN_KEY) || null
-  );
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [showSessionExpired, setShowSessionExpired] = useState(false);
 
   /* ============================
         Persist Tokens
+        refresh token nằm trong httpOnly cookie
+        → chỉ lưu access token ở localStorage
      ============================ */
-  const persistTokens = (access, refresh) => {
+  const persistTokens = (access) => {
     if (access) {
       localStorage.setItem(ACCESS_TOKEN_KEY, access);
       setAccessToken(access);
     } else {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
       setAccessToken(null);
-    }
-
-    if (refresh) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
-      setRefreshToken(refresh);
-    } else {
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-      setRefreshToken(null);
     }
   };
 
@@ -93,40 +68,37 @@ export const AuthProvider = ({ children }) => {
 
   /* ============================
        Refresh Tokens
+       Cookie httpOnly tự gửi kèm request
+       → không cần đọc/gửi refresh token thủ công
    ============================ */
   const refreshTokens = useCallback(async () => {
-    // Không có refresh token → báo ngay là "hết hạn"
-    if (!refreshToken) return { expired: true };
     if (isRefreshing) return { waiting: true };
 
     try {
       setIsRefreshing(true);
 
-      const res = await authService.refreshToken({
-        refresh_token: refreshToken,
-      });
-
+      // withCredentials: true → browser tự gửi cookie refresh token
+      const res = await authService.refreshToken();
       const data = res?.data ?? res;
 
       const newAccess = data?.access_token ?? data?.accessToken;
-      const newRefresh = data?.refresh_token ?? data?.refreshToken;
 
-      if (newAccess || newRefresh) {
-        persistTokens(newAccess, newRefresh);
+      if (newAccess) {
+        persistTokens(newAccess);
         const newUser = buildUserFromToken(newAccess);
         if (newUser) setUser(newUser);
       }
 
       setIsRefreshing(false);
-      return data; // success → có access_token trong đây
+      return data;
     } catch (err) {
       console.error("Refresh token failed", err);
       setIsRefreshing(false);
-      persistTokens(null, null);
+      persistTokens(null);
       setUser(null);
-      return { expired: true }; // ← đánh dấu rõ ràng là expired
+      return { expired: true };
     }
-  }, [refreshToken, isRefreshing]);
+  }, [isRefreshing]);
 
   /* ============================
              LOGIN
@@ -136,9 +108,7 @@ export const AuthProvider = ({ children }) => {
     const data = res?.data ?? res;
 
     const newAccess = data?.access_token ?? data?.accessToken;
-    const newRefresh = data?.refresh_token ?? data?.refreshToken;
-
-    persistTokens(newAccess, newRefresh);
+    persistTokens(newAccess);
 
     let newUser = buildUserFromToken(newAccess);
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
@@ -164,9 +134,7 @@ export const AuthProvider = ({ children }) => {
     const data = res?.data ?? res;
 
     const newAccess = data?.access_token ?? data?.accessToken;
-    const newRefresh = data?.refresh_token ?? data?.refreshToken;
-
-    persistTokens(newAccess, newRefresh);
+    persistTokens(newAccess);
 
     let newUser = buildUserFromToken(newAccess);
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
@@ -188,17 +156,13 @@ export const AuthProvider = ({ children }) => {
        LOGIN FROM OAUTH DATA
        Dùng khi đã có API response
        sẵn (không gọi API lại).
-       Sync cả accessToken state
-       để UserProvider fire fetchMyInfo.
      ============================ */
   const loginFromOAuthData = useCallback((data) => {
     const newAccess =
       data?.access_token ?? data?.accessToken ??
       data?.token ?? data?.data?.access_token ?? data?.data?.token;
-    const newRefresh =
-      data?.refresh_token ?? data?.refreshToken ?? data?.data?.refresh_token;
 
-    persistTokens(newAccess, newRefresh);
+    persistTokens(newAccess);
 
     let newUser = newAccess ? buildUserFromToken(newAccess) : null;
     const fromBody = data?.user ?? data?.data?.user ?? data?.profile;
@@ -222,13 +186,12 @@ export const AuthProvider = ({ children }) => {
      ============================ */
   const logout = async () => {
     try {
+      // Backend sẽ xóa cookie refresh token khi gọi logout
       await authService.logout().catch(() => {});
     } finally {
       localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
       setAccessToken(null);
-      setRefreshToken(null);
       setUser(null);
       setIsBlocked(false);
     }
@@ -274,8 +237,7 @@ export const AuthProvider = ({ children }) => {
     const reqInterceptor = apiClient.interceptors.request.use(
       (config) => {
         if (!config.headers) config.headers = {};
-        const token =
-          accessToken || localStorage.getItem(ACCESS_TOKEN_KEY) || null;
+        const token = accessToken || localStorage.getItem(ACCESS_TOKEN_KEY) || null;
         if (token) {
           config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -290,15 +252,12 @@ export const AuthProvider = ({ children }) => {
         const originalRequest = error.config;
         if (!originalRequest) return Promise.reject(error);
 
-        if (
-          error.response?.status === 401 &&
-          !originalRequest._retry
-        ) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
           const result = await refreshTokens();
 
-          // Đang chờ refresh khác → thử lại với token hiện tại
+          // Đang có refresh khác chạy → thử lại với token hiện tại
           if (result?.waiting) {
             const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
             if (currentToken) {
@@ -314,8 +273,10 @@ export const AuthProvider = ({ children }) => {
             return apiClient(originalRequest);
           }
 
-          // Refresh thất bại → show modal
-          setShowSessionExpired(true);
+          // Refresh thất bại → redirect login (silent)
+          persistTokens(null);
+          setUser(null);
+          window.location.href = "/login?session=expired";
           return Promise.reject(error);
         }
 
@@ -328,7 +289,7 @@ export const AuthProvider = ({ children }) => {
             msg.includes("banned") ||
             msg.includes("blocked")
           ) {
-            persistTokens(null, null);
+            persistTokens(null);
             setUser(null);
             setIsBlocked(true);
             window.location.href = "/login?blocked=true";
@@ -349,26 +310,11 @@ export const AuthProvider = ({ children }) => {
         Init User From Token
      ============================ */
   useEffect(() => {
-    const init = async () => {
-      if (accessToken) {
-        if (isTokenExpired(accessToken)) {
-          const result = await refreshTokens();
-          if (result?.expired) {
-            setShowSessionExpired(true);
-          } else if (result?.waiting) {
-            // Trường hợp hiếm gặp lúc mount — fallback: dùng token cũ
-            const userObj = buildUserFromToken(accessToken);
-            if (userObj) setUser(userObj);
-          }
-          // Nếu refresh thành công, refreshTokens() đã setUser rồi
-        } else {
-          const userObj = buildUserFromToken(accessToken);
-          if (userObj) setUser(userObj);
-        }
-      }
-      setLoading(false);
-    };
-    init();
+    if (accessToken) {
+      const userObj = buildUserFromToken(accessToken);
+      if (userObj) setUser(userObj);
+    }
+    setLoading(false);
   }, []);
 
   /* ============================
@@ -377,7 +323,6 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     accessToken,
-    refreshToken,
     loading,
     isBlocked,
 
@@ -395,81 +340,11 @@ export const AuthProvider = ({ children }) => {
     refreshTokens,
     setUser,
     setIsBlocked,
-    setShowSessionExpired,
   };
 
   return (
     <AuthContext.Provider value={value}>
       {isBlocked ? <BlockedBanner /> : children}
-      {showSessionExpired && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9999,
-          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: 20,
-        }}>
-          <div style={{
-            background: "white", borderRadius: 20, padding: 32,
-            maxWidth: 420, width: "100%", textAlign: "center",
-            boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-            animation: "slideInUp 0.3s ease-out",
-          }}>
-            <div style={{
-              width: 64, height: 64, borderRadius: "50%",
-              background: "linear-gradient(135deg, #fef3c7, #fde68a)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px",
-            }}>
-              <AlertTriangle size={32} color="#d97706" />
-            </div>
-            <h3 style={{
-              fontSize: 20, fontWeight: 800, marginBottom: 12,
-              color: "#1f2937", fontFamily: "'DM Sans', sans-serif",
-            }}>
-              Phiên đăng nhập hết hạn
-            </h3>
-            <p style={{
-              fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24,
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
-              Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục sử dụng.
-            </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button
-                onClick={() => setShowSessionExpired(false)}
-                style={{
-                  padding: "12px 24px", borderRadius: 12,
-                  border: "1px solid #e5e7eb", background: "white",
-                  fontSize: 14, fontWeight: 600, color: "#6b7280",
-                  cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  setShowSessionExpired(false);
-                  window.location.href = "/login?session=expired";
-                }}
-                style={{
-                  padding: "12px 24px", borderRadius: 12,
-                  border: "none", background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                  fontSize: 14, fontWeight: 600, color: "white",
-                  cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                <LogIn size={16} />
-                Đăng nhập lại
-              </button>
-            </div>
-          </div>
-          <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-            @keyframes slideInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-          `}</style>
-        </div>
-      )}
     </AuthContext.Provider>
   );
 };

@@ -57,11 +57,10 @@ export class authMiddleware {
             }
 
             const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
+            console.log("Decoded refresh token:", decoded); // Debug log
             const user = await models.User.findOne({
                 where: {
-                    id: decoded.id,
-                    refresh_token: refreshToken
+                    id: decoded.user_id,
                 }
             });
 
@@ -84,7 +83,8 @@ export class authMiddleware {
                 email: user.email,
                 role: user.role,
                 full_name: user.full_name,
-                phone_number: user.phone_number
+                phone_number: user.phone_number,
+                gender: user.gender
             };
 
             const newAccessToken = generateAccessToken(payload);
