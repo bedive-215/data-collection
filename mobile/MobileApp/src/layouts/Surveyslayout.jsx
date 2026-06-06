@@ -201,9 +201,9 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
    INVITE MODAL
 ════════════════════════════════════════════════════════════════ */
 const ROLES = [
-  { value: "viewer",     label: "👁 Viewer",     desc: "Chỉ xem câu hỏi" },
-  { value: "respondent", label: "📝 Respondent", desc: "Trả lời khảo sát" },
-  { value: "editor",     label: "✏️ Editor",     desc: "Chỉnh sửa khảo sát" },
+  { value: "respondent", label: "✏️ Trả lời",   desc: "Làm khảo sát" },
+  { value: "viewer",     label: "👁 Xem",        desc: "Chỉ xem câu hỏi" },
+  { value: "editor",     label: "🛠 Làm bài",    desc: "Chỉnh sửa khảo sát" },
 ];
 
 function InviteModal({ open, onClose, survey, onInvite }) {
@@ -297,9 +297,9 @@ function InviteModal({ open, onClose, survey, onInvite }) {
    BULK INVITE MODAL
 ════════════════════════════════════════════════════════════════ */
 const BULK_ROLES = [
-  { value: "viewer",     label: "👁 Viewer",     desc: "Chỉ xem" },
-  { value: "respondent", label: "✏️ Respondent", desc: "Trả lời" },
-  { value: "editor",     label: "🛠 Editor",     desc: "Chỉnh sửa" },
+  { value: "respondent", label: "✏️ Trả lời",  desc: "Làm khảo sát" },
+  { value: "viewer",     label: "👁 Xem",       desc: "Chỉ xem câu hỏi" },
+  { value: "editor",     label: "🛠 Làm bài",   desc: "Chỉnh sửa khảo sát" },
 ];
 
 function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
@@ -310,7 +310,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
   const [error, setError]     = useState("");
 
   useEffect(() => {
-    if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("viewer"); }
+    if (!open) { setEmails(""); setSuccess(null); setError(""); setRole("respondent"); }
   }, [open]);
 
   const parseEmails = () => emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);

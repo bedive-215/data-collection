@@ -165,6 +165,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
 function InviteModal({ open, onClose, survey, onInvite }) {
   const mountedRef = React.useRef(true);
   const [emails, setEmails] = useState("");
+  const [role, setRole] = useState("respondent");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -177,7 +178,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
 
   useEffect(() => {
     if (!open) {
-      setEmails(""); setSuccess(false); setError(""); setSentCount(0);
+      setEmails(""); setSuccess(false); setError(""); setSentCount(0); setRole("respondent");
       return;
     }
   }, [open]);
@@ -186,7 +187,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
     const list = emails.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
     if (!list.length) { setError("Vui lòng nhập ít nhất 1 email."); return; }
     setLoading(true); setError(""); setSuccess(false);
-    Promise.all(list.map(email => onInvite(survey.id, { email, role: "viewer" })))
+    Promise.all(list.map(email => onInvite(survey.id, { email, role })))
       .then(() => {
         if (!mountedRef.current) return;
         setSentCount(list.length);
@@ -213,6 +214,32 @@ function InviteModal({ open, onClose, survey, onInvite }) {
                 <Text style={styles.successText}>✓ Đã gửi lời mời đến {sentCount} địa chỉ email.</Text>
               </View>
             )}
+            <Text style={styles.fieldLabel}>Vai trò</Text>
+            <View style={styles.roleRow}>
+              {[
+                { value: "respondent", label: "✏️ Trả lời",   desc: "Làm khảo sát" },
+                { value: "viewer",     label: "👁 Xem",        desc: "Chỉ xem câu hỏi" },
+                { value: "editor",     label: "🛠 Làm bài",    desc: "Chỉnh sửa khảo sát" },
+              ].map(r => {
+                const isActive = role === r.value;
+                return (
+                  <TouchableOpacity
+                    key={r.value}
+                    style={[styles.roleBtn, isActive && styles.roleBtnActive]}
+                    onPress={() => setRole(r.value)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.radioOuter, isActive && styles.radioOuterActive]}>
+                      {isActive && <View style={styles.radioInner} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.roleBtnLabel, isActive && styles.roleBtnLabelActive]}>{r.label}</Text>
+                      <Text style={styles.roleBtnDesc}>{r.desc}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <Text style={styles.fieldLabel}>Địa chỉ email</Text>
             <TextInput
               style={[styles.textarea, !!error && styles.inputError]}
@@ -882,6 +909,20 @@ const styles = StyleSheet.create({
   textarea: { width: "100%", padding: 10, backgroundColor: "rgba(255,255,255,0.8)", borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)", borderRadius: 10, fontSize: 13, color: COLORS.text, minHeight: 90 },
   inputError: { borderColor: COLORS.error },
   fieldLabel: { fontSize: 11, fontWeight: "700", color: COLORS.textSub, textTransform: "uppercase", letterSpacing: 0.6 },
+  roleRow: { gap: 8 },
+  roleBtn: {
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: 12, paddingHorizontal: 14,
+    borderRadius: 12, borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)",
+    backgroundColor: "rgba(255,255,255,0.7)",
+  },
+  roleBtnActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: "rgba(67,97,238,0.07)",
+  },
+  roleBtnLabel: { fontSize: 13, fontWeight: "700", color: COLORS.textSub },
+  roleBtnLabelActive: { color: COLORS.primary },
+  roleBtnDesc: { fontSize: 11, color: COLORS.textDim, marginTop: 1 },
   searchRow: { flexDirection: "row", alignItems: "center", padding: 8, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.7)", borderWidth: 1, borderColor: "rgba(0,0,0,0.07)" },
   searchInput: { flex: 1, fontSize: 12, color: COLORS.text },
   participantHeader: { flexDirection: "row", gap: 10, marginBottom: 12 },
@@ -910,4 +951,20 @@ const styles = StyleSheet.create({
   participantEmail: { fontSize: 11, color: COLORS.textSub },
   rolePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
   rolePillText: { fontSize: 10, fontWeight: "700" },
+
+  // Radio button for role selection
+  radioOuter: {
+    width: 20, height: 20, borderRadius: 10,
+    borderWidth: 2, borderColor: "rgba(0,0,0,0.2)",
+    alignItems: "center", justifyContent: "center",
+    flexShrink: 0, marginRight: 10,
+  },
+  radioOuterActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: "rgba(67,97,238,0.05)",
+  },
+  radioInner: {
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: COLORS.primary,
+  },
 });
