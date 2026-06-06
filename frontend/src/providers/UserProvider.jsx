@@ -1,5 +1,6 @@
 // src/context/UserContext.jsx
 import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { userService } from "@/services/userService";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +20,7 @@ export const useUser = () => {
 // Provider chính
 const UserProvider = ({ children }) => {
   const { accessToken, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -98,6 +100,10 @@ const UserProvider = ({ children }) => {
       setError(null);
       return;
     }
+    // bỏ qua nếu đang ở trang login/register (không gọi /me khi chưa login)
+    if (location.pathname === "/login" || location.pathname === "/register") {
+      return;
+    }
     // gọi /me ngay khi có token để tránh race "lần đầu"
     if (!fetchedRef.current) {
       fetchedRef.current = true;
@@ -105,7 +111,7 @@ const UserProvider = ({ children }) => {
         // nếu lỗi thì giữ user=null để guard redirect đúng
       });
     }
-  }, [accessToken, fetchMyInfo]);
+  }, [accessToken, fetchMyInfo, location.pathname]);
 
 
   // Cập nhật thông tin cá nhân + avatar (PATCH /me)
