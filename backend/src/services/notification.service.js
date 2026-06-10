@@ -28,22 +28,29 @@ class NotificationService {
         return this.Response.count({ where: { survey_id: surveyId } });
     }
     
+    _invalidateNotificationCache(userId) {
+        cache.del([
+            `notif:unreadCount:${userId}`,
+            // First-page / default-limit caches (p1:l20) — these are what UI typically fetches
+            `notif:list:${userId}:p1:l20:unread:1`,
+            `notif:list:${userId}:p1:l20:unread:0`,
+            // First-page / max-limit cache (p1:l50) — what the frontend fetchNotifications uses
+            `notif:list:${userId}:p1:l50:unread:1`,
+            `notif:list:${userId}:p1:l50:unread:0`,
+        ]);
+    }
+
     async createNotification({ userId, type, title, message, data = null }) {
         try {
+            // Invalidate cache BEFORE insert so any in-flight stale GET requests
+            // will miss the cache and read fresh data immediately.
+            this._invalidateNotificationCache(userId);
+
             const n = await this.Notification.create({
                 user_id:   userId,
                 survey_id: data?.surveyId || null,
                 type, title, message, data,
             });
-
-            // Invalidate best-effort caches: unread count + common first-page list
-            await cache.del([
-                `notif:unreadCount:${userId}`,
-                `notif:list:${userId}:p1:l20:unread:1`,
-                `notif:list:${userId}:p1:l20:unread:0`,
-            ]);
-
-            console.log(`[NotificationService] Created ${n.id} for user ${userId}, type: ${type}`);
 
             const emit = () => {
                 if (!global.emitToUser) {
@@ -70,6 +77,8 @@ class NotificationService {
                 });
             };
             emit();
+
+            console.log(`[NotificationService] Created ${n.id} for user ${userId}, type: ${type}`);
             return n;
         } catch (err) {
             console.error("Error creating notification:", err);
@@ -286,12 +295,7 @@ class NotificationService {
     async markAsRead(userId, notificationId) {
         await (await this._findOwned(userId, notificationId)).update({ read: true, read_at: new Date() });
 
-        await cache.del([
-            `notif:unreadCount:${userId}`,
-            // best-effort invalidate common first page caches (covers đa số UI)
-            `notif:list:${userId}:p1:l20:unread:1`,
-            `notif:list:${userId}:p1:l20:unread:0`,
-        ]);
+        this._invalidateNotificationCache(userId);
 
         return { message: "Notification marked as read" };
     }
@@ -303,11 +307,7 @@ class NotificationService {
             { where: { user_id: userId, read: false } }
         );
 
-        await cache.del([
-            `notif:unreadCount:${userId}`,
-            `notif:list:${userId}:p1:l20:unread:1`,
-            `notif:list:${userId}:p1:l20:unread:0`,
-        ]);
+        this._invalidateNotificationCache(userId);
 
         return { message: "All notifications marked as read" };
     }
@@ -316,11 +316,7 @@ class NotificationService {
     async deleteNotification(userId, notificationId) {
         await (await this._findOwned(userId, notificationId)).destroy();
 
-        await cache.del([
-            `notif:unreadCount:${userId}`,
-            `notif:list:${userId}:p1:l20:unread:1`,
-            `notif:list:${userId}:p1:l20:unread:0`,
-        ]);
+        this._invalidateNotificationCache(userId);
 
         return { message: "Notification deleted" };
     }
@@ -329,11 +325,7 @@ class NotificationService {
     async deleteReadNotifications(userId) {
         const count = await this.Notification.destroy({ where: { user_id: userId, read: true } });
 
-        await cache.del([
-            `notif:unreadCount:${userId}`,
-            `notif:list:${userId}:p1:l20:unread:1`,
-            `notif:list:${userId}:p1:l20:unread:0`,
-        ]);
+        this._invalidateNotificationCache(userId);
 
         return { message: "Read notifications deleted", count };
     }

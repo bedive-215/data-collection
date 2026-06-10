@@ -175,7 +175,11 @@ const NotificationsPage = () => {
     const [filter, setFilter] = useState('all');
     const [selectedNotification, setSelectedNotification] = useState(null);
 
-    useEffect(() => { refreshNotifications(); }, [refreshNotifications]);
+    useEffect(() => {
+        refreshNotifications();
+        const interval = setInterval(refreshNotifications, 15000);
+        return () => clearInterval(interval);
+    }, []);
 
     const filtered = notifications.filter(n => {
         if (filter === 'unread') return !n.read;

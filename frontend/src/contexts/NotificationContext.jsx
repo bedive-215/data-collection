@@ -25,15 +25,19 @@ const normalizeNotification = (n) => {
         createdAt: n.createdAt || n.created_at || null,
         data: {
             ...raw,
-            surveyTitle: raw.surveyTitle || raw.title || null,
-            surveyId: raw.surveyId || raw.survey_id || null,
-            surveyEndAt: raw.surveyEndAt || raw.end_at || null,
-            responseCount: raw.responseCount ?? null,
-            inviterName: raw.inviterName || null,
-            responderName: raw.responderName || null,
-            participantName: raw.participantName || null,
-            roleLabel: raw.roleLabel || null,
-            role: raw.role || null,
+            // Top-level fields từ socket payload (flattened, không nằm trong data)
+            surveyId:      n.surveyId      || raw.surveyId      || raw.survey_id      || null,
+            surveyTitle:   n.surveyTitle   || raw.surveyTitle   || raw.title          || null,
+            surveyEndAt:   n.surveyEndAt   || raw.surveyEndAt   || raw.end_at         || null,
+            responseCount: n.responseCount ?? raw.responseCount ?? raw.response_count ?? null,
+            inviterName:   n.inviterName   || raw.inviterName   || raw.inviter_name   || null,
+            inviterId:     n.inviterId     || raw.inviterId     || raw.inviter_id     || null,
+            responderName: n.responderName || raw.responderName || raw.responder_name || null,
+            responderId:   n.responderId   || raw.responderId   || raw.responder_id   || null,
+            participantName: n.participantName || raw.participantName || raw.participant_name || null,
+            participantId: n.participantId || raw.participantId || raw.participant_id || null,
+            roleLabel:     n.roleLabel     || raw.roleLabel     || raw.role_label     || null,
+            role:          n.role          || raw.role          || null,
         },
     };
 };
@@ -47,7 +51,7 @@ export const NotificationProvider = ({ children }) => {
     const socketRef = useRef(null);
     const fetchNotificationsRef = useRef(null);
 
-    const fetchNotifications = useCallback(async () => {
+    const fetchNotifications = useCallback(async (options = {}) => {
         if (!accessToken) return;
         try {
             const response = await fetch(`${API_URL}/api/v1/notifications?limit=50`, {
@@ -55,7 +59,10 @@ export const NotificationProvider = ({ children }) => {
             });
             if (response.ok) {
                 const data = await response.json();
-                setNotifications((data.notifications || []).map(normalizeNotification));
+                const fetched = (data.notifications || []).map(normalizeNotification);
+                // Replace state with fresh server data so the user always sees
+                // up-to-date notifications immediately after a fetch.
+                setNotifications(fetched);
                 setUnreadCount(data.unreadCount || 0);
             }
         } catch (error) {
@@ -133,6 +140,7 @@ export const NotificationProvider = ({ children }) => {
         setNotifications([]);
         setUnreadCount(0);
         setIsConnected(false);
+        socketRef.current = null;
 
         // Disconnect old socket
         if (socketRef.current) {

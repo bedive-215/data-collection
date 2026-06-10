@@ -10,7 +10,7 @@ import "@/index.css";
 // Providers
 import { AuthProvider } from "@/providers/AuthProvider.jsx";
 import UserProvider from "@/providers/UserProvider";
-import SurveyProvider from "@/providers/Surveyprovider";
+import SurveyProvider from "@/providers/SurveyProvider";
 import QuestionProvider from "@/providers/Questionprovider";
 import ResponseProvider from "@/providers/Responseprovider";
 import OptionProvider from "./providers/OptionProvider";
