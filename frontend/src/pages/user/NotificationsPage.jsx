@@ -242,15 +242,15 @@ const NotificationsPage = () => {
                                     key={opt.value}
                                     onClick={() => setFilter(opt.value)}
                                     className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${filter === opt.value
-                                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200/60 dark:ring-slate-600/40'
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200/60 dark:ring-slate-600/40'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                         }`}
                                 >
                                     {opt.label}
                                     {opt.count > 0 && (
                                         <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${filter === opt.value
-                                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
-                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
+                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                             }`}>{opt.count}</span>
                                     )}
                                 </button>
@@ -288,8 +288,8 @@ const NotificationsPage = () => {
                                         key={notification.id}
                                         onClick={() => handleClick(notification)}
                                         className={`relative rounded-2xl border transition-all duration-300 cursor-pointer group overflow-hidden ${isUnread
-                                                ? `${config.cardBg} border-white/90 dark:border-slate-700/60 shadow-lg ${config.glowColor}`
-                                                : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-white/70 dark:border-slate-700/40 hover:shadow-md hover:bg-white/80 dark:hover:bg-slate-800/80'
+                                            ? `${config.cardBg} border-white/90 dark:border-slate-700/60 shadow-lg ${config.glowColor}`
+                                            : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-white/70 dark:border-slate-700/40 hover:shadow-md hover:bg-white/80 dark:hover:bg-slate-800/80'
                                             } hover:-translate-y-0.5 active:translate-y-0`}
                                     >
                                         {/* Left accent bar */}
