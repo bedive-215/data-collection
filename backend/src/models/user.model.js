@@ -14,7 +14,7 @@ export default (sequelize) => {
         },
         gender: {
             type: DataTypes.ENUM("MALE", "FEMALE", "OTHER"),
-            allowNull: false
+            allowNull: true,
         },
         email: {
             type: DataTypes.STRING(255),
