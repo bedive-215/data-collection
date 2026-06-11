@@ -29,7 +29,6 @@
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:init": "npx sequelize-cli db:migrate --to 0"
   },
-
   "keywords": [],
   "author": "",
   "license": "ISC",
