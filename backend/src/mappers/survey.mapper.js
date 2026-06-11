@@ -68,6 +68,8 @@ export const mapSurvey = (survey) => {
         one_question_per_page: survey.one_question_per_page ?? true,
         thank_you_message: survey.thank_you_message ?? null,
         logo_url: survey.logo_url ?? null,
+        access_type: survey.access_type,
+        created_by: survey.created_by,
         background_url: survey.background_url ?? null,
         accent_color: survey.accent_color ?? "#6366f1",
         show_correct_answers: survey.show_correct_answers ?? false,
