@@ -65,8 +65,6 @@ export default (sequelize) => {
             defaultValue: false
         },
 
-        // ── NEW: Nâng cao survey settings ──────────────────────────────
-        // anonymous: ẩn danh người trả lời trong analytics
         is_anonymous: {
             type: DataTypes.BOOLEAN,
             allowNull: true,

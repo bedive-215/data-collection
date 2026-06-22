@@ -284,10 +284,19 @@ class SurveyService {
 
     async shareLink(survey, user) {
         if (survey.access_type !== "LINK") survey.access_type = "LINK";
-        if (!survey.access_token) survey.access_token = generateSurveyAccessToken();
+
+        let token;
+        const existingAccess = await this.SurveyAccess.findOne({ where: { survey_id: survey.id } });
+        if (existingAccess) {
+            token = existingAccess.access_token;
+        } else {
+            token = generateSurveyAccessToken();
+            await this.SurveyAccess.create({ survey_id: survey.id, access_token: token });
+        }
 
         await survey.save();
-        return { message: "Share link generated successfully", url: buildSurveyPublicUrl(survey) };
+        const url = buildSurveyPublicUrl({ ...survey.toJSON(), access_token: token });
+        return { message: "Share link generated successfully", url };
     }
 
     // invite participant to survey (owner)

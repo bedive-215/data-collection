@@ -225,6 +225,7 @@ class AuthService {
         email: data.email,
         provider_uid: data.sub,
         name: data.name || data.email.split('@')[0],
+        picture: data.picture || null,
       };
     } catch (err) {
       console.error('Google token verification failed:', err.response?.data || err.message);
@@ -237,7 +238,7 @@ class AuthService {
 
     // 1. Verify Google token
     const googleData = await this.verifyGoogleToken(token);
-    const { email, provider_uid, name } = googleData;
+    const { email, provider_uid, name, picture } = googleData;
 
     // 2. Find or create user
     let user = await this.User.findOne({ where: { email } });
@@ -266,20 +267,27 @@ class AuthService {
       defaults: { user_id: user.id }
     });
 
-    // 5. Update missing profile fields (if client sends)
-    let updated = false;
-
+    // 5. Update missing profile fields (if client sends) — gộp save() với token bên dưới
     if (!user.phone_number && phone_number) {
+      const existingPhoneUser = await this.User.findOne({ where: { phone_number } });
+      if (existingPhoneUser && existingPhoneUser.id !== user.id) {
+        throw new AppError('Phone number already in use by another account', 400);
+      }
       user.phone_number = phone_number;
-      updated = true;
     }
 
     if (!user.date_of_birth && date_of_birth) {
       user.date_of_birth = date_of_birth;
-      updated = true;
     }
 
-    if (updated) await user.save();
+    if (!user.gender && gender) {
+      user.gender = gender;
+    }
+
+    // Lấy avatar từ Google nếu user chưa có ảnh custom
+    if (picture && !user.avatar_public_id) {
+      user.avatar = picture;
+    }
 
     // 6. CHECK PROFILE COMPLETENESS
     const missingFields = {
@@ -288,7 +296,7 @@ class AuthService {
       gender: !user.gender
     };
 
-    const isProfileComplete = !missingFields.phone_number && !missingFields.date_of_birth;
+    const isProfileComplete = !missingFields.phone_number && !missingFields.date_of_birth && !missingFields.gender;
 
     if (!isProfileComplete) {
       return {

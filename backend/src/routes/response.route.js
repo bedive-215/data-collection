@@ -70,8 +70,6 @@ router.get(
     ResponseController.getMyResponses
 );
 
-
-
 // get specific user's response in a survey
 router.get(
     "/admin/surveys/:survey_id/users/:id",

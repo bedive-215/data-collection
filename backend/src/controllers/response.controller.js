@@ -14,12 +14,15 @@ class ResponseController {
             next(err);
         }
     }
-    
+
     // submit
     async submit(req, res, next) {
         try {
             if (!Array.isArray(req.body.answers)) {
                 return res.status(400).json({ message: "Invalid answers format" });
+            }
+            if (req.user.id === req.survey.created_by) {
+                return res.status(403).json({ message: "Owners cannot submit responses to their own surveys" });
             }
             const result = await ResponseService.submitSurvey(
                 req.user.id,
@@ -33,8 +36,6 @@ class ResponseController {
         }
     }
 
-    
-    
     // get answers by response id
     async getAnswers(req, res, next) {
         try {
@@ -56,13 +57,13 @@ class ResponseController {
                 req.params.survey_id,
                 req.body.answers
             );
-            
+
             res.json(result);
         } catch (err) {
             next(err);
         }
     }
-    
+
     // delete
     async delete(req, res, next) {
         try {
@@ -106,7 +107,7 @@ class ResponseController {
             next(err);
         }
     }
-    
+
     // get all my responses
     async getMyResponses(req, res, next) {
         try {
@@ -118,7 +119,7 @@ class ResponseController {
             next(err);
         }
     }
-    
+
     // admin: get response by user and survey
     async getUserResponse(req, res, next) {
         try {

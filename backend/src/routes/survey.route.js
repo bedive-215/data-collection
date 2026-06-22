@@ -18,9 +18,9 @@ route.get('/public', SurveyController.getSurveyPublic);
 route.get('/invited', SurveyController.getInvitedSurveys);
 
 // just admin
-route.get('/users/:id', 
-    authMiddleware.checkRole('admin'), 
-    validate(userIdParams), 
+route.get('/users/:id',
+    authMiddleware.checkRole('admin'),
+    validate(userIdParams),
     SurveyController.getSurveyByUserId
 );
 route.get('/',
@@ -29,34 +29,35 @@ route.get('/',
 );
 
 // get survey by id
-route.get('/:survey_id', 
-    validate(surveyIdParams), 
-    authMiddleware.checkSurveyAccess("editor", "viewer", "respondent"), 
+route.get('/:survey_id',
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess("editor", "viewer", "respondent"),
     SurveyController.getSurveyById
 );
 
 // Update survey (just editor or owner, admin)
-route.put('/:survey_id', 
-    validate(surveyIdParams), 
-    authMiddleware.checkSurveyAccess('editor'), 
+route.put('/:survey_id',
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyAccess('editor'),
     SurveyController.updateSurvey
 );
 
 // Delete survey (just admin or owner)
-route.delete('/:survey_id', 
-    validate(surveyIdParams), 
-    authMiddleware.checkSurveyOwnerOrAdmin, 
+route.delete('/:survey_id',
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
     SurveyController.deleteSurvey
 );
 // Close survey
-route.patch('/:survey_id/close', 
+route.patch('/:survey_id/close',
     validate(surveyIdParams),
     authMiddleware.checkSurveyOwnerOrAdmin,
     SurveyController.closeSurvey
 );
 
-route.patch('/:survey_id/publish', 
-    validate(surveyIdParams), 
+route.patch('/:survey_id/publish',
+    validate(surveyIdParams),
+    authMiddleware.checkSurveyOwnerOrAdmin,
     SurveyController.publicSurvey
 );
 // Gia hạn thời gian khảo sát
@@ -72,13 +73,13 @@ route.patch('/:survey_id/share',
     SurveyController.shareLink
 );
 // Invite survey (editor (viewer, respondent), owner and admin)
-route.post('/:survey_id/invite', 
+route.post('/:survey_id/invite',
     validate(surveyIdParams),
     authMiddleware.checkSurveyAccess('editor'),
     SurveyController.inviteSurvey
 );
 
-route.post('/:survey_id/invite/bulk', 
+route.post('/:survey_id/invite/bulk',
     validate(surveyIdParams),
     authMiddleware.checkSurveyAccess('editor'),
     SurveyController.bulkInviteSurvey
@@ -90,8 +91,8 @@ route.get('/:survey_id/participants',
     SurveyController.getParticipants
 );
 
-route.delete('/:survey_id/participants/:pid', 
-    validate(deleteParticipantParams), 
+route.delete('/:survey_id/participants/:pid',
+    validate(deleteParticipantParams),
     authMiddleware.checkSurveyOwnerOrAdmin,
     SurveyController.deleteParticipant
 );
