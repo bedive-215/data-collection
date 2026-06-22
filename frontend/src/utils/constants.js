@@ -27,6 +27,7 @@ export const ROUTERS = {
 
     // ANALYSIS HUB
     ANALYSIS_HUB: "/user/analysis",
+    REWARDS: "/user/rewards",
     ANALYSIS_STATISTICAL: "/user/analysis/:surveyId/statistical",
     ANALYSIS_AI: "/user/analysis/:surveyId/ai",
   },

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
 import NotificationDetailModal from '../../components/common/Notification/NotificationDetailModal';
@@ -10,14 +10,14 @@ import {
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-/* ── TYPE_CONFIG — key UPPERCASE, lookup qua normalizeType() ── */
+/* -- TYPE_CONFIG � key UPPERCASE, lookup qua normalizeType() -- */
 const TYPE_CONFIG = {
     SURVEY_INVITATION: {
         icon: Mail, gradient: 'from-indigo-500 to-purple-600',
         bgAccent: 'bg-indigo-50/80 dark:bg-indigo-950/30', textAccent: 'text-indigo-600 dark:text-indigo-400',
         avatarBg: 'bg-indigo-100 dark:bg-indigo-900/50',
         cardBg: 'bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-indigo-950/25 dark:to-purple-950/15',
-        glowColor: 'shadow-indigo-200/50 dark:shadow-indigo-900/30', dotColor: 'bg-indigo-500', label: 'Lời mời',
+        glowColor: 'shadow-indigo-200/50 dark:shadow-indigo-900/30', dotColor: 'bg-indigo-500', label: 'L?i m?i',
         actionColor: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg'
     },
     SURVEY_RESPONSE: {
@@ -25,7 +25,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-emerald-50/80 dark:bg-emerald-950/30', textAccent: 'text-emerald-600 dark:text-emerald-400',
         avatarBg: 'bg-emerald-100 dark:bg-emerald-900/50',
         cardBg: 'bg-gradient-to-br from-emerald-50/60 to-teal-50/40 dark:from-emerald-950/25 dark:to-teal-950/15',
-        glowColor: 'shadow-emerald-200/50 dark:shadow-emerald-900/30', dotColor: 'bg-emerald-500', label: 'Phản hồi',
+        glowColor: 'shadow-emerald-200/50 dark:shadow-emerald-900/30', dotColor: 'bg-emerald-500', label: 'Ph?n h?i',
         actionColor: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg'
     },
     SURVEY_EXPIRED: {
@@ -33,7 +33,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-orange-50/80 dark:bg-orange-950/30', textAccent: 'text-orange-600 dark:text-orange-400',
         avatarBg: 'bg-orange-100 dark:bg-orange-900/50',
         cardBg: 'bg-gradient-to-br from-orange-50/60 to-amber-50/40 dark:from-orange-950/25 dark:to-amber-950/15',
-        glowColor: 'shadow-orange-200/50 dark:shadow-orange-900/30', dotColor: 'bg-orange-500', label: 'Hết hạn',
+        glowColor: 'shadow-orange-200/50 dark:shadow-orange-900/30', dotColor: 'bg-orange-500', label: 'H?t h?n',
         actionColor: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg'
     },
     SURVEY_TIMEOUT: {
@@ -41,7 +41,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-orange-50/80 dark:bg-orange-950/30', textAccent: 'text-orange-600 dark:text-orange-400',
         avatarBg: 'bg-orange-100 dark:bg-orange-900/50',
         cardBg: 'bg-gradient-to-br from-orange-50/60 to-amber-50/40 dark:from-orange-950/25 dark:to-amber-950/15',
-        glowColor: 'shadow-orange-200/50 dark:shadow-orange-900/30', dotColor: 'bg-orange-500', label: 'Hết hạn',
+        glowColor: 'shadow-orange-200/50 dark:shadow-orange-900/30', dotColor: 'bg-orange-500', label: 'H?t h?n',
         actionColor: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg'
     },
     SURVEY_PUBLISHED: {
@@ -49,7 +49,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-teal-50/80 dark:bg-teal-950/30', textAccent: 'text-teal-600 dark:text-teal-400',
         avatarBg: 'bg-teal-100 dark:bg-teal-900/50',
         cardBg: 'bg-gradient-to-br from-teal-50/60 to-cyan-50/40 dark:from-teal-950/25 dark:to-cyan-950/15',
-        glowColor: 'shadow-teal-200/50 dark:shadow-teal-900/30', dotColor: 'bg-teal-500', label: 'Công khai',
+        glowColor: 'shadow-teal-200/50 dark:shadow-teal-900/30', dotColor: 'bg-teal-500', label: 'C�ng khai',
         actionColor: 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-lg'
     },
     SURVEY_CLOSED: {
@@ -57,7 +57,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-red-50/80 dark:bg-red-950/30', textAccent: 'text-red-600 dark:text-red-400',
         avatarBg: 'bg-red-100 dark:bg-red-900/50',
         cardBg: 'bg-gradient-to-br from-red-50/60 to-pink-50/40 dark:from-red-950/25 dark:to-pink-950/15',
-        glowColor: 'shadow-red-200/50 dark:shadow-red-900/30', dotColor: 'bg-red-500', label: 'Đã đóng',
+        glowColor: 'shadow-red-200/50 dark:shadow-red-900/30', dotColor: 'bg-red-500', label: '�� d�ng',
         actionColor: 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white shadow-lg'
     },
     NEW_PARTICIPANT: {
@@ -73,7 +73,7 @@ const TYPE_CONFIG = {
         bgAccent: 'bg-slate-50/80 dark:bg-slate-800/50', textAccent: 'text-slate-600 dark:text-slate-400',
         avatarBg: 'bg-slate-100 dark:bg-slate-800',
         cardBg: 'bg-gradient-to-br from-slate-50/60 to-gray-50/40 dark:from-slate-800/40 dark:to-gray-800/20',
-        glowColor: 'shadow-slate-200/50 dark:shadow-slate-900/30', dotColor: 'bg-slate-400', label: 'Hệ thống',
+        glowColor: 'shadow-slate-200/50 dark:shadow-slate-900/30', dotColor: 'bg-slate-400', label: 'H? th?ng',
         actionColor: 'bg-gradient-to-r from-slate-500 to-gray-500 hover:from-slate-600 hover:to-gray-600 text-white shadow-lg'
     },
     SURVEY_INVITATION_SENT: {
@@ -84,37 +84,34 @@ const TYPE_CONFIG = {
         avatarBg: 'bg-indigo-100 dark:bg-indigo-900/50',
         lightGradient: 'bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20',
         actionColor: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg',
-        label: 'Đã gửi lời mời',
-    },
-};
+        label: '�� g?i l?i m?i'}};
 
-/* ─── Helpers ─── */
+/* --- Helpers --- */
 
-/** BE có thể trả lowercase ("survey_timeout") hoặc uppercase ("SURVEY_TIMEOUT") → chuẩn hoá */
+/** BE c� th? tr? lowercase ("survey_timeout") ho?c uppercase ("SURVEY_TIMEOUT") ? chu?n ho� */
 const normalizeType = (type) => (type || '').toUpperCase();
 
 const getConfig = (type) => TYPE_CONFIG[normalizeType(type)] || TYPE_CONFIG.SYSTEM;
 
-/** title có thể là "" → fallback sang label của type */
+/** title c� th? l� "" ? fallback sang label c?a type */
 const getDisplayTitle = (n) => {
     if (n.title && n.title.trim()) return n.title;
     const labels = {
-        SURVEY_TIMEOUT: 'Khảo sát đã hết hạn',
-        SURVEY_EXPIRED: 'Khảo sát đã hết hạn',
-        SURVEY_RESPONSE: 'Có phản hồi mới',
-        SURVEY_INVITATION: 'Bạn được mời tham gia',
-        SURVEY_PUBLISHED: 'Khảo sát đã công khai',
-        SURVEY_CLOSED: 'Khảo sát đã đóng',
-        NEW_PARTICIPANT: 'Có người tham gia mới',
-    };
-    return labels[normalizeType(n.type)] || 'Thông báo';
+        SURVEY_TIMEOUT: 'Kh?o s�t d� h?t h?n',
+        SURVEY_EXPIRED: 'Kh?o s�t d� h?t h?n',
+        SURVEY_RESPONSE: 'C� ph?n h?i m?i',
+        SURVEY_INVITATION: 'B?n du?c m?i tham gia',
+        SURVEY_PUBLISHED: 'Kh?o s�t d� c�ng khai',
+        SURVEY_CLOSED: 'Kh?o s�t d� d�ng',
+        NEW_PARTICIPANT: 'C� ngu?i tham gia m?i'};
+    return labels[normalizeType(n.type)] || 'Th�ng b�o';
 };
 
 /**
- * Tên khảo sát:
- *  - data.surveyTitle  (service mới)
- *  - data.title        (format cũ / socket event)
- *  - parse từ message  (fallback)
+ * T�n kh?o s�t:
+ *  - data.surveyTitle  (service m?i)
+ *  - data.title        (format cu / socket event)
+ *  - parse t? message  (fallback)
  */
 const getSurveyTitle = (n) => {
     const d = n.data || {};
@@ -127,7 +124,7 @@ const getSurveyTitle = (n) => {
     return null;
 };
 
-/** Tên người liên quan (inviter / responder / participant) */
+/** T�n ngu?i li�n quan (inviter / responder / participant) */
 const getPersonName = (n) => {
     const d = n.data || {};
     return d.inviterName || d.responderName || d.participantName || null;
@@ -141,7 +138,7 @@ const getAvatarInitials = (name) => {
         : name.substring(0, 2).toUpperCase();
 };
 
-/** createdAt có thể null → trả '' thay vì crash */
+/** createdAt c� th? null ? tr? '' thay v� crash */
 const formatTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -150,14 +147,14 @@ const formatTime = (dateString) => {
     const m = Math.floor(diffMs / 60000);
     const h = Math.floor(diffMs / 3600000);
     const d = Math.floor(diffMs / 86400000);
-    if (m < 1) return 'Vừa xong';
-    if (m < 60) return `${m} phút trước`;
-    if (h < 24) return `${h} giờ trước`;
-    if (d < 7) return `${d} ngày trước`;
+    if (m < 1) return 'V?a xong';
+    if (m < 60) return `${m} ph�t tru?c`;
+    if (h < 24) return `${h} gi? tru?c`;
+    if (d < 7) return `${d} ng�y tru?c`;
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
-/** surveyEndAt có thể null → trả null thay vì crash */
+/** surveyEndAt c� th? null ? tr? null thay v� crash */
 const formatEndDate = (dateStr) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -168,7 +165,7 @@ const formatEndDate = (dateStr) => {
     };
 };
 
-/* ── Component ── */
+/* -- Component -- */
 const NotificationsPage = () => {
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, refreshNotifications } = useNotification();
@@ -193,52 +190,52 @@ const NotificationsPage = () => {
     };
 
     const filterOptions = [
-        { value: 'all', label: 'Tất cả', count: notifications.length },
-        { value: 'unread', label: 'Chưa đọc', count: unreadCount },
-        { value: 'read', label: 'Đã đọc', count: notifications.length - unreadCount }
+        { value: 'all', label: 'T?t c?', count: notifications.length },
+        { value: 'unread', label: 'Chua d?c', count: unreadCount },
+        { value: 'read', label: '�� d?c', count: notifications.length - unreadCount }
     ];
 
     const emptyMsg = {
-        all: { title: 'Chưa có thông báo nào', sub: 'Các thông báo sẽ xuất hiện khi có hoạt động mới' },
-        unread: { title: 'Bạn đã đọc hết rồi!', sub: 'Không còn thông báo chưa đọc nào' },
-        read: { title: 'Chưa đọc thông báo nào', sub: 'Hãy đọc một số thông báo trước' }
+        all: { title: 'Chua c� th�ng b�o n�o', sub: 'C�c th�ng b�o s? xu?t hi?n khi c� ho?t d?ng m?i' },
+        unread: { title: 'B?n d� d?c h?t r?i!', sub: 'Kh�ng c�n th�ng b�o chua d?c n�o' },
+        read: { title: 'Chua d?c th�ng b�o n�o', sub: 'H�y d?c m?t s? th�ng b�o tru?c' }
     };
 
     return (
         <>
-            {/* Nền animate — fixed z-0, pointer-events none (từ component gốc) */}
+            {/* N?n animate � fixed z-0, pointer-events none (t? component g?c) */}
             <AnimatedSurveyBackdrop />
 
-            {/* Nội dung trang — z-1 */}
+            {/* N?i dung trang � z-1 */}
             <div className="relative z-[1] min-h-screen">
                 <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
 
-                    {/* ── Header ── */}
+                    {/* -- Header -- */}
                     <div className="mb-8 flex items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
                                     <Bell className="w-5 h-5 text-white" />
                                 </div>
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Thông báo</h1>
+                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Th�ng b�o</h1>
                                 {unreadCount > 0 && (
                                     <span className="px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-md animate-pulse">
                                         {unreadCount}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 ml-1">Theo dõi mọi hoạt động quan trọng của bạn</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 ml-1">Theo d�i m?i ho?t d?ng quan tr?ng c?a b?n</p>
                         </div>
                         {unreadCount > 0 && (
                             <button onClick={markAllAsRead} className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0">
                                 <CheckCheck className="w-4 h-4" />
-                                <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
-                                <span className="sm:hidden">Đọc tất cả</span>
+                                <span className="hidden sm:inline">��nh d?u t?t c? d� d?c</span>
+                                <span className="sm:hidden">�?c t?t c?</span>
                             </button>
                         )}
                     </div>
 
-                    {/* ── Filter tabs ── */}
+                    {/* -- Filter tabs -- */}
                     <div className="mb-5 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-1 p-1 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-white/80 dark:border-slate-700/50 shadow-sm">
                             {filterOptions.map(opt => (
@@ -262,11 +259,11 @@ const NotificationsPage = () => {
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                             <Filter className="w-3 h-3" />
-                            {filtered.length} thông báo
+                            {filtered.length} th�ng b�o
                         </div>
                     </div>
 
-                    {/* ── List ── */}
+                    {/* -- List -- */}
                     <div className="space-y-2.5">
                         {filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 px-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/80 dark:border-slate-700/40">
@@ -335,7 +332,7 @@ const NotificationsPage = () => {
                                                             </span>
                                                         </div>
 
-                                                        {/* Tên khảo sát (data.title hoặc data.surveyTitle) */}
+                                                        {/* T�n kh?o s�t (data.title ho?c data.surveyTitle) */}
                                                         {sTitle && (
                                                             <div className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${isUnread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                 <FileText className="w-3 h-3 flex-shrink-0 opacity-70" />
@@ -349,11 +346,11 @@ const NotificationsPage = () => {
                                                             {endDate && (
                                                                 <span className={`flex items-center gap-1 ${endDate.isExpired ? 'text-red-400 dark:text-red-500' : ''}`}>
                                                                     <Calendar className="w-3 h-3" />
-                                                                    {endDate.isExpired ? 'Đã hết hạn' : `Hạn: ${endDate.text}`}
+                                                                    {endDate.isExpired ? '�� h?t h?n' : `H?n: ${endDate.text}`}
                                                                 </span>
                                                             )}
                                                             {notification.data?.responseCount !== undefined && (
-                                                                <span className="flex items-center gap-1"><Award className="w-3 h-3" />{notification.data.responseCount} câu trả lời</span>
+                                                                <span className="flex items-center gap-1"><Award className="w-3 h-3" />{notification.data.responseCount} c�u tr? l?i</span>
                                                             )}
                                                             {notification.data?.roleLabel && (
                                                                 <span className={`px-1.5 py-0.5 rounded-md font-semibold text-[10px] ${config.bgAccent} ${config.textAccent}`}>
@@ -362,14 +359,14 @@ const NotificationsPage = () => {
                                                             )}
                                                         </div>
 
-                                                        {/* Message nếu có (có thể null từ BE) */}
+                                                        {/* Message n?u c� (c� th? null t? BE) */}
                                                         {notification.message && (
                                                             <p className="text-xs text-slate-400 dark:text-slate-500 truncate mb-1">
                                                                 {notification.message}
                                                             </p>
                                                         )}
 
-                                                        {/* Time — createdAt có thể null */}
+                                                        {/* Time � createdAt c� th? null */}
                                                         {time && (
                                                             <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
                                                                 <Clock className="w-3 h-3" />{time}
@@ -380,9 +377,9 @@ const NotificationsPage = () => {
                                                     {/* Hover actions */}
                                                     <div className="flex-shrink-0 flex flex-col items-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0">
                                                         <button onClick={(e) => { e.stopPropagation(); handleClick(notification); }} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg ${config.actionColor}`}>
-                                                            <Eye className="w-3 h-3" />Chi tiết
+                                                            <Eye className="w-3 h-3" />Chi ti?t
                                                         </button>
-                                                        <button onClick={(e) => { e.stopPropagation(); deleteNotification(notification.id); }} className="p-1.5 hover:bg-red-50/80 dark:hover:bg-red-950/30 rounded-lg transition-colors" title="Xóa">
+                                                        <button onClick={(e) => { e.stopPropagation(); deleteNotification(notification.id); }} className="p-1.5 hover:bg-red-50/80 dark:hover:bg-red-950/30 rounded-lg transition-colors" title="X�a">
                                                             <Trash2 className="w-3.5 h-3.5 text-red-400" />
                                                         </button>
                                                     </div>

@@ -16,8 +16,7 @@ const schemaStep1 = yup.object({
   phone_number: yup.string().required("auth.required"),
   email: yup.string().required("auth.required").email("auth.invalidEmail"),
   password: yup.string().required("auth.required").min(6, "auth.minPassword"),
-  gender: yup.string().required("auth.required").oneOf(["MALE", "FEMALE", "OTHER"], "auth.required"),
-});
+  gender: yup.string().required("auth.required").oneOf(["MALE", "FEMALE", "OTHER"], "auth.required")});
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -44,8 +43,7 @@ export default function RegisterPage() {
         phone_number: data.phone_number,
         email: data.email,
         password: data.password,
-        gender: data.gender,
-      });
+        gender: data.gender});
       setEmail(data.email);
       setStep(2);
       setOtpMessage("Mã xác minh đã được gửi đến email của bạn.");
@@ -78,9 +76,7 @@ export default function RegisterPage() {
     border: `1.5px solid ${DS.inputBorder}`,
     height: DS.inputHeight,
     padding: "0 16px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  });
+    });
 
   return (
     <div style={{ minHeight: "100vh", width: "100%", background: "#F8FAFC", fontFamily: DS.font, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
@@ -95,17 +91,15 @@ export default function RegisterPage() {
         WebkitBackdropFilter: `${DS.cardBlur} saturate(190%)`,
         borderRadius: "28px",
         border: `1px solid ${DS.cardBorder}`,
-        boxShadow: DS.cardShadow,
         padding: "44px",
         position: "relative",
-        zIndex: 1,
-      }}>
+        zIndex: 1}}>
         {/* Top decorative bar */}
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 5, background: `linear-gradient(90deg, transparent, ${DS.primary}, ${DS.primaryEnd}, transparent)`, borderRadius: "0 0 6px 6px" }} />
 
         {/* Brand header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(67,97,238,0.35)", flexShrink: 0 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           <div>
@@ -123,7 +117,7 @@ export default function RegisterPage() {
           <Link to="/login" style={{ flex: 1, borderRadius: 12, padding: "13px 16px", background: "transparent", border: "1px solid transparent", color: DS.segInactiveText, fontWeight: 500, fontSize: 14, fontFamily: DS.font, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
             Đăng nhập
           </Link>
-          <button style={{ flex: 1, borderRadius: 12, padding: "13px 16px", background: DS.segActiveBg, border: `1px solid ${DS.segActiveBorder}`, color: DS.segActiveText, fontWeight: 700, fontSize: 14, fontFamily: DS.font, boxShadow: "0 1px 4px rgba(67,97,238,0.18)" }}>
+          <button style={{ flex: 1, borderRadius: 12, padding: "13px 16px", background: DS.segActiveBg, border: `1px solid ${DS.segActiveBorder}`, color: DS.segActiveText, fontWeight: 700, fontSize: 14, fontFamily: DS.font}}>
             Đăng ký
           </button>
         </div>
@@ -135,8 +129,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Họ và tên</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="text" {...register("full_name")} placeholder="Nguyễn Văn A"
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -148,8 +142,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Số điện thoại</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="text" {...register("phone_number")} placeholder="0912345678"
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -161,8 +155,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Ngày sinh</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="date" {...register("date_of_birth")}
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -177,7 +171,7 @@ export default function RegisterPage() {
                 {[{ value: "MALE", label: "Nam" }, { value: "FEMALE", label: "Nữ" }, { value: "OTHER", label: "Khác" }].map((opt) => {
                   const sel = watch("gender") === opt.value;
                   return (
-                    <label key={opt.value} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px 8px", borderRadius: DS.inputRadius, background: sel ? DS.genderSelectedBg : DS.genderUnselectedBg, border: `1.5px solid ${sel ? DS.genderSelectedBorder : DS.genderUnselectedBorder}`, color: sel ? DS.genderSelectedText : DS.genderUnselectedText, fontSize: 13, fontWeight: 600, fontFamily: DS.font, cursor: "pointer", transition: "all 0.15s" }}>
+                    <label key={opt.value} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px 8px", borderRadius: DS.inputRadius, background: sel ? DS.genderSelectedBg : DS.genderUnselectedBg, border: `1.5px solid ${sel ? DS.genderSelectedBorder : DS.genderUnselectedBorder}`, color: sel ? DS.genderSelectedText : DS.genderUnselectedText, fontSize: 13, fontWeight: 600, fontFamily: DS.font, cursor: "pointer"}}>
                       <input type="radio" value={opt.value} {...register("gender")} style={{ display: "none" }} />
                       {opt.label}
                     </label>
@@ -191,8 +185,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Email</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="email" {...register("email")} placeholder="email@example.com"
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -204,8 +198,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Mật khẩu</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type={showPassword ? "text" : "password"} {...register("password")} placeholder="••••••••"
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -231,9 +225,9 @@ export default function RegisterPage() {
             )}
 
             <button type="submit" disabled={loading}
-              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; } }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.65 : 1 }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)" } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)" }}
             >
               {loading ? <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang xử lý...</> : "Đăng ký"}
             </button>
@@ -249,8 +243,8 @@ export default function RegisterPage() {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Mã xác minh</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Nhập mã 6 chữ số..."
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 16, color: DS.inputText, fontFamily: DS.font, letterSpacing: "0.2em" }} />
@@ -267,14 +261,14 @@ export default function RegisterPage() {
               </div>
             )}
             <button onClick={onSubmitVerify} disabled={loading}
-              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; } }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.65 : 1 }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)" } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)" }}
             >
               {loading ? <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang xác minh...</> : "Xác minh email"}
             </button>
             <button type="button" onClick={() => setStep(1)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: DS.textMuted, fontSize: 13, fontFamily: DS.font, fontWeight: 500, padding: "8px 0", transition: "color 0.15s" }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: DS.textMuted, fontSize: 13, fontFamily: DS.font, fontWeight: 500, padding: "8px 0"}}
               onMouseEnter={e => e.currentTarget.style.color = DS.textSecondary}
               onMouseLeave={e => e.currentTarget.style.color = DS.textMuted}
             >

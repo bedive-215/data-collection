@@ -145,7 +145,7 @@ export default function AiQuestionAssistant({
           border: `1px solid rgba(255,255,255,0.55)`,
           borderRadius: 20,
           borderTop: `5px solid ${C.primary}`,
-          boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 24px 48px rgba(15,23,42,0.12)",
+
         }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -418,7 +418,7 @@ export default function AiQuestionAssistant({
               fontSize: 13,
               cursor: loading ? "not-allowed" : "pointer",
               fontFamily: C.font,
-              boxShadow: loading ? "none" : "0 4px 14px rgba(79,70,229,0.35)",
+
             }}
           >
             {loading ? <Loader2 size={16} style={{ animation: "spin 0.9s linear infinite" }} /> : <Sparkles size={16} />}
@@ -441,7 +441,7 @@ export default function AiQuestionAssistant({
                 fontSize: 13,
                 cursor: "pointer",
                 fontFamily: C.font,
-                boxShadow: "0 4px 14px rgba(16,185,129,0.35)",
+
               }}
             >
               <Check size={16} strokeWidth={2.5} />

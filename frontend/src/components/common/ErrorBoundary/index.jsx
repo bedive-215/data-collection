@@ -32,7 +32,7 @@ function ErrorDisplay({ error, resetError, isAdmin = false, goBack }) {
         borderRadius: 24,
         padding: "40px 36px",
         textAlign: "center",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+
       }}>
         {/* Icon */}
         <div style={{
@@ -106,11 +106,11 @@ function ErrorDisplay({ error, resetError, isAdmin = false, goBack }) {
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: "'DM Sans', 'Inter', sans-serif",
-              boxShadow: "0 4px 16px rgba(99,102,241,0.35)",
+
               transition: "all 0.2s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(99,102,241,0.45)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(99,102,241,0.35)"; }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
           >
             <RefreshCw size={15} />
             Thử lại

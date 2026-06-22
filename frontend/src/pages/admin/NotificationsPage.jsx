@@ -11,8 +11,7 @@ const TYPE_LABELS = {
     SURVEY_CLOSED: "Đã đóng",
     NEW_PARTICIPANT: "Người tham gia",
     SURVEY_INVITATION_SENT: "Đã gửi lời mời",
-    SYSTEM: "Hệ thống",
-};
+    SYSTEM: "Hệ thống"};
 
 const TYPE_COLORS = {
     SURVEY_INVITATION: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
@@ -22,8 +21,7 @@ const TYPE_COLORS = {
     SURVEY_CLOSED:     { bg: "rgba(239,68,68,0.1)", color: "#EF4444", border: "rgba(239,68,68,0.2)" },
     NEW_PARTICIPANT:   { bg: "rgba(139,92,246,0.1)", color: "#8B5CF6", border: "rgba(139,92,246,0.2)" },
     SURVEY_INVITATION_SENT: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
-    SYSTEM:            { bg: "rgba(156,163,175,0.1)", color: "#9CA3AF", border: "rgba(156,163,175,0.2)" },
-};
+    SYSTEM:            { bg: "rgba(156,163,175,0.1)", color: "#9CA3AF", border: "rgba(156,163,175,0.2)" }};
 
 const formatTime = (dateString) => {
     if (!dateString) return "";
@@ -91,8 +89,7 @@ export default function AdminNotificationsPage() {
                         style={{
                             background: "var(--admin-surface)",
                             border: "1px solid var(--admin-border)",
-                            color: "var(--admin-text-sub)",
-                        }}
+                            color: "var(--admin-text-sub)"}}
                     >
                         <RefreshCw size={14} />
                         Làm mới
@@ -105,8 +102,7 @@ export default function AdminNotificationsPage() {
                             style={{
                                 background: "rgba(245,158,11,0.1)",
                                 color: "#F59E0B",
-                                border: "1px solid rgba(245,158,11,0.2)",
-                            }}
+                                border: "1px solid rgba(245,158,11,0.2)"}}
                         >
                             {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
                             Đánh dấu đã đọc
@@ -119,8 +115,7 @@ export default function AdminNotificationsPage() {
                         style={{
                             background: "rgba(239,68,68,0.08)",
                             color: "#EF4444",
-                            border: "1px solid rgba(239,68,68,0.15)",
-                        }}
+                            border: "1px solid rgba(239,68,68,0.15)"}}
                     >
                         <Trash2 size={14} />
                         Xóa đã đọc
@@ -160,8 +155,7 @@ export default function AdminNotificationsPage() {
                         className="rounded-2xl p-16 text-center"
                         style={{
                             background: "var(--admin-surface)",
-                            border: "1px solid var(--admin-border)",
-                        }}
+                            border: "1px solid var(--admin-border)"}}
                     >
                         <div
                             className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
@@ -187,8 +181,7 @@ export default function AdminNotificationsPage() {
                                 style={{
                                     background: "var(--admin-surface)",
                                     border: `1px solid ${notification.read ? "var(--admin-border)" : "rgba(245,158,11,0.2)"}`,
-                                    borderLeft: notification.read ? "1px solid var(--admin-border)" : `3px solid ${tc.color}`,
-                                }}
+                                    borderLeft: notification.read ? "1px solid var(--admin-border)" : `3px solid ${tc.color}`}}
                                 onMouseEnter={e => {
                                     e.currentTarget.style.background = "var(--admin-surface-hover)";
                                     e.currentTarget.style.borderColor = "var(--admin-border-hover)";

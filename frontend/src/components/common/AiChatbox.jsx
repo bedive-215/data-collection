@@ -57,7 +57,7 @@ function SurveyCard({ survey, onView, onStats }) {
       borderRadius: 14,
       background: "#fff",
       border: "1px solid rgba(0,0,0,0.07)",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+
       marginBottom: 8,
       animation: "slideInUp 0.2s ease",
     }}>
@@ -276,7 +276,7 @@ function SuccessCard({ message, survey }) {
               color: "#fff", fontSize: 11, fontWeight: 700,
               cursor: "pointer", fontFamily: C.font,
               display: "flex", alignItems: "center", gap: 4,
-              boxShadow: "0 4px 12px rgba(79,70,229,0.3)",
+
             }}
           >
             <Eye size={11} /> Xem khảo sát
@@ -484,17 +484,16 @@ export default function AiChatbox() {
           width: 60, height: 60, borderRadius: "50%", border: "none",
           background: C.primaryGrad, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 8px 24px rgba(79,70,229,0.45), 0 2px 8px rgba(79,70,229,0.2)",
-          transition: "transform 0.25s ease, box-shadow 0.25s ease",
+          transition: "transform 0.25s ease",
           animation: isOpen ? "none" : "float 3s ease-in-out infinite",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.1)";
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(79,70,229,0.55), 0 4px 12px rgba(79,70,229,0.3)";
+
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(79,70,229,0.45), 0 2px 8px rgba(79,70,229,0.2)";
+
         }}
         title="EchoAI Assistant"
         aria-label="Mở EchoAI Assistant"
@@ -524,7 +523,7 @@ export default function AiChatbox() {
           WebkitBackdropFilter: "blur(28px) saturate(190%)",
           border: `1px solid ${C.glassBorder}`,
           borderRadius: 24,
-          boxShadow: "0 24px 64px rgba(15,23,42,0.18), 0 4px 0 rgba(255,255,255,0.9) inset",
+
           overflow: "hidden",
           animation: "slideInUp 0.3s cubic-bezier(.16,1,.3,1)",
         }}>
@@ -673,7 +672,7 @@ export default function AiChatbox() {
                                 ? C.errorBg
                                 : "#fff",
                             border: isUser ? "none" : isError ? "1px solid rgba(239,68,68,0.15)" : "1px solid rgba(0,0,0,0.07)",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+
                             color: isUser ? "#fff" : isError ? "#b91c1c" : C.text,
                             fontSize: 13, lineHeight: 1.5,
                             fontFamily: C.font, wordBreak: "break-word",
@@ -693,7 +692,7 @@ export default function AiChatbox() {
                                   color: "#fff", fontSize: 11, fontWeight: 700,
                                   cursor: "pointer", fontFamily: C.font,
                                   display: "flex", alignItems: "center", gap: 4,
-                                  boxShadow: "0 3px 8px rgba(79,70,229,0.3)",
+
                                 }}
                               >
                                 <Eye size={11} /> Xem khảo sát
@@ -868,7 +867,7 @@ export default function AiChatbox() {
                     <div style={{
                       padding: "10px 16px", borderRadius: "18px 18px 18px 4px",
                       background: "#fff", border: "1px solid rgba(0,0,0,0.07)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+
                     }}>
                       <TypingDots />
                     </div>
@@ -901,15 +900,15 @@ export default function AiChatbox() {
                     backdropFilter: "blur(8px)",
                     outline: "none", resize: "none", maxHeight: 100,
                     overflowY: "auto", lineHeight: 1.4,
-                    transition: "border-color 0.15s, box-shadow 0.15s",
+                    transition: "border-color 0.15s",
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = C.primary;
-                    e.target.style.boxShadow = `0 0 0 3px rgba(79,70,229,0.1)`;
+
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = "rgba(0,0,0,0.1)";
-                    e.target.style.boxShadow = "none";
+
                   }}
                 />
                 <button
@@ -924,7 +923,7 @@ export default function AiChatbox() {
                     cursor: loading || !input.trim() ? "not-allowed" : "pointer",
                     display: "flex", alignItems: "center",
                     justifyContent: "center", flexShrink: 0,
-                    boxShadow: loading || !input.trim() ? "none" : "0 4px 12px rgba(79,70,229,0.35)",
+
                     transition: "all 0.2s",
                   }}
                   onMouseEnter={(e) => {

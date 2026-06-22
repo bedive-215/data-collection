@@ -12,8 +12,7 @@ import {
   ToggleLeft, Star, Grid, FileUp, Calendar, Clock,
   FileText, Video, Minus, Copy, Bold, Italic, Underline,
   Link, AlignLeft as AlignLeftIcon, AlignCenter, AlignRight,
-  ImagePlus, Sparkles,
-} from "lucide-react";
+  ImagePlus, Sparkles} from "lucide-react";
 import AiQuestionAssistant from "@/components/survey/AiQuestionAssistant";
 
 /* ── Design tokens — aligned with Admin Design System v2 ───────────────────── */
@@ -41,8 +40,7 @@ const C = {
   error:         "#EF4444",
   errorBg:       "#150f0f",
   errorBorder:   "rgba(239,68,68,0.30)",
-  font:          "'Plus Jakarta Sans','DM Sans',sans-serif",
-};
+  font:          "'Plus Jakarta Sans','DM Sans',sans-serif"};
 
 /* ─────────────────────────────────────────────────────────────────────
  * TYPE MAPPING
@@ -65,8 +63,7 @@ const BE_TO_FE_TYPE = {
   RATING:          "RATING",
   SINGLE_CHOICE:   "SINGLE_CHOICE",
   MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
-  DROPDOWN:        "DROPDOWN",
-};
+  DROPDOWN:        "DROPDOWN"};
 
 const toFEType = (beType) => BE_TO_FE_TYPE[beType] ?? "TEXT";
 const toBEType = (feType) => feType;
@@ -95,13 +92,11 @@ const inp = (err) => ({
   width:"100%", boxSizing:"border-box", padding:"10px 14px",
   background:C.bg, border:`1.5px solid ${err?C.error:C.border}`,
   borderRadius:10, color:C.text, fontSize:14,
-  fontFamily:C.font, outline:"none", transition:"border-color .15s",
-});
+  fontFamily:C.font, outline:"none", transition:"border-color .15s"});
 const lbl = {
   display:"block", fontSize:11, fontWeight:700,
   letterSpacing:"0.04em", textTransform:"uppercase",
-  color:C.textSub, marginBottom:7,
-};
+  color:C.textSub, marginBottom:7};
 
 function iconBtn(color, borderColor, bg) {
   return {
@@ -109,8 +104,7 @@ function iconBtn(color, borderColor, bg) {
     width:30, height:30, borderRadius:7,
     border:`1px solid ${borderColor??C.border}`,
     background:bg??"transparent", cursor:"pointer", color,
-    transition:"background .12s", flexShrink:0,
-  };
+    transition:"background .12s", flexShrink:0};
 }
 
 /* ── Default option row factory ───────────────────────────────────── */
@@ -125,8 +119,7 @@ const buildBEOptions = (optionRows) =>
       order_index: i,
       is_other:    r.is_other ?? false,
       image_url:   r.image?.serverUrl || r.image?.url || null,
-      media_type:  r.image?.media_type || null,
-    }));
+      media_type:  r.image?.media_type || null}));
 
 /* ── Toggle ───────────────────────────────────────────────────────── */
 function Toggle({ checked, onChange }) {
@@ -137,13 +130,11 @@ function Toggle({ checked, onChange }) {
         width:44,height:24,borderRadius:999,
         background:checked?C.primary:C.surfaceHigh,
         position:"relative",transition:"background .2s",cursor:"pointer",
-        border:`1px solid ${checked?C.primaryBorder:C.border}`,
-      }}>
+        border:`1px solid ${checked?C.primaryBorder:C.border}`}}>
         <div style={{
           position:"absolute",top:3,left:checked?22:3,
           width:16,height:16,borderRadius:"50%",background:"#fff",
-          transition:"left .2s",
-        }}/>
+          transition:"left .2s"}}/>
       </div>
     </label>
   );
@@ -169,8 +160,7 @@ function QuestionTypeDropdown({ value, onChange }) {
         width:"100%", padding:"8px 12px",
         background: C.surfaceHigh, border:`1px solid ${open?C.borderHover:C.border}`,
         borderRadius:8, cursor:"pointer", color:C.text, fontFamily:C.font, fontSize:13,
-        justifyContent:"space-between",
-      }}>
+        justifyContent:"space-between"}}>
         <span style={{display:"flex",alignItems:"center",gap:8,color:C.textSub}}>
           {current.icon}
           <span style={{color:C.text}}>{current.label}</span>
@@ -182,9 +172,7 @@ function QuestionTypeDropdown({ value, onChange }) {
         <div style={{
           position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:20,
           background:C.surfaceHigh, border:`1px solid ${C.border}`,
-          borderRadius:10, overflow:"hidden",
-          boxShadow:"0 8px 24px rgba(0,0,0,0.5)", maxHeight:320, overflowY:"auto",
-        }}>
+          borderRadius:10, overflow:"hidden", maxHeight:320, overflowY:"auto"}}>
           {Q_TYPES.map(t => (
             <button key={t.value} onClick={()=>{ onChange(t.value); setOpen(false); }}
               style={{
@@ -193,8 +181,7 @@ function QuestionTypeDropdown({ value, onChange }) {
                 background: t.value===value ? C.primaryDim : "transparent",
                 border:"none", fontSize:13, fontWeight:500,
                 color: t.value===value ? C.primary : C.text,
-                cursor:"pointer", fontFamily:C.font,
-              }}
+                cursor:"pointer", fontFamily:C.font}}
               onMouseEnter={e=>e.currentTarget.style.background=t.value===value?C.primaryDim:C.surface}
               onMouseLeave={e=>e.currentTarget.style.background=t.value===value?C.primaryDim:"transparent"}
             >
@@ -228,8 +215,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
         overflow:"hidden", border:`1px solid ${C.border}`,
         width: size === "sm" ? 44 : 80,
         height: size === "sm" ? 44 : 60,
-        flexShrink:0,
-      }}>
+        flexShrink:0}}>
         <img src={image.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
         <button
           type="button"
@@ -240,8 +226,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
             background:"rgba(0,0,0,0.75)",border:"none",
             color:"#fff",cursor:"pointer",fontSize:10,
             display:"flex",alignItems:"center",justifyContent:"center",
-            lineHeight:1,
-          }}
+            lineHeight:1}}
         >×</button>
       </div>
     );
@@ -261,8 +246,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
           borderRadius:7, border:`1px solid ${C.border}`,
           background:"transparent", color:C.textSub,
           cursor:"pointer", flexShrink:0,
-          transition:"all .12s",
-        }}
+          transition:"all .12s"}}
         onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.primary;}}
         onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;e.currentTarget.style.borderColor=C.border;}}
       >
@@ -303,8 +287,7 @@ function OptionImageUpload({ image, onImageChange }) {
       <div style={{
         position:"relative", display:"inline-flex", borderRadius:8,
         overflow:"hidden", border:`1px solid ${C.border}`,
-        width:44, height:44, flexShrink:0,
-      }}>
+        width:44, height:44, flexShrink:0}}>
         {image.media_type === "video" ? (
           <video src={image.url} style={{width:"100%",height:"100%",objectFit:"cover"}} controls/>
         ) : (
@@ -319,8 +302,7 @@ function OptionImageUpload({ image, onImageChange }) {
             background:"rgba(0,0,0,0.75)",border:"none",
             color:"#fff",cursor:"pointer",fontSize:10,
             display:"flex",alignItems:"center",justifyContent:"center",
-            lineHeight:1,
-          }}
+            lineHeight:1}}
         >×</button>
       </div>
     );
@@ -341,8 +323,7 @@ function OptionImageUpload({ image, onImageChange }) {
           border:`1px solid ${uploading ? C.border : C.primaryBorder}`,
           borderRadius:6, color: uploading ? C.textDim : C.primary,
           fontSize:11, fontWeight:600, cursor: uploading ? "not-allowed" : "pointer",
-          fontFamily:C.font, transition:"all .12s", whiteSpace:"nowrap",
-        }}
+          fontFamily:C.font, transition:"all .12s", whiteSpace:"nowrap"}}
         onMouseEnter={e=>{ if(!uploading){e.currentTarget.style.background="rgba(79,110,247,0.18)";e.currentTarget.style.color=C.primary;} }}
         onMouseLeave={e=>{ if(!uploading){e.currentTarget.style.background="rgba(79,110,247,0.08)";e.currentTarget.style.color=C.primary;} }}
       >
@@ -421,8 +402,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
         width:26, height:26, borderRadius:5,
         border:"none", background:"transparent",
         color:C.textSub, cursor:"pointer",
-        transition:"all .1s",
-      }}
+        transition:"all .1s"}}
       onMouseEnter={e=>{e.currentTarget.style.background=C.surfaceHigh;e.currentTarget.style.color=C.text;}}
       onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
     >
@@ -435,14 +415,12 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
       border:`1.5px solid ${hasError ? C.error : isFocused ? C.primary : C.border}`,
       borderRadius:10, overflow:"hidden",
       transition:"border-color .15s",
-      background:C.bg,
-    }}>
+      background:C.bg}}>
       {/* Toolbar */}
       <div style={{
         display:"flex", alignItems:"center", gap:2, padding:"6px 10px",
         borderBottom:`1px solid ${C.border}`, background:C.surfaceHigh,
-        flexWrap:"wrap",
-      }}>
+        flexWrap:"wrap"}}>
         {toolbarBtn("bold",    <Bold size={13}/>,      "In đậm")}
         {toolbarBtn("italic",  <Italic size={13}/>,    "In nghiêng")}
         {toolbarBtn("underline",<Underline size={13}/>,"Gạch chân")}
@@ -467,8 +445,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
           style={{
             background:C.bg, border:`1px solid ${C.border}`, borderRadius:5,
             color:C.textSub, fontSize:11, padding:"2px 4px",
-            cursor:"pointer", fontFamily:C.font, outline:"none",
-          }}
+            cursor:"pointer", fontFamily:C.font, outline:"none"}}
         >
           <option value="p">Đoạn văn</option>
           <option value="h1">Tiêu đề 1</option>
@@ -510,8 +487,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
             width:26, height:26, borderRadius:5,
             border:"none", background:"transparent",
             color:C.textSub, cursor:"pointer",
-            transition:"all .1s",
-          }}
+            transition:"all .1s"}}
           onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
           onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
         >
@@ -529,8 +505,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
           <div style={{
             position:"absolute", top:0, left:0, right:0,
             padding:"10px 14px", fontSize:14, color:C.textDim,
-            pointerEvents:"none", userSelect:"none",
-          }}>
+            pointerEvents:"none", userSelect:"none"}}>
             {placeholder}
           </div>
         )}
@@ -550,8 +525,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
             fontFamily:C.font,
             outline:"none",
             lineHeight:1.6,
-            wordBreak:"break-word",
-          }}
+            wordBreak:"break-word"}}
         />
       </div>
     </div>
@@ -583,8 +557,7 @@ function QuestionImageUploadArea({ image, onImageChange, uploading }) {
         <div style={{
           position:"absolute",top:0,left:0,right:0,bottom:0,
           background:"rgba(0,0,0,0)",transition:"background .15s",
-          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-        }}
+          display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
           onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.5)"}
           onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0)"}
         >
@@ -595,8 +568,7 @@ function QuestionImageUploadArea({ image, onImageChange, uploading }) {
               padding:"5px 10px",background:"rgba(0,0,0,0.7)",
               border:"none",borderRadius:6,color:"#fff",
               fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,
-              opacity:0,transition:"opacity .15s",
-            }}
+              opacity:0,transition:"opacity .15s"}}
             onMouseEnter={e=>e.currentTarget.style.opacity="1"}
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
           >{uploading?<Loader2 size={12} style={{animation:"spin 1s linear infinite",display:"inline"}}/>:"Thay ảnh"}</button>
@@ -607,8 +579,7 @@ function QuestionImageUploadArea({ image, onImageChange, uploading }) {
               padding:"5px 10px",background:"rgba(180,30,30,0.8)",
               border:"none",borderRadius:6,color:"#fff",
               fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:C.font,
-              opacity:0,transition:"opacity .15s",
-            }}
+              opacity:0,transition:"opacity .15s"}}
             onMouseEnter={e=>e.currentTarget.style.opacity="1"}
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
           >Xóa ảnh</button>
@@ -653,8 +624,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
         label: trimLabel,
         value: trimValue,
         image_url: optImage?.serverUrl || null,
-        media_type: optImage?.media_type || null,
-      });
+        media_type: optImage?.media_type || null});
       setEditing(false);
     } finally { setSaving(false); }
   };
@@ -702,8 +672,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
   return (
     <div style={{
       display:"flex",flexDirection:"column",gap:6,
-      padding:"7px 0",borderBottom:`1px solid ${C.border}`,
-    }}>
+      padding:"7px 0",borderBottom:`1px solid ${C.border}`}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <GripVertical size={13} color={C.textDim} style={{flexShrink:0,cursor:"grab"}}/>
         <Marker/>
@@ -898,8 +867,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                   flex:1, padding:"6px 10px",
                   background:C.surfaceHigh, border:`1px solid ${C.border}`,
                   borderRadius:7, color:C.text, fontSize:13,
-                  fontFamily:C.font, outline:"none",
-                }}
+                  fontFamily:C.font, outline:"none"}}
                 onFocus={e => e.target.style.borderColor = C.primary}
                 onBlur={e => e.target.style.borderColor = C.border}
               />
@@ -912,8 +880,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                   flex:1, padding:"6px 10px",
                   background:C.bg, border:`1px solid ${C.border}`,
                   borderRadius:7, color:C.textSub, fontSize:12,
-                  fontFamily:"monospace", outline:"none",
-                }}
+                  fontFamily:"monospace", outline:"none"}}
                 onFocus={e => e.target.style.borderColor = C.primary}
                 onBlur={e => e.target.style.borderColor = C.border}
               />
@@ -930,8 +897,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                   background:"transparent",
                   cursor: optionRows.length <= 1 ? "not-allowed" : "pointer",
                   color: C.textDim, display:"flex", alignItems:"center",
-                  justifyContent:"center", flexShrink:0,
-                }}
+                  justifyContent:"center", flexShrink:0}}
                 onMouseEnter={e => { if (optionRows.length > 1) { e.currentTarget.style.color=C.error; e.currentTarget.style.background=C.errorBg; }}}
                 onMouseLeave={e => { e.currentTarget.style.color=C.textDim; e.currentTarget.style.background="transparent"; }}
               >×</button>
@@ -959,8 +925,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
           style={{
             background:"none", border:"none", color:C.primary,
             fontSize:13, fontWeight:600, fontFamily:C.font,
-            cursor:"pointer", display:"flex", alignItems:"center", gap:6, padding:0,
-          }}
+            cursor:"pointer", display:"flex", alignItems:"center", gap:6, padding:0}}
         >
           <PlusCircle size={14}/> Thêm lựa chọn
         </button>
@@ -973,8 +938,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
               display:"inline-flex", alignItems:"center", gap:5,
               padding:"3px 10px", borderRadius:20,
               background:C.surfaceHigh, border:`1px solid ${C.border}`,
-              fontSize:12, color:C.textSub, fontWeight:500,
-            }}>
+              fontSize:12, color:C.textSub, fontWeight:500}}>
               {o.image && <img src={o.image.serverUrl || o.image.url} alt="" style={{width:14,height:14,objectFit:"cover",borderRadius:3}}/>}
               <span style={{width:5,height:5,borderRadius:"50%",background:C.primary,flexShrink:0}}/>
               {o.label}
@@ -1100,8 +1064,7 @@ function QuestionBody({ q, type }) {
         opts.map((opt, i) => (
           <div key={opt.id ?? i} style={{
             display:"flex",alignItems:"center",gap:10,
-            padding:"6px 0",borderBottom:`1px solid ${C.border}`,
-          }}>
+            padding:"6px 0",borderBottom:`1px solid ${C.border}`}}>
             {type === "MULTIPLE_CHOICE"
               ? <div style={{width:15,height:15,borderRadius:3,border:`1.5px solid ${C.textDim}`,flexShrink:0}}/>
               : type === "DROPDOWN"
@@ -1171,8 +1134,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
                 is_other: o.is_other ?? false,
                 image: o.image_url
                   ? { serverUrl: o.image_url, url: o.image_url, media_type: o.media_type || "image" }
-                  : null,
-              }
+                  : null}
         )
       : [newOptionRow()]
   );
@@ -1212,8 +1174,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           serverUrl: url,
           url: previewUrl,
           name: file.name,
-          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image"),
-        });
+          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image")});
       })
       .catch(err => {
         console.error("Upload question image failed:", err);
@@ -1250,8 +1211,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       required,
       settings: hasSettings ? settings : undefined,
       media_url: qImage?.serverUrl || null,
-      media_type: qImage?.media_type || null,
-    };
+      media_type: qImage?.media_type || null};
     if (isChoice) payload.options = buildBEOptions(optionRows);
 
     try { await onSave(q.id, q.survey_id, payload); }
@@ -1273,9 +1233,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           display: "flex", alignItems: "center", gap: 14,
           cursor: "pointer", position: "relative",
           transition: "all .18s",
-          boxShadow: hovered?"0 4px 20px rgba(79,110,247,0.10)":"none",
-          transform: hovered?"translateY(-1px)":"none",
-        }}
+          transform: hovered?"translateY(-1px)":"none"}}
       >
         <GripVertical size={14} color={C.textDim} style={{cursor:"grab",flexShrink:0}}/>
         <span style={{fontSize:11,fontWeight:700,color:hovered?C.primary:C.textDim,minWidth:22}}>
@@ -1302,9 +1260,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       background: C.surface,
       border: `1px solid ${C.borderHover}`,
       borderLeft: `4px solid ${C.primary}`,
-      borderRadius: 12,
-      boxShadow: "0 4px 24px rgba(79,110,247,0.15)",
-    }}>
+      borderRadius: 12}}>
       <div style={{display:"flex",justifyContent:"center",padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
         <GripVertical size={16} color={C.textDim} style={{cursor:"grab"}}/>
       </div>
@@ -1346,8 +1302,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       <div style={{
         display:"flex", alignItems:"center", justifyContent:"flex-end",
         gap:4, padding:"12px 20px 14px",
-        borderTop:`1px solid ${C.border}`, marginTop:12,
-      }}>
+        borderTop:`1px solid ${C.border}`, marginTop:12}}>
         <button onClick={()=>onDuplicate(q)} title="Nhân đôi"
           style={iconBtn(C.textSub)}
           onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHigh}
@@ -1373,9 +1328,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           border:saving?`1px solid ${C.border}`:"none",
           borderRadius:9, fontSize:12, fontWeight:700,
           cursor:saving?"not-allowed":"pointer",
-          fontFamily:C.font,
-          boxShadow:saving?"none":"0 2px 10px rgba(79,110,247,0.3)",
-        }}>
+          fontFamily:C.font}}>
           {saving&&<Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/>}
           Lưu
         </button>
@@ -1383,8 +1336,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           padding:"7px 14px", background:"transparent",
           border:`1px solid ${C.border}`, borderRadius:9,
           fontSize:12, fontWeight:600, color:C.textSub,
-          cursor:"pointer", fontFamily:C.font,
-        }}>
+          cursor:"pointer", fontFamily:C.font}}>
           Đóng
         </button>
       </div>
@@ -1407,16 +1359,14 @@ function Sidebar({ onAddQuestion }) {
       position:"sticky",top:24,alignSelf:"flex-start",
       background:C.surface,border:`1px solid ${C.border}`,
       borderRadius:12,overflow:"hidden",
-      display:"flex",flexDirection:"column",
-    }}>
+      display:"flex",flexDirection:"column"}}>
       {items.map((item,i)=>(
         <button key={i} onClick={item.action} title={item.title}
           style={{
             display:"flex",alignItems:"center",justifyContent:"center",
             width:44,height:44,background:"transparent",border:"none",
             cursor:"pointer",color:C.textSub,transition:"all .12s",
-            borderBottom:i<items.length-1?`1px solid ${C.border}`:"none",
-          }}
+            borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
           onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
           onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
         >
@@ -1433,8 +1383,7 @@ export default function QuestionPage() {
   const {
     questions, loading,
     createQuestion, fetchQuestionsBySurvey,
-    updateQuestion, deleteQuestion,
-  } = useQuestion();
+    updateQuestion, deleteQuestion} = useQuestion();
 
   const [activeId,    setActiveId]    = useState(null);
   const [showForm,    setShowForm]    = useState(false);
@@ -1523,8 +1472,7 @@ export default function QuestionPage() {
           serverUrl: url,
           url: previewUrl,
           name: file.name,
-          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image"),
-        });
+          media_type: media_type || (file.type.startsWith("video/") ? "video" : "image")});
       })
       .catch(err => {
         console.error("Upload question image failed:", err);
@@ -1586,8 +1534,7 @@ export default function QuestionPage() {
       order_index: questions.length,
       settings:    hasSettings ? settings : undefined,
       media_url:   qImage?.serverUrl || null,
-      media_type:  qImage?.media_type || null,
-    };
+      media_type:  qImage?.media_type || null};
 
     if (isChoice) {
       payload.options = buildBEOptions(optionRows);
@@ -1621,8 +1568,7 @@ export default function QuestionPage() {
       type:        toBEType(toFEType(q.type)),
       required:    q.required,
       order_index: questions.length,
-      settings:    q.settings ?? undefined,
-    };
+      settings:    q.settings ?? undefined};
     const feType = toFEType(q.type);
     if (CHOICE_TYPES.includes(feType) && opts.length > 0) {
       payload.options = opts
@@ -1632,22 +1578,20 @@ export default function QuestionPage() {
           order_index: i,
           is_other:    typeof o === "object" ? (o.is_other ?? false) : false,
           image_url:   typeof o === "object" ? (o.image_url ?? null) : null,
-          media_type:  typeof o === "object" ? (o.media_type ?? null) : null,
-        }))
+          media_type:  typeof o === "object" ? (o.media_type ?? null) : null}))
         .filter(o => o.label && o.value);
     }
     try {
       const created = await createQuestion(surveyId, payload);
       await fetchQuestionsBySurvey(surveyId);
       if (created?.id) pendingIdRef.current = created.id;
-    } catch { }
+    } catch {}
   }, [questions, surveyId, createQuestion, fetchQuestionsBySurvey]);
 
   const handleUpdate = useCallback(async (id, sid, payload) => {
     const mappedPayload = {
       ...payload,
-      type: payload.type ? toBEType(toFEType(payload.type)) : undefined,
-    };
+      type: payload.type ? toBEType(toFEType(payload.type)) : undefined};
     delete mappedPayload.option;
     if (Array.isArray(mappedPayload.options)) {
       mappedPayload.options = mappedPayload.options
@@ -1679,13 +1623,11 @@ export default function QuestionPage() {
       <div style={{
         background:C.surface,borderBottom:`1px solid ${C.border}`,
         padding:"0 24px",display:"flex",alignItems:"center",
-        justifyContent:"space-between",height:60,gap:16,
-      }}>
+        justifyContent:"space-between",height:60,gap:16}}>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <div style={{
             width:36,height:36,borderRadius:8,background:C.primaryGrad,
-            display:"flex",alignItems:"center",justifyContent:"center",
-          }}>
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
             <FileText size={18} color="#fff"/>
           </div>
           <div>
@@ -1712,8 +1654,7 @@ export default function QuestionPage() {
               border:`1px solid rgba(99,102,241,0.35)`,
               borderRadius:10,
               fontSize:12,fontWeight:700,
-              cursor:"pointer",fontFamily:C.font,
-            }}
+              cursor:"pointer",fontFamily:C.font}}
           >
             <Sparkles size={14}/>
             Tạo bằng AI
@@ -1725,9 +1666,7 @@ export default function QuestionPage() {
             color:showForm?C.textSub:"#fff",
             border:showForm?`1px solid ${C.border}`:"none",
             borderRadius:9,fontSize:13,fontWeight:700,
-            cursor:"pointer",fontFamily:C.font,
-            boxShadow:showForm?"none":"0 2px 12px rgba(79,110,247,0.3)",
-          }}>
+            cursor:"pointer",fontFamily:C.font}}>
             {showForm?<X size={14}/>:<Plus size={14}/>}
             {showForm?"Huỷ":"Câu hỏi mới"}
           </button>
@@ -1737,24 +1676,21 @@ export default function QuestionPage() {
       {/* ── Body ── */}
       <div style={{
         maxWidth:900,margin:"0 auto",padding:"28px 24px",
-        display:"flex",gap:16,alignItems:"flex-start",
-      }}>
+        display:"flex",gap:16,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:12}}>
 
           {/* Form header card */}
           <div style={{
             background:C.surface,border:`1px solid ${C.border}`,
             borderTop:`6px solid ${C.primary}`,borderRadius:12,
-            padding:"20px 24px",marginBottom:4,
-          }}>
+            padding:"20px 24px",marginBottom:4}}>
             <input
               defaultValue="Mẫu khảo sát"
               style={{
                 width:"100%",background:"transparent",
                 border:"none",borderBottom:`1px solid ${C.border}`,
                 color:C.text,fontSize:22,fontWeight:700,fontFamily:C.font,
-                outline:"none",padding:"4px 0 8px",
-              }}
+                outline:"none",padding:"4px 0 8px"}}
               onFocus={e=>e.target.style.borderBottomColor=C.primary}
               onBlur={e=>e.target.style.borderBottomColor=C.border}
             />
@@ -1765,8 +1701,7 @@ export default function QuestionPage() {
                 width:"100%",background:"transparent",
                 border:"none",borderBottom:`1px solid ${C.border}`,
                 color:C.textSub,fontSize:13,fontFamily:C.font,
-                outline:"none",padding:"8px 0 4px",marginTop:8,
-              }}
+                outline:"none",padding:"8px 0 4px",marginTop:8}}
               onFocus={e=>e.target.style.borderBottomColor=C.primary}
               onBlur={e=>e.target.style.borderBottomColor=C.border}
             />
@@ -1777,8 +1712,7 @@ export default function QuestionPage() {
             <div style={{
               background:C.surfaceLow,border:`1px solid ${C.borderHover}`,
               borderLeft:`4px solid ${C.primary}`,borderRadius:12,
-              padding:"20px 24px",boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
-            }}>
+              padding:"20px 24px"}}>
               <h2 style={{fontSize:14,fontWeight:700,color:C.text,margin:"0 0 14px"}}>Câu hỏi mới</h2>
               <form onSubmit={handleAdd}>
                 <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -1850,8 +1784,7 @@ export default function QuestionPage() {
                         padding:"7px 14px",background:"transparent",
                         border:`1.5px solid ${C.border}`,borderRadius:9,
                         fontSize:12,fontWeight:600,color:C.textSub,
-                        cursor:"pointer",fontFamily:C.font,
-                      }}
+                        cursor:"pointer",fontFamily:C.font}}
                     >
                       Huỷ
                     </button>
@@ -1863,9 +1796,7 @@ export default function QuestionPage() {
                       border:formLoading?`1px solid ${C.border}`:"none",
                       borderRadius:9,fontSize:12,fontWeight:700,
                       cursor:formLoading?"not-allowed":"pointer",
-                      fontFamily:C.font,
-                      boxShadow:formLoading?"none":"0 2px 10px rgba(79,110,247,0.3)",
-                    }}>
+                      fontFamily:C.font}}>
                       {formLoading
                         ? <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/>
                         : <Plus size={13}/>
@@ -1890,16 +1821,14 @@ export default function QuestionPage() {
               <p style={{fontSize:15,margin:0,color:C.textSub}}>Chưa có câu hỏi nào.</p>
               <button onClick={()=>setShowForm(true)} style={{
                 fontSize:13,fontWeight:600,color:C.primary,background:"none",
-                border:"none",cursor:"pointer",textDecoration:"underline",fontFamily:C.font,
-              }}>
+                border:"none",cursor:"pointer",textDecoration:"underline",fontFamily:C.font}}>
                 Thêm câu hỏi đầu tiên
               </button>
               <button type="button" onClick={()=>setAiOpen(true)} style={{
                 fontSize:13,fontWeight:700,color:C.primary,background:C.surface,
                 border:`1px solid rgba(99,102,241,0.35)`,cursor:"pointer",borderRadius:10,
                 padding:"9px 18px",fontFamily:C.font,
-                display:"flex",alignItems:"center",gap:8,
-              }}>
+                display:"flex",alignItems:"center",gap:8}}>
                 <Sparkles size={14}/>
                 Tạo bằng AI
               </button>
@@ -1942,8 +1871,7 @@ export default function QuestionPage() {
               required: q.required,
               order_index: q.order_index,
               settings: q.settings,
-              options: q.options,
-            });
+              options: q.options});
           }
           fetchQuestionsBySurvey(surveyId);
         }}

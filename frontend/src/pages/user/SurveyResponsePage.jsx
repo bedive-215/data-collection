@@ -4,8 +4,7 @@ import { useResponse } from "@/providers/ResponseProvider";
 import {
   ChevronLeft, CheckCircle2, Loader2, AlertCircle,
   AlignLeft, FileText, Mail, Calendar, Hash, Star, CheckSquare, ChevronDown,
-  Trophy, Home, Clock, Inbox,
-} from "lucide-react";
+  Trophy, Home, Clock, Inbox, ArrowLeft} from "lucide-react";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
 const TYPE_CONFIG = {
@@ -17,16 +16,14 @@ const TYPE_CONFIG = {
   RATING: { label: "Đánh giá", Icon: Star, color: "#d97706", bg: "#fffbeb" },
   SINGLE_CHOICE: { label: "Một lựa chọn", Icon: CheckSquare, color: "#ea580c", bg: "#fff7ed" },
   MULTIPLE_CHOICE: { label: "Nhiều lựa chọn", Icon: CheckSquare, color: "#16a34a", bg: "#f0fdf4" },
-  DROPDOWN: { label: "Danh sách thả", Icon: ChevronDown, color: "#6d28d9", bg: "#f5f3ff" },
-};
+  DROPDOWN: { label: "Danh sách thả", Icon: ChevronDown, color: "#6d28d9", bg: "#f5f3ff" }};
 
 const PAGE = {
   text: "#0f172a",
   textSub: "#64748b",
   textDim: "#94a3b8",
   primary: "#4f46e5",
-  font: "'DM Sans','Inter',sans-serif",
-};
+  font: "'DM Sans','Inter',sans-serif"};
 
 function GlassPanel({ children, style = {}, delay = 0 }) {
   return (
@@ -39,17 +36,15 @@ function GlassPanel({ children, style = {}, delay = 0 }) {
         borderRadius: 20,
         padding: 22,
         animation: `slideInUp 0.55s ease-out ${delay}s both`,
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)",
-        ...style,
-      }}
+        transition:"transform 0.25s ease",
+        ...style}}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-3px)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.92) inset, 0 16px 40px rgba(79,70,229,0.1)";
+        
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)";
+        
       }}
     >
       {children}
@@ -121,8 +116,7 @@ function SurveyResponsePage() {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 11,
               background: "rgba(255,255,255,0.82)", border: "1px solid rgba(0,0,0,0.08)", cursor: "pointer",
-              marginBottom: 18, fontSize: 13, fontWeight: 700, color: PAGE.primary,
-            }}
+              marginBottom: 18, fontSize: 13, fontWeight: 700, color: PAGE.primary}}
           >
             <ChevronLeft size={16} /> Quay lại
           </button>
@@ -131,8 +125,7 @@ function SurveyResponsePage() {
               <div style={{
                 width: 52, height: 52, borderRadius: 14,
                 background: "linear-gradient(135deg,#f87171,#ef4444)",
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0}}>
                 <AlertCircle size={28} color="#fff" />
               </div>
               <div>
@@ -158,10 +151,9 @@ function SurveyResponsePage() {
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9,
                   background: PAGE.primary, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 700, color: "#fff",
-                }}
+                  fontSize: 12, fontWeight: 700, color: "#fff"}}
               >
-                ← Quay lại trang chủ
+                <ArrowLeft size={14} /> Quay lại trang chủ
               </button>
             </div>
           </GlassPanel>
@@ -178,8 +170,7 @@ function SurveyResponsePage() {
         fontFamily: PAGE.font,
         padding: "24px 20px 48px",
         overflowX: "hidden",
-        position: "relative",
-      }}
+        position: "relative"}}
     >
       <AnimatedSurveyBackdrop />
 
@@ -190,8 +181,7 @@ function SurveyResponsePage() {
           style={{
             display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 11,
             background: "rgba(255,255,255,0.82)", border: "1px solid rgba(0,0,0,0.08)", cursor: "pointer",
-            marginBottom: 20, fontSize: 13, fontWeight: 700, color: PAGE.primary,
-          }}
+            marginBottom: 20, fontSize: 13, fontWeight: 700, color: PAGE.primary}}
         >
           <ChevronLeft size={16} /> Quay lại
         </button>
@@ -208,17 +198,15 @@ function SurveyResponsePage() {
             overflow: "hidden",
             animation: "slideInUp 0.55s ease-out",
             border: "1px solid rgba(255,255,255,0.82)",
-            boxShadow: "0 2px 0 rgba(255,255,255,0.95) inset, 0 20px 48px rgba(15,23,42,0.08), 0 40px 80px rgba(79,70,229,0.08)",
             marginBottom: 22,
-            transition: "box-shadow 0.25s ease, transform 0.25s ease",
-          }}
+            transition:"transform 0.25s ease"}}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.98) inset, 0 24px 56px rgba(79,70,229,0.12)";
+            
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.95) inset, 0 20px 48px rgba(15,23,42,0.08), 0 40px 80px rgba(79,70,229,0.08)";
+            
           }}
         >
           <div
@@ -231,8 +219,7 @@ function SurveyResponsePage() {
               background: "radial-gradient(circle, rgba(255,255,255,0.2), transparent)",
               borderRadius: "50%",
               opacity: 0.5,
-              animation: "float 6s ease-in-out infinite",
-            }}
+              animation: "float 6s ease-in-out infinite"}}
           />
           <div
             style={{
@@ -244,8 +231,7 @@ function SurveyResponsePage() {
               background: "radial-gradient(circle, rgba(255,255,255,0.15), transparent)",
               borderRadius: "50%",
               opacity: 0.5,
-              animation: "float 8s ease-in-out infinite reverse",
-            }}
+              animation: "float 8s ease-in-out infinite reverse"}}
           />
 
           <div style={{ position: "relative", zIndex: 1 }}>
@@ -259,8 +245,7 @@ function SurveyResponsePage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: "1px solid rgba(79,70,229,0.2)",
-                }}
+                  border: "1px solid rgba(79,70,229,0.2)"}}
               >
                 <CheckCircle2 size={26} color={PAGE.primary} />
               </div>
@@ -270,8 +255,7 @@ function SurveyResponsePage() {
                   fontWeight: 800,
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
-                  color: PAGE.textSub,
-                }}
+                  color: PAGE.textSub}}
               >
                 Đã hoàn thành
               </span>
@@ -284,8 +268,7 @@ function SurveyResponsePage() {
                 marginBottom: 12,
                 marginTop: 0,
                 lineHeight: 1.2,
-                color: PAGE.text,
-              }}
+                color: PAGE.text}}
             >
               {response?.data?.survey?.title || response?.data?.title || "Khảo sát đã hoàn thành"}
             </h2>
@@ -296,8 +279,7 @@ function SurveyResponsePage() {
                 marginBottom: 18,
                 marginTop: 0,
                 lineHeight: 1.6,
-                color: PAGE.textSub,
-              }}
+                color: PAGE.textSub}}
             >
               {response?.data?.survey?.description || response?.data?.description || ""}
             </p>
@@ -328,8 +310,7 @@ function SurveyResponsePage() {
               color: PAGE.text,
               marginBottom: 16,
               marginTop: 0,
-              letterSpacing: "0.02em",
-            }}
+              letterSpacing: "0.02em"}}
           >
             Câu trả lời của bạn
           </h3>
@@ -338,8 +319,7 @@ function SurveyResponsePage() {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: 20,
-            }}
+              gap: 20}}
           >
             {response.answers?.map((answer, idx) => {
               const config = TYPE_CONFIG[answer.type];
@@ -358,8 +338,7 @@ function SurveyResponsePage() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          flexShrink: 0,
-                        }}
+                          flexShrink: 0}}
                       >
                         <Icon size={24} color={config.color} />
                       </div>
@@ -370,8 +349,7 @@ function SurveyResponsePage() {
                           margin: "0 0 4px",
                           fontSize: 14,
                           fontWeight: 700,
-                          color: PAGE.text,
-                        }}
+                          color: PAGE.text}}
                       >
                         {answer.question}
                       </h4>
@@ -386,8 +364,7 @@ function SurveyResponsePage() {
                       background: config?.bg,
                       padding: "14px",
                       borderRadius: 12,
-                      borderLeft: `4px solid ${config?.color}`,
-                    }}
+                      borderLeft: `4px solid ${config?.color}`}}
                   >
                     {Array.isArray(answer.answer) ? (
                       answer.answer.length > 0 ? (
@@ -403,8 +380,7 @@ function SurveyResponsePage() {
                                 borderRadius: 8,
                                 fontSize: 13,
                                 fontWeight: 500,
-                                color: config?.color,
-                              }}
+                                color: config?.color}}
                             >
                               {item}
                             </span>
@@ -423,8 +399,7 @@ function SurveyResponsePage() {
                           fontWeight: 500,
                           color: PAGE.text,
                           whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                        }}
+                          wordBreak: "break-word"}}
                       >
                         {answer.answer || "(Trống)"}
                       </p>
@@ -441,8 +416,7 @@ function SurveyResponsePage() {
           style={{
             background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1))",
             border: "1px solid rgba(16, 185, 129, 0.3)",
-            textAlign: "center",
-          }}
+            textAlign: "center"}}
           delay={0.3}
         >
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
@@ -454,8 +428,7 @@ function SurveyResponsePage() {
                 background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-              }}
+                justifyContent: "center"}}
             >
               <CheckCircle2 size={32} color="#059669" />
             </div>

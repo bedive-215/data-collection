@@ -10,8 +10,7 @@ export default function AdminProfile() {
     email: "",
     phone_number: "",
     date_of_birth: "",
-    address: "",
-  });
+    address: ""});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -21,8 +20,7 @@ export default function AdminProfile() {
         email: user.email || "",
         phone_number: user.phone_number || "",
         date_of_birth: user.date_of_birth?.split("T")[0] || "",
-        address: user.address || "",
-      });
+        address: user.address || ""});
     }
   }, [user]);
 
@@ -70,9 +68,7 @@ export default function AdminProfile() {
         className="max-w-2xl rounded-2xl overflow-hidden"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         {/* Avatar section */}
         <div
@@ -93,15 +89,14 @@ export default function AdminProfile() {
                 style={{
                   background: "linear-gradient(135deg, #F59E0B, #D97706)",
                   border: "3px solid rgba(245,158,11,0.3)",
-                  color: "#000",
-                }}
+                  color: "#000"}}
               >
                 {form.full_name?.charAt(0)?.toUpperCase() || "A"}
               </div>
             )}
             <button
               className="absolute bottom-1 right-1 p-2.5 rounded-xl text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)", boxShadow: "0 4px 12px rgba(245,158,11,0.3)" }}
+              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
             >
               <Camera size={16} />
             </button>
@@ -117,8 +112,7 @@ export default function AdminProfile() {
             style={{
               background: "rgba(245,158,11,0.1)",
               color: "#F59E0B",
-              border: "1px solid rgba(245,158,11,0.2)",
-            }}
+              border: "1px solid rgba(245,158,11,0.2)"}}
           >
             <span
               className="w-1.5 h-1.5 rounded-full"
@@ -149,8 +143,7 @@ export default function AdminProfile() {
                 style={{
                   background: "var(--admin-bg-secondary)",
                   border: "1px solid var(--admin-border)",
-                  color: "var(--admin-text)",
-                }}
+                  color: "var(--admin-text)"}}
                 placeholder="Nhập họ và tên"
               />
             </div>
@@ -173,8 +166,7 @@ export default function AdminProfile() {
                 style={{
                   background: "var(--admin-bg-secondary)",
                   border: "1px solid var(--admin-border)",
-                  color: "var(--admin-text)",
-                }}
+                  color: "var(--admin-text)"}}
                 placeholder="email@example.com"
               />
             </div>
@@ -197,8 +189,7 @@ export default function AdminProfile() {
                 style={{
                   background: "var(--admin-bg-secondary)",
                   border: "1px solid var(--admin-border)",
-                  color: "var(--admin-text)",
-                }}
+                  color: "var(--admin-text)"}}
                 placeholder="0xxx xxx xxx"
               />
             </div>
@@ -221,8 +212,7 @@ export default function AdminProfile() {
                 style={{
                   background: "var(--admin-bg-secondary)",
                   border: "1px solid var(--admin-border)",
-                  color: "var(--admin-text)",
-                }}
+                  color: "var(--admin-text)"}}
               />
             </div>
           </div>
@@ -245,8 +235,7 @@ export default function AdminProfile() {
               style={{
                 background: "var(--admin-bg-secondary)",
                 border: "1px solid var(--admin-border)",
-                color: "var(--admin-text)",
-              }}
+                color: "var(--admin-text)"}}
               placeholder="Nhập địa chỉ"
             />
           </div>
@@ -257,9 +246,7 @@ export default function AdminProfile() {
               disabled={saving}
               className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-black rounded-xl transition-all disabled:opacity-50"
               style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                boxShadow: "0 4px 16px rgba(245,158,11,0.25)",
-              }}
+                background: "linear-gradient(135deg, #F59E0B, #D97706)"}}
             >
               {saving ? (
                 <Loader2 size={18} className="animate-spin" />

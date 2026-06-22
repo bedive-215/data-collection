@@ -1,5 +1,6 @@
 // src/contexts/GamificationContext.jsx
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import starService from "@/services/starService";
 import checkinService from "@/services/checkinService";
@@ -15,8 +16,11 @@ export const emitGamificationRefresh = () => {
 
 const GamificationContext = createContext(null);
 
+const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/verify-email"];
+
 export function GamificationProvider({ children }) {
   const { user } = useAuth();
+  const location = useLocation();
 
   // State
   const [balance, setBalance] = useState(null);
@@ -27,6 +31,8 @@ export function GamificationProvider({ children }) {
   const [top5WithPrizes, setTop5WithPrizes] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
+
+  const isPublicRoute = PUBLIC_ROUTES.some(p => location.pathname.startsWith(p));
 
   // Load all gamification data
   const loadAll = useCallback(async () => {
@@ -74,9 +80,10 @@ export function GamificationProvider({ children }) {
     return () => window.removeEventListener(GAMIFICATION_REFRESH_EVENT, handler);
   }, [refreshBalance]);
 
+  // Load khi user có && đang ở route authenticated
   useEffect(() => {
-    if (user) loadAll();
-  }, [user, loadAll]);
+    if (user && !isPublicRoute) loadAll();
+  }, [user, isPublicRoute, loadAll]);
 
   // Điểm danh
   const doCheckin = useCallback(async () => {

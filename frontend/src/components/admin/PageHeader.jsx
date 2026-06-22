@@ -7,7 +7,7 @@ export default function PageHeader({ title, subtitle, actions }) {
       style={{
         background: "var(--admin-surface)",
         border: "1px solid var(--admin-border)",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+
       }}
     >
       <div>

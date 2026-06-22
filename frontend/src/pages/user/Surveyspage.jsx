@@ -15,8 +15,7 @@ import {
   SlidersHorizontal,
   X,
   Loader2,
-  RefreshCw,
-} from "lucide-react";
+  RefreshCw} from "lucide-react";
 
 import { useSurvey } from "@/providers/SurveyProvider";
 import { useResponse } from "@/providers/ResponseProvider";
@@ -38,24 +37,19 @@ const TYPE_CONFIG = {
   SINGLE_CHOICE: {
     label: "Một lựa chọn",
     barColor: "#2563eb", badgeBg: "#eff6ff",
-    badgeBorder: "#bfdbfe", badgeColor: "#1d4ed8",
-  },
+    badgeBorder: "#bfdbfe", badgeColor: "#1d4ed8"},
   MULTIPLE_CHOICE: {
     label: "Nhiều lựa chọn",
     barColor: "#7c3aed", badgeBg: "#f5f3ff",
-    badgeBorder: "#ddd6fe", badgeColor: "#6d28d9",
-  },
+    badgeBorder: "#ddd6fe", badgeColor: "#6d28d9"},
   TEXT: {
     label: "Văn bản",
     barColor: "#0891b2", badgeBg: "#ecfeff",
-    badgeBorder: "#a5f3fc", badgeColor: "#0e7490",
-  },
-};
+    badgeBorder: "#a5f3fc", badgeColor: "#0e7490"}};
 function getTypeCfg(type) {
   return TYPE_CONFIG[type] ?? {
     label: type, barColor: "#888",
-    badgeBg: "#f3f4f6", badgeBorder: "#e5e7eb", badgeColor: "#6b7280",
-  };
+    badgeBg: "#f3f4f6", badgeBorder: "#e5e7eb", badgeColor: "#6b7280"};
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -186,7 +180,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
 
   return (
     <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", justifyContent: "center", alignItems: "center", padding: 16 }}>
-      <div style={{ width: "100%", maxWidth: 560, maxHeight: "88vh", overflow: "hidden", background: "#ffffff", borderRadius: 18, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.14)", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
+      <div style={{ width: "100%", maxWidth: 560, maxHeight: "88vh", overflow: "hidden", background: "#ffffff", borderRadius: 18, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
         <div style={{ padding: "14px 18px", background: "linear-gradient(135deg, #059669, #10b981)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -236,8 +230,7 @@ function CardSkeleton() {
       height: 260,   /* ← khớp với card thật */
       display: "flex",
       flexDirection: "column",
-      animation: "skPulse 1.4s ease-in-out infinite",
-    }}>
+      animation: "skPulse 1.4s ease-in-out infinite"}}>
       <div style={{ height: 110, background: "linear-gradient(135deg,#f1f5fb,#e8edf5)" }}/>
       <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
         <div style={{ height: 12, background: "#f1f5f9", borderRadius: 6, width: "70%" }}/>
@@ -260,7 +253,7 @@ function ExpiredModal({ open, onClose, survey }) {
   if (!open || !survey) return null;
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, border: "1px solid #e8ecf2", boxShadow: "0 24px 60px rgba(0,0,0,0.15)", width: "100%", maxWidth: 400, overflow: "hidden", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif", textAlign: "center", padding: "32px 24px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, border: "1px solid #e8ecf2", width: "100%", maxWidth: 400, overflow: "hidden", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif", textAlign: "center", padding: "32px 24px" }}>
         <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <Clock size={26} color="#ef4444"/>
         </div>
@@ -368,8 +361,7 @@ export default function SurveysPage() {
         gap: 20,
         position: "sticky",
         top: 0,
-        zIndex: 50,
-      }}>
+        zIndex: 50}}>
         {/* Title */}
         <div>
           <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
@@ -396,8 +388,7 @@ export default function SurveysPage() {
               background: "#f8fafc",
               color: "#0f172a",
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              boxSizing: "border-box",
-            }}
+              boxSizing: "border-box"}}
             onFocus={(e) => { e.target.style.borderColor = "#6366f1"; e.target.style.background = "#fff"; }}
             onBlur={(e)  => { e.target.style.borderColor = "#e8ecf5"; e.target.style.background = "#f8fafc"; }}
           />
@@ -412,10 +403,10 @@ export default function SurveysPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {/* View toggle */}
           <div style={{ display: "flex", background: "#f4f6f8", borderRadius: 9, padding: 3, gap: 1 }}>
-            <button onClick={() => setViewMode("grid")} style={{ width: 30, height: 30, borderRadius: 7, border: "none", background: viewMode === "grid" ? "#fff" : "transparent", color: viewMode === "grid" ? "#4f6ef7" : "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: viewMode === "grid" ? "0 1px 4px rgba(0,0,0,0.08)" : "none" }}>
+            <button onClick={() => setViewMode("grid")} style={{ width: 30, height: 30, borderRadius: 7, border: "none", background: viewMode === "grid" ? "#fff" : "transparent", color: viewMode === "grid" ? "#4f6ef7" : "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" === "grid" ? "0 1px 4px rgba(0,0,0,0.08)" : "none" }}>
               <LayoutGrid size={15}/>
             </button>
-            <button onClick={() => setViewMode("list")} style={{ width: 30, height: 30, borderRadius: 7, border: "none", background: viewMode === "list" ? "#fff" : "transparent", color: viewMode === "list" ? "#4f6ef7" : "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: viewMode === "list" ? "0 1px 4px rgba(0,0,0,0.08)" : "none" }}>
+            <button onClick={() => setViewMode("list")} style={{ width: 30, height: 30, borderRadius: 7, border: "none", background: viewMode === "list" ? "#fff" : "transparent", color: viewMode === "list" ? "#4f6ef7" : "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" === "list" ? "0 1px 4px rgba(0,0,0,0.08)" : "none" }}>
               <List size={15}/>
             </button>
           </div>
@@ -459,7 +450,7 @@ export default function SurveysPage() {
             const count = tab.key === "all" ? totalCount : tab.key === "pending" ? pendingCount : doneCount;
             const active = activeTab === tab.key;
             return (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", border: "none", background: "transparent", cursor: "pointer", fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#4f6ef7" : "#64748b", borderBottom: active ? "2px solid #4f6ef7" : "2px solid transparent", marginBottom: -2, fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all .15s" }}>
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", border: "none", background: "transparent", cursor: "pointer", fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#4f6ef7" : "#64748b", borderBottom: active ? "2px solid #4f6ef7" : "2px solid transparent", marginBottom: -2, fontFamily: "'Plus Jakarta Sans', sans-serif"}}>
                 {tab.label}
                 {!loading && <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 999, background: active ? "#eef2ff" : "#f4f6f8", color: active ? "#4f6ef7" : "#94a3b8" }}>{count}</span>}
               </button>
@@ -524,8 +515,7 @@ export default function SurveysPage() {
                   /* card đều nhau: minmax(280px, 1fr), hàng đều chiều cao */
                   gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
                   gridAutoRows: "260px",
-                  gap: 16,
-                }
+                  gap: 16}
               : { display: "flex", flexDirection: "column", gap: 10 }
           }>
             {displayed.map((survey, index) => (

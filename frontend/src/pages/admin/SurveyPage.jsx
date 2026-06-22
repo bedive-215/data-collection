@@ -1,4 +1,4 @@
-// ─── SurveyPage.jsx ─── Admin, dark theme ──
+// ─── SurveyPage.jsx ─── Admin ──
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import surveyService from "@/services/surveyService";
 import { useSurvey } from "@/providers/SurveyProvider";
@@ -12,87 +12,80 @@ import {
   Image as ImageIcon, Share2, Mail, Lock, Globe,
   Power, PowerOff, ExternalLink, Link as LinkIcon,
   Send, UserPlus, UserMinus, RefreshCw, ChevronDown,
-  BarChart3, Settings,
-} from "lucide-react";
+  BarChart3, Settings} from "lucide-react";
 import { SurveyCardHome, ShareModal } from "@/components/survey/SurveyCardHome";
 
-/* ─── Token — aligned with Admin Design System v2 ─────────────────────── */
+/* ─── EchoForm Design System ─────────────────────────────────────── */
 const C = {
-  bg:            "#0F1117",
-  bgSecondary:   "#141620",
-  surface:       "#1A1D2E",
-  surfaceHover:  "#222638",
-  surfaceHigh:   "#222638",
-  border:        "#2A2D3E",
-  borderHover:   "#3A3D50",
-  primary:       "#F59E0B",
-  primaryHover:  "#D97706",
-  primaryGrad:   "linear-gradient(135deg,#F59E0B,#D97706)",
-  primaryDim:    "rgba(245,158,11,0.10)",
-  primaryBorder: "rgba(245,158,11,0.30)",
-  secondary:     "#6366F1",
-  secondaryDim:  "rgba(99,102,241,0.10)",
-  accent:        "#8B5CF6",
-  text:          "#F9FAFB",
+  bg:            "#F4F3F8",
+  bgSecondary:   "#FFFFFF",
+  surface:       "#FFFFFF",
+  surfaceHover:  "#F9F8FF",
+  surfaceHigh:   "#F4F3F8",
+  border:        "#E8E6F0",
+  borderHover:   "#D4D0E8",
+  primary:       "#5B4EE8",
+  primaryHover:  "#4A3DD6",
+  primaryGrad:   "linear-gradient(135deg,#5B4EE8,#4A3DD6)",
+  primaryDim:    "rgba(91,78,232,0.08)",
+  primaryBorder: "rgba(91,78,232,0.20)",
+  secondary:     "#5B4EE8",
+  secondaryDim:  "rgba(91,78,232,0.08)",
+  accent:        "#5B4EE8",
+  text:          "#374151",
   textSub:       "#9CA3AF",
-  textDim:       "#4B5563",
+  textDim:       "#D1D5DB",
   error:         "#EF4444",
-  errorBg:       "rgba(239,68,68,0.10)",
-  errorBorder:   "rgba(239,68,68,0.25)",
+  errorBg:       "rgba(239,68,68,0.08)",
+  errorBorder:   "rgba(239,68,68,0.20)",
   success:       "#10B981",
-  successBg:     "rgba(16,185,129,0.10)",
-  successBorder: "rgba(16,185,129,0.25)",
+  successBg:     "rgba(16,185,129,0.08)",
+  successBorder: "rgba(16,185,129,0.20)",
   warning:       "#F59E0B",
-  warningBg:     "rgba(245,158,11,0.10)",
-  warningBorder: "rgba(245,158,11,0.25)",
+  warningBg:     "rgba(245,158,11,0.08)",
+  warningBorder: "rgba(245,158,11,0.20)",
   font:          "'Plus Jakarta Sans','DM Sans',sans-serif",
   thumbColors: [
-    "conic-gradient(from 0deg at 50% 50%, #F59E0B, #D97706, #F59E0B)",
+    "conic-gradient(from 0deg at 50% 50%, #5B4EE8, #4A3DD6, #5B4EE8)",
     "conic-gradient(from 0deg at 50% 50%, #6366F1, #8B5CF6, #6366F1)",
     "conic-gradient(from 0deg at 50% 50%, #10B981, #3B82F6, #10B981)",
     "conic-gradient(from 0deg at 50% 50%, #EC4899, #F59E0B, #EC4899)",
     "conic-gradient(from 0deg at 50% 50%, #8B5CF6, #6366F1, #8B5CF6)",
     "conic-gradient(from 0deg at 50% 50%, #3B82F6, #10B981, #3B82F6)",
-  ],
-};
+  ]};
 
 /* ─── Shared button styles ───────────────────────────────────────── */
 const cancelBtn = {
-  padding:"8px 14px", borderRadius:10,
-  border:`1px solid ${C.border}`, background:"transparent",
-  cursor:"pointer", fontSize:13, fontWeight:600, color:C.textSub,
-  fontFamily:C.font,
-};
+  height:36, padding:"0 16px", borderRadius:8,
+  border:`1px solid ${C.primary}`, background:"#FFFFFF",
+  cursor:"pointer", fontSize:14, fontWeight:600, color:C.primary,
+  fontFamily:C.font, display:"inline-flex", alignItems:"center", gap:6};
 
 const saveBtn = {
-  padding:"8px 14px", borderRadius:10,
+  height:36, padding:"0 16px", borderRadius:8,
   border:"none", background:C.primary,
-  color:"#fff", cursor:"pointer",
-  display:"flex", alignItems:"center", gap:6,
-  fontSize:13, fontWeight:600, fontFamily:C.font,
-};
+  color:"#FFFFFF", cursor:"pointer",
+  display:"inline-flex", alignItems:"center", gap:6,
+  fontSize:14, fontWeight:600, fontFamily:C.font};
 
 const quickBtn = {
   width:28, height:28, borderRadius:8,
-  border:"none", background:"rgba(255,255,255,0.08)",
+  border:"none", background:"transparent",
   cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-  color:C.textSub, transition:"background .15s, color .15s",
-};
+  color:C.textSub, transition:"background .15s, color .15s"};
 
 const chipBtn = {
   width:24, height:24, borderRadius:6,
   border:`1px solid ${C.border}`, background:"transparent",
   cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-  color:C.textDim, transition:"background .15s, color .15s, border-color .15s",
-};
+  color:C.textDim, transition:"background .15s, color .15s, border-color .15s"};
 
 const inputStyle = {
   width:"100%", border:`1px solid ${C.border}`,
-  borderRadius:10, padding:"9px 12px",
-  outline:"none", fontSize:13, color:C.text,
-  fontFamily:C.font, background:C.bg,
-  boxSizing:"border-box", colorScheme:"dark",
-};
+  borderRadius:8, padding:"9px 12px",
+  outline:"none", fontSize:14, color:C.text,
+  fontFamily:C.font, background:"#FFFFFF",
+  boxSizing:"border-box"};
 
 const textareaStyle = { ...inputStyle, resize:"none" };
 
@@ -108,17 +101,14 @@ function ToggleSwitch({ checked, onChange }) {
         border:`1.5px solid ${checked ? C.primaryBorder : C.border}`,
         cursor:"pointer", position:"relative",
         transition:"background .2s, border-color .2s",
-        flexShrink:0, padding:0, outline:"none",
-      }}
+        flexShrink:0, padding:0, outline:"none"}}
     >
       <div style={{
         width:14, height:14, borderRadius:"50%",
         background: checked ? "#fff" : C.textDim,
         position:"absolute", top:"50%",
         transform:`translateY(-50%) translateX(${checked ? "20px" : "2px"})`,
-        transition:"transform .2s, background .2s",
-        boxShadow:"0 1px 3px rgba(0,0,0,0.3)",
-      }} />
+        transition:"transform .2s, background .2s"}} />
     </button>
   );
 }
@@ -129,8 +119,7 @@ const STATUS_MAP = {
   DRAFT:     { label:"Nháp",     color:C.textSub,  bg:"rgba(100,116,139,0.12)" },
   SCHEDULED: { label:"Lên lịch", color:C.warning,  bg:"rgba(245,158,11,0.12)" },
   EXPIRED:   { label:"Hết hạn",  color:C.error,    bg:"rgba(239,68,68,0.12)" },
-  CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,0.12)" },
-};
+  CLOSED:    { label:"Đã đóng",  color:"#6b7280",  bg:"rgba(107,114,128,0.12)" }};
 
 function StatusBadge({ status }) {
   if (!status) return null;
@@ -138,8 +127,7 @@ function StatusBadge({ status }) {
   return (
     <span style={{
       fontSize:10, fontWeight:700, padding:"3px 8px",
-      borderRadius:999, color:s.color, background:s.bg,
-    }}>
+      borderRadius:999, color:s.color, background:s.bg}}>
       {s.label}
     </span>
   );
@@ -163,30 +151,25 @@ function Modal({ open, onClose, title, children, width = 480 }) {
         position:"fixed", inset:0, zIndex:999,
         background:"rgba(0,0,0,0.6)",
         display:"flex", alignItems:"center", justifyContent:"center",
-        padding:20,
-      }}
+        padding:20}}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background:C.surface, borderRadius:20,
+          background:C.surface, borderRadius:12,
           border:`1px solid ${C.border}`,
-          boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
           width:"100%", maxWidth:width,
-          overflow:"hidden",
-        }}
+          overflow:"hidden"}}
       >
         <div style={{
           display:"flex", alignItems:"center", justifyContent:"space-between",
-          padding:"16px 20px", borderBottom:`1px solid ${C.border}`,
-        }}>
+          padding:"16px 20px", borderBottom:`1px solid ${C.border}`}}>
           <h3 style={{margin:0, fontSize:16, fontWeight:700, color:C.text}}>{title}</h3>
           <button onClick={onClose} style={{
             width:30, height:30, borderRadius:8,
             border:`1px solid ${C.border}`, background:"transparent",
             cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-            color:C.textSub,
-          }}>
+            color:C.textSub}}>
             <X size={15}/>
           </button>
         </div>
@@ -251,13 +234,11 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
         <div style={{
           display:"flex", alignItems:"center", gap:12,
           padding:"14px 16px", background:C.surfaceHigh,
-          borderRadius:12, border:`1px solid ${C.border}`,
-        }}>
+          borderRadius:12, border:`1px solid ${C.border}`}}>
           <div style={{
             width:40, height:40, borderRadius:10,
             background:C.primaryDim,
-            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-          }}>
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
             <Share2 size={18} color={C.primary}/>
           </div>
           <div>
@@ -274,8 +255,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 fontSize:13, fontWeight:600, fontFamily:C.font,
                 background: activeTab === tab ? C.primary : "transparent",
                 color:      activeTab === tab ? "#fff"    : C.textSub,
-                transition:"background .15s, color .15s",
-              }}>
+                transition:"background .15s, color .15s"}}>
               {tab === "link" ? "🔗 Link" : "⬡ QR Code"}
             </button>
           ))}
@@ -291,8 +271,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 <div style={{
                   display:"flex", alignItems:"center", gap:8,
                   padding:"10px 14px", background:C.surfaceHigh,
-                  borderRadius:10, border:`1px solid ${C.border}`,
-                }}>
+                  borderRadius:10, border:`1px solid ${C.border}`}}>
                   <LinkIcon size={14} color={C.textSub} style={{flexShrink:0}}/>
                   <span style={{flex:1, fontSize:13, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
                     {shareUrl}
@@ -304,8 +283,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                     background: copied ? C.successBg : "transparent",
                     color:      copied ? C.success   : C.textSub,
                     fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0,
-                    transition:"all .2s",
-                  }}>
+                    transition:"all .2s"}}>
                     {copied ? <Check size={12}/> : <Copy size={12}/>}
                     {copied ? "Đã sao chép" : "Sao chép"}
                   </button>
@@ -329,8 +307,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                   padding:"8px 0", borderRadius:10,
                   border:`1px solid ${C.primaryBorder}`,
                   background:C.primaryDim, color:C.primary,
-                  fontSize:13, fontWeight:600, cursor:"pointer",
-                }}>
+                  fontSize:13, fontWeight:600, cursor:"pointer"}}>
                   <ExternalLink size={13}/> Mở link
                 </button>
               </>
@@ -338,11 +315,9 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
               <button onClick={handleGenerate} disabled={loading} style={{
                 display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                 padding:"12px 0", borderRadius:12, border:"none",
-                background: loading ? C.surfaceHigh : C.primaryGrad,
-                color:      loading ? C.textSub     : "#fff",
-                fontSize:14, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: loading ? "none" : "0 2px 12px rgba(79,110,247,0.3)",
-              }}>
+                background: loading ? C.surfaceHigh : C.primary,
+                color:      loading ? C.textSub     : "#FFFFFF",
+                fontSize:14, fontWeight:600, cursor: loading ? "not-allowed" : "pointer"}}>
                 {loading
                   ? <><Loader2 size={16} style={{animation:"spin 1s linear infinite"}}/> Đang tạo link...</>
                   : <><LinkIcon size={16}/> Tạo link chia sẻ</>
@@ -366,11 +341,9 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 </p>
                 <button onClick={handleDownloadQR} style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  padding:"9px 20px", borderRadius:10, border:"none",
-                  background:C.primaryGrad, color:"#fff",
-                  fontSize:13, fontWeight:700, cursor:"pointer",
-                  boxShadow:"0 2px 12px rgba(79,110,247,0.3)",
-                }}>
+                  height:36, padding:"0 16px", borderRadius:8, border:"none",
+                  background:C.primary, color:"#FFFFFF",
+                  fontSize:14, fontWeight:600, cursor:"pointer"}}>
                   ⬇ Tải mã QR
                 </button>
               </>
@@ -384,11 +357,10 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
                 </p>
                 <button onClick={handleGenerate} disabled={loading} style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  padding:"10px 20px", borderRadius:10, border:"none",
-                  background: loading ? C.surfaceHigh : C.primaryGrad,
-                  color:      loading ? C.textSub     : "#fff",
-                  fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-                }}>
+                  height:36, padding:"0 16px", borderRadius:8, border:"none",
+                  background: loading ? C.surfaceHigh : C.primary,
+                  color:      loading ? C.textSub     : "#FFFFFF",
+                  fontSize:14, fontWeight:600, cursor: loading ? "not-allowed" : "pointer"}}>
                   {loading
                     ? <><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</>
                     : <><LinkIcon size={14}/> Tạo link</>
@@ -432,8 +404,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
         <div style={{
           display:"flex", alignItems:"center", gap:12,
           padding:"12px 14px", background:C.surfaceHigh,
-          borderRadius:10, border:`1px solid ${C.border}`,
-        }}>
+          borderRadius:10, border:`1px solid ${C.border}`}}>
           <Users size={16} color={C.primary}/>
           <span style={{fontSize:13, color:C.textSub}}>
             Mời người dùng tham gia <strong style={{color:C.text}}>{survey?.title}</strong>
@@ -445,8 +416,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
             display:"flex", alignItems:"center", gap:8,
             padding:"10px 14px", borderRadius:10,
             background:C.successBg, border:`1px solid ${C.successBorder}`,
-            fontSize:13, color:C.success, fontWeight:600,
-          }}>
+            fontSize:13, color:C.success, fontWeight:600}}>
             <Check size={14}/> Đã gửi lời mời thành công!
           </div>
         )}
@@ -456,8 +426,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
             <div>
               <label style={{
                 display:"block", fontSize:12, fontWeight:600, color:C.textSub,
-                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
-              }}>
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>
                 Địa chỉ email
               </label>
               <textarea
@@ -465,36 +434,32 @@ function InviteModal({ open, onClose, survey, onInvite }) {
                 onChange={e => { setEmails(e.target.value); setError(""); }}
                 placeholder={"example@email.com\nuser2@email.com\n(mỗi dòng hoặc dấu phẩy)"}
                 style={{
-                  ...textareaStyle,
-                  border:`1.5px solid ${error ? C.error : C.border}`,
-                }}
-                onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = "0 0 0 3px rgba(108,126,247,0.1)"; }}
-                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = "none"; }}
-              />
-            </div>
-
-            {error && (
-              <div style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"8px 12px", borderRadius:8,
-                background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-                fontSize:13, color:C.error,
-              }}>
-                <X size={13}/> {error}
+                    ...textareaStyle,
+                    border:`1.5px solid ${error ? C.error : C.border}`}}
+                  onFocus={e => { e.target.style.borderColor = C.primary; }}
+                  onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; }}
+                />
               </div>
-            )}
 
-            <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
-              <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
-              <button type="submit" disabled={loading} style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"9px 18px", borderRadius:10, border:"none",
-                background: loading ? C.surfaceHigh : C.primaryGrad,
-                color:      loading ? C.textSub     : "#fff",
-                fontSize:13, fontWeight:700,
-                cursor:     loading ? "not-allowed" : "pointer",
-                boxShadow:  loading ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
-              }}>
+              {error && (
+                <div style={{
+                  display:"flex", alignItems:"center", gap:6,
+                  padding:"8px 12px", borderRadius:8,
+                  background:C.errorBg, border:`1px solid ${C.errorBorder}`,
+                  fontSize:13, color:C.error}}>
+                  <X size={13}/> {error}
+                </div>
+              )}
+
+              <div style={{display:"flex", justifyContent:"flex-end", gap:8}}>
+                <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
+                <button type="submit" disabled={loading} style={{
+                  display:"flex", alignItems:"center", gap:6,
+                  height:36, padding:"0 16px", borderRadius:8, border:"none",
+                  background: loading ? C.surfaceHigh : C.primary,
+                  color:      loading ? C.textSub     : "#FFFFFF",
+                  fontSize:14, fontWeight:600,
+                  cursor:     loading ? "not-allowed" : "pointer"}}>
                 {loading
                   ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
                   : <><Send size={13}/> Gửi lời mời</>
@@ -545,13 +510,11 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
           display:"flex", alignItems:"center", gap:12,
           padding:"12px 14px",
           background:"linear-gradient(135deg,rgba(108,126,247,0.08),rgba(79,110,247,0.08))",
-          borderRadius:10, border:`1px solid ${C.primaryBorder}`,
-        }}>
+          borderRadius:10, border:`1px solid ${C.primaryBorder}`}}>
           <div style={{
             width:38, height:38, borderRadius:10,
             background:C.primaryDim,
-            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-          }}>
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
             <UserPlus size={18} color={C.primary}/>
           </div>
           <div style={{flex:1}}>
@@ -562,8 +525,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <div style={{
               padding:"4px 10px", borderRadius:999,
               background:C.primaryDim, color:C.primary,
-              fontSize:12, fontWeight:700, flexShrink:0,
-            }}>
+              fontSize:12, fontWeight:700, flexShrink:0}}>
               {emailCount} email
             </div>
           )}
@@ -572,8 +534,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
         {success && (
           <div style={{
             padding:"12px 14px", borderRadius:10,
-            background:C.successBg, border:`1px solid ${C.successBorder}`,
-          }}>
+            background:C.successBg, border:`1px solid ${C.successBorder}`}}>
             <div style={{display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:600, color:C.success}}>
               <Check size={14}/> Đã gửi lời mời hàng loạt!
             </div>
@@ -595,8 +556,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <div>
               <label style={{
                 display:"block", fontSize:12, fontWeight:600, color:C.textSub,
-                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
-              }}>
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>
                 Vai trò
               </label>
               <div style={{display:"flex", gap:8}}>
@@ -613,8 +573,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                       border:`1.5px solid ${role === r.value ? C.primary : C.border}`,
                       background: role === r.value ? C.primaryDim : "transparent",
                       cursor:"pointer", textAlign:"center",
-                      transition:"border-color .15s, background .15s",
-                    }}
+                      transition:"border-color .15s, background .15s"}}
                   >
                     <div style={{fontSize:12, fontWeight:700, color: role === r.value ? C.primary : C.text}}>
                       {r.label}
@@ -628,8 +587,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <div>
               <label style={{
                 display:"block", fontSize:12, fontWeight:600, color:C.textSub,
-                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6,
-              }}>
+                textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>
                 Danh sách email
               </label>
               <textarea
@@ -639,10 +597,9 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                 style={{
                   ...textareaStyle,
                   border:`1.5px solid ${error ? C.error : C.border}`,
-                  lineHeight:1.7,
-                }}
-                onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = "0 0 0 3px rgba(108,126,247,0.1)"; }}
-                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = "none"; }}
+                  lineHeight:1.7}}
+                onFocus={e => { e.target.style.borderColor = C.primary; }}
+                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; }}
               />
             </div>
 
@@ -651,8 +608,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                 display:"flex", alignItems:"center", gap:6,
                 padding:"8px 12px", borderRadius:8,
                 background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-                fontSize:13, color:C.error,
-              }}>
+                fontSize:13, color:C.error}}>
                 <X size={13}/> {error}
               </div>
             )}
@@ -661,13 +617,11 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
               <button type="button" onClick={onClose} style={cancelBtn}>Đóng</button>
               <button type="submit" disabled={loading || emailCount === 0} style={{
                 display:"flex", alignItems:"center", gap:6,
-                padding:"9px 18px", borderRadius:10, border:"none",
-                background: (loading || emailCount === 0) ? C.surfaceHigh : C.primaryGrad,
-                color:      (loading || emailCount === 0) ? C.textSub     : "#fff",
-                fontSize:13, fontWeight:700,
-                cursor:     (loading || emailCount === 0) ? "not-allowed" : "pointer",
-                boxShadow:  (loading || emailCount === 0) ? "none" : "0 2px 10px rgba(79,110,247,0.3)",
-              }}>
+                height:36, padding:"0 16px", borderRadius:8, border:"none",
+                background: (loading || emailCount === 0) ? C.surfaceHigh : C.primary,
+                color:      (loading || emailCount === 0) ? C.textSub     : "#FFFFFF",
+                fontSize:14, fontWeight:600,
+                cursor:     (loading || emailCount === 0) ? "not-allowed" : "pointer"}}>
                 {loading
                   ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang gửi...</>
                   : <><UserPlus size={13}/> Mời {emailCount > 0 ? `${emailCount} người` : "hàng loạt"}</>
@@ -742,8 +696,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
   const ROLE_STYLE = {
     viewer:     { color:"#60a5fa", bg:"rgba(59,130,246,0.12)",  border:"rgba(59,130,246,0.25)" },
     respondent: { color:"#4ade80", bg:"rgba(34,197,94,0.12)",   border:"rgba(34,197,94,0.25)" },
-    editor:     { color:"#a78bfa", bg:"rgba(139,92,246,0.12)",  border:"rgba(139,92,246,0.25)" },
-  };
+    editor:     { color:"#a78bfa", bg:"rgba(139,92,246,0.12)",  border:"rgba(139,92,246,0.25)" }};
 
   const getRoleStyle = (role) =>
     ROLE_STYLE[role?.toLowerCase()] ?? { color:C.primary, bg:C.primaryDim, border:C.primaryBorder };
@@ -755,13 +708,11 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           <div style={{
             flex:1, padding:"12px 14px", borderRadius:12,
             background:C.surfaceHigh, border:`1px solid ${C.border}`,
-            display:"flex", alignItems:"center", gap:10,
-          }}>
+            display:"flex", alignItems:"center", gap:10}}>
             <div style={{
               width:36, height:36, borderRadius:9,
               background:C.primaryDim,
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
+              display:"flex", alignItems:"center", justifyContent:"center"}}>
               <Users size={16} color={C.primary}/>
             </div>
             <div>
@@ -774,8 +725,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
             border:`1px solid ${C.border}`, background:"transparent",
             cursor: loading ? "not-allowed" : "pointer",
             display:"flex", alignItems:"center", gap:6,
-            fontSize:12, fontWeight:600, color:C.textSub, flexShrink:0,
-          }}>
+            fontSize:12, fontWeight:600, color:C.textSub, flexShrink:0}}>
             <RefreshCw size={14} style={loading ? {animation:"spin 1s linear infinite"} : {}}/>
             Tải lại
           </button>
@@ -785,21 +735,18 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           <div style={{
             display:"flex", alignItems:"center", justifyContent:"space-between",
             padding:"10px 14px", borderRadius:10,
-            background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-          }}>
+            background:C.errorBg, border:`1px solid ${C.errorBorder}`}}>
             <span style={{fontSize:13, color:C.error}}>{error}</span>
             <button onClick={load} style={{
               padding:"4px 10px", borderRadius:6, fontSize:12, fontWeight:700,
               border:`1px solid ${C.errorBorder}`, background:"transparent",
-              color:C.error, cursor:"pointer",
-            }}>Thử lại</button>
+              color:C.error, cursor:"pointer"}}>Thử lại</button>
           </div>
         )}
 
         <div style={{
           display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
-          background:C.surfaceHigh, border:`1px solid ${C.border}`, borderRadius:10,
-        }}>
+          background:C.surfaceHigh, border:`1px solid ${C.border}`, borderRadius:10}}>
           <Search size={14} color={C.textDim}/>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
@@ -847,15 +794,13 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                     padding:"11px 14px",
                     borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none",
                     background: isConfirming ? C.errorBg : "transparent",
-                    transition:"background .15s",
-                  }}
+                    transition:"background .15s"}}
                 >
                   <div style={{
                     width:36, height:36, borderRadius:"50%",
                     background:av.bg, color:av.color,
                     display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:12, fontWeight:700, flexShrink:0,
-                  }}>
+                    fontSize:12, fontWeight:700, flexShrink:0}}>
                     {getInitials(p.name, p.email)}
                   </div>
 
@@ -880,8 +825,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                       fontSize:11, fontWeight:700, padding:"3px 9px",
                       borderRadius:999, flexShrink:0,
                       color:roleStyle.color, background:roleStyle.bg,
-                      border:`1px solid ${roleStyle.border}`,
-                    }}>
+                      border:`1px solid ${roleStyle.border}`}}>
                       {p.role}
                     </span>
                   )}
@@ -891,16 +835,14 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                       <button onClick={() => setConfirmPid(null)} style={{
                         padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:600,
                         border:`1px solid ${C.border}`, background:"transparent",
-                        color:C.textSub, cursor:"pointer",
-                      }}>Huỷ</button>
+                        color:C.textSub, cursor:"pointer"}}>Huỷ</button>
                       <button onClick={() => handleDelete(deleteKey)} disabled={isDeleting} style={{
                         display:"flex", alignItems:"center", gap:5,
                         padding:"5px 10px", borderRadius:7, fontSize:12, fontWeight:700,
                         border:"none",
                         background: isDeleting ? C.surfaceHigh : C.error,
                         color:      isDeleting ? C.textSub     : "#fff",
-                        cursor:     isDeleting ? "not-allowed" : "pointer",
-                      }}>
+                        cursor:     isDeleting ? "not-allowed" : "pointer"}}>
                         {isDeleting ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/> : <Trash2 size={11}/>}
                         Xoá
                       </button>
@@ -912,8 +854,7 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
                         width:30, height:30, borderRadius:8, flexShrink:0,
                         border:`1px solid ${C.border}`, background:"transparent",
                         cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                        color:C.textDim, transition:"all .15s",
-                      }}
+                        color:C.textDim, transition:"all .15s"}}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = C.errorBorder; e.currentTarget.style.color = C.error; e.currentTarget.style.background = C.errorBg; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; e.currentTarget.style.background = "transparent"; }}
                     >
@@ -960,8 +901,7 @@ function PublishModal({ open, onClose, survey, onPublish }) {
           padding:"16px", borderRadius:12,
           background: isPublished ? C.warningBg : C.primaryDim,
           border:`1px solid ${isPublished ? C.warningBorder : C.primaryBorder}`,
-          textAlign:"center",
-        }}>
+          textAlign:"center"}}>
           <div style={{fontSize:32, marginBottom:8}}>{isPublished ? "🔒" : "🌐"}</div>
           <div style={{fontSize:14, fontWeight:600, color:C.text}}>
             {isPublished
@@ -973,11 +913,10 @@ function PublishModal({ open, onClose, survey, onPublish }) {
           <button onClick={onClose} style={cancelBtn}>Huỷ</button>
           <button onClick={handleConfirm} disabled={loading} style={{
             display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10, border:"none",
-            background: loading ? C.surfaceHigh : isPublished ? C.warning : C.primaryGrad,
-            color:      loading ? C.textSub     : "#fff",
-            fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-          }}>
+            height:36, padding:"0 16px", borderRadius:8, border:"none",
+            background: loading ? C.surfaceHigh : isPublished ? C.warning : C.primary,
+            color:      loading ? C.textSub     : "#FFFFFF",
+            fontSize:14, fontWeight:600, cursor: loading ? "not-allowed" : "pointer"}}>
             {loading
               ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang xử lý...</>
               : isPublished ? <><PowerOff size={13}/> Ẩn survey</> : <><Globe size={13}/> Publish</>
@@ -1005,8 +944,7 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
         <div style={{
           padding:"16px", borderRadius:12,
           background:C.errorBg, border:`1px solid ${C.errorBorder}`,
-          textAlign:"center",
-        }}>
+          textAlign:"center"}}>
           <div style={{fontSize:32, marginBottom:8}}>⛔</div>
           <div style={{fontSize:14, fontWeight:600, color:C.text}}>
             Sau khi đóng, survey sẽ không nhận thêm câu trả lời.
@@ -1019,11 +957,10 @@ function CloseModal({ open, onClose, survey, onCloseSurvey }) {
           <button onClick={onClose} style={cancelBtn}>Huỷ</button>
           <button onClick={handleConfirm} disabled={loading} style={{
             display:"flex", alignItems:"center", gap:6,
-            padding:"9px 18px", borderRadius:10, border:"none",
+            height:36, padding:"0 16px", borderRadius:8, border:"none",
             background: loading ? C.surfaceHigh : C.error,
-            color:      loading ? C.textSub     : "#fff",
-            fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
-          }}>
+            color:      loading ? C.textSub     : "#FFFFFF",
+            fontSize:14, fontWeight:600, cursor: loading ? "not-allowed" : "pointer"}}>
             {loading
               ? <><Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> Đang đóng...</>
               : <><PowerOff size={13}/> Đóng survey</>
@@ -1056,8 +993,7 @@ function ParticipantBadge({ surveyId }) {
   return (
     <span style={{
       display:"inline-flex", alignItems:"center", gap:4,
-      fontSize:11, fontWeight:700, color:C.primary,
-    }}>
+      fontSize:11, fontWeight:700, color:C.primary}}>
       <Users size={11}/>
       {loading ? "..." : count !== undefined ? count : "—"}
     </span>
@@ -1082,8 +1018,7 @@ function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu..
       italic:              document.queryCommandState("italic"),
       underline:           document.queryCommandState("underline"),
       insertUnorderedList: document.queryCommandState("insertUnorderedList"),
-      insertOrderedList:   document.queryCommandState("insertOrderedList"),
-    });
+      insertOrderedList:   document.queryCommandState("insertOrderedList")});
   };
 
   const handleInput = () => {
@@ -1103,8 +1038,7 @@ function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu..
           cursor:"pointer", color: active ? C.primary : C.textSub,
           fontFamily:C.font, fontSize:12, fontWeight:700,
           display:"flex", alignItems:"center", justifyContent:"center",
-          transition:"background .12s, color .12s", flexShrink:0,
-        }}
+          transition:"background .12s, color .12s", flexShrink:0}}
         onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(108,126,247,0.10)"; e.currentTarget.style.color = C.primary; } }}
         onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textSub; } }}
       >
@@ -1120,14 +1054,12 @@ function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu..
   return (
     <div style={{
       border:`1.5px solid ${hasError ? C.error : focused ? C.primary : C.border}`,
-      borderRadius:10, overflow:"hidden", background:C.bg,
-      transition:"border-color .15s",
-    }}>
+      borderRadius:10, overflow:"hidden", background:"#FFFFFF",
+      transition:"border-color .15s"}}>
       <div style={{
         display:"flex", alignItems:"center", gap:1,
         padding:"5px 8px", background:C.surface,
-        borderBottom:`1px solid ${C.border}`, flexWrap:"wrap",
-      }}>
+        borderBottom:`1px solid ${C.border}`, flexWrap:"wrap"}}>
         {tbBtn("bold",                null, <b style={{fontSize:13}}>B</b>,  "Bold")}
         {tbBtn("italic",              null, <i style={{fontSize:13}}>I</i>,  "Italic")}
         {tbBtn("underline",           null, <u style={{fontSize:13}}>U</u>,  "Underline")}
@@ -1154,8 +1086,7 @@ function RichEditor({ onChange, placeholder = "Nhập tiêu đề biểu mẫu..
         style={{
           minHeight:64, padding:"10px 14px",
           outline:"none", fontSize:14, color:C.text,
-          lineHeight:1.6, fontFamily:C.font,
-        }}
+          lineHeight:1.6, fontFamily:C.font}}
         data-placeholder={placeholder}
       />
 
@@ -1210,8 +1141,7 @@ function ImagePicker({ images, onChange }) {
             flexDirection:"column", alignItems:"center",
             justifyContent:"center", gap:5,
             fontSize:10, fontFamily:C.font,
-            transition:"border-color .15s, color .15s",
-          }}
+            transition:"border-color .15s, color .15s"}}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.color = C.primary; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}
         >
@@ -1225,16 +1155,14 @@ function ImagePicker({ images, onChange }) {
               position:"absolute", top:3, right:3, width:18, height:18,
               background:"rgba(0,0,0,0.75)", borderRadius:"50%",
               border:"none", cursor:"pointer", color:"#fff", fontSize:10,
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
+              display:"flex", alignItems:"center", justifyContent:"center"}}>
               <X size={10}/>
             </button>
             {images.length > 1 && (
               <div style={{
                 position:"absolute", bottom:3, right:3,
                 background:"rgba(0,0,0,0.65)", borderRadius:5,
-                fontSize:10, color:"#fff", padding:"1px 5px", fontWeight:700,
-              }}>
+                fontSize:10, color:"#fff", padding:"1px 5px", fontWeight:700}}>
                 +{images.length - 1}
               </div>
             )}
@@ -1246,8 +1174,7 @@ function ImagePicker({ images, onChange }) {
                 position:"absolute", top:3, right:3, width:16, height:16,
                 background:"rgba(0,0,0,0.75)", borderRadius:"50%",
                 border:"none", cursor:"pointer", color:"#fff", fontSize:9,
-                display:"flex", alignItems:"center", justifyContent:"center",
-              }}>
+                display:"flex", alignItems:"center", justifyContent:"center"}}>
                 <X size={9}/>
               </button>
             </div>
@@ -1257,8 +1184,7 @@ function ImagePicker({ images, onChange }) {
             border:`1px dashed ${C.border}`, background:"transparent",
             cursor:"pointer", color:C.textDim, display:"flex",
             alignItems:"center", justifyContent:"center", gap:4,
-            fontSize:10, fontFamily:C.font, transition:"border-color .15s, color .15s",
-          }}
+            fontSize:10, fontFamily:C.font, transition:"border-color .15s, color .15s"}}
             onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.color = C.primary; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}
           >
@@ -1278,8 +1204,7 @@ const CARD_THEME_MAP = {
   EXPIRED:   { mesh:"linear-gradient(135deg,#fff5f5 0%,#ffe8e8 50%,#ffd9d9 100%)", accent:"#ef4444" },
   CLOSED:    { mesh:"linear-gradient(135deg,#f9fafb 0%,#f3f4f6 50%,#eceef1 100%)", accent:"#9ca3af" },
   SCHEDULED: { mesh:"linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#cce9fb 100%)", accent:"#0284c7" },
-  COMPLETED: { mesh:"linear-gradient(135deg,#f0fdf4 0%,#dcfce7 50%,#c4e4ce 100%)", accent:"#059669" },
-};
+  COMPLETED: { mesh:"linear-gradient(135deg,#f0fdf4 0%,#dcfce7 50%,#c4e4ce 100%)", accent:"#059669" }};
 
 function SurveyCard({
   s, index,
@@ -1287,8 +1212,7 @@ function SurveyCard({
   onShare, onInvite, onBulkInvite,
   onPublish, onCloseSurvey,
   onGetParticipants, onDeleteParticipant,
-  deletingId, updatingId, navigate,
-}) {
+  deletingId, updatingId, navigate}) {
   const menuRef = useRef(null);
   // ── PERF: removed rotateX/rotateY state and onMouseMove — replaced with simple CSS translateY
   const [hovered,    setHovered]    = useState(false);
@@ -1385,8 +1309,7 @@ function SurveyCard({
       thank_you_redirect_url: thankYouRedirectUrl.trim() || null,
       logo_url:              logoUrl.trim() || null,
       background_url:        backgroundUrl.trim() || null,
-      accent_color:          accentColor || "#6366f1",
-    });
+      accent_color:          accentColor || "#6366f1"});
     setEditing(false);
     setShowSettings(false);
   };
@@ -1411,13 +1334,11 @@ function SurveyCard({
       icon: isPublished ? <Lock size={13}/> : <Globe size={13}/>,
       label: isPublished ? "Ẩn survey" : "Publish",
       action: () => { setPublishOpen(true); setMenuOpen(false); },
-      color: isPublished ? C.warning : C.primary,
-    },
+      color: isPublished ? C.warning : C.primary},
     !isClosed && {
       icon:<PowerOff size={13}/>, label:"Đóng survey",
       action:() => { setCloseOpen(true); setMenuOpen(false); },
-      color:"#6b7280",
-    },
+      color:"#6b7280"},
     { icon:<Trash2 size={13}/>, label:"Xóa", action:() => onDelete(s.id), color:C.error },
   ].filter(Boolean);
 
@@ -1432,7 +1353,7 @@ function SurveyCard({
         // ── PERF: removed onMouseMove entirely
         style={{
           background:     C.surface,
-          borderColor:    hovered ? "#d0d7e8" : "#e8ecf2",
+          borderColor:    hovered ? C.borderHover : C.border,
           borderWidth:    "1px",
           borderStyle:    "solid",
           borderRadius:   12,
@@ -1440,10 +1361,7 @@ function SurveyCard({
           cursor:         "pointer",
           // ── PERF: only GPU-composited properties (transform + opacity + box-shadow)
           // no rotateX/rotateY — triggers repaint on every mousemove
-          transition:     "border-color .2s, box-shadow .2s, transform .2s",
-          boxShadow:      hovered
-            ? "0 8px 24px rgba(0,0,0,0.10)"
-            : "0 1px 4px rgba(0,0,0,0.04)",
+          transition:     "border-color .2s, transform .2s",
           // ── PERF: simple translateY instead of 3D rotation
           transform:      hovered ? "translateY(-4px)" : "translateY(0)",
           // ── PERF: promote to GPU layer only while hovered, release after
@@ -1451,8 +1369,7 @@ function SurveyCard({
           display:        "flex",
           flexDirection:  "column",
           // ── PERF: removed perspective + transformStyle (no longer needed)
-          animation:      `slideInUp 0.3s ease-out ${animDelay}s both`,
-        }}
+          animation:      `slideInUp 0.3s ease-out ${animDelay}s both`}}
         onClick={() => !editing && onOpen(s.id)}
       >
         {/* Header — pastel mesh gradient + icon */}
@@ -1462,20 +1379,17 @@ function SurveyCard({
             ? "linear-gradient(135deg,#f3f4f6,#e5e7eb)"
             : cardTheme.mesh,
           position:"relative",
-          overflow:"hidden", flexShrink:0,
-        }}>
+          overflow:"hidden", flexShrink:0}}>
           {/* Radial highlight */}
           <div style={{
             position:"absolute", inset:0,
             background:"radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.5) 0%,transparent 65%)",
-            pointerEvents:"none",
-          }} />
+            pointerEvents:"none"}} />
           {/* Bottom fade */}
           <div style={{
             position:"absolute", bottom:0, left:0, right:0, height:28,
             background:"linear-gradient(to top,#fff 20%,transparent)",
-            pointerEvents:"none",
-          }} />
+            pointerEvents:"none"}} />
 
           {/* Floating icon */}
           <div style={{
@@ -1484,13 +1398,11 @@ function SurveyCard({
             width:56, height:56, borderRadius:14,
             background:"rgba(255,255,255,0.55)",
             border:"1.5px solid rgba(255,255,255,0.7)",
-            display:"flex", alignItems:"center", justifyContent:"center",
-          }}>
+            display:"flex", alignItems:"center", justifyContent:"center"}}>
             <div style={{
               width:30, height:30, borderRadius:8,
               background:"rgba(255,255,255,0.55)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
+              display:"flex", alignItems:"center", justifyContent:"center"}}>
               <FileText size={18} color={cardTheme.accent} strokeWidth={1.5}/>
             </div>
           </div>
@@ -1501,9 +1413,8 @@ function SurveyCard({
               <span style={{
                 fontSize:9.5, fontWeight:700, padding:"3px 8px",
                 borderRadius:6, color:"#fff",
-                background:"linear-gradient(90deg,#6c7ef7,#4f6ef7)",
-                display:"flex", alignItems:"center", gap:3,
-              }}>
+                background:C.primary,
+                display:"flex", alignItems:"center", gap:3}}>
                 ★ Biểu mẫu của bạn
               </span>
             )}
@@ -1514,8 +1425,7 @@ function SurveyCard({
                 borderRadius:6, color:"#059669",
                 background:"rgba(5,150,105,0.10)",
                 border:"1px solid rgba(5,150,105,0.20)",
-                display:"flex", alignItems:"center", gap:3,
-              }}>
+                display:"flex", alignItems:"center", gap:3}}>
                 <Globe size={9}/> Published
               </span>
             )}
@@ -1535,8 +1445,7 @@ function SurveyCard({
                     ...quickBtn,
                     background:"rgba(255,255,255,0.55)",
                     border:"1px solid rgba(255,255,255,0.7)",
-                    color:"#64748b",
-                  }}
+                    color:"#64748b"}}
                   onMouseEnter={e => { e.currentTarget.style.background = "#6366f1"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6366f1"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                   {btn.icon}
@@ -1548,13 +1457,12 @@ function SurveyCard({
                 onClick={() => setPublishOpen(true)} title={isPublished ? "Ẩn survey" : "Publish"}
                 style={{
                   ...quickBtn,
-                  background:  isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)",
-                  borderColor: isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)",
-                  color:       isPublished ? "#d97706" : "#64748b",
-                  border:"1px solid",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#d97706"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#d97706"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = isPublished ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.55)"; e.currentTarget.style.color = isPublished ? "#d97706" : "#64748b"; e.currentTarget.style.borderColor = isPublished ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.7)"; }}>
+                  background:  isPublished ? C.warningBg : "rgba(255,255,255,0.55)",
+                  borderColor: isPublished ? C.warningBorder : "rgba(255,255,255,0.7)",
+                  color:       isPublished ? C.warning : "#64748b",
+                  border:"1px solid"}}
+                onMouseEnter={e => { e.currentTarget.style.background = C.warning; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = C.warning; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isPublished ? C.warningBg : "rgba(255,255,255,0.55)"; e.currentTarget.style.color = isPublished ? C.warning : "#64748b"; e.currentTarget.style.borderColor = isPublished ? C.warningBorder : "rgba(255,255,255,0.7)"; }}>
                 {isPublished ? <Lock size={12}/> : <Globe size={12}/>}
               </button>
 
@@ -1564,8 +1472,7 @@ function SurveyCard({
                     ...quickBtn,
                     background:"rgba(255,255,255,0.55)",
                     border:"1px solid rgba(255,255,255,0.7)",
-                    color:"#64748b",
-                  }}
+                    color:"#64748b"}}
                   onMouseEnter={e => { e.currentTarget.style.background = "#6b7280"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#6b7280"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.55)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.7)"; }}>
                   <PowerOff size={12}/>
@@ -1588,19 +1495,17 @@ function SurveyCard({
                 border:"1px solid rgba(255,255,255,0.7)",
                 cursor:"pointer", color:"#64748b",
                 display:"flex", alignItems:"center", justifyContent:"center",
-                transition:"background .15s",
-              }}
+                transition:"background .15s"}}
             >
               <MoreVertical size={14}/>
             </button>
             {menuOpen && (
               <div style={{
                 position:"absolute", top:30, right:0, zIndex:20, width:190,
-                background:C.surfaceHigh, border:"1px solid #e8ecf2",
+                background:C.surfaceHigh, border:`1px solid ${C.border}`,
                 borderRadius:10, overflow:"hidden",
-                boxShadow:"0 8px 24px rgba(0,0,0,0.12)",
-                animation:"slideInUp 0.15s ease-out",
-              }}>
+
+                animation:"slideInUp 0.15s ease-out"}}>
                 {menuItems.map((item, i) => (
                   <button key={i} onClick={item.action} style={{
                     display:"flex", alignItems:"center", gap:10,
@@ -1609,9 +1514,8 @@ function SurveyCard({
                     fontSize:13, fontWeight:500,
                     color: item.color || C.text,
                     cursor:"pointer", fontFamily:C.font,
-                    borderBottom: i < menuItems.length - 1 ? "1px solid #f4f6f8" : "none",
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#f4f6f8"}
+                    borderBottom: i < menuItems.length - 1 ? `1px solid ${C.border}` : "none"}}
+                    onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     {isDeleting && item.label === "Xóa"
@@ -1628,7 +1532,7 @@ function SurveyCard({
 
         {/* Info */}
         <div
-          style={{padding:"12px 14px 14px", flex:1, display:"flex", flexDirection:"column", gap:4}}
+          style={{padding:20, flex:1, display:"flex", flexDirection:"column", gap:4}}
           onClick={e => editing && e.stopPropagation()}
         >
           {editing ? (
@@ -1675,14 +1579,13 @@ function SurveyCard({
                     color:     showSettings ? C.primary : C.textSub,
                     fontSize:12, fontWeight:600, cursor:"pointer",
                     fontFamily:C.font, transition:"all .15s",
-                    background: showSettings ? C.primaryDim : "transparent",
-                  }}
+                    background: showSettings ? C.primaryDim : "transparent"}}
                 >
                   <Settings size={13}/> {showSettings ? "Ẩn cài đặt nâng cao" : "Cài đặt nâng cao"}
                 </button>
 
                 {showSettings && (
-                  <div style={{marginTop:12, display:"flex", flexDirection:"column", gap:10, padding:"12px", background:C.bg, borderRadius:10, border:`1px solid ${C.border}`}}>
+                  <div style={{marginTop:12, display:"flex", flexDirection:"column", gap:10, padding:"12px", background:"#FFFFFF", borderRadius:10, border:`1px solid ${C.border}`}}>
                     <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
                       <div style={{display:"flex", flexDirection:"column", gap:4}}>
                         <label style={{fontSize:11, color:C.textSub, fontWeight:600}}>Ẩn danh</label>
@@ -1766,9 +1669,7 @@ function SurveyCard({
                 <button onClick={cancel} style={cancelBtn}>Huỷ</button>
                 <button onClick={save} disabled={isSaving} style={{
                   ...saveBtn,
-                  background: isSaving ? C.surfaceHigh : C.primaryGrad,
-                  color:      isSaving ? C.textSub     : "#fff",
-                }}>
+                  background: isSaving ? C.surfaceHigh : C.primary}}>
                   {isSaving
                     ? <Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>
                     : <Check size={11}/>
@@ -1780,10 +1681,9 @@ function SurveyCard({
           ) : (
             <>
               <div style={{
-                fontSize:14, fontWeight:700, color:C.text, lineHeight:1.4,
+                fontSize:14, fontWeight:600, color:"#111827", lineHeight:1.4,
                 display:"-webkit-box", WebkitLineClamp:2,
-                WebkitBoxOrient:"vertical", overflow:"hidden",
-              }}>
+                WebkitBoxOrient:"vertical", overflow:"hidden"}}>
                 {s.title}
               </div>
 
@@ -1810,8 +1710,7 @@ function SurveyCard({
                     width:18, height:18, borderRadius:"50%",
                     background:"rgba(100,116,139,0.15)", color:"#64748b",
                     display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:9, fontWeight:700, flexShrink:0,
-                  }}>
+                    fontSize:9, fontWeight:700, flexShrink:0}}>
                     {(s.creator.full_name || s.creator.email || "?")[0].toUpperCase()}
                   </div>
                   <span style={{fontSize:11, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
@@ -1863,8 +1762,7 @@ export default function SurveyPage() {
     createSurvey, deleteSurvey, updateSurvey,
     publishSurvey, closeSurvey,
     shareLink, inviteSurvey, bulkInviteSurvey,
-    getParticipants, deleteParticipant,
-  } = useSurvey();
+    getParticipants, deleteParticipant} = useSurvey();
   const navigate     = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -1907,8 +1805,7 @@ export default function SurveyPage() {
     created_at:   s.created_at ?? null,
     created_by:   s.created_by ?? null,
     creator:      s.creator    ?? null,
-    isOwner:      (s.created_by === currentUserId) || (s.creator?.id === currentUserId),
-  }), [currentUserId]);
+    isOwner:      (s.created_by === currentUserId) || (s.creator?.id === currentUserId)}), [currentUserId]);
 
   const fetchAll = useCallback(async () => {
     setFetchError(null); setFetching(true);
@@ -1941,8 +1838,7 @@ export default function SurveyPage() {
       title:       plainTitle,
       description: description.trim() || null,
       start_at:    startAt ? new Date(startAt).toISOString() : null,
-      end_at:      endAt   ? new Date(endAt).toISOString()   : null,
-    };
+      end_at:      endAt   ? new Date(endAt).toISOString()   : null};
 
     const snap = { ...payload };
     setShowForm(false); resetForm(); setFormLoading(true);
@@ -2038,30 +1934,27 @@ export default function SurveyPage() {
 
   const dateInp = {
     width:"100%", boxSizing:"border-box", padding:"9px 12px",
-    background:C.bg, border:`1.5px solid ${C.border}`,
-    borderRadius:10, color:C.text, fontSize:13,
-    fontFamily:C.font, outline:"none", colorScheme:"dark",
-  };
+    background:"#FFFFFF", border:`1.5px solid ${C.border}`,
+    borderRadius:8, color:C.text, fontSize:14,
+    fontFamily:C.font, outline:"none"};
 
   return (
-    <div style={{minHeight:"100vh", background:C.bg, fontFamily:C.font}}>
+    <div style={{minHeight:"100vh", background:"#F4F3F8", fontFamily:C.font}}>
 
       {/* ── Top bar ── */}
       <div style={{
         background:C.surface, borderBottom:`1px solid ${C.border}`,
         padding:"0 24px",
         display:"flex", alignItems:"center", justifyContent:"space-between",
-        height:64, gap:16,
-      }}>
+        height:64, gap:16}}>
         <div style={{display:"flex", alignItems:"center", gap:10, flexShrink:0}}>
           <div style={{
             width:36, height:36, borderRadius:8,
-            background:C.primaryGrad,
-            display:"flex", alignItems:"center", justifyContent:"center",
-          }}>
-            <ClipboardList size={20} color="#fff"/>
+            background:C.primary,
+            display:"flex", alignItems:"center", justifyContent:"center"}}>
+            <ClipboardList size={20} color="#FFFFFF"/>
           </div>
-          <span style={{fontSize:18, fontWeight:700, color:C.text, letterSpacing:"-0.02em"}}>
+          <span style={{fontSize:18, fontWeight:600, color:"#111827", letterSpacing:"-0.02em"}}>
             Biểu mẫu
           </span>
         </div>
@@ -2071,16 +1964,14 @@ export default function SurveyPage() {
             flex:1, maxWidth:360,
             display:"flex", alignItems:"center", gap:10,
             background:C.surfaceHigh, border:`1px solid ${C.border}`,
-            borderRadius:24, padding:"0 16px", height:40,
-          }}>
+            borderRadius:24, padding:"0 16px", height:40}}>
             <Search size={15} color={C.textSub}/>
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Tìm kiếm"
               style={{
                 flex:1, background:"transparent", border:"none",
-                outline:"none", fontSize:14, color:C.text, fontFamily:C.font,
-              }}
+                outline:"none", fontSize:14, color:C.text, fontFamily:C.font}}
             />
             {search && (
               <button onClick={() => setSearch("")} style={{background:"none", border:"none", cursor:"pointer", color:C.textDim, display:"flex", padding:0}}>
@@ -2097,8 +1988,7 @@ export default function SurveyPage() {
                 height:40, padding:"0 12px",
                 background:C.surfaceHigh, border:`1px solid ${C.border}`,
                 borderRadius:10, color:C.text, fontSize:13,
-                fontFamily:C.font, outline:"none", cursor:"pointer",
-              }}
+                fontFamily:C.font, outline:"none", cursor:"pointer"}}
             >
               <option value="">Tất cả người tạo</option>
               {allCreators.map(c => (
@@ -2116,15 +2006,13 @@ export default function SurveyPage() {
             onClick={() => { setShowForm(v => !v); resetForm(); }}
             style={{
               display:"flex", alignItems:"center", gap:7,
-              padding:"8px 18px",
-              background: showForm ? C.surfaceHigh : C.primaryGrad,
-              color:      showForm ? C.textSub     : "#fff",
+              height:36, padding:"0 16px",
+              background: showForm ? "#FFFFFF" : C.primary,
+              color:      showForm ? C.textSub  : "#FFFFFF",
               border:     showForm ? `1px solid ${C.border}` : "none",
-              borderRadius:10, fontSize:13, fontWeight:700,
+              borderRadius:8, fontSize:14, fontWeight:600,
               cursor:"pointer", flexShrink:0,
-              boxShadow: showForm ? "none" : "0 2px 12px rgba(79,110,247,0.35)",
-              fontFamily:C.font,
-            }}
+              fontFamily:C.font}}
           >
             {showForm ? <X size={15}/> : <Plus size={15}/>}
             {showForm ? "Huỷ" : "Biểu mẫu mới"}
@@ -2137,12 +2025,9 @@ export default function SurveyPage() {
         {/* ── Create form ── */}
         {showForm && (
           <div style={{
-            background:C.surface, border:`1px solid ${C.borderHover}`,
-            borderRadius:16, padding:"1.5rem", marginBottom:"2rem",
-            boxShadow:"0 4px 32px rgba(0,0,0,0.5)",
-            borderLeft:`4px solid ${C.primary}`,
-          }}>
-            <h2 style={{fontSize:15, fontWeight:700, color:C.text, margin:"0 0 16px"}}>
+            background:"#FFFFFF", border:"1px solid #E8E6F0",
+            borderRadius:12, padding:20, marginBottom:"2rem"}}>
+            <h2 style={{fontSize:15, fontWeight:600, color:"#111827", margin:"0 0 16px"}}>
               Biểu mẫu mới
             </h2>
             <form onSubmit={handleCreate}>
@@ -2171,9 +2056,8 @@ export default function SurveyPage() {
                   style={{
                     width:"100%", boxSizing:"border-box", padding:"10px 14px",
                     border:`1.5px solid ${C.border}`, borderRadius:10,
-                    fontSize:14, color:C.text, background:C.bg,
-                    outline:"none", resize:"vertical", fontFamily:C.font,
-                  }}
+                    fontSize:14, color:C.text, background:"#FFFFFF",
+                    outline:"none", resize:"vertical", fontFamily:C.font}}
                 />
 
                 <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
@@ -2207,15 +2091,13 @@ export default function SurveyPage() {
                   </button>
                   <button type="submit" disabled={formLoading} style={{
                     display:"flex", alignItems:"center", gap:7,
-                    padding:"9px 18px",
-                    background: formLoading ? C.surfaceHigh : C.primaryGrad,
-                    color:      formLoading ? C.textSub     : "#fff",
-                    border:     formLoading ? `1px solid ${C.border}` : "none",
-                    borderRadius:11, fontSize:13, fontWeight:700,
+                    height:36, padding:"0 16px",
+                    background: formLoading ? C.surfaceHigh : C.primary,
+                    color:      formLoading ? C.textSub     : "#FFFFFF",
+                    border:"none",
+                    borderRadius:8, fontSize:14, fontWeight:600,
                     cursor:    formLoading ? "not-allowed" : "pointer",
-                    fontFamily:C.font,
-                    boxShadow: formLoading ? "none" : "0 2px 12px rgba(79,110,247,0.35)",
-                  }}>
+                    fontFamily:C.font}}>
                     {formLoading
                       ? <><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/> Đang tạo...</>
                       : <><Plus size={14}/> Tạo biểu mẫu</>
@@ -2231,9 +2113,8 @@ export default function SurveyPage() {
         {!search && surveys.length > 0 && (
           <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16}}>
             <h2 style={{
-              fontSize:13, fontWeight:700, color:C.textSub,
-              textTransform:"uppercase", letterSpacing:"0.06em", margin:0,
-            }}>
+              fontSize:13, fontWeight:600, color:"#111827",
+              textTransform:"uppercase", letterSpacing:"0.06em", margin:0}}>
               Biểu mẫu gần đây
             </h2>
             <span style={{fontSize:12, color:C.textDim}}>{surveys.length} biểu mẫu</span>
@@ -2246,8 +2127,7 @@ export default function SurveyPage() {
             display:"grid",
             gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",
             gap:16,
-            marginBottom:32,
-          }}>
+            marginBottom:32}}>
             {sortedSurveys.map((s, i) => (
               <SurveyCard
                 key={s.id}
@@ -2277,14 +2157,12 @@ export default function SurveyPage() {
             display:"flex", alignItems:"center", gap:10,
             padding:"14px 18px", background:"rgba(239,68,68,0.08)",
             border:"1px solid rgba(239,68,68,0.2)", borderRadius:12,
-            marginBottom:"1.5rem", fontSize:14, color:"#fca5a5",
-          }}>
+            marginBottom:"1.5rem", fontSize:14, color:C.error}}>
             <AlertCircle size={16} color={C.error}/>
             {fetchError}
             <button onClick={fetchAll} style={{
               marginLeft:"auto", fontSize:13, fontWeight:600,
-              color:C.primary, background:"none", border:"none", cursor:"pointer",
-            }}>
+              color:C.primary, background:"none", border:"none", cursor:"pointer"}}>
               Thử lại
             </button>
           </div>
@@ -2302,20 +2180,18 @@ export default function SurveyPage() {
           <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"6rem 0", gap:14}}>
             <div style={{
               width:72, height:72, borderRadius:18,
-              background:"linear-gradient(135deg,#1b2244,#222d5a)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-            }}>
+              background:C.primaryDim,
+              display:"flex", alignItems:"center", justifyContent:"center"}}>
               <ClipboardList size={32} color={C.primary}/>
             </div>
-            <p style={{fontSize:16, fontWeight:600, color:C.textSub, margin:0}}>Chưa có biểu mẫu nào</p>
+            <p style={{fontSize:16, fontWeight:600, color:"#111827", margin:0}}>Chưa có biểu mẫu nào</p>
             <p style={{fontSize:13, color:C.textDim, margin:0}}>Tạo biểu mẫu đầu tiên để bắt đầu thu thập câu trả lời</p>
             <button onClick={() => setShowForm(true)} style={{
               display:"flex", alignItems:"center", gap:7,
-              padding:"10px 20px", background:C.primaryGrad,
-              color:"#fff", border:"none", borderRadius:11,
-              fontSize:13, fontWeight:700, cursor:"pointer",
-              fontFamily:C.font, boxShadow:"0 2px 12px rgba(79,110,247,0.35)",
-            }}>
+              height:36, padding:"0 16px", background:C.primary,
+              color:"#FFFFFF", border:"none", borderRadius:8,
+              fontSize:14, fontWeight:600, cursor:"pointer",
+              fontFamily:C.font}}>
               <Plus size={15}/> Tạo biểu mẫu mới
             </button>
           </div>

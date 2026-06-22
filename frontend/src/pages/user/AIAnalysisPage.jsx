@@ -8,8 +8,7 @@ import {
   ArrowLeft, RefreshCw, Brain, Sparkles, BarChart3,
   Clock, Users, CheckCircle, TrendingUp, Zap,
   TrendingDown, Award, Activity, Calendar,
-  ChevronRight, Loader2, AlertTriangle,
-} from "lucide-react";
+  ChevronRight, Loader2, AlertTriangle} from "lucide-react";
 import analyticsService from "@/services/analyticsService";
 import { useSurvey } from "@/providers/SurveyProvider";
 import { toast } from "react-toastify";
@@ -17,13 +16,11 @@ import { ROUTERS } from "@/utils/constants";
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const glassCard = {
-  background: "rgba(255,255,255,0.85)",
-  backdropFilter: "blur(24px) saturate(190%)",
-  WebkitBackdropFilter: "blur(24px) saturate(190%)",
-  border: "1px solid rgba(255,255,255,0.7)",
-  borderRadius: 18,
-  boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)",
-};
+  background: "rgba(255,255,255,0.6)",
+  backdropFilter: "blur(20px) saturate(180%)",
+  WebkitBackdropFilter: "blur(20px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,0.8)",
+  borderRadius: 18};
 const chartCard = { ...glassCard, padding: "22px 24px" };
 
 /* ─── Loading skeleton ─────────────────────────────────────── */
@@ -33,8 +30,7 @@ function Shimmer({ height = 80 }) {
       height, borderRadius: 12,
       background: "linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 100%)",
       backgroundSize: "200% 100%",
-      animation: "shimmer 1.5s ease-in-out infinite",
-    }} />
+      animation: "shimmer 1.5s ease-in-out infinite"}} />
   );
 }
 
@@ -42,22 +38,15 @@ function Shimmer({ height = 80 }) {
 function InsightCard({ icon: Icon, iconBg, iconColor, title, children, delay = 0 }) {
   return (
     <div style={{
-      background: "rgba(255,255,255,0.9)",
-      border: "1px solid rgba(255,255,255,0.7)",
-      borderRadius: 18,
+      ...glassCard,
       padding: "22px 24px",
-      backdropFilter: "blur(20px)",
-      boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)",
-      animation: `fadeSlideIn 0.5s ease-out ${delay}ms both`,
-    }}>
+      animation: `aiFadeSlideIn 0.5s ease-out ${delay}ms both`}}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <div style={{
           width: 42, height: 42, borderRadius: 12,
           background: iconBg,
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: `0 4px 14px ${iconColor}25`,
-          flexShrink: 0,
-        }}>
+          flexShrink: 0}}>
           <Icon size={20} color={iconColor} strokeWidth={1.8} />
         </div>
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#1e293b", fontFamily: "'DM Sans', sans-serif" }}>{title}</h3>
@@ -72,8 +61,8 @@ function AIInsightsRenderer({ text }) {
   if (!text) return null;
   return (
     <div style={{
-      background: "#fafafa",
-      border: "1px solid rgba(0,0,0,0.08)",
+      background: "rgba(255,255,255,0.5)",
+      border: "1px solid rgba(236,72,153,0.1)",
       borderRadius: 16,
       padding: "20px 22px",
       fontSize: 13,
@@ -82,8 +71,7 @@ function AIInsightsRenderer({ text }) {
       whiteSpace: "pre-wrap",
       fontFamily: "'DM Sans', sans-serif",
       maxHeight: 500,
-      overflowY: "auto",
-    }}>
+      overflowY: "auto"}}>
       {text.split("\n").map((line, i) => {
         const trimmed = line.trim();
         if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: "20px 0 8px", borderBottom: "1px solid rgba(99,102,241,0.2)", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
@@ -121,18 +109,17 @@ function QuickStatChip({ icon: Icon, iconBg, iconColor, label, value, sub }) {
     <div style={{
       display: "flex", alignItems: "center", gap: 10,
       padding: "12px 16px",
-      background: "rgba(0,0,0,0.03)",
-      border: "1px solid rgba(0,0,0,0.06)",
+      background: "rgba(255,255,255,0.6)",
+      backdropFilter: "blur(12px)",
+      border: "1px solid rgba(255,255,255,0.8)",
       borderRadius: 14,
       flex: 1,
-      minWidth: 140,
-    }}>
+      minWidth: 140}}>
       <div style={{
         width: 36, height: 36, borderRadius: 10,
         background: iconBg,
         display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-      }}>
+        flexShrink: 0}}>
         <Icon size={17} color={iconColor} strokeWidth={1.8} />
       </div>
       <div>
@@ -176,8 +163,7 @@ export default function AIAnalysisPage() {
       setStats({
         stats: statsR.status === "fulfilled" ? statsR.value?.data?.data : null,
         comp: compR.status === "fulfilled" ? compR.value?.data?.data : null,
-        trend: trendR.status === "fulfilled" ? trendR.value?.data?.data : null,
-      });
+        trend: trendR.status === "fulfilled" ? trendR.value?.data?.data : null});
     }).finally(() => setStatsLoad(false));
   }, [surveyId]);
 
@@ -209,35 +195,47 @@ export default function AIAnalysisPage() {
     : null;
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "transparent", position: "relative", overflowX: "hidden" }}>
+    <div style={{
+      fontFamily: "'DM Sans', sans-serif",
+      background: "linear-gradient(135deg, #fdf2f8 0%, #fff5f9 50%, #fdf2f8 100%)",
+      position: "relative", overflowX: "hidden", minHeight: "100vh"}}>
+      <div style={{
+        position: "fixed", top: "-15%", right: "-8%",
+        width: 450, height: 450, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(236,72,153,0.08) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0}} />
+      <div style={{
+        position: "fixed", bottom: "-10%", left: "-5%",
+        width: 350, height: 350, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(99,102,241,0.04) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0}} />
+
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: "0 18px 60px" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+        <div style={{ ...glassCard, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button
               onClick={() => navigate(ROUTERS.USER.HOME)}
               style={{
-                width: 42, height: 42, borderRadius: 14,
-                background: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.6)",
+                width: 44, height: 44, borderRadius: 14,
+                background: "rgba(255,255,255,0.8)", backdropFilter: "blur(10px)",
+                border: "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                transition: "transform 0.15s, box-shadow 0.15s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
+                cursor: "pointer", flexShrink: 0}}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)";  }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)";  }}
             >
-              <ArrowLeft size={18} color="#1e293b" />
+              <ArrowLeft size={19} color="#1e293b" />
             </button>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg,#ec4899,#f43f5e)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(236,72,153,0.35)" }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg,#ec4899,#f43f5e)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Brain size={18} color="#fff" strokeWidth={1.9} />
                 </div>
-                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#1e293b", fontFamily: "'DM Sans', sans-serif" }}>Phân tích bằng AI</h1>
+                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0f172a" }}>Phân tích bằng AI</h1>
               </div>
-              <p style={{ margin: 0, fontSize: 12, color: "#94a3b8", marginTop: 2, fontFamily: "'DM Sans', sans-serif" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
                 {survey?.title || surveyId}
               </p>
             </div>
@@ -252,22 +250,18 @@ export default function AIAnalysisPage() {
               background: aiLoad ? "rgba(0,0,0,0.04)" : "linear-gradient(135deg, #ec4899, #f43f5e)",
               color: aiLoad ? "#64748b" : "#fff",
               fontSize: 13, fontWeight: 700, cursor: aiLoad ? "not-allowed" : "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-              boxShadow: aiLoad ? "none" : "0 4px 14px rgba(236,72,153,0.35)",
-              transition: "all 0.2s",
-            }}
+              fontFamily: "'DM Sans', sans-serif"}}
             onMouseEnter={e => {
               if (!aiLoad) {
                 e.currentTarget.style.transform = "scale(1.03)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(236,72,153,0.45)";
+                
               }
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = aiLoad ? "none" : "0 4px 14px rgba(236,72,153,0.35)";
+              e.currentTarget.style.transform = "scale(1)"
             }}
           >
-            {aiLoad ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang phân tích...</> : <><Sparkles size={15} /> Phân tích lại bằng AI</>}
+            {aiLoad ? <><Loader2 size={15} style={{ animation: "aiSpin 1s linear infinite" }} /> Đang phân tích...</> : <><Sparkles size={15} /> Phân tích lại bằng AI</>}
           </button>
         </div>
 
@@ -342,8 +336,7 @@ export default function AIAnalysisPage() {
                   style={{
                     padding: "10px 24px", background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)",
                     borderRadius: 12, color: "#ec4899", cursor: "pointer", fontSize: 13, fontWeight: 700,
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
+                    fontFamily: "'DM Sans', sans-serif"}}
                 >
                   Thử lại
                 </button>
@@ -385,19 +378,13 @@ export default function AIAnalysisPage() {
                         background: trendDirection === "up"
                           ? "linear-gradient(to top, #6366f1, #a855f7)"
                           : "linear-gradient(to top, #ef4444, #f87171)",
-                        boxShadow: `0 4px 14px ${trendDirection === "up" ? "rgba(99,102,241,0.3)" : "rgba(239,68,68,0.3)"}`,
                         minHeight: 4,
-                        transition: "height 0.5s ease",
-                        animation: `growUp 0.6s ease-out ${i * 0.08}s both`,
-                      }} />
+                        animation: `growUp 0.6s ease-out ${i * 0.08}s both`}} />
                       <span style={{ fontSize: 9, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{d.period?.slice(-5) || ""}</span>
                     </div>
                   );
                 })}
               </div>
-              <style>{`
-                @keyframes growUp { from { opacity: 0; transform: scaleY(0); transform-origin: bottom; } to { opacity: 1; transform: scaleY(1); transform-origin: bottom; } }
-              `}</style>
             </InsightCard>
           )}
 
@@ -431,9 +418,10 @@ export default function AIAnalysisPage() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes aiSpin { to { transform: rotate(360deg); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+        @keyframes aiFadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+        @keyframes growUp { from { opacity: 0; transform: scaleY(0); transform-origin: bottom; } to { opacity: 1; transform: scaleY(1); transform-origin: bottom; } }
         * { box-sizing: border-box; }
         button { font-family: 'DM Sans', sans-serif; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }

@@ -7,17 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import App from "@/App";
 import "@/index.css";
 
-// Providers
-import { AuthProvider } from "@/providers/AuthProvider.jsx";
+import { AuthProvider } from "@/providers/AuthProvider";
 import UserProvider from "@/providers/UserProvider";
 import SurveyProvider from "@/providers/SurveyProvider";
-import QuestionProvider from "@/providers/Questionprovider";
-import ResponseProvider from "@/providers/Responseprovider";
-import OptionProvider from "./providers/OptionProvider";
-import AdminStatsProvider from "./providers/AdminStatsProvider";
-import { NotificationProvider } from "./contexts/NotificationContext";
-
-console.log("🚀 Rendering App...");
+import QuestionProvider from "@/providers/QuestionProvider";
+import ResponseProvider from "@/providers/ResponseProvider";
+import OptionProvider from "@/providers/OptionProvider";
+import AdminStatsProvider from "@/providers/AdminStatsProvider";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -30,25 +27,25 @@ root.render(
             <QuestionProvider>
               <ResponseProvider>
                 <AdminStatsProvider>
-                <OptionProvider>
-                <NotificationProvider>
-                <App />
-                <ToastContainer
-                  position="bottom-right"
-                  autoClose={3000}
-                  hideProgressBar={false}
-                  newestOnTop={true}
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss
-                  draggable
-                  pauseOnHover
-                  theme="dark"
-                  toastClassName="!bg-slate-800 !text-white !rounded-xl !shadow-2xl"
-                  progressClassName="!bg-blue-500"
-                />
-                </NotificationProvider>
-                </OptionProvider>
+                  <OptionProvider>
+                    <NotificationProvider>
+                      <App />
+                      <ToastContainer
+                        position="bottom-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={true}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="dark"
+                        toastClassName="!bg-slate-800 !text-white !rounded-xl !shadow-2xl"
+                        progressClassName="!bg-blue-500"
+                      />
+                    </NotificationProvider>
+                  </OptionProvider>
                 </AdminStatsProvider>
               </ResponseProvider>
             </QuestionProvider>

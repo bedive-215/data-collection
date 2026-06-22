@@ -11,8 +11,7 @@ import { useOption } from "@/providers/OptionProvider";
 import {
   FileText, Eye, Loader2, CheckCircle2, ChevronLeft,
   ChevronRight, Home, Send, CircleDot, CheckSquare,
-  Star, Clock, Calendar, ChevronDown,
-} from "lucide-react";
+  Star, Clock, Calendar, ChevronDown} from "lucide-react";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 
 /* ── Design tokens ──────────────────────────────────────────── */
@@ -28,8 +27,7 @@ const C = {
   successBorder: "rgba(16,185,129,0.25)",
   error: "#ef4444",
   warning: "#f59e0b",
-  font: "'DM Sans','Inter',sans-serif",
-};
+  font: "'DM Sans','Inter',sans-serif"};
 
 /* ── Type config ────────────────────────────────────────────── */
 const TYPE_CONFIG = {
@@ -43,21 +41,20 @@ const TYPE_CONFIG = {
   MULTIPLE_CHOICE:  { label: "Nhiều lựa chọn",  Icon: CheckSquare, color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
   DROPDOWN:        { label: "Danh sách thả",    Icon: ChevronDown, color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe" },
   LINEAR_SCALE:     { label: "Phạm vi tuyến tính", Icon: FileText, color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
-  TIME:            { label: "Giờ",              Icon: Clock,      color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" },
-};
+  TIME:            { label: "Giờ",              Icon: Clock,      color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" }};
 
 /* ── SuccessScreen (respondent) ─────────────────────────────── */
 function SuccessScreen({ onGoHome, thankYouMessage }) {
   return (
     <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"80vh",fontFamily:C.font }}>
-      <div style={{width:80,height:80,borderRadius:"50%",background:"linear-gradient(135deg,#d1fae5,#a7f3d0)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,boxShadow:"0 4px 16px rgba(22,163,74,0.20)"}}>
+      <div style={{width:80,height:80,borderRadius:"50%",background:"linear-gradient(135deg,#d1fae5,#a7f3d0)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24}}>
         <CheckCircle2 size={40} color="#16a34a"/>
       </div>
       <h2 style={{fontSize:24,fontWeight:800,color:C.text,margin:"0 0 12px"}}>Gửi thành công!</h2>
       <p style={{fontSize:14,color:C.textSub,margin:"0 0 32px",maxWidth:400,textAlign:"center",lineHeight:1.7}}>
         {thankYouMessage || "Câu trả lời của bạn đã được ghi nhận. Cảm ơn bạn đã dành thời gian hoàn thành khảo sát này."}
       </p>
-      <button onClick={onGoHome} style={{display:"flex",alignItems:"center",gap:8,padding:"13px 32px",background:C.primaryGrad,color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(67,97,238,0.30)"}}>
+      <button onClick={onGoHome} style={{display:"flex",alignItems:"center",gap:8,padding:"13px 32px",background:C.primaryGrad,color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer"}}>
         <Home size={16}/>Về trang chủ
       </button>
     </div>
@@ -78,7 +75,7 @@ function ViewerQuestionCard({ question }) {
   );
 
   return (
-    <div style={{background:"rgba(255,255,255,0.85)",backdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,0.6)",borderRadius:20,padding:"1.75rem",boxShadow:"0 2px 0 rgba(255,255,255,0.85) inset, 0 8px 24px rgba(15,23,42,0.06)"}}>
+    <div style={{background:"rgba(255,255,255,0.85)",backdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,0.6)",borderRadius:20,padding:"1.75rem"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
         <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:20,background:bg,border:`1px solid ${border}`,fontSize:11,fontWeight:700,color}}>
           <Icon size={11}/>{label}
@@ -121,8 +118,7 @@ const inputStyle = {
   width:"100%",padding:"12px 14px",
   border:"1.5px solid #e5e7eb",borderRadius:12,
   fontSize:14,color:"#111827",outline:"none",
-  fontFamily:"inherit",boxSizing:"border-box",background:"#fafafa",
-};
+  fontFamily:"inherit",boxSizing:"border-box",background:"#fafafa"};
 
 function RatingInput({ settings, value, onChange }) {
   const min = settings?.min ?? 1;
@@ -157,7 +153,7 @@ function DropdownInput({ options, value, onChange }) {
         <ChevronDown size={16} color="#6b7280" style={{transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s"}}/>
       </button>
       {open&&(
-        <div style={{position:"absolute",top:"calc(100%+6px)",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:12,boxShadow:"0 8px 24px rgba(0,0,0,0.10)",overflow:"hidden",animation:"fadeUp .15s ease"}}>
+        <div style={{position:"absolute",top:"calc(100%+6px)",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:12,overflow:"hidden",animation:"fadeUp .15s ease"}}>
           {options.map(opt=>{
             const sel=opt.id===value;
             return (
@@ -176,8 +172,7 @@ function normalizeOption(opt,index=0) {
   return {
     id:opt.id||opt.option_id,
     label:opt.label||opt.content||opt.value||`Lựa chọn ${index+1}`,
-    order_index:opt.order_index??index,
-  };
+    order_index:opt.order_index??index};
 }
 function resolveOptions(question,optionsMap) {
   const raw=optionsMap?.[question.id];
@@ -205,7 +200,7 @@ function RespondQuestionCard({ question, answer, onChange }) {
   };
 
   return (
-    <div style={{background:"rgba(255,255,255,0.88)",backdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,0.6)",borderRadius:20,padding:"2rem",boxShadow:"0 2px 0 rgba(255,255,255,0.85) inset, 0 14px 40px rgba(15,23,42,0.08)"}}>
+    <div style={{background:"rgba(255,255,255,0.88)",backdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,0.6)",borderRadius:20,padding:"2rem"}}>
       <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:20,background:bg,border:`1px solid ${border}`,fontSize:11,fontWeight:700,color,marginBottom:16}}>
         <Icon size={11}/>{label}
         {question.required&&<span style={{color:"#ef4444",marginLeft:2}}>*</span>}
@@ -480,7 +475,7 @@ export default function InvitedSurveyPage() {
     return (
       <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:C.font,padding:"2rem"}}>
         <AnimatedSurveyBackdrop/>
-        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:480,width:"100%",textAlign:"center",boxShadow:"0 18px 48px rgba(15,23,42,0.08)"}}>
+        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:480,width:"100%",textAlign:"center"}}>
           <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.5rem"}}>
             <Calendar size={32} color="#2563eb"/>
           </div>
@@ -500,7 +495,7 @@ export default function InvitedSurveyPage() {
     return (
       <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:C.font,padding:"2rem"}}>
         <AnimatedSurveyBackdrop/>
-        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:480,width:"100%",textAlign:"center",boxShadow:"0 18px 48px rgba(15,23,42,0.08)"}}>
+        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:480,width:"100%",textAlign:"center"}}>
           <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.5rem"}}>
             <FileText size={32} color="#d97706"/>
           </div>
@@ -520,7 +515,7 @@ export default function InvitedSurveyPage() {
     return (
       <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:C.font,padding:"2rem"}}>
         <AnimatedSurveyBackdrop/>
-        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:520,width:"100%",textAlign:"center",boxShadow:"0 18px 48px rgba(15,23,42,0.08)"}}>
+        <div style={{position:"relative",zIndex:1,background:"rgba(255,255,255,0.88)",backdropFilter:"blur(20px)",borderRadius:22,padding:"3rem 2.5rem",maxWidth:520,width:"100%",textAlign:"center"}}>
           {currentSurvey.logo_url&&<img src={currentSurvey.logo_url} alt="Logo" style={{width:64,height:64,borderRadius:12,objectFit:"contain",marginBottom:"1rem"}}/>}
           <div style={{width:72,height:72,borderRadius:"50%",background:`linear-gradient(135deg,${accent}22,${accent}44)`,border:`2px solid ${accent}33`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.5rem"}}>
             <FileText size={32} color={accent}/>
@@ -531,7 +526,7 @@ export default function InvitedSurveyPage() {
             <FileText size={13}/>{questions.length} câu hỏi
           </div>
           <div style={{height:1,background:"#f3f4f6",margin:"0 0 1.75rem"}}/>
-          <button onClick={async()=>{ try{ await startSurvey(surveyId); setStarted(true); }catch(e){} }} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px 40px",background:`linear-gradient(135deg,${accent},${accent}cc)`,color:"#fff",border:"none",borderRadius:12,fontSize:16,fontWeight:700,cursor:"pointer",width:"100%",boxShadow:`0 4px 14px ${accent}44`}}>
+          <button onClick={async()=>{ try{ await startSurvey(surveyId); setStarted(true); }catch(e){} }} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px 40px",background:`linear-gradient(135deg,${accent},${accent}cc)`,color:"#fff",border:"none",borderRadius:12,fontSize:16,fontWeight:700,cursor:"pointer",width:"100%"}}>
             <FileText size={16}/>Bắt đầu làm khảo sát
           </button>
           <button onClick={()=>navigate("/user/home")} style={{marginTop:"0.75rem",background:"none",border:"none",fontSize:13,color:C.textDim,cursor:"pointer"}}>← Quay lại</button>

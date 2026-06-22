@@ -182,71 +182,6 @@ const UserProvider = ({ children }) => {
     }
   };
 
-  //
-  // --------------- Reviews related (mới thêm) ----------------
-  //
-
-  // GET /product/:product_id - Lấy reviews theo product
-  const fetchReviewsByProduct = async (productId, params = {}) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await userService.getReviewsByProduct(productId, params);
-      // server có thể trả data ở nhiều shape
-      return response.data.data ?? response.data ?? [];
-    } catch (err) {
-      const msg = err.response?.data?.message || "Không lấy được đánh giá";
-      setError(msg);
-      toast.error(msg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // POST / - Thêm review (yêu cầu auth)
-  // payload: { product_id, rating, comment, ... }
-  const addReview = async (payload, options = {}) => {
-    // options có thể chứa token nếu muốn override
-    setLoading(true);
-    setError(null);
-    try {
-      const token = options.token ?? getToken();
-      const response = await userService.addReview(payload, token);
-      const created = response.data.data ?? response.data;
-      toast.success("Đăng đánh giá thành công");
-      return created;
-    } catch (err) {
-      const msg = err.response?.data?.message || "Đăng đánh giá thất bại";
-      setError(msg);
-      toast.error(msg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // DELETE /:id - Xóa review của user (yêu cầu auth)
-  const deleteReview = async (reviewId, options = {}) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) return false;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const token = options.token ?? getToken();
-      await userService.deleteUserReview(reviewId, token);
-      toast.success("Xóa đánh giá thành công");
-      return true;
-    } catch (err) {
-      const msg = err.response?.data?.message || "Xóa đánh giá thất bại";
-      setError(msg);
-      toast.error(msg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Reset lỗi
   const clearError = () => setError(null);
 
@@ -268,11 +203,6 @@ const UserProvider = ({ children }) => {
     removeUser,
     logout,
     setUser,
-
-    // Reviews
-    fetchReviewsByProduct,
-    addReview,
-    deleteReview,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

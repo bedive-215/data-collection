@@ -37,23 +37,23 @@ import SurveysPage from "@/pages/user/SurveysPage";
 import GenderSetup from "@/pages/user/GenderSetup";
 import GenderGuard from "@/components/common/GenderGuard";
 
-// USER SURVEY
-import MySurveysPage from "@/pages/user/MySurveysPage";
 import MySurveyQuestionPage from "@/pages/user/MySurveyQuestionsPage";
 import SurveyResponsePage from "@/pages/user/SurveyResponsePage";
 import MyResponsePage from "@/pages/user/MyResponsePage";
 import UserAnalyticsPage from "@/pages/user/AnalyticsPage";
 import NotificationsPage from "@/pages/user/NotificationsPage";
 import SurveyStudio from "@/pages/user/SurveyStudio";
-import LeaderboardPage from "@/pages/user/LeaderboardPage";
-import AchievementsPage from "@/pages/user/AchievementsPage";
-import StarWalletPage from "@/pages/user/StarWalletPage";
+import GamificationHubPage from "@/pages/user/GamificationHubPage";
 import InvitedSurveyPage from "@/pages/user/InvitedSurveyPage";
 
-// ANALYSIS - separate from survey
+// ANALYSIS
 import AnalysisHubPage from "@/pages/user/AnalysisHubPage";
 import StatisticalAnalysisPage from "@/pages/user/StatisticalAnalysisPage";
 import AIAnalysisPage from "@/pages/user/AIAnalysisPage";
+
+// SURVEY PAGES (separated by concern)
+import BrowseSurveysPage from "@/pages/user/BrowseSurveysPage";
+import MySurveysPage from "@/pages/user/MySurveysPage";
 
 // Errors
 import NotFound from "@/pages/error/NotFound";
@@ -61,7 +61,6 @@ import Forbidden from "@/pages/error/Forbidden";
 
 // Constants
 import { ROUTERS } from "@/utils/constants";
-import SurveysLayout from "@/layouts/SurveysLayout";
 const routeConfig = [
   // PUBLIC
   {
@@ -130,13 +129,13 @@ const routeConfig = [
   },
 {
   path: ROUTERS.USER.SURVEYS,
-  element: SurveysLayout,
+  element: BrowseSurveysPage,
   layout: HomeLayout,
   guard: GenderGuard,
 },
 {
   path: ROUTERS.USER.MY_SURVEYS,
-  element: SurveysLayout,
+  element: MySurveysPage,
   layout: HomeLayout,
   guard: GenderGuard,
 },
@@ -190,20 +189,8 @@ const routeConfig = [
     guard: GenderGuard,
   },
   {
-    path: "/user/leaderboard",
-    element: LeaderboardPage,
-    layout: HomeLayout,
-    guard: GenderGuard,
-  },
-  {
-    path: "/user/achievements",
-    element: AchievementsPage,
-    layout: HomeLayout,
-    guard: GenderGuard,
-  },
-  {
-    path: "/user/wallet",
-    element: StarWalletPage,
+    path: ROUTERS.USER.REWARDS,
+    element: GamificationHubPage,
     layout: HomeLayout,
     guard: GenderGuard,
   },

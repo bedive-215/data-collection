@@ -245,7 +245,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                 style={{
                     background: 'var(--admin-surface)',
                     border: '1px solid var(--admin-border)',
-                    boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+
                     borderRadius: 24,
                     /* đảm bảo card không bị đẩy ra ngoài viewport trên mobile */
                     maxHeight: 'calc(100vh - 32px)',
@@ -381,7 +381,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                     min={getMinDate()}
                                     value={extendDate}
                                     onChange={(e) => { setExtendDate(e.target.value); setExtendError(''); }}
-                                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-hover)] text-[var(--admin-text)] focus:ring-[var(--admin-primary)] focus:border-[var(--admin-primary)] outline-none"
+                                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-hover)] text-[var(--admin-text)] outline-none"
                                 />
                                 {extendError && <p className="text-xs text-red-500">{extendError}</p>}
                                 {extendSuccess && (

@@ -1,18 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CheckCircle2, ClipboardList, Clock, Zap,
-  Inbox, ArrowRight, Globe,
-  Sparkles, Rocket, LayoutGrid, Calendar,
-  Lock, Share, Link as LinkIcon, X, ExternalLink, Copy, Loader2,
-  Users, Star, RefreshCw,
-} from "lucide-react";
+  Clock, Rocket, ArrowRight, Star, Loader2, LayoutGrid, RefreshCw, Inbox, Globe,
+  Trophy, Sparkles, CheckCircle2, Flame, Medal, CalendarDays, Zap} from "lucide-react";
 import { useResponse } from "@/providers/ResponseProvider";
 import { useSurvey } from "@/providers/SurveyProvider";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS } from "@/utils/constants";
-import { SurveyCardHome, STATUS_MAP, C } from "@/components/survey/SurveyCardHome";
-import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
+import { SurveyCardHome, ShareModal, C } from "@/components/survey/SurveyCardHome";
+import { SurveyCardSkeleton } from "@/utils/surveyHelpers";
 import { useGamification } from "@/contexts/GamificationContext";
 
 /* ── Expired Modal (for public surveys not completed) ─────────────── */
@@ -24,17 +20,14 @@ function ExpiredModal({ open, onClose, survey }) {
       background: "rgba(15,23,42,0.5)",
       backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 20, animation: "fadeIn .15s ease",
-    }}>
+      padding: 20, animation: "fadeIn .15s ease"}}>
       <div onClick={e => e.stopPropagation()} style={{
         background: "#fff", borderRadius: 16,
         border: "1px solid #e8ecf2",
-        boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
         width: "100%", maxWidth: 400, overflow: "hidden",
         animation: "slideUp .2s cubic-bezier(.16,1,.3,1)",
         fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
-        textAlign: "center", padding: "32px 24px",
-      }}>
+        textAlign: "center", padding: "32px 24px"}}>
         <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <Clock size={26} color="#ef4444" />
         </div>
@@ -49,8 +42,7 @@ function ExpiredModal({ open, onClose, survey }) {
             background: "#f4f6f8",
             border: "1px solid #e8ecf2", borderRadius: 10,
             color: "#64748b", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
-          }}
+            cursor: "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif"}}
         >
           Đóng
         </button>
@@ -97,18 +89,15 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
       background: "rgba(15,23,42,0.5)",
       backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 20, animation: "fadeIn .15s ease",
-    }}>
+      padding: 20, animation: "fadeIn .15s ease"}}>
       <div onClick={e => e.stopPropagation()} style={{
         background: "#fff", borderRadius: 16,
         border: "1px solid #e8ecf2",
-        boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
         width: "100%", maxWidth: 420, overflow: "hidden",
         animation: "slideUp .2s cubic-bezier(.16,1,.3,1)",
-        fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
-      }}>
+        fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "20px 24px 0" }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <RefreshCw size={20} color="#fff" />
           </div>
           <div>
@@ -140,8 +129,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
                 width: "100%", padding: "10px 14px", borderRadius: 10,
                 border: `1.5px solid ${error ? "#fecaca" : "#e8ecf2"}`,
                 background: "#fff", fontSize: 14, fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif", color: "#0f172a",
-                outline: "none",
-              }}
+                outline: "none"}}
             />
             {error && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#ef4444" }}>{error}</p>}
           </div>
@@ -158,9 +146,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
                 background: submitting ? "#94a3b8" : "linear-gradient(135deg,#f59e0b,#fbbf24)",
                 border: "none", color: "#fff", fontSize: 14, fontWeight: 700,
                 cursor: submitting ? "not-allowed" : "pointer", fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
-                boxShadow: submitting ? "none" : "0 4px 14px rgba(245,158,11,0.3)",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              }}
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6}}
             >
               {submitting
                 ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang xử lý...</>
@@ -174,223 +160,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
   );
 }
 
-/* ── Share Modal ──────────────────────────────────────────────────── */
-function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, error, onGenerate }) {
-  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (!open) setCopied(false);
-  }, [open]);
-
-  const handleCopy = () => {
-    if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl).catch(() => {
-      const el = document.createElement("textarea");
-      el.value = shareUrl;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-    });
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  if (!open) return null;
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(15,23,42,0.55)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 20,
-        animation: "fadeIn .16s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          borderRadius: 24,
-          border: "1px solid rgba(255,255,255,0.55)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5)",
-          width: "100%", maxWidth: 440, overflow: "hidden",
-          animation: "slideUp .22s cubic-bezier(.16,1,.3,1)",
-          fontFamily: C.font,
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 20px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 9,
-              background: "linear-gradient(135deg, #4361ee, #6c7ef7)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Share size={15} color="#fff" />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Chia sẻ khảo sát</div>
-              <div style={{ fontSize: 11, color: C.textSub, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {surveyTitle}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 30, height: 30, borderRadius: 8,
-              border: "1px solid rgba(0,0,0,0.08)",
-              background: "transparent",
-              cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: C.textSub, transition: "all .15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "#ef4444"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textSub; }}
-          >
-            <X size={13} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: "20px" }}>
-          {error && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 14px", borderRadius: 10,
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              marginBottom: 14,
-            }}>
-              <span style={{ fontSize: 12, color: "#ef4444" }}>{error}</span>
-              <button
-                type="button"
-                onClick={onGenerate}
-                style={{
-                  padding: "4px 10px", borderRadius: 6,
-                  border: "1px solid rgba(239,68,68,0.25)",
-                  background: "rgba(255,255,255,0.8)",
-                  color: "#ef4444", fontSize: 11, fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Thử lại
-              </button>
-            </div>
-          )}
-
-          {shareUrl ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "slideUp .2s ease" }}>
-              {/* URL display */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 12px",
-                background: "rgba(67,97,238,0.06)",
-                borderRadius: 12,
-                border: "1px solid rgba(67,97,238,0.18)",
-                backdropFilter: "blur(8px)",
-              }}>
-                <LinkIcon size={13} color="#4f46e5" style={{ flexShrink: 0 }} />
-                <span style={{
-                  flex: 1, fontSize: 12, color: C.text,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  fontFamily: "'SF Mono','Fira Code',monospace",
-                }}>
-                  {shareUrl}
-                </span>
-              </div>
-
-              {/* Buttons */}
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  style={{
-                    flex: 1,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    padding: "10px 0",
-                    borderRadius: 11,
-                    border: `1px solid ${copied ? "rgba(16,185,129,0.35)" : "rgba(67,97,238,0.3)"}`,
-                    background: copied ? "rgba(16,185,129,0.08)" : "rgba(67,97,238,0.06)",
-                    color: copied ? "#10b981" : "#4f46e5",
-                    fontSize: 12, fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "all .2s",
-                  }}
-                >
-                  {copied ? (
-                    <><CheckCircle2 size={13} /> Đã sao chép!</>
-                  ) : (
-                    <><Copy size={13} /> Sao chép link</>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.open(shareUrl, "_blank")}
-                  style={{
-                    width: 42,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    borderRadius: 11,
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    background: "transparent",
-                    color: C.textSub,
-                    cursor: "pointer",
-                    transition: "all .15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#4f46e5"; e.currentTarget.style.borderColor = "rgba(67,97,238,0.3)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = C.textSub; e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
-                >
-                  <ExternalLink size={14} />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={onGenerate}
-              disabled={loading}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                width: "100%", padding: "12px 0",
-                borderRadius: 12, border: "none",
-                background: loading ? "rgba(0,0,0,0.06)" : "linear-gradient(135deg,#4361ee,#6c7ef7)",
-                color: loading ? C.textSub : "#fff",
-                fontSize: 13, fontWeight: 700,
-                cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: C.font,
-                boxShadow: loading ? "none" : "0 4px 14px rgba(67,97,238,0.35)",
-                transition: "all .2s",
-              }}
-            >
-              {loading ? (
-                <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang tạo link...</>
-              ) : (
-                <><LinkIcon size={15} /> Tạo link chia sẻ</>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
-        @keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-        @keyframes spin    { to { transform:rotate(360deg); } }
-      `}</style>
-    </div>
-  );
-}
 
 function GlassmorphCard({ children, style = {}, delay = 0, hover = true }) {
   const base = {
@@ -401,21 +171,19 @@ function GlassmorphCard({ children, style = {}, delay = 0, hover = true }) {
     borderRadius: 22,
     padding: 24,
     animation: `slideInUp 0.8s ease-out ${delay}s both`,
-    transition: "transform 0.28s ease, box-shadow 0.28s ease, border-color 0.22s ease",
-    boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)",
-    ...style,
-  };
+    transition:"transform 0.28s ease, border-color 0.22s ease",
+    ...style};
   return (
     <div
       style={base}
       onMouseEnter={hover ? (e) => {
         e.currentTarget.style.transform = "translateY(-5px)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.95) inset, 0 18px 44px rgba(79,70,229,0.12), 0 0 0 1px rgba(99,102,241,0.12)";
+        
         e.currentTarget.style.borderColor = "rgba(129,140,248,0.35)";
       } : undefined}
       onMouseLeave={hover ? (e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)";
+        
         e.currentTarget.style.borderColor = C.glassBorder;
       } : undefined}
     >
@@ -436,11 +204,9 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
         backdropFilter: "blur(26px)",
         WebkitBackdropFilter: "blur(26px)",
         border: "1px solid rgba(255,255,255,0.82)",
-        boxShadow: "0 2px 0 rgba(255,255,255,0.95) inset, 0 24px 56px rgba(15,23,42,0.08), 0 48px 90px rgba(79,70,229,0.1)",
         animation: "slideInUp 0.72s ease-out both",
         flex: "1 1 320px",
-        minHeight: 220,
-      }}
+        minHeight: 220}}
     >
       <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", borderRadius: 28 }}>
         <div
@@ -453,8 +219,7 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
             background: "linear-gradient(118deg, transparent 0%, rgba(255,255,255,0.12) 40%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0.15) 58%, transparent 100%)",
             animation: "shimmerSweep 7s ease-in-out infinite",
             transform: "rotate(-18deg)",
-            willChange: "transform",
-          }}
+            willChange: "transform"}}
         />
       </div>
       <div
@@ -470,8 +235,7 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
           transform: "rotate(-16deg)",
           pointerEvents: "none",
           filter: "blur(1px)",
-          animation: "floatAccent 10s ease-in-out infinite",
-        }}
+          animation: "floatAccent 10s ease-in-out infinite"}}
       />
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -483,9 +247,7 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
               background: "linear-gradient(135deg,#4361ee,#6c7ef7)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(67,97,238,0.35)",
-            }}
+              justifyContent: "center"}}
           >
             <LayoutGrid size={18} color="#fff" strokeWidth={2.2} />
           </div>
@@ -496,8 +258,7 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               color: C.textSub,
-              fontFamily: C.font,
-            }}
+              fontFamily: C.font}}
           >
             Trang chủ
           </span>
@@ -514,8 +275,7 @@ function WelcomeHero({ loading, doneCount, pendingCount, totalCount, onOpenSurve
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            animation: "titleAurora 8s ease-in-out infinite alternate",
-          }}
+            animation: "titleAurora 8s ease-in-out infinite alternate"}}
         >
           Chào mừng trở lại
         </h1>
@@ -546,17 +306,15 @@ function ProgressHeroCard({ doneCount, pendingCount, totalCount, loading }) {
         animation: "slideInUp 0.8s ease-out 0.08s both",
         background: "linear-gradient(148deg,#4361ee 0%,#6c7ef7 45%,#a855f7 100%)",
         border: "1px solid rgba(255,255,255,0.22)",
-        boxShadow: "0 2px 0 rgba(255,255,255,0.2) inset, 0 20px 48px rgba(67,97,238,0.35)",
-        transition: "transform 0.28s ease, box-shadow 0.28s ease",
-        minHeight: 220,
-      }}
+        transition:"transform 0.28s ease",
+        minHeight: 220}}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.25) inset, 0 26px 56px rgba(79,70,229,0.45)";
+        
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 0 rgba(255,255,255,0.2) inset, 0 20px 48px rgba(67,97,238,0.35)";
+        
       }}
     >
       <div
@@ -569,8 +327,7 @@ function ProgressHeroCard({ doneCount, pendingCount, totalCount, loading }) {
           background: "radial-gradient(circle, rgba(255,255,255,0.22), transparent)",
           borderRadius: "50%",
           opacity: 0.6,
-          animation: "float 6s ease-in-out infinite",
-        }}
+          animation: "float 6s ease-in-out infinite"}}
       />
       <div
         style={{
@@ -582,8 +339,7 @@ function ProgressHeroCard({ doneCount, pendingCount, totalCount, loading }) {
           background: "radial-gradient(circle, rgba(255,255,255,0.14), transparent)",
           borderRadius: "50%",
           opacity: 0.55,
-          animation: "float 8s ease-in-out infinite reverse",
-        }}
+          animation: "float 8s ease-in-out infinite reverse"}}
       />
 
       <div style={{ position: "relative", zIndex: 1, fontFamily: C.font }}>
@@ -618,8 +374,7 @@ function BentoCard({ children, size = "normal", style = {}, delay = 0 }) {
         gridColumn: size === "wide" ? "span 2" : "span 1",
         gridRow: size === "tall" ? "span 2" : "span 1",
         minHeight: size === "tall" ? "400px" : "auto",
-        ...style,
-      }}
+        ...style}}
       delay={delay}
     >
       {children}
@@ -641,8 +396,7 @@ function BentoStatCard({ icon: Icon, label, value, sub, color, delay }) {
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 16,
-            border: `1px solid ${color}28`,
-          }}
+            border: `1px solid ${color}28`}}
         >
           <Icon size={26} color={color} strokeWidth={1.5} />
         </div>
@@ -658,8 +412,7 @@ function BentoStatCard({ icon: Icon, label, value, sub, color, delay }) {
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              marginBottom: 8,
-            }}
+              marginBottom: 8}}
           >
             {value}
           </div>
@@ -675,7 +428,7 @@ function GamificationQuickStatsCard() {
 
   const stars = balance?.star_balance ?? 0;
   const streak = balance?.streak_count ?? 0;
-  const rankIcon = balance?.rank_info?.icon || "🥉";
+  const RankIconComp = balance?.rank_info?.icon ? () => <span>{balance.rank_info.icon}</span> : Medal;
   const rankName = balance?.rank_info?.name;
   const rankLabel = rankName === "SILVER" ? "Bạc" : rankName === "GOLD" ? "Vàng" : rankName === "PLATINUM" ? "Bạch Kim" : rankName === "DIAMOND" ? "Kim Cương" : "Đồng";
 
@@ -696,11 +449,15 @@ function GamificationQuickStatsCard() {
 
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1, textAlign: "center", padding: "6px 8px", background: "rgba(245,158,11,0.08)", borderRadius: 10, border: "1px solid rgba(245,158,11,0.15)" }}>
-            <div style={{ fontSize: 14, fontWeight: 900 }}>{rankIcon}</div>
+            <div style={{ fontSize: 14, fontWeight: 900, display: "flex", justifyContent: "center" }}>
+              <RankIconComp size={20} className="text-amber-600" />
+            </div>
             <div style={{ fontSize: 10, color: C.textSub, fontWeight: 600, marginTop: 2 }}>{rankLabel}</div>
           </div>
           <div style={{ flex: 1, textAlign: "center", padding: "6px 8px", background: "rgba(239,68,68,0.08)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.15)" }}>
-            <div style={{ fontSize: 14, fontWeight: 900 }}>🔥</div>
+            <div style={{ fontSize: 14, fontWeight: 900, display: "flex", justifyContent: "center" }}>
+              <Flame size={18} className="text-red-500" />
+            </div>
             <div style={{ fontSize: 10, color: C.textSub, fontWeight: 600, marginTop: 2 }}>{streak} ngày</div>
           </div>
         </div>
@@ -715,13 +472,14 @@ function CheckinBanner() {
   const { balance, checkinStatus, loading, checkinLoading, doCheckin } = useGamification();
   const [showSuccess, setShowSuccess] = useState(false);
   const [result, setResult] = useState(null);
+  const [showDone, setShowDone] = useState(true);
 
   const streak = balance?.streak_count ?? 0;
   const canCheckin = checkinStatus?.can_checkin ?? false;
   const multiplier = checkinStatus?.current_multiplier ?? 1;
   const nextBonusTier = checkinStatus?.next_bonus_tier;
 
-  const streakEmoji = streak >= 7 ? "🔥🔥" : streak >= 4 ? "🔥" : streak > 0 ? "✨" : "";
+  const StreakIconComp = streak >= 7 ? Flame : streak >= 4 ? Flame : streak > 0 ? Sparkles : null;
   const starsToEarn = streak >= 7 ? 100 : streak >= 4 ? 75 : 50;
 
   const handleCheckin = async () => {
@@ -730,19 +488,18 @@ function CheckinBanner() {
       setResult(res);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
-    } catch (_) { }
+    } catch (_) {}
   };
 
-  if (loading) {
-    return (
-      <div style={{
-        borderRadius: 20, padding: "20px 24px", marginBottom: 20,
-        background: "linear-gradient(135deg, #fef3c7, #fde68a)",
-        border: "1px solid rgba(245,158,11,0.25)",
-        height: 96, animation: "pulse 2s ease-in-out infinite",
-      }} />
-    );
-  }
+  useEffect(() => {
+    if (checkinStatus && !canCheckin) {
+      setShowDone(true);
+      const timer = setTimeout(() => setShowDone(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [checkinStatus, canCheckin]);
+
+  if (checkinStatus === null) return null;
 
   if (showSuccess && result) {
     return (
@@ -752,17 +509,16 @@ function CheckinBanner() {
         border: "1.5px solid #34d399",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         flexWrap: "wrap", gap: 16,
-        animation: "slideInUp 0.4s cubic-bezier(.16,1,.3,1)",
-        boxShadow: "0 8px 32px rgba(16,185,129,0.2)",
-      }}>
+        animation: "slideInUp 0.4s cubic-bezier(.16,1,.3,1)"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ fontSize: 40 }}>🎉</div>
+          <Sparkles size={40} className="text-green-600" />
           <div>
             <div style={{ fontFamily: C.font, fontWeight: 800, fontSize: 18, color: "#065f46" }}>
               Điểm danh thành công!
             </div>
-            <div style={{ fontFamily: C.font, fontSize: 14, color: "#059669", marginTop: 2 }}>
-              Chuỗi {result.streak_count} ngày {streakEmoji}
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: C.font, fontSize: 14, color: "#059669", marginTop: 2 }}>
+              Chuỗi {result.streak_count} ngày
+              {StreakIconComp && <StreakIconComp size={16} className="text-red-500" />}
             </div>
           </div>
         </div>
@@ -770,10 +526,12 @@ function CheckinBanner() {
           <div style={{ fontFamily: C.font, fontWeight: 900, fontSize: 36, color: "#065f46", lineHeight: 1 }}>
             +{result.stars_earned}
           </div>
-          <div style={{ fontFamily: C.font, fontSize: 13, color: "#059669", fontWeight: 600 }}>sao ⭐</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 2, fontFamily: C.font, fontSize: 13, color: "#059669", fontWeight: 600 }}>
+            sao <Star size={12} fill="currentColor" />
+          </div>
           {result.is_new_streak_record && (
             <div style={{ fontFamily: C.font, fontSize: 12, fontWeight: 800, color: "#dc2626", marginTop: 4 }}>
-              🏆 Kỷ lục mới!
+              <Trophy size={12} className="inline" /> Kỷ lục mới!
             </div>
           )}
         </div>
@@ -782,6 +540,7 @@ function CheckinBanner() {
   }
 
   if (!canCheckin) {
+    if (!showDone) return null;
     return (
       <div style={{
         borderRadius: 20, padding: "18px 24px", marginBottom: 20,
@@ -790,14 +549,16 @@ function CheckinBanner() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         flexWrap: "wrap", gap: 12,
         fontFamily: C.font,
-        boxShadow: "0 4px 20px rgba(16,185,129,0.12)",
-      }}>
+        animation: "slideInUp 0.35s cubic-bezier(.16,1,.3,1)",
+        transition: "opacity 0.3s, transform 0.3s"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontSize: 32 }}>✅</div>
+          <CheckCircle2 size={32} className="text-green-600" />
           <div>
             <div style={{ fontWeight: 800, fontSize: 17, color: "#065f46" }}>Đã điểm danh hôm nay!</div>
-            <div style={{ fontSize: 13, color: "#059669", marginTop: 2 }}>
-              Chuỗi {streak} ngày {streakEmoji} · Hẹn gặp bạn ngày mai
+            <div style={{ fontSize: 13, color: "#059669", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+              <span>Chuỗi {streak} ngày</span>
+              {StreakIconComp && <StreakIconComp size={14} className="text-red-500" />}
+              <span>· Hẹn gặp bạn ngày mai</span>
             </div>
           </div>
         </div>
@@ -805,8 +566,7 @@ function CheckinBanner() {
           display: "flex", alignItems: "center", gap: 8,
           background: "rgba(16,185,129,0.12)",
           border: "1px solid rgba(16,185,129,0.3)",
-          borderRadius: 12, padding: "10px 16px",
-        }}>
+          borderRadius: 12, padding: "10px 16px"}}>
           <span style={{ fontSize: 24, fontWeight: 900, color: "#065f46" }}>
             {streak}
           </span>
@@ -824,19 +584,16 @@ function CheckinBanner() {
       display: "flex", alignItems: "center", justifyContent: "space-between",
       flexWrap: "wrap", gap: 14,
       fontFamily: C.font,
-      boxShadow: "0 8px 32px rgba(245,158,11,0.18)",
-      position: "relative", overflow: "hidden",
-    }}>
+      position: "relative", overflow: "hidden"}}>
       {/* Background decoration */}
       <div style={{
         position: "absolute", top: -20, right: -20,
         width: 120, height: 120, borderRadius: "50%",
         background: "rgba(255,255,255,0.25)",
-        pointerEvents: "none",
-      }} />
+        pointerEvents: "none"}} />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ fontSize: 36 }}>📅</div>
+        <CalendarDays size={36} className="text-amber-600" />
         <div>
           <div style={{ fontWeight: 800, fontSize: 17, color: "#92400e" }}>Điểm danh hôm nay</div>
           <div style={{ fontSize: 13, color: "#b45309", marginTop: 2 }}>
@@ -873,19 +630,17 @@ function CheckinBanner() {
           fontSize: 14, fontWeight: 700,
           cursor: checkinLoading ? "not-allowed" : "pointer",
           opacity: checkinLoading ? 0.8 : 1,
-          boxShadow: checkinLoading ? "none" : "0 6px 20px rgba(245,158,11,0.45)",
           transition: "all 0.2s",
-          flexShrink: 0,
-        }}
+          flexShrink: 0}}
         onMouseEnter={(e) => {
           if (!checkinLoading) {
             e.currentTarget.style.transform = "translateY(-2px) scale(1.03)";
-            e.currentTarget.style.boxShadow = "0 10px 28px rgba(245,158,11,0.5)";
+            
           }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "translateY(0) scale(1)";
-          e.currentTarget.style.boxShadow = "0 6px 20px rgba(245,158,11,0.45)";
+          
         }}
         onMouseDown={(e) => {
           if (!checkinLoading) e.currentTarget.style.transform = "translateY(0) scale(0.97)";
@@ -895,17 +650,9 @@ function CheckinBanner() {
         }}
       >
         {checkinLoading ? (
-          <>
-            <div style={{
-              width: 16, height: 16, borderRadius: "50%",
-              border: "2px solid rgba(255,255,255,0.4)",
-              borderTopColor: "#fff",
-              animation: "spin 0.7s linear infinite",
-            }} />
-            Đang xử lý...
-          </>
+          <><Loader2 size={16} className="animate-spin" /> Đang xử lý...</>
         ) : (
-          <>✊ Nhận +{starsToEarn} sao</>
+          <><Zap size={16} /> Nhận +{starsToEarn} sao</>
         )}
       </button>
     </div>
@@ -945,15 +692,11 @@ const primaryBtn = {
   borderRadius: 10,
   cursor: "pointer",
   fontFamily: C.font,
-  boxShadow: "0 4px 14px rgba(67,97,238,0.35)",
-  transition: "transform .15s, box-shadow .15s",
-};
+  transition:"transform .15s"};
 
 const successBtn = {
   ...primaryBtn,
-  background: "linear-gradient(135deg,#10b981,#059669)",
-  boxShadow: "0 4px 14px rgba(16,185,129,0.32)",
-};
+  background: "linear-gradient(135deg,#10b981,#059669)"};
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -1054,8 +797,7 @@ export default function DashboardPage() {
         fontFamily: C.font,
         padding: "16px 18px 48px",
         overflowX: "hidden",
-        position: "relative",
-      }}
+        position: "relative"}}
     >
       <AnimatedSurveyBackdrop />
 
@@ -1068,8 +810,7 @@ export default function DashboardPage() {
             flexWrap: "wrap",
             alignItems: "stretch",
             gap: 22,
-            marginBottom: 36,
-          }}
+            marginBottom: 36}}
         >
           <WelcomeHero
             loading={loading}
@@ -1095,11 +836,11 @@ export default function DashboardPage() {
               style={primaryBtn}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 22px rgba(67,97,238,0.38)";
+                
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(67,97,238,0.35)";
+                
               }}
             >
               Xem tất cả <ArrowRight size={14} />
@@ -1109,16 +850,7 @@ export default function DashboardPage() {
           {loading ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: C.surface,
-                    borderRadius: 40,
-                    height: 240,
-                    animation: "pulse 2s ease-in-out infinite",
-                    border: `1px solid ${C.glassBorder}`,
-                  }}
-                />
+                <SurveyCardSkeleton key={i} />
               ))}
             </div>
           ) : mySurveys.length === 0 ? (
@@ -1158,11 +890,11 @@ export default function DashboardPage() {
               style={primaryBtn}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 22px rgba(67,97,238,0.38)";
+                
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(67,97,238,0.35)";
+                
               }}
             >
               Xem tất cả <ArrowRight size={14} />
@@ -1172,16 +904,7 @@ export default function DashboardPage() {
           {loading ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: C.surface,
-                    borderRadius: 40,
-                    height: 240,
-                    animation: "pulse 2s ease-in-out infinite",
-                    border: `1px solid ${C.glassBorder}`,
-                  }}
-                />
+                <SurveyCardSkeleton key={i} />
               ))}
             </div>
           ) : publicSurveys.length === 0 ? (

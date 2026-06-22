@@ -28,7 +28,7 @@ export default function EditorInviteModal({ survey, onClose }) {
         style={{
           background: "var(--admin-surface, #fff)",
           border: "1px solid var(--admin-border, #e8ecf2)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+
           borderRadius: 24,
         }}
       >
@@ -43,7 +43,7 @@ export default function EditorInviteModal({ survey, onClose }) {
                 width: 48, height: 48, borderRadius: 14,
                 background: "linear-gradient(135deg, #fef3c7, #fde68a)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 16px rgba(245,158,11,0.25)",
+
                 flexShrink: 0,
               }}
             >
@@ -112,7 +112,7 @@ export default function EditorInviteModal({ survey, onClose }) {
               fontSize: 14, fontWeight: 700, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
-              boxShadow: "0 4px 14px rgba(67,97,238,0.30)",
+
             }}
           >
             <Edit3 size={16} /> Mở trang chỉnh sửa

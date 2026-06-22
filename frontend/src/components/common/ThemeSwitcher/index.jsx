@@ -5,11 +5,8 @@ const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="p-2 rounded-lg border border-[var(--color-brand-200)] dark:border-[var(--color-accent)]"
-    >
-      {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+    <button onClick={toggleTheme} className="btn-admin-ghost" style={{ padding: "8px", borderColor: "var(--admin-border)" }}>
+      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
     </button>
   );
 };

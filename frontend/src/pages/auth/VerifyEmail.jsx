@@ -41,9 +41,7 @@ const VerifyEmailPage = () => {
     border: `1.5px solid ${DS.inputBorder}`,
     height: DS.inputHeight,
     padding: "0 16px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  });
+    });
 
   return (
     <div style={{ minHeight: "100vh", width: "100%", background: "#F8FAFC", fontFamily: DS.font, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
@@ -58,17 +56,15 @@ const VerifyEmailPage = () => {
         WebkitBackdropFilter: `${DS.cardBlur} saturate(190%)`,
         borderRadius: "28px",
         border: `1px solid ${DS.cardBorder}`,
-        boxShadow: DS.cardShadow,
         padding: "44px",
         position: "relative",
-        zIndex: 1,
-      }}>
+        zIndex: 1}}>
         {/* Top decorative bar */}
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 5, background: `linear-gradient(90deg, transparent, ${DS.primary}, ${DS.primaryEnd}, transparent)`, borderRadius: "0 0 6px 6px" }} />
 
         {/* Brand header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(67,97,238,0.35)", flexShrink: 0 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
@@ -87,8 +83,8 @@ const VerifyEmailPage = () => {
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Email</label>
               <div style={inputStyle()}
-                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = DS.inputBorderFocus }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
               >
                 <input type="email" {...register("email")} placeholder="email@example.com"
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "0 12px", fontSize: 15, color: DS.inputText, fontFamily: DS.font }} />
@@ -101,9 +97,9 @@ const VerifyEmailPage = () => {
               </div>
             )}
             <button type="submit" disabled={loading}
-              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", boxShadow: DS.primaryGlow, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s", opacity: loading ? 0.65 : 1 }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; } }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+              style={{ height: 52, width: "100%", background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, border: "none", borderRadius: DS.radiusButton, color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.65 : 1 }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)" } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)" }}
             >
               {loading ? (
                 <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Đang gửi...</>
@@ -140,9 +136,9 @@ const VerifyEmailPage = () => {
               </div>
             </div>
             <Link to="/login"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, color: "white", textDecoration: "none", fontFamily: DS.font, padding: "14px 28px", borderRadius: DS.radiusButton, background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, boxShadow: DS.primaryGlow, transition: "all 0.2s", marginTop: 4 }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(67,97,238,0.45)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, color: "white", textDecoration: "none", fontFamily: DS.font, padding: "14px 28px", borderRadius: DS.radiusButton, background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, marginTop: 4 }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)" }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
@@ -153,7 +149,7 @@ const VerifyEmailPage = () => {
         )}
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
-          <Link to="/login" style={{ fontSize: 13, fontWeight: 500, color: DS.textMuted, textDecoration: "none", fontFamily: DS.font, transition: "color 0.15s" }}>
+          <Link to="/login" style={{ fontSize: 13, fontWeight: 500, color: DS.textMuted, textDecoration: "none", fontFamily: DS.font}}>
             ← Quay lại đăng nhập
           </Link>
         </div>

@@ -28,8 +28,7 @@ import {
   Trophy,
   Flame,
   Clock,
-  Filter,
-} from "lucide-react";
+  Filter} from "lucide-react";
 
 /* ================================
    Shared Helpers
@@ -49,8 +48,7 @@ function RoleBadge({ role }) {
       style={{
         background: isAdmin ? "rgba(245,158,11,0.1)" : "rgba(99,102,241,0.1)",
         color: isAdmin ? "#F59E0B" : "#6366F1",
-        borderColor: isAdmin ? "rgba(245,158,11,0.2)" : "rgba(99,102,241,0.2)",
-      }}
+        borderColor: isAdmin ? "rgba(245,158,11,0.2)" : "rgba(99,102,241,0.2)"}}
     >
       {isAdmin ? <Shield size={11} /> : <User size={11} />}
       {role}
@@ -68,8 +66,7 @@ function StatusBadge({ isActive }) {
       style={{
         background: "rgba(16,185,129,0.1)",
         color: "#10B981",
-        borderColor: "rgba(16,185,129,0.2)",
-      }}
+        borderColor: "rgba(16,185,129,0.2)"}}
     >
       <CheckCircle size={11} />
       Hoạt động
@@ -80,8 +77,7 @@ function StatusBadge({ isActive }) {
       style={{
         background: "rgba(239,68,68,0.1)",
         color: "#EF4444",
-        borderColor: "rgba(239,68,68,0.2)",
-      }}
+        borderColor: "rgba(239,68,68,0.2)"}}
     >
       <XCircle size={11} />
       Bị khóa
@@ -105,9 +101,7 @@ function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText, c
         className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         <div className="flex items-center gap-3 mb-3">
           <div
@@ -130,8 +124,7 @@ function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText, c
             style={{
               background: "var(--admin-bg-secondary)",
               border: "1px solid var(--admin-border)",
-              color: "var(--admin-text-sub)",
-            }}
+              color: "var(--admin-text-sub)"}}
           >
             Hủy
           </button>
@@ -172,9 +165,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
         className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
@@ -265,8 +256,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
             style={{
               background: "var(--admin-bg-secondary)",
               border: "1px solid var(--admin-border)",
-              color: "var(--admin-text-sub)",
-            }}
+              color: "var(--admin-text-sub)"}}
           >
             Hủy
           </button>
@@ -307,9 +297,7 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
         className="relative p-6 w-full max-w-md rounded-2xl animate-slide-up"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
@@ -365,8 +353,7 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
             style={{
               background: "var(--admin-bg-secondary)",
               border: "1px solid var(--admin-border)",
-              color: "var(--admin-text)",
-            }}
+              color: "var(--admin-text)"}}
           />
           <p className="text-[10px] text-right mt-1" style={{ color: "var(--admin-text-dim)" }}>
             {reason.length}/500
@@ -380,8 +367,7 @@ function BlockReasonModal({ open, onClose, onConfirm, loading, user }) {
             style={{
               background: "var(--admin-bg-secondary)",
               border: "1px solid var(--admin-border)",
-              color: "var(--admin-text-sub)",
-            }}
+              color: "var(--admin-text-sub)"}}
           >
             Hủy
           </button>
@@ -416,9 +402,7 @@ function UserDetailModal({ open, onClose, user }) {
         className="relative p-6 w-full max-w-lg rounded-2xl animate-slide-up overflow-y-auto max-h-[85vh]"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold" style={{ color: "var(--admin-text)" }}>
@@ -472,8 +456,7 @@ function UserDetailModal({ open, onClose, user }) {
             {
               label: "Giới tính",
               value: user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác",
-              icon: <User size={13} />,
-            },
+              icon: <User size={13} />},
             { label: "Ngày sinh", value: formatDate(user.date_of_birth), icon: <Calendar size={13} /> },
             { label: "Ngày tạo", value: formatDate(user.created_at), icon: <Clock size={13} /> },
             {
@@ -481,8 +464,7 @@ function UserDetailModal({ open, onClose, user }) {
               value: user.email_verified ? "Đã xác thực" : "Chưa xác thực",
               icon: user.email_verified
                 ? <CheckCircle size={13} style={{ color: "#10B981" }} />
-                : <XCircle size={13} style={{ color: "#EF4444" }} />,
-            },
+                : <XCircle size={13} style={{ color: "#EF4444" }} />},
           ].map(({ label, value, icon }) => (
             <div
               key={label}
@@ -760,8 +742,7 @@ export default function UserManagement() {
   const {
     overview,
     loading: loadingStats,
-    fetchOverview,
-  } = useAdminStats();
+    fetchOverview} = useAdminStats();
 
   /* ── Fetch list ── */
   const fetchListUsers = async () => {
@@ -889,29 +870,25 @@ export default function UserManagement() {
       value: overview?.totalUsers ?? total,
       icon: <Users size={20} style={{ color: "#F59E0B" }} />,
       bg: "rgba(245,158,11,0.1)",
-      color: "#F59E0B",
-    },
+      color: "#F59E0B"},
     {
       label: "Đang hoạt động",
       value: overview?.totalActiveUsers ?? "—",
       icon: <ShieldCheck size={20} style={{ color: "#10B981" }} />,
       bg: "rgba(16,185,129,0.1)",
-      color: "#10B981",
-    },
+      color: "#10B981"},
     {
       label: "Bị khóa",
       value: overview?.totalBlockedUsers ?? "—",
       icon: <ShieldAlert size={20} style={{ color: "#EF4444" }} />,
       bg: "rgba(239,68,68,0.1)",
-      color: "#EF4444",
-    },
+      color: "#EF4444"},
     {
       label: "Tổng khảo sát",
       value: overview?.totalSurveys ?? "—",
       icon: <ClipboardList size={20} style={{ color: "#6366F1" }} />,
       bg: "rgba(99,102,241,0.1)",
-      color: "#6366F1",
-    },
+      color: "#6366F1"},
   ];
 
   return (
@@ -936,8 +913,7 @@ export default function UserManagement() {
           style={{
             background: "var(--admin-surface)",
             border: "1px solid var(--admin-border)",
-            color: "var(--admin-text-sub)",
-          }}
+            color: "var(--admin-text-sub)"}}
         >
           <RotateCcw size={14} className={isLoading ? "animate-spin" : ""} />
           Làm mới
@@ -952,9 +928,7 @@ export default function UserManagement() {
             className="p-5 rounded-2xl relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
             style={{
               background: "var(--admin-surface)",
-              border: "1px solid var(--admin-border)",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-            }}
+              border: "1px solid var(--admin-border)"}}
           >
             <div
               className="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-15"
@@ -990,9 +964,7 @@ export default function UserManagement() {
         className="rounded-2xl overflow-hidden"
         style={{
           background: "var(--admin-surface)",
-          border: "1px solid var(--admin-border)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-        }}
+          border: "1px solid var(--admin-border)"}}
       >
         {/* Table header */}
         <div
@@ -1044,8 +1016,7 @@ export default function UserManagement() {
               style={{
                 background: "var(--admin-bg-secondary)",
                 border: "1px solid var(--admin-border)",
-                color: "var(--admin-text)",
-              }}
+                color: "var(--admin-text)"}}
             />
           </div>
         </div>
@@ -1135,7 +1106,7 @@ export default function UserManagement() {
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all"
                 style={
                   p === page
-                    ? { background: "#F59E0B", color: "#000", boxShadow: "0 4px 12px rgba(245,158,11,0.3)" }
+                    ? { background: "#F59E0B", color: "#000" }
                     : { color: "var(--admin-text-dim)" }
                 }
                 onMouseEnter={e => {

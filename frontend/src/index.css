@@ -1,129 +1,56 @@
 @import "tailwindcss";
 
-/* =============================================
-   Admin UI — Warm Dark Premium Theme
-   v2 — Thống nhất màu sắc, phong cách hiện đại
-   ============================================= */
+/* ─── Design Tokens ──────────────────────────────────── */
 @theme {
-  /* ─── Màu chủ đạo (Amber — ấm, nổi bật) ─── */
   --color-primary:    #F59E0B;
   --color-on-primary: #FFFFFF;
   --color-secondary:  #6366F1;
   --color-accent:     #8B5CF6;
-
-  /* ─── Màu nền Dark ─── */
   --color-bg-base:     #0F1117;
   --color-bg-surface:  #1A1D2E;
   --color-bg-card:     #141620;
-
-  /* ─── Trạng thái ─── */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error:   #EF4444;
-  --color-info:    #3B82F6;
-
-  /* ─── Border ─── */
+  --color-success:    #10B981;
+  --color-warning:    #F59E0B;
+  --color-error:      #EF4444;
+  --color-info:       #3B82F6;
   --color-border:      #2A2D3E;
   --color-border-hover:#3A3D50;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* =============================================
-   Admin Theme Variables (cho inline style)
-   ============================================= */
+/* ─── CSS Custom Properties ──────────────────────────── */
 :root {
-  --admin-bg:           #0F1117;
-  --admin-bg-secondary: #141620;
-  --admin-surface:      #1A1D2E;
-  --admin-surface-hover:#222638;
-  --admin-border:       #2A2D3E;
+  --admin-bg:            #0F1117;
+  --admin-bg-secondary:  #141620;
+  --admin-surface:       #1A1D2E;
+  --admin-surface-hover: #222638;
+  --admin-border:        #2A2D3E;
   --admin-border-hover:  #3A3D50;
-  --admin-text:         #F9FAFB;
-  --admin-text-sub:     #9CA3AF;
-  --admin-text-dim:     #4B5563;
-  --admin-primary:      #F59E0B;
+  --admin-text:          #F9FAFB;
+  --admin-text-sub:      #9CA3AF;
+  --admin-text-dim:      #4B5563;
+  --admin-primary:       #F59E0B;
   --admin-primary-hover: #D97706;
-  --admin-secondary:    #6366F1;
-  --admin-success:      #10B981;
-  --admin-error:        #EF4444;
-  --admin-warning:      #F59E0B;
-  --admin-info:         #3B82F6;
-  --admin-radius-sm:    8px;
-  --admin-radius-md:    12px;
-  --admin-radius-lg:    18px;
-  --admin-radius-xl:    24px;
+  --admin-secondary:     #6366F1;
+  --admin-success:       #10B981;
+  --admin-error:         #EF4444;
+  --admin-warning:       #F59E0B;
+  --admin-info:          #3B82F6;
+  --admin-radius-sm:     8px;
+  --admin-radius-md:     12px;
+  --admin-radius-lg:     18px;
+  --admin-radius-xl:     24px;
 }
 
-/* =============================================
-   Global Styles
-   ============================================= */
-html, body {
-  scroll-behavior: smooth;
-  background-color: #0F1117;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background-color: #0F1117;
-  color: #F9FAFB;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-  min-height: 100vh;
-  background-color: #0F1117;
-}
-
-a {
-  color: #9CA3AF;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-a:hover { color: #F9FAFB; }
-
-/* =============================================
-   Admin Theme Variables (cho inline style)
-   ============================================= */
-:root {
-  --admin-bg:           #0F1117;
-  --admin-bg-secondary: #141620;
-  --admin-surface:      #1A1D2E;
-  --admin-surface-hover:#222638;
-  --admin-border:       #2A2D3E;
-  --admin-border-hover:  #3A3D50;
-  --admin-text:         #F9FAFB;
-  --admin-text-sub:     #9CA3AF;
-  --admin-text-dim:     #4B5563;
-  --admin-primary:      #F59E0B;
-  --admin-primary-hover: #D97706;
-  --admin-secondary:    #6366F1;
-  --admin-success:      #10B981;
-  --admin-error:        #EF4444;
-  --admin-warning:      #F59E0B;
-  --admin-info:         #3B82F6;
-  --admin-radius-sm:    8px;
-  --admin-radius-md:    12px;
-  --admin-radius-lg:    18px;
-  --admin-radius-xl:    24px;
-}
-
-/* =============================================
-   Global Styles
-   ============================================= */
+/* ─── Global Styles ──────────────────────────────────── */
 html {
   scroll-behavior: smooth;
-  background-color: var(--admin-bg);
   min-height: 100%;
 }
 
 body {
-  background-color: var(--admin-bg);
+  background-color: #F8FAFC;
   color: var(--admin-text);
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   line-height: 1.5;
@@ -136,17 +63,16 @@ body {
 
 #root {
   min-height: 100vh;
-  background-color: var(--admin-bg);
 }
 
 a {
-  @apply text-gray-400 hover:text-white transition-colors;
+  color: #9CA3AF;
   text-decoration: none;
+  transition: color 0.15s;
 }
+a:hover { color: #F9FAFB; }
 
-/* =============================================
-   Form Elements
-   ============================================= */
+/* ─── Form Elements ──────────────────────────────────── */
 input, select, textarea {
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-md);
@@ -158,16 +84,10 @@ input, select, textarea {
   outline: none;
   transition: border-color 0.15s;
 }
-
-input::placeholder, textarea::placeholder {
-  color: var(--admin-text-dim);
-}
-
+input::placeholder, textarea::placeholder { color: var(--admin-text-dim); }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--admin-primary);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  border-color: var(--admin-border);
 }
-
 select {
   cursor: pointer;
   appearance: none;
@@ -177,9 +97,7 @@ select {
   padding-right: 36px;
 }
 
-/* =============================================
-   Admin Cards
-   ============================================= */
+/* ─── Cards ──────────────────────────────────────────── */
 .admin-card {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
@@ -187,12 +105,9 @@ select {
   padding: 24px;
   transition: all 0.2s;
 }
-
 .admin-card:hover {
   border-color: var(--admin-border-hover);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
-
 .admin-card-glass {
   background: rgba(26, 29, 46, 0.85);
   backdrop-filter: blur(16px);
@@ -202,9 +117,7 @@ select {
   padding: 24px;
 }
 
-/* =============================================
-   Admin Buttons
-   ============================================= */
+/* ─── Buttons ────────────────────────────────────────── */
 .btn-admin-primary {
   display: inline-flex;
   align-items: center;
@@ -219,19 +132,11 @@ select {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
-
 .btn-admin-primary:hover {
   background: var(--admin-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
 }
-
-.btn-admin-primary:active {
-  transform: translateY(0);
-}
-
 .btn-admin-secondary {
   display: inline-flex;
   align-items: center;
@@ -246,265 +151,80 @@ select {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
 }
-
-.btn-admin-secondary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
+.btn-admin-secondary:hover { opacity: 0.9; transform: translateY(-1px); }
 .btn-admin-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: transparent;
-  color: var(--admin-text-sub);
-  border: 1px solid var(--admin-border);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; background: transparent;
+  color: var(--admin-text-sub); border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-md);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
-
-.btn-admin-ghost:hover {
-  background: var(--admin-surface-hover);
-  border-color: var(--admin-border-hover);
-  color: var(--admin-text);
-}
-
+.btn-admin-ghost:hover { background: var(--admin-surface-hover); border-color: var(--admin-border-hover); color: var(--admin-text); }
 .btn-admin-danger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--admin-error);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; background: rgba(239, 68, 68, 0.1);
+  color: var(--admin-error); border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--admin-radius-md);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
+.btn-admin-danger:hover { background: rgba(239, 68, 68, 0.2); border-color: var(--admin-error); }
 
-.btn-admin-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: var(--admin-error);
-}
-
-/* =============================================
-   Admin Badges
-   ============================================= */
+/* ─── Badges ─────────────────────────────────────────── */
 .badge-admin {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
 }
+.badge-primary { background: rgba(245,158,11,0.12); color: var(--admin-primary); border: 1px solid rgba(245,158,11,0.2); }
+.badge-success { background: rgba(16,185,129,0.12); color: var(--admin-success); border: 1px solid rgba(16,185,129,0.2); }
+.badge-error   { background: rgba(239,68,68,0.12);   color: var(--admin-error);   border: 1px solid rgba(239,68,68,0.2);   }
+.badge-warning { background: rgba(245,158,11,0.12); color: var(--admin-warning); border: 1px solid rgba(245,158,11,0.2); }
+.badge-info    { background: rgba(59,130,246,0.12);  color: var(--admin-info);    border: 1px solid rgba(59,130,246,0.2);  }
+.badge-secondary { background: rgba(99,102,241,0.12); color: var(--admin-secondary); border: 1px solid rgba(99,102,241,0.2); }
 
-.badge-primary {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--admin-primary);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
+/* ─── Alerts ─────────────────────────────────────────── */
+.alert-error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--admin-error);   padding: 12px 16px; border-radius: var(--admin-radius-md); font-size: 14px; }
+.alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: var(--admin-success); padding: 12px 16px; border-radius: var(--admin-radius-md); font-size: 14px; }
+.alert-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: var(--admin-warning); padding: 12px 16px; border-radius: var(--admin-radius-md); font-size: 14px; }
 
-.badge-success {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--admin-success);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
+/* ─── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-.badge-error {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--admin-error);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
+/* ─── Tables ─────────────────────────────────────────── */
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table thead tr { border-bottom: 1px solid var(--admin-border); }
+.admin-table thead th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--admin-text-dim); }
+.admin-table tbody tr { border-bottom: 1px solid rgba(42,45,62,0.5); transition: background 0.15s; }
+.admin-table tbody tr:hover { background: var(--admin-surface-hover); }
+.admin-table tbody td { padding: 16px 20px; font-size: 14px; color: var(--admin-text); vertical-align: middle; }
 
-.badge-warning {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--admin-warning);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.badge-info {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--admin-info);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-.badge-secondary {
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--admin-secondary);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-/* =============================================
-   Alerts
-   ============================================= */
-.alert-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: var(--admin-error);
-  padding: 12px 16px;
-  border-radius: var(--admin-radius-md);
-  font-size: 14px;
-}
-
-.alert-success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: var(--admin-success);
-  padding: 12px 16px;
-  border-radius: var(--admin-radius-md);
-  font-size: 14px;
-}
-
-.alert-warning {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  color: var(--admin-warning);
-  padding: 12px 16px;
-  border-radius: var(--admin-radius-md);
-  font-size: 14px;
-}
-
-/* =============================================
-   Custom Scrollbar
-   ============================================= */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* =============================================
-   Table Styles
-   ============================================= */
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.admin-table thead tr {
-  border-bottom: 1px solid var(--admin-border);
-}
-
-.admin-table thead th {
-  padding: 12px 20px;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--admin-text-dim);
-}
-
-.admin-table tbody tr {
-  border-bottom: 1px solid rgba(42, 45, 62, 0.5);
-  transition: background 0.15s;
-}
-
-.admin-table tbody tr:hover {
-  background: var(--admin-surface-hover);
-}
-
-.admin-table tbody td {
-  padding: 16px 20px;
-  font-size: 14px;
-  color: var(--admin-text);
-  vertical-align: middle;
-}
-
-/* =============================================
-   Input Overrides (admin context)
-   ============================================= */
+/* ─── Admin Input ────────────────────────────────────── */
 .admin-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--admin-bg-secondary);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text);
-  font-size: 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  outline: none;
-  transition: all 0.15s;
+  width: 100%; padding: 10px 14px; background: var(--admin-bg-secondary);
+  border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md);
+  color: var(--admin-text); font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; transition: all 0.15s;
 }
+.admin-input:focus { border-color: var(--admin-border); }
+.admin-input::placeholder { color: var(--admin-text-dim); }
 
-.admin-input:focus {
-  border-color: var(--admin-primary);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-}
+/* ─── Animations ─────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse-glow { 0%,100% { } 50% { } }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-.admin-input::placeholder {
-  color: var(--admin-text-dim);
-}
-
-/* =============================================
-   Animations
-   ============================================= */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-  50%       { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.15); }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-slide-in-right { animation: slideInRight 0.3s ease-out; }

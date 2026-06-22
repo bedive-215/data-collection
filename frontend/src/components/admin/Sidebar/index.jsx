@@ -41,7 +41,7 @@ export default function Sidebar() {
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
               background: "linear-gradient(135deg, #F59E0B, #D97706)",
-              boxShadow: "0 4px 12px rgba(245, 158, 11, 0.3)",
+
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -169,7 +169,7 @@ export default function Sidebar() {
           style={{
             background: "linear-gradient(135deg, #F59E0B, #D97706)",
             color: "#000",
-            boxShadow: "0 4px 16px rgba(245, 158, 11, 0.25)",
+
           }}
         >
           <PlusCircle size={16} strokeWidth={2.5} />

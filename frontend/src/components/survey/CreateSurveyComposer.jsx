@@ -86,8 +86,8 @@ function GlassPanel({ children, style = {} }) {
         backdropFilter: "blur(22px) saturate(180%)",
         WebkitBackdropFilter: "blur(22px) saturate(180%)",
         border: `1px solid ${C.glassBorder}`,
-        borderRadius: 20,
-        boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)",
+        borderRadius: 12,
+
         ...style,
       }}
     >
@@ -101,7 +101,7 @@ function fieldIn() {
     width: "100%",
     boxSizing: "border-box",
     padding: "10px 12px",
-    borderRadius: 11,
+    borderRadius: 6,
     border: "1px solid rgba(0,0,0,0.1)",
     fontSize: 13,
     fontFamily: C.font,
@@ -318,7 +318,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
     alignItems: "center",
     gap: 8,
     padding: "10px 22px",
-    borderRadius: 11,
+    borderRadius: 6,
     border: "none",
     background: busy || !title.trim() ? "rgba(0,0,0,0.08)" : "linear-gradient(135deg,#4361ee,#6c7ef7)",
     color: busy || !title.trim() ? C.textDim : "#fff",
@@ -326,7 +326,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
     fontWeight: 700,
     cursor: busy || !title.trim() ? "not-allowed" : "pointer",
     fontFamily: C.font,
-    boxShadow: busy || !title.trim() ? "none" : "0 4px 14px rgba(67,97,238,0.35)",
+
   };
 
   if (done?.survey) {
@@ -400,7 +400,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
           style={{
             width: 36,
             height: 36,
-            borderRadius: 10,
+            borderRadius: 6,
             border: "1px solid rgba(0,0,0,0.08)",
             background: C.surfaceSoft,
             cursor: "pointer",
@@ -510,7 +510,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                   alignItems: "center",
                   gap: 5,
                   padding: "7px 12px",
-                  borderRadius: 10,
+                  borderRadius: 6,
                   border: "none",
                   background: "linear-gradient(135deg,#4361ee,#6c7ef7)",
                   color: "#fff",
@@ -518,7 +518,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                   fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: C.font,
-                  boxShadow: "0 3px 10px rgba(67,97,238,0.3)",
+
                 }}
               >
                 <Plus size={14} />
@@ -539,7 +539,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                     key={d.id}
                     style={{
                       padding: 14,
-                      borderRadius: 14,
+                      borderRadius: 8,
                       border: "1px solid rgba(99,102,241,0.15)",
                       background: "rgba(255,255,255,0.65)",
                     }}
@@ -558,7 +558,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                           style={{
                             padding: 6,
                             border: "none",
-                            borderRadius: 8,
+                            borderRadius: 6,
                             background: drafts.length <= 1 ? "transparent" : "rgba(239,68,68,0.1)",
                             color: drafts.length <= 1 ? C.textDim : "#dc2626",
                             cursor: drafts.length <= 1 ? "not-allowed" : "pointer",
@@ -657,7 +657,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: C.textSub, marginBottom: 6 }}>Lựa chọn (ít nhất 2, value không trùng)</div>
                         {(d.options || []).map((opt, oi) => (
-                          <div key={`${d.id}-opt-${oi}`} style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10, padding: 10, borderRadius: 10, background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.05)" }}>
+                          <div key={`${d.id}-opt-${oi}`} style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10, padding: 10, borderRadius: 6, background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.05)" }}>
                             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                               <input
                                 value={opt.label}
@@ -678,7 +678,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                                 style={{
                                   padding: 8,
                                   border: "none",
-                                  borderRadius: 8,
+                                  borderRadius: 6,
                                   background: (d.options || []).length <= 2 ? "transparent" : "rgba(239,68,68,0.1)",
                                   cursor: (d.options || []).length <= 2 ? "not-allowed" : "pointer",
                                   color: (d.options || []).length <= 2 ? "#94a3b8" : "#dc2626",
@@ -704,7 +704,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                           style={{
                             marginTop: 4,
                             padding: "6px 10px",
-                            borderRadius: 8,
+                            borderRadius: 6,
                             border: `1px dashed rgba(79,70,229,0.35)`,
                             background: "transparent",
                             color: C.primary,
@@ -757,7 +757,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
                   style={{
                     flex: "1 1 92px",
                     padding: "8px 10px",
-                    borderRadius: 10,
+                    borderRadius: 6,
                     border: `1.5px solid ${inviteRole === r.value ? "rgba(79,70,229,0.45)" : "rgba(0,0,0,0.08)"}`,
                     background: inviteRole === r.value ? C.primarySoft : "rgba(255,255,255,0.6)",
                     cursor: "pointer",
@@ -790,7 +790,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
         </GlassPanel>
 
         {busy && progress && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, padding: "10px 14px", borderRadius: 12, background: C.surfaceSoft, border: "1px solid rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 700, color: C.primary }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, padding: "10px 14px", borderRadius: 8, background: C.surfaceSoft, border: "1px solid rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 700, color: C.primary }}>
             <Loader2 size={16} style={{ animation: "composerSpin 0.85s linear infinite" }} />
             {progress}
           </div>

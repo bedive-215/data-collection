@@ -15,8 +15,7 @@ import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 // ── Schemas ────────────────────────────────────────────────────────────────
 const schema = yup.object({
   email: yup.string().required("auth.required").email("auth.invalidEmail"),
-  password: yup.string().required("auth.required").min(6, "auth.minPassword"),
-});
+  password: yup.string().required("auth.required").min(6, "auth.minPassword")});
 
 const extraSchema = yup.object({
   phone_number: yup
@@ -27,7 +26,7 @@ const extraSchema = yup.object({
     .string()
     .required("Ngày sinh không được bỏ trống")
     .matches(/^\d{4}-\d{2}-\d{2}$/, "Ngày sinh phải đúng định dạng YYYY-MM-DD"),
-});
+  gender: yup.string().required("Vui lòng chọn giới tính").oneOf(["MALE", "FEMALE", "OTHER"])});
 
 // ── InputWrapper định nghĩa NGOÀI component → không bị re-create mỗi render ──
 const INPUT_WRAPPER_STYLE = {
@@ -38,9 +37,7 @@ const INPUT_WRAPPER_STYLE = {
   border: `1.5px solid ${DS.inputBorder}`,
   height: 52,
   padding: "0 16px",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-  transition: "border-color 0.2s, box-shadow 0.2s",
-};
+  };
 
 const InputWrapper = ({ children, onFocusCapture, onBlurCapture }) => (
   <div
@@ -83,8 +80,7 @@ const Spinner = ({ size = 18, color = "white", borderColor = "rgba(255,255,255,0
     borderTopColor: color,
     borderRadius: "50%",
     animation: "spin 0.7s linear infinite",
-    flexShrink: 0,
-  }} />
+    flexShrink: 0}} />
 );
 
 // ── Main component ─────────────────────────────────────────────────────────
@@ -150,13 +146,11 @@ export default function Login() {
             const idToken = response?.credential;
             if (!idToken) { setErrorMessage("Không nhận được token từ Google"); return; }
             await handleGoogleTokenReceived(idToken);
-          },
-        });
+          }});
         if (googleButtonRef.current) {
           window.google.accounts.id.renderButton(googleButtonRef.current, {
             theme: "outline", size: "large", text: "signin_with",
-            locale: "vi", shape: "rectangular", width: "100%",
-          });
+            locale: "vi", shape: "rectangular", width: "100%"});
         }
         gsiInitialized.current = true;
         clearInterval(interval);
@@ -228,6 +222,7 @@ export default function Login() {
       const payload = { token: tempToken };
       if (missingFields?.phone_number) payload.phone_number = formData.phone_number;
       if (missingFields?.date_of_birth) payload.date_of_birth = formData.date_of_birth;
+      if (missingFields?.gender) payload.gender = formData.gender;
       const res = await apiClient.post("/api/v1/auth/login/oauth", payload);
       handleSuccessfulLogin(res.data);
     } catch (err) {
@@ -261,9 +256,9 @@ export default function Login() {
     register: registerExtra,
     handleSubmit: handleSubmitExtra,
     formState: { errors: extraErrors },
+    watch: watchExtra,
     reset: resetExtraForm,
-    clearErrors: clearExtraErrors,
-  } = useForm({ resolver: yupResolver(extraSchema), mode: "onChange" });
+    clearErrors: clearExtraErrors} = useForm({ resolver: yupResolver(extraSchema), mode: "onChange" });
 
   const closeExtraForm = useCallback(() => {
     setShowExtraForm(false);
@@ -275,20 +270,16 @@ export default function Login() {
   }, [resetExtraForm, clearExtraErrors]);
 
   const focusRingOn = useCallback((e) => {
-    e.currentTarget.style.borderColor = DS.inputBorderFocus;
-    e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`;
+    e.currentTarget.style.borderColor = DS.inputBorderFocus
   }, []);
   const focusRingOff = useCallback((e) => {
-    e.currentTarget.style.borderColor = DS.inputBorder;
-    e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)";
+    e.currentTarget.style.borderColor = DS.inputBorder
   }, []);
   const inputFocusOn = useCallback((e) => {
-    e.target.style.borderColor = DS.inputBorderFocus;
-    e.target.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`;
+    e.target.style.borderColor = DS.inputBorderFocus
   }, []);
   const inputFocusOff = useCallback((e) => {
-    e.target.style.borderColor = DS.inputBorder;
-    e.target.style.boxShadow = "none";
+    e.target.style.borderColor = DS.inputBorder
   }, []);
 
   return (
@@ -299,8 +290,7 @@ export default function Login() {
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "24px 16px",
       position: "relative",
-      overflow: "hidden",
-    }}>
+      overflow: "hidden"}}>
       <AnimatedSurveyBackdrop />
 
       {/* Main card */}
@@ -311,18 +301,15 @@ export default function Login() {
         WebkitBackdropFilter: `${DS.cardBlur} saturate(190%)`,
         borderRadius: "28px",
         border: `1px solid ${DS.cardBorder}`,
-        boxShadow: DS.cardShadow,
         padding: "44px",
-        position: "relative", zIndex: 1,
-      }}>
+        position: "relative", zIndex: 1}}>
         {/* Top decorative bar */}
         <div style={{
           position: "absolute", top: 0, left: "50%",
           transform: "translateX(-50%)",
           width: 120, height: 5,
           background: `linear-gradient(90deg, transparent, ${DS.primary}, ${DS.primaryEnd}, transparent)`,
-          borderRadius: "0 0 6px 6px",
-        }} />
+          borderRadius: "0 0 6px 6px"}} />
 
         {/* Brand + header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
@@ -330,9 +317,8 @@ export default function Login() {
             width: 52, height: 52, borderRadius: 16,
             background: `linear-gradient(145deg, ${DS.primary}, ${DS.primaryEnd})`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(67,97,238,0.35)",
-            flexShrink: 0,
-          }}>
+
+            flexShrink: 0}}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true">
               <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
@@ -351,8 +337,7 @@ export default function Login() {
             border: `1px solid ${DS.segActiveBorder}`,
             color: DS.segActiveText, fontWeight: 700, fontSize: 14,
             fontFamily: DS.font,
-            boxShadow: "0 1px 4px rgba(67,97,238,0.18)",
-          }}>
+            }}>
             Đăng nhập
           </button>
           <Link to="/register" style={{
@@ -361,8 +346,7 @@ export default function Login() {
             border: "1px solid transparent",
             color: DS.segInactiveText, fontWeight: 500, fontSize: 14,
             fontFamily: DS.font, textDecoration: "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+            display: "flex", alignItems: "center", justifyContent: "center"}}>
             Đăng ký
           </Link>
         </div>
@@ -427,12 +411,9 @@ export default function Login() {
               border: "none", borderRadius: 16,
               color: "white", fontSize: 15, fontWeight: 700, fontFamily: DS.font,
               cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: DS.primaryGlow,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              transition: "all 0.2s", opacity: loading ? 0.65 : 1,
-            }}
-            onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(67,97,238,0.45)"; } }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = DS.primaryGlow; }}
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.65 : 1}}
+            onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)" } }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)" }}
           >
             {loading
               ? <><Spinner />Đang xử lý...</>
@@ -459,11 +440,9 @@ export default function Login() {
               border: `1.5px solid ${DS.inputBorder}`,
               borderRadius: 16,
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-              transition: "all 0.2s", cursor: "pointer", pointerEvents: "none",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(67,97,238,0.3)"; e.currentTarget.style.boxShadow = `0 0 0 3px ${DS.inputFocusRing}`; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = DS.inputBorder; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+              cursor: "pointer", pointerEvents: "none"}}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(67,97,238,0.3)" }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = DS.inputBorder }}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -488,14 +467,12 @@ export default function Login() {
         <div style={{
           position: "fixed", inset: 0, zIndex: 200,
           background: "rgba(15,23,42,0.55)",
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-        }}>
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24}}>
           <div style={{
             background: "white", borderRadius: 24, padding: 40,
             width: "100%", maxWidth: 460,
-            boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-            animation: "slideUp 0.2s ease",
-          }}>
+
+            animation: "slideUp 0.2s ease"}}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
               <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${DS.primary}, ${DS.primaryEnd})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -524,6 +501,23 @@ export default function Login() {
                   {extraErrors.date_of_birth && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{extraErrors.date_of_birth.message}</p>}
                 </div>
               )}
+              {missingFields.gender && (
+                <div>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: DS.textSecondary, marginBottom: 8 }}>Giới tính <span style={{ color: DS.errorText }}>*</span></label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[{ value: "MALE", label: "Nam" }, { value: "FEMALE", label: "Nữ" }, { value: "OTHER", label: "Khác" }].map((opt) => {
+                      const sel = watchExtra("gender") === opt.value;
+                      return (
+                        <label key={opt.value} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px 8px", borderRadius: DS.inputRadius, background: sel ? DS.genderSelectedBg : DS.genderUnselectedBg, border: `1.5px solid ${sel ? DS.genderSelectedBorder : DS.genderUnselectedBorder}`, color: sel ? DS.genderSelectedText : DS.genderUnselectedText, fontSize: 13, fontWeight: 600, fontFamily: DS.font, cursor: "pointer"}}>
+                          <input type="radio" value={opt.value} {...registerExtra("gender")} style={{ display: "none" }} />
+                          {opt.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {extraErrors.gender && <p style={{ fontSize: 12, color: DS.errorText, marginTop: 6 }}>{extraErrors.gender.message}</p>}
+                </div>
+              )}
               {errorMessage && (
                 <div style={{ borderRadius: 14, padding: "13px 16px", background: DS.errorBg, border: `1px solid ${DS.errorBorder}` }}>
                   <p style={{ fontSize: 13, color: DS.errorText, margin: 0 }}>{errorMessage}</p>
@@ -549,14 +543,12 @@ export default function Login() {
         <div style={{
           position: "fixed", inset: 0, zIndex: 200,
           background: "rgba(248,250,252,0.75)",
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-        }}>
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24}}>
           <div style={{
             background: "white", borderRadius: 24, padding: "44px 52px",
-            textAlign: "center", boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
+            textAlign: "center",
             width: "100%", maxWidth: 360,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          }}>
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
             <Spinner size={52} color={DS.primary} borderColor="rgba(67,97,238,0.15)" />
             <p style={{ fontSize: 16, fontWeight: 600, color: DS.textPrimary, marginTop: 18 }}>
               Đang xử lý đăng nhập...

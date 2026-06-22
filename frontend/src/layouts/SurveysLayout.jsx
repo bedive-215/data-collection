@@ -69,9 +69,8 @@ function GlassCard({ children, style={}, delay=0, hover=true }) {
     WebkitBackdropFilter:"blur(24px) saturate(190%)",
     border:`1px solid ${C.glassBorder}`,
     borderRadius:22,
-    boxShadow:"0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)",
     animation:`slideInUp 0.8s ease-out ${delay}s both`,
-    transition:"transform 0.28s ease, box-shadow 0.28s ease, border-color 0.22s ease",
+    transition:"transform 0.28s ease, border-color 0.22s ease",
     ...style,
   };
   return (
@@ -79,12 +78,10 @@ function GlassCard({ children, style={}, delay=0, hover=true }) {
       style={base}
       onMouseEnter={hover ? e => {
         e.currentTarget.style.transform="translateY(-5px)";
-        e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.95) inset, 0 18px 44px rgba(79,70,229,0.12), 0 0 0 1px rgba(99,102,241,0.12)";
         e.currentTarget.style.borderColor="rgba(129,140,248,0.35)";
       } : undefined}
       onMouseLeave={hover ? e => {
         e.currentTarget.style.transform="translateY(0)";
-        e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)";
         e.currentTarget.style.borderColor=C.glassBorder;
       } : undefined}
     >
@@ -138,7 +135,6 @@ function Modal({ open, onClose, title, children, width=480 }) {
         background:"rgba(255,255,255,0.92)",
         backdropFilter:"blur(24px)",
         borderRadius:24, border:`1px solid ${C.glassBorder}`,
-        boxShadow:"0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5)",
         width:"100%", maxWidth:width, overflow:"hidden",
         animation:"slideUp .22s cubic-bezier(.16,1,.3,1)",
       }}>
@@ -176,7 +172,6 @@ const sharedPrimaryBtn = (disabled=false) => ({
   background:disabled ? "rgba(0,0,0,0.05)" : "linear-gradient(135deg,#4361ee,#6c7ef7)",
   color:disabled ? C.textSub : "#fff",
   fontSize:12, fontWeight:700, cursor:disabled?"not-allowed":"pointer", fontFamily:C.font,
-  boxShadow:disabled?"none":"0 4px 14px rgba(67,97,238,0.35)",
   transition:"all .2s",
 });
 
@@ -288,7 +283,6 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
               fontWeight: 700,
               cursor: loading ? "not-allowed" : "pointer",
               fontFamily: C.font,
-              boxShadow: loading ? "none" : "0 4px 14px rgba(67,97,238,0.35)",
             }}
           >
             {loading ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Đang tạo link...</> : <><LinkIcon size={15} /> Tạo link chia sẻ</>}
@@ -346,8 +340,8 @@ function InviteModal({ open, onClose, survey, onInvite }) {
           <textarea rows={4} value={emails} onChange={e=>{setEmails(e.target.value);setError("");}}
             placeholder={"example@email.com\nuser2@email.com"}
             style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",background:"rgba(255,255,255,0.8)",backdropFilter:"blur(8px)",border:`1.5px solid ${error?C.error:"rgba(0,0,0,0.1)"}`,borderRadius:11,color:C.text,fontSize:13,fontFamily:C.font,outline:"none",resize:"vertical",lineHeight:1.7}}
-            onFocus={e=>{e.target.style.borderColor=C.primary;e.target.style.boxShadow=`0 0 0 3px rgba(67,97,238,0.1)`;}}
-            onBlur={e=>{e.target.style.borderColor=error?C.error:"rgba(0,0,0,0.1)";e.target.style.boxShadow="none";}}
+            onFocus={e=>{e.target.style.borderColor=C.primary;}}
+            onBlur={e=>{e.target.style.borderColor=error?C.error:"rgba(0,0,0,0.1)";}}
           />
           {error&&<div style={{fontSize:12,color:C.error,fontFamily:C.font}}>{error}</div>}
           <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:4}}>
@@ -424,8 +418,8 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <textarea rows={6} value={emails} onChange={e=>{setEmails(e.target.value);setError("");}}
               placeholder={"user1@email.com\nuser2@email.com, user3@email.com"}
               style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",background:"rgba(255,255,255,0.8)",backdropFilter:"blur(8px)",border:`1.5px solid ${error?C.error:"rgba(0,0,0,0.1)"}`,borderRadius:11,color:C.text,fontSize:12,fontFamily:C.font,outline:"none",resize:"vertical",lineHeight:1.7}}
-              onFocus={e=>{e.target.style.borderColor=C.primary;e.target.style.boxShadow=`0 0 0 3px rgba(67,97,238,0.1)`;}}
-              onBlur={e=>{e.target.style.borderColor=error?C.error:"rgba(0,0,0,0.1)";e.target.style.boxShadow="none";}}
+              onFocus={e=>{e.target.style.borderColor=C.primary;}}
+              onBlur={e=>{e.target.style.borderColor=error?C.error:"rgba(0,0,0,0.1)";}}
             />
           </div>
           {error&&<div style={{fontSize:12,color:C.error,fontFamily:C.font}}>{error}</div>}
@@ -651,7 +645,7 @@ function AnswerBlock({ item }) {
 function QuestionCard({ item, index }) {
   const cfg=getTypeCfg(item.type);
   return (
-    <div style={{background:"rgba(255,255,255,0.8)",backdropFilter:"blur(12px)",borderRadius:16,border:"1px solid rgba(255,255,255,0.3)",borderTop:`3px solid ${cfg.barColor}`,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.06)"}}>
+    <div style={{background:"rgba(255,255,255,0.8)",backdropFilter:"blur(12px)",borderRadius:16,border:"1px solid rgba(255,255,255,0.3)",borderTop:`3px solid ${cfg.barColor}`,overflow:"hidden"}}>
       <div style={{padding:16}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
           <span style={{fontSize:11,color:C.textSub,fontFamily:C.font}}>Câu {index+1}</span>
@@ -699,7 +693,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
   if (typeof document === "undefined") return null;
   return createPortal(
     <div onClick={e=>e.target===e.currentTarget&&onClose()} style={{position:"fixed",inset:0,zIndex:10040,background:"rgba(0,0,0,0.45)",backdropFilter:"blur(10px)",display:"flex",justifyContent:"center",alignItems:"center",padding:16}}>
-      <div style={{width:"100%",maxWidth:600,maxHeight:"90vh",overflow:"hidden",background:"rgba(245,247,250,0.95)",backdropFilter:"blur(20px)",borderRadius:24,border:`1px solid ${C.glassBorder}`,display:"flex",flexDirection:"column",boxShadow:"0 32px 80px rgba(0,0,0,.2)"}}>
+      <div style={{width:"100%",maxWidth:600,maxHeight:"90vh",overflow:"hidden",background:"rgba(245,247,250,0.95)",backdropFilter:"blur(20px)",borderRadius:24,border:`1px solid ${C.glassBorder}`,display:"flex",flexDirection:"column"}}>
         <div style={{padding:"14px 18px",background:"rgba(255,255,255,0.8)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(0,0,0,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <button onClick={onClose} style={{display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:600,color:C.textSub,background:"none",border:"none",cursor:"pointer",fontFamily:C.font}}>
             <ArrowLeft size={14}/> Đóng
@@ -730,13 +724,13 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
           </div>
           {loading&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"48px 0",gap:8,color:C.primary}}><Loader2 size={18} style={{animation:"spin 1s linear infinite"}}/><span style={{fontSize:13,fontFamily:C.font}}>Đang tải...</span></div>}
           {!loading&&error&&<div style={{textAlign:"center",padding:"32px 20px"}}>
-            <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",boxShadow:"0 4px 16px rgba(217,119,6,0.20)"}}>
+            <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#fef3c7,#fde68a)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
               <Clock size={32} color="#d97706"/>
             </div>
             <h3 style={{fontSize:18,fontWeight:800,color:"#111827",marginBottom:8,fontFamily:C.font}}>Khảo sát đã kết thúc</h3>
             <p style={{fontSize:14,color:"#6b7280",marginBottom:24,lineHeight:1.7,fontFamily:C.font}}>Khảo sát này đã kết thúc. Cảm ơn bạn đã quan tâm!</p>
             <div style={{height:1,background:"#f3f4f6",marginBottom:20}}/>
-            <button onClick={onClose} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 28px",background:"linear-gradient(135deg,#4361ee,#6c7ef7)",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:C.font,boxShadow:"0 4px 14px rgba(79,110,247,0.30)"}}>
+            <button onClick={onClose} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 28px",background:"linear-gradient(135deg,#4361ee,#6c7ef7)",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:C.font}}>
               Đã hiểu
             </button>
           </div>}
@@ -768,7 +762,6 @@ function ExpiredModal({ open, onClose, survey }) {
       <div onClick={e => e.stopPropagation()} style={{
         background:"#fff", borderRadius:16,
         border:"1px solid #e8ecf2",
-        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
         width:"100%", maxWidth:400, overflow:"hidden",
         animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
         fontFamily:"'DM Sans',sans-serif",
@@ -826,13 +819,11 @@ function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onEx
       onMouseEnter={e=>{
         const el=e.currentTarget;
         el.style.transform="translateY(-4px)";
-        el.style.boxShadow=done?"0 12px 32px rgba(16,185,129,0.18), 0 4px 14px rgba(15,23,42,0.06)":"0 12px 32px rgba(79,70,229,0.16), 0 4px 14px rgba(15,23,42,0.06)";
         el.style.borderColor=done?"rgba(16,185,129,0.45)":"rgba(99,102,241,0.28)";
       }}
       onMouseLeave={e=>{
         const el=e.currentTarget;
         el.style.transform="translateY(0)";
-        el.style.boxShadow="0 4px 20px rgba(15,23,42,0.08)";
         el.style.borderColor=done?"rgba(16,185,129,0.28)":C.glassBorder;
       }}
       style={{
@@ -840,8 +831,6 @@ function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onEx
         border:`1px solid ${done?"rgba(16,185,129,0.28)":C.glassBorder}`,
         borderRadius:20, overflow:"hidden",
         cursor:done?"pointer":"default",
-        transition:"transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease",
-        boxShadow:"0 4px 20px rgba(15,23,42,0.08)",
         display:"flex", flexDirection:"column",
       }}
     >
@@ -867,9 +856,9 @@ function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onEx
           {done?(
             <span style={{padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,background:"rgba(220,252,231,0.9)",color:"#059669",border:"1px solid #a7f3d0",fontFamily:C.font}}>Xem kết quả →</span>
           ):(
-            <button onClick={e=>{e.stopPropagation();onStart(survey.id);}} style={{padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#4361ee,#6c7ef7)",border:"none",cursor:"pointer",fontFamily:C.font,transition:"all .2s",boxShadow:"0 4px 12px rgba(67,97,238,0.3)"}}
-              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.05)";e.currentTarget.style.boxShadow="0 6px 20px rgba(67,97,238,0.4)";}}
-              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow="0 4px 12px rgba(67,97,238,0.3)";}}
+            <button onClick={e=>{e.stopPropagation();onStart(survey.id);}} style={{padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#4361ee,#6c7ef7)",border:"none",cursor:"pointer",fontFamily:C.font,transition:"all .2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.05)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}
             >Bắt đầu →</button>
           )}
         </div>
@@ -945,21 +934,18 @@ function MySurveyCard({
         onMouseEnter={e=>{
           const el=e.currentTarget;
           el.style.transform="translateY(-4px)";
-          el.style.boxShadow="0 12px 28px rgba(79,70,229,0.14), 0 4px 12px rgba(15,23,42,0.06)";
           el.style.borderColor="rgba(99,102,241,0.28)";
         }}
         onMouseLeave={e=>{
           const el=e.currentTarget;
           el.style.transform="translateY(0)";
-          el.style.boxShadow="0 4px 18px rgba(15,23,42,0.08)";
           el.style.borderColor=C.glassBorder;
         }}
         style={{
           position:"relative",
           background:"rgba(255,255,255,0.85)",backdropFilter:"blur(18px)",
           border:`1px solid ${C.glassBorder}`,borderRadius:20,overflow:"hidden",
-          cursor:"pointer",transition:"transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease",
-          boxShadow:"0 4px 18px rgba(15,23,42,0.08)",
+          cursor:"pointer",transition:"transform 0.22s ease, border-color 0.2s ease",
           opacity:isClosed?0.7:1,display:"flex",flexDirection:"column",height:"100%",
         }}
         onClick={()=>!editing&&navigate(`/user/my-surveys/${survey.id}/studio`)}
@@ -1037,7 +1023,6 @@ function StatsStrip({ mySurveys, total, done, pending, loading }) {
             <div style={{
               width:44, height:44, borderRadius:14, background:s.grad,
               display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-              boxShadow:`0 8px 18px ${s.color}38`,
             }}>
               <s.icon size={21} color="#fff" strokeWidth={1.8}/>
             </div>
@@ -1099,13 +1084,12 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
       <div onClick={e => e.stopPropagation()} style={{
         background:"#fff", borderRadius:16,
         border:"1px solid #e8ecf2",
-        boxShadow:"0 24px 60px rgba(0,0,0,0.15)",
         width:"100%", maxWidth:420, overflow:"hidden",
         animation:"slideUp .2s cubic-bezier(.16,1,.3,1)",
         fontFamily:"'DM Sans',sans-serif",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:14, padding:"20px 24px 0" }}>
-          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,#f59e0b,#fbbf24)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 4px 14px rgba(245,158,11,0.3)" }}>
+          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,#f59e0b,#fbbf24)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
             <RefreshCw size={20} color="#fff"/>
           </div>
           <div>
@@ -1155,7 +1139,6 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
                 background: submitting ? "#94a3b8" : "linear-gradient(135deg,#f59e0b,#fbbf24)",
                 border:"none", color:"#fff", fontSize:14, fontWeight:700,
                 cursor: submitting ? "not-allowed" : "pointer", fontFamily:"'DM Sans',sans-serif",
-                boxShadow: submitting ? "none" : "0 4px 14px rgba(245,158,11,0.3)",
                 display:"flex", alignItems:"center", justifyContent:"center", gap:6,
               }}
             >
@@ -1302,7 +1285,6 @@ export default function SurveysLayout() {
               background:"linear-gradient(148deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.48) 55%, rgba(238,242,255,0.65) 100%)",
               backdropFilter:"blur(26px)",WebkitBackdropFilter:"blur(26px)",
               border:"1px solid rgba(255,255,255,0.82)",
-              boxShadow:"0 2px 0 rgba(255,255,255,0.95) inset, 0 24px 56px rgba(15,23,42,0.08), 0 48px 90px rgba(79,70,229,0.1)",
             }}>
               <div aria-hidden style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden",borderRadius:28}}>
                 <div style={{
@@ -1325,7 +1307,6 @@ export default function SurveysLayout() {
                     width:38,height:38,borderRadius:13,
                     background:"linear-gradient(135deg,#6366f1,#a855f7)",
                     display:"flex",alignItems:"center",justifyContent:"center",
-                    boxShadow:"0 10px 26px rgba(99,102,241,0.5)",
                   }}><Rocket size={18} color="#fff" strokeWidth={1.9}/></div>
                   <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.18em",color:"#4f46e5",textTransform:"uppercase"}}>Không gian khảo sát</span>
                 </div>
@@ -1356,12 +1337,11 @@ export default function SurveysLayout() {
               background:"linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72))",
               backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",
               border:"1px solid rgba(255,255,255,0.88)",
-              boxShadow:"0 2px 0 rgba(255,255,255,0.98) inset, 0 16px 40px rgba(15,23,42,0.08)",
               display:"flex",alignItems:"center",gap:12,padding:"0 20px",
-              transition:"box-shadow .22s, transform .22s",
+    transition:"transform 0.28s ease, border-color 0.22s ease",
             }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,1) inset, 0 20px 48px rgba(79,70,229,0.15)";e.currentTarget.style.transform="translateY(-2px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 2px 0 rgba(255,255,255,0.98) inset, 0 16px 40px rgba(15,23,42,0.08)";e.currentTarget.style.transform="translateY(0)";}}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";}}
             >
               <Search size={17} color={C.primary}/>
               <input placeholder="Tìm nhanh toàn trang..." style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,fontFamily:C.font,color:C.text}} value={globalSearch} onChange={e=>handleGlobalSearch(e.target.value)}/>
@@ -1386,7 +1366,7 @@ export default function SurveysLayout() {
                 <input value={mySearch} onChange={e=>setMySearch(e.target.value)} placeholder="Tìm..." style={{flex:1,border:"none",outline:"none",fontSize:12,fontFamily:C.font,color:C.text,background:"transparent",width:100}}/>
                 {mySearch&&<button onClick={()=>setMySearch("")} style={{background:"none",border:"none",cursor:"pointer",color:C.textDim,display:"flex",padding:0}}><X size={11}/></button>}
               </div>
-              <button onClick={()=>{setShowCreateForm(v=>!v);if(!showCreateForm)setMyExpanded(true);}} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:10,border:showCreateForm?`1px solid rgba(0,0,0,0.1)`:"none",background:showCreateForm?"rgba(255,255,255,0.7)":"linear-gradient(135deg,#4361ee,#6c7ef7)",color:showCreateForm?C.textSub:"#fff",cursor:"pointer",fontWeight:700,fontFamily:C.font,fontSize:12,boxShadow:showCreateForm?"none":"0 4px 14px rgba(67,97,238,0.35)",transition:"all .15s",whiteSpace:"nowrap"}}>
+              <button onClick={()=>{setShowCreateForm(v=>!v);if(!showCreateForm)setMyExpanded(true);}} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:10,border:showCreateForm?`1px solid rgba(0,0,0,0.1)`:"none",background:showCreateForm?"rgba(255,255,255,0.7)":"linear-gradient(135deg,#4361ee,#6c7ef7)",color:showCreateForm?C.textSub:"#fff",cursor:"pointer",fontWeight:700,fontFamily:C.font,fontSize:12,transition:"all .15s",whiteSpace:"nowrap"}}>
                 {showCreateForm?<X size={13}/>:<Plus size={13}/>}{showCreateForm?"Huỷ":"Tạo mới"}
               </button>
             </div>
@@ -1428,7 +1408,7 @@ export default function SurveysLayout() {
                   </div>
                   {hasMoreMySurveys&&!showCreateForm&&(
                     <div style={{display:"flex",justifyContent:"center",marginTop:18}}>
-                      <button onClick={()=>setMyExpanded(v=>!v)} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 22px",borderRadius:999,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font,transition:"all .15s",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}
+                      <button onClick={()=>setMyExpanded(v=>!v)} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 22px",borderRadius:999,border:`1px solid rgba(0,0,0,0.08)`,background:"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:C.font,transition:"all .15s"}}
                         onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primaryBorder;e.currentTarget.style.color=C.primary;e.currentTarget.style.background="rgba(67,97,238,0.08)";}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(0,0,0,0.08)";e.currentTarget.style.color=C.textSub;e.currentTarget.style.background="rgba(255,255,255,0.7)";}}
                       >
@@ -1495,7 +1475,6 @@ export default function SurveysLayout() {
             display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:999,
             background:"linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.65))",
             backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.85)",
-            boxShadow:"0 8px 24px rgba(79,70,229,0.1)",
           }}>
             <Globe size={13} color={C.primary}/>
             <span style={{fontSize:10,fontWeight:800,color:C.text,textTransform:"uppercase",letterSpacing:"0.14em",whiteSpace:"nowrap",fontFamily:C.font}}>Khảo sát công khai</span>
@@ -1518,7 +1497,7 @@ export default function SurveysLayout() {
                 {PUBLIC_TABS.map(tab=>{
                   const isActive=activeTab===tab.key;
                   return (
-                    <button key={tab.key} onClick={()=>setActiveTab(tab.key)} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:C.font,transition:"all .12s",background:isActive?"rgba(255,255,255,0.9)":"transparent",color:isActive?C.primary:C.textSub,boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.08)":"none"}}>
+                    <button key={tab.key} onClick={()=>setActiveTab(tab.key)} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:C.font,transition:"all .12s",background:isActive?"rgba(255,255,255,0.9)":"transparent",color:isActive?C.primary:C.textSub}}>
                       {tab.label}
                       {!publicLoading&&<span style={{padding:"1px 6px",borderRadius:999,fontSize:10,background:isActive?"rgba(67,97,238,0.1)":"transparent",color:isActive?C.primary:C.textDim,fontFamily:C.font}}>{tab.count}</span>}
                     </button>

@@ -15,8 +15,7 @@ import {
   Smartphone,
   Share2,
   Activity,
-  Eye,
-} from "lucide-react";
+  Eye} from "lucide-react";
 import { useAdminStats } from "@/providers/AdminStatsProvider";
 
 const BAR_HEIGHTS = [50, 75, 38, 88, 62, 55, 94, 70, 48, 82];
@@ -34,24 +33,21 @@ const LIVE_FEED = [
     survey: "Trải nghiệm người dùng App v2.0",
     quote: "Giao diện mới rất mượt, nhưng tôi hy vọng có thêm tính năng lọc dữ liệu nhanh hơn.",
     accentColor: "#F59E0B",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=quan&backgroundColor=b6e3f4",
-  },
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=quan&backgroundColor=b6e3f4"},
   {
     name: "Lê Thị Thu Hà",
     time: "5 phút trước",
     survey: "Khảo sát Sản phẩm Mới",
     quote: "Giá cả khá cạnh tranh so với thị trường hiện tại. Tôi sẽ cân nhắc mua dùng thử.",
     accentColor: "#6366F1",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ha&backgroundColor=ffd5dc",
-  },
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ha&backgroundColor=ffd5dc"},
   {
     name: "Trần Đình Khoa",
     time: "12 phút trước",
     survey: "Đánh giá Dịch vụ CSKH",
     quote: "Nhân viên hỗ trợ rất nhiệt tình. Thời gian phản hồi chỉ mất 5 phút.",
     accentColor: "#10B981",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=khoa&backgroundColor=c0aede",
-  },
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=khoa&backgroundColor=c0aede"},
 ];
 
 const QUICK_STATS = [
@@ -79,9 +75,7 @@ function StatCard({ label, value, icon, color, bgColor, change, up, loading }) {
       className="p-6 rounded-2xl relative overflow-hidden group transition-all duration-300 hover:-translate-y-0.5"
       style={{
         background: "var(--admin-surface)",
-        border: "1px solid var(--admin-border)",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-      }}
+        border: "1px solid var(--admin-border)"}}
     >
       {/* Glow effect */}
       <div
@@ -121,8 +115,7 @@ function StatCard({ label, value, icon, color, bgColor, change, up, loading }) {
             className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full mb-1"
             style={{
               background: up ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-              color: up ? "#10B981" : "#EF4444",
-            }}
+              color: up ? "#10B981" : "#EF4444"}}
           >
             {up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {change}
@@ -141,8 +134,7 @@ export default function Dashboard() {
     surveyByDay,
     loading,
     fetchDashboard,
-    fetchSurveyByDay,
-  } = useAdminStats();
+    fetchSurveyByDay} = useAdminStats();
 
   useEffect(() => {
     fetchDashboard();
@@ -181,29 +173,25 @@ export default function Dashboard() {
       value: loading ? null : overview?.totalUsers?.toLocaleString() ?? "—",
       icon: <Users size={18} style={{ color: "#F59E0B" }} />,
       color: "#F59E0B",
-      bgColor: "rgba(245,158,11,0.1)",
-    },
+      bgColor: "rgba(245,158,11,0.1)"},
     {
       label: "Tổng Khảo sát",
       value: loading ? null : overview?.totalSurveys?.toLocaleString() ?? "—",
       icon: <ClipboardList size={18} style={{ color: "#6366F1" }} />,
       color: "#6366F1",
-      bgColor: "rgba(99,102,241,0.1)",
-    },
+      bgColor: "rgba(99,102,241,0.1)"},
     {
       label: "Tổng Câu hỏi",
       value: loading ? null : overview?.totalQuestions?.toLocaleString() ?? "—",
       icon: <HelpCircle size={18} style={{ color: "#10B981" }} />,
       color: "#10B981",
-      bgColor: "rgba(16,185,129,0.1)",
-    },
+      bgColor: "rgba(16,185,129,0.1)"},
     {
       label: "Tổng Lựa chọn",
       value: loading ? null : overview?.totalOptions?.toLocaleString() ?? "—",
       icon: <CheckSquare size={18} style={{ color: "#8B5CF6" }} />,
       color: "#8B5CF6",
-      bgColor: "rgba(139,92,246,0.1)",
-    },
+      bgColor: "rgba(139,92,246,0.1)"},
   ];
 
   return (
@@ -228,8 +216,7 @@ export default function Dashboard() {
           style={{
             background: "var(--admin-surface)",
             border: "1px solid var(--admin-border)",
-            color: "var(--admin-text-sub)",
-          }}
+            color: "var(--admin-text-sub)"}}
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           Làm mới
@@ -258,9 +245,7 @@ export default function Dashboard() {
           className="lg:col-span-2 p-7 rounded-2xl"
           style={{
             background: "var(--admin-surface)",
-            border: "1px solid var(--admin-border)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-          }}
+            border: "1px solid var(--admin-border)"}}
         >
           <div className="flex justify-between items-start mb-8">
             <div>
@@ -317,8 +302,7 @@ export default function Dashboard() {
                     className="flex-1 rounded-t-lg animate-pulse"
                     style={{
                       height: `${30 + Math.random() * 50}%`,
-                      background: "var(--admin-surface-hover)",
-                    }}
+                      background: "var(--admin-surface-hover)"}}
                   />
                 ))
               : barData.map((h, i) => (
@@ -327,9 +311,7 @@ export default function Dashboard() {
                     className="flex-1 rounded-t-lg transition-all duration-300 hover:brightness-125 group/bar relative cursor-pointer"
                     style={{
                       height: `${h}%`,
-                      background: `linear-gradient(to top, rgba(245,158,11,0.3), #F59E0B)`,
-                      boxShadow: h >= 90 ? "0 0 20px rgba(245,158,11,0.2)" : "none",
-                    }}
+                      background: `linear-gradient(to top, rgba(245,158,11,0.3), #F59E0B)` >= 90 ? "0 0 20px rgba(245,158,11,0.2)" : "none"}}
                   >
                     {surveyByDay[i] && (
                       <div
@@ -337,9 +319,7 @@ export default function Dashboard() {
                         style={{
                           background: "var(--admin-surface)",
                           border: "1px solid var(--admin-border)",
-                          color: "var(--admin-text)",
-                          boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                        }}
+                          color: "var(--admin-text)"}}
                       >
                         <span style={{ color: "#F59E0B" }}>{surveyByDay[i].count}</span> khảo sát
                       </div>
@@ -367,9 +347,7 @@ export default function Dashboard() {
           className="p-7 rounded-2xl"
           style={{
             background: "var(--admin-surface)",
-            border: "1px solid var(--admin-border)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-          }}
+            border: "1px solid var(--admin-border)"}}
         >
           <h3
             className="text-lg font-bold mb-6"
@@ -440,9 +418,7 @@ export default function Dashboard() {
           className="lg:col-span-3 p-7 rounded-2xl"
           style={{
             background: "var(--admin-surface)",
-            border: "1px solid var(--admin-border)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-          }}
+            border: "1px solid var(--admin-border)"}}
         >
           <div className="flex justify-between items-center mb-5">
             <h3
@@ -471,8 +447,7 @@ export default function Dashboard() {
                 className="p-4 rounded-xl flex gap-4 transition-all duration-200"
                 style={{
                   background: "var(--admin-bg-secondary)",
-                  border: "1px solid var(--admin-border)",
-                }}
+                  border: "1px solid var(--admin-border)"}}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = `${accentColor}40`;
                   e.currentTarget.style.background = "var(--admin-surface-hover)";
@@ -511,8 +486,7 @@ export default function Dashboard() {
                     className="p-3 rounded-xl"
                     style={{
                       background: "var(--admin-bg)",
-                      borderLeft: `3px solid ${accentColor}`,
-                    }}
+                      borderLeft: `3px solid ${accentColor}`}}
                   >
                     <p className="text-sm italic" style={{ color: "var(--admin-text-sub)", lineHeight: 1.5 }}>
                       "{quote}"
@@ -531,9 +505,7 @@ export default function Dashboard() {
             className="p-6 rounded-2xl"
             style={{
               background: "var(--admin-surface)",
-              border: "1px solid var(--admin-border)",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-            }}
+              border: "1px solid var(--admin-border)"}}
           >
             <h3
               className="text-base font-bold mb-4"
@@ -548,8 +520,7 @@ export default function Dashboard() {
                   className="p-3 rounded-xl"
                   style={{
                     background: "var(--admin-bg-secondary)",
-                    border: "1px solid var(--admin-border)",
-                  }}
+                    border: "1px solid var(--admin-border)"}}
                 >
                   <p
                     className="text-[10px] uppercase tracking-wider mb-2 font-bold"
@@ -580,9 +551,7 @@ export default function Dashboard() {
             className="p-6 rounded-2xl flex-1"
             style={{
               background: "var(--admin-surface)",
-              border: "1px solid var(--admin-border)",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-            }}
+              border: "1px solid var(--admin-border)"}}
           >
             <h3
               className="text-base font-bold mb-4"
@@ -625,8 +594,7 @@ export default function Dashboard() {
               style={{
                 background: "var(--admin-bg-secondary)",
                 border: "1px dashed var(--admin-border)",
-                color: "var(--admin-text-dim)",
-              }}
+                color: "var(--admin-text-dim)"}}
             >
               <PlusCircle size={14} />
               Xem thêm hoạt động

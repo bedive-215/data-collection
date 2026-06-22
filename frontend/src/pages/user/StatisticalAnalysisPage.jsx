@@ -6,27 +6,23 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, AreaChart, Area,
-} from "recharts";
+  ResponsiveContainer, Cell, AreaChart, Area} from "recharts";
 import {
   ArrowLeft, RefreshCw, Download, Users, CheckCircle, Clock,
   TrendingUp, Target, FileText, Table, Filter, ChevronDown, ChevronUp,
   Zap, Sparkles, BarChart3, Activity, Award, Eye, AlertTriangle, X,
   Search, ThumbsUp, ThumbsDown, Minus,
   TrendingDown, Calendar, ChevronRight, FileSpreadsheet, EyeOff,
-  Venus,
-} from "lucide-react";
+  Venus} from "lucide-react";
 import analyticsService from "@/services/analyticsService";
 import { useSurvey } from "@/providers/SurveyProvider";
 import { toast } from "react-toastify";
 import {
   userTheme as T, chartColors, questionTypeBadge,
-  DATE_PRESETS, resolveDatePreset,
-} from "@/styles/designSystem";
+  DATE_PRESETS, resolveDatePreset} from "@/styles/designSystem";
 import {
   SkeletonStatCard, SkeletonChart, SkeletonQuestionCard,
-  SkeletonTableRow, RetrySection, Shimmer,
-} from "@/components/common/Skeleton/index.jsx";
+  SkeletonTableRow, RetrySection, Shimmer} from "@/components/common/Skeleton/index.jsx";
 import { ROUTERS } from "@/utils/constants";
 
 /* ─── TABS ─────────────────────────────────────────────────────────── */
@@ -72,8 +68,7 @@ function chiSquareTest(rows) {
     cramers_v: parseFloat(Math.abs(cramersV).toFixed(3)),
     degrees_of_freedom: df, total_samples: total,
     significance: chiSq > 10.83 ? "Cực kỳ có ý nghĩa" : chiSq > 6.63 ? "Rất có ý nghĩa" : chiSq > 3.84 ? "Có ý nghĩa" : "Không có ý nghĩa",
-    strength, has_correlation: chiSq > 3.84,
-  };
+    strength, has_correlation: chiSq > 3.84};
 }
 
 function calcNPS(answers) {
@@ -85,8 +80,7 @@ function calcNPS(answers) {
     score: parseFloat((((promoters - detractors) / n) * 100).toFixed(1)),
     promoters, detractors, passives: n - promoters - detractors, n,
     promoter_pct: parseFloat(((promoters / n) * 100).toFixed(1)),
-    detractor_pct: parseFloat(((detractors / n) * 100).toFixed(1)),
-  };
+    detractor_pct: parseFloat(((detractors / n) * 100).toFixed(1))};
 }
 
 /* ─── CHART TOOLTIP ────────────────────────────────────────────────── */
@@ -96,8 +90,7 @@ function ChartTooltip({ active, payload, label }) {
     <div style={{
       background: "rgba(255,255,255,0.97)", backdropFilter: "blur(20px)",
       border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14,
-      padding: "12px 16px", boxShadow: "0 8px 32px rgba(99,102,241,0.08)",
-    }}>
+      padding: "12px 16px"}}>
       <p style={{ color: "#64748b", fontSize: 12, marginBottom: 6 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color, fontSize: 14, fontWeight: 700 }}>
@@ -117,10 +110,7 @@ function ProgressBar({ value, max, color = T.primary }) {
     <div style={{ height: 6, background: "#e2e8f0", borderRadius: 999, overflow: "hidden" }}>
       <div style={{
         height: "100%", borderRadius: 999, width: `${w}%`,
-        background: `linear-gradient(90deg, ${color}88, ${color})`,
-        transition: "width 0.8s cubic-bezier(0.34,1.56,0.64,1)",
-        boxShadow: `0 2px 8px ${color}30`,
-      }} />
+        background: `linear-gradient(90deg, ${color}88, ${color})`}} />
     </div>
   );
 }
@@ -152,10 +142,8 @@ function DateHeatmap({ data }) {
                 width: 13, height: 13, borderRadius: 3,
                 background: day ? getColor(day.count) : "transparent",
                 cursor: day ? "pointer" : "default",
-                transition: "transform 0.15s",
-                boxShadow: day && day.count > 0 ? `0 1px 3px ${getColor(day.count)}50` : "none",
-                title: day ? `${day.date}: ${day.count} phản hồi` : "",
-              }}
+                 && day.count > 0 ? `0 1px 3px ${getColor(day.count)}50` : "none",
+                title: day ? `${day.date}: ${day.count} phản hồi` : ""}}
                 onMouseEnter={e => { if (day) e.currentTarget.style.transform = "scale(1.4)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
               />
@@ -179,8 +167,7 @@ function FunnelViz({ dropOffData }) {
   if (!dropOffData || dropOffData.length === 0) return null;
   const sorted = [...dropOffData].sort((a, b) => b.answered_count - a.answered_count);
   const funnelData = sorted.slice(0, 10).map(d => ({
-    name: `Q${d.question_id?.slice(-3) || "?"}`, value: d.answered_count,
-  }));
+    name: `Q${d.question_id?.slice(-3) || "?"}`, value: d.answered_count}));
   return (
     <div style={{ height: 200 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -204,13 +191,13 @@ function FunnelViz({ dropOffData }) {
 /* ─── NPS CARD ────────────────────────────────────────────────────── */
 function NPSCard({ npsData }) {
   if (!npsData) return (
-    <div style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 18, padding: 22, textAlign: "center", boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)" }}>
+    <div style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 18, padding: 22, textAlign: "center" }}>
       <p style={{ color: "#94a3b8", fontSize: 13 }}>Cần câu hỏi đánh giá (RATING 1-10) để tính NPS</p>
     </div>
   );
   const scoreColor = npsData.score >= 50 ? "#10b981" : npsData.score >= 0 ? "#f59e0b" : "#ef4444";
   return (
-    <div style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 18, padding: "20px 22px", boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(99,102,241,0.06)" }}>
+    <div style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 18, padding: "20px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <ThumbsUp size={17} color="#6366f1" />
         <h4 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>NPS Score</h4>
@@ -230,9 +217,9 @@ function NPSCard({ npsData }) {
             ))}
           </div>
           <div style={{ display: "flex", borderRadius: 6, overflow: "hidden", height: 8 }}>
-            <div style={{ flex: npsData.promoter_pct, background: "#10b981", transition: "width 0.8s" }} />
-            <div style={{ flex: 100 - npsData.promoter_pct - npsData.detractor_pct, background: "#f59e0b", transition: "width 0.8s" }} />
-            <div style={{ flex: npsData.detractor_pct, background: "#ef4444", transition: "width 0.8s" }} />
+            <div style={{ flex: npsData.promoter_pct, background: "#10b981"}} />
+            <div style={{ flex: 100 - npsData.promoter_pct - npsData.detractor_pct, background: "#f59e0b"}} />
+            <div style={{ flex: npsData.detractor_pct, background: "#ef4444"}} />
           </div>
         </div>
       </div>
@@ -249,8 +236,7 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
     emerald:  { bg: "#d1fae5", color: "#10b981", text: "#1e293b" },
     violet:  { bg: "#f3e8ff", color: "#a855f7", text: "#1e293b" },
     amber:   { bg: "#fef3c7", color: "#f59e0b", text: "#1e293b" },
-    cyan:    { bg: "#cffafe", color: "#06b6d4", text: "#1e293b" },
-  };
+    cyan:    { bg: "#cffafe", color: "#06b6d4", text: "#1e293b" }};
   const c = colors[color] || colors.indigo;
   return (
     <div style={{
@@ -258,17 +244,15 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
       border: "1px solid rgba(99,102,241,0.12)",
       borderRadius: 18, padding: "20px 22px",
       backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(99,102,241,0.04)",
       opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(16px)",
-      transition: `opacity 0.5s ease ${delay}ms, transform 0.5s ease ${delay}ms`,
-    }}>
+      transition: `opacity 0.5s ease ${delay}ms, transform 0.5s ease ${delay}ms`}}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
           <p style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{label}</p>
           <p style={{ fontSize: 28, fontWeight: 900, color: c.text, margin: 0, lineHeight: 1.1 }}>{visible ? value : "—"}</p>
           {sub && <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>{sub}</p>}
         </div>
-        <div style={{ width: 46, height: 46, borderRadius: 14, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 12px ${c.color}15` }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon size={20} color={c.color} strokeWidth={1.8} />
         </div>
       </div>
@@ -293,8 +277,7 @@ function EmptyState({ icon: Icon, title, desc }) {
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "64px 24px", background: "rgba(0,0,0,0.02)",
       border: "1px dashed rgba(0,0,0,0.08)", borderRadius: 20,
-      gap: 12, textAlign: "center",
-    }}>
+      gap: 12, textAlign: "center"}}>
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
         <Icon size={28} color="#cbd5e1" strokeWidth={1.5} />
       </div>
@@ -322,17 +305,15 @@ function QuestionCard({ question, index }) {
       border: `1px solid ${expanded ? "rgba(99,102,241,0.25)" : "rgba(0,0,0,0.06)"}`,
       borderRadius: 18, overflow: "hidden",
       backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)",
       opacity: animDone ? 1 : 0, transform: animDone ? "translateY(0)" : "translateY(12px)",
-      transition: `all 0.4s ease ${index * 60}ms`,
-    }}>
+      transition: `all 0.4s ease ${index * 60}ms`}}>
       <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
         onClick={() => setExpanded(!expanded)}
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.03)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#6366f1", flexShrink: 0, boxShadow: "0 4px 12px rgba(99,102,241,0.15)" }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#6366f1", flexShrink: 0 }}>
             {index + 1}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -376,7 +357,7 @@ function QuestionCard({ question, index }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {question.options.map((opt, i) => (
                   <div key={opt.option_id || i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 9, height: 9, borderRadius: "50%", background: chartColors[i % chartColors.length], flexShrink: 0, boxShadow: `0 2px 6px ${chartColors[i % chartColors.length]}40` }} />
+                    <div style={{ width: 9, height: 9, borderRadius: "50%", background: chartColors[i % chartColors.length], flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: "#334155", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.label}</span>
                     <div style={{ width: 140 }}><ProgressBar value={opt.count} max={question.options[0]?.count || 1} color={chartColors[i % chartColors.length]} /></div>
                     <span style={{ fontSize: 12, color: "#94a3b8", width: 42, textAlign: "right" }}>{opt.percent}%</span>
@@ -490,8 +471,7 @@ function ResponseRow({ response }) {
           <span style={{
             display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700,
             background: response.status === "COMPLETED" ? "#d1fae5" : "#fef3c7",
-            color: response.status === "COMPLETED" ? "#059669" : "#d97706",
-          }}>
+            color: response.status === "COMPLETED" ? "#059669" : "#d97706"}}>
             {response.status === "COMPLETED" ? "✓ Hoàn thành" : "○ Đang làm"}
           </span>
         </div>
@@ -547,10 +527,7 @@ function StatusFilter({ value, onChange }) {
           background: value === o.value ? "white" : "transparent",
           color: value === o.value ? "#1e293b" : "#64748b",
           fontSize: 12, fontWeight: 700, cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          boxShadow: value === o.value ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
-          transition: "all 0.15s",
-        }}>
+          fontFamily: "'DM Sans', sans-serif" === o.value ? "0 2px 8px rgba(0,0,0,0.1)" : "none"}}>
           {o.label}
         </button>
       ))}
@@ -575,9 +552,7 @@ function DatePresetSelector({ activePreset, onChange }) {
           background: activePreset === p.value ? "rgba(99,102,241,0.15)" : "rgba(0,0,0,0.04)",
           color: activePreset === p.value ? "#4f46e5" : "#64748b",
           fontSize: 11, fontWeight: 700, cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          transition: "all 0.15s",
-        }}>
+          fontFamily: "'DM Sans', sans-serif"}}>
           {p.label}
         </button>
       ))}
@@ -596,8 +571,7 @@ function TrendSwitcher({ value, onChange }) {
           background: value === o.value ? "#6366f1" : "transparent",
           color: value === o.value ? "#fff" : "#64748b",
           fontSize: 11, fontWeight: 700, cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s",
-        }}>
+          fontFamily: "'DM Sans', sans-serif"}}>
           {o.label}
         </button>
       ))}
@@ -609,13 +583,11 @@ function TrendSwitcher({ value, onChange }) {
    MAIN COMPONENT
 ═════════════════════════════════════════════════════════════════════════ */
 const glassCard = {
-  background: "rgba(255,255,255,0.85)",
-  backdropFilter: "blur(24px) saturate(190%)",
-  WebkitBackdropFilter: "blur(24px) saturate(190%)",
-  border: "1px solid rgba(255,255,255,0.7)",
-  borderRadius: 18,
-  boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(15,23,42,0.04)",
-};
+  background: "rgba(255,255,255,0.6)",
+  backdropFilter: "blur(20px) saturate(180%)",
+  WebkitBackdropFilter: "blur(20px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,0.8)",
+  borderRadius: 18};
 const chartCard = { ...glassCard, padding: "22px 24px" };
 
 export default function StatisticalAnalysisPage() {
@@ -802,47 +774,71 @@ export default function StatisticalAnalysisPage() {
   const npsData = calcNPS(npsAnswers);
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "transparent", position: "relative", overflowX: "hidden" }}>
+    <div style={{
+      fontFamily: "'DM Sans', sans-serif",
+      background: "linear-gradient(135deg, #f0f2f6 0%, #f8f9ff 50%, #f0f2f6 100%)",
+      position: "relative", overflowX: "hidden", minHeight: "100vh"}}>
+      <div style={{
+        position: "fixed", top: "-15%", right: "-8%",
+        width: 450, height: 450, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0}} />
+      <div style={{
+        position: "fixed", bottom: "-10%", left: "-5%",
+        width: 350, height: 350, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0}} />
+
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 18px 48px" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 16 }}>
+        <div style={{ ...glassCard, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", marginBottom: 16, flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button onClick={() => navigate(ROUTERS.USER.HOME)} style={{
-              width: 42, height: 42, borderRadius: 14, border: "none",
-              background: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)",
+              width: 44, height: 44, borderRadius: 14, border: "none",
+              background: "rgba(255,255,255,0.8)", backdropFilter: "blur(10px)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              transition: "transform 0.15s, box-shadow 0.15s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
+              cursor: "pointer", flexShrink: 0}}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)";  }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)";  }}
             >
-              <ArrowLeft size={18} color="#1e293b" />
+              <ArrowLeft size={19} color="#1e293b" />
             </button>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <BarChart3 size={18} color="#6366f1" />
-                <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1e293b", margin: 0 }}>Phân tích Thống kê</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                  display: "flex", alignItems: "center", justifyContent: "center"}}>
+                  <BarChart3 size={17} color="#fff" />
+                </div>
+                <h1 style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", margin: 0 }}>Phân tích Thống kê</h1>
               </div>
-              <p style={{ fontSize: 12, color: "#94a3b8", margin: 0, marginTop: 4 }}>
+              <p style={{ fontSize: 12, color: "#94a3b8", margin: 0, marginTop: 3 }}>
                 {(survey?.title) || surveyId}
               </p>
             </div>
           </div>
           <button onClick={handleRefreshAll} style={{
             display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 12,
-            border: "none", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)",
-            color: "#1e293b", fontSize: 13, fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)", fontFamily: "'DM Sans', sans-serif",
-          }}>
+            border: "1px solid rgba(99,102,241,0.15)", background: "rgba(255,255,255,0.8)",
+            backdropFilter: "blur(10px)", color: "#1e293b", fontSize: 13, fontWeight: 700,
+            cursor: "pointer", fontFamily: "'DM Sans', sans-serif"}}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.95)";  }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.8)";  }}
+          >
             <RefreshCw size={15} /> Làm mới
           </button>
         </div>
 
         {/* Filter bar */}
-        <div style={{ ...glassCard, display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", marginBottom: 24, flexWrap: "wrap" }}>
-          <Filter size={15} color="#64748b" />
+        <div style={{ ...glassCard, display: "flex", alignItems: "center", gap: 10, padding: "12px 18px", marginBottom: 20, flexWrap: "wrap" }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: "rgba(99,102,241,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0}}>
+            <Filter size={13} color="#4f46e5" />
+          </div>
           <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Khoảng thời gian:</span>
           <DatePresetSelector activePreset={datePreset} onChange={applyPreset} />
           {datePreset === "custom" && (
@@ -860,21 +856,19 @@ export default function StatisticalAnalysisPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ ...glassCard, display: "flex", gap: 5, padding: 5, marginBottom: 28, width: "fit-content", overflowX: "auto" }}>
+        <div style={{ ...glassCard, display: "flex", gap: 4, padding: 5, marginBottom: 28, width: "fit-content", overflowX: "auto" }}>
           {TABS.map(tab => {
             const Icon = tab.icon;
             const is = activeTab === tab.id;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 12,
+                display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 12,
                 border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700,
-                fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s ease",
-                background: is ? "linear-gradient(135deg, #6366f1, #7c5df7)" : "transparent",
+                fontFamily: "'DM Sans', sans-serif",
+                background: is ? "linear-gradient(135deg, #4f46e5, #6366f1)" : "transparent",
                 color: is ? "#fff" : "#64748b",
-                boxShadow: is ? "0 4px 14px rgba(99,102,241,0.35)" : "none",
-                whiteSpace: "nowrap",
-              }}>
-                <Icon size={15} /> {tab.label}
+                whiteSpace: "nowrap"}}>
+                <Icon size={14} /> {tab.label}
               </button>
             );
           })}
@@ -1063,9 +1057,7 @@ export default function StatisticalAnalysisPage() {
                         border: pg === rPage ? "none" : "1px solid rgba(0,0,0,0.08)",
                         background: pg === rPage ? "linear-gradient(135deg, #6366f1, #7c5df7)" : "rgba(0,0,0,0.03)",
                         color: pg === rPage ? "#fff" : "#64748b", fontWeight: pg === rPage ? 700 : 500, fontSize: 13,
-                        cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                        boxShadow: pg === rPage ? "0 4px 14px rgba(99,102,241,0.35)" : "none",
-                      }}>{pg}</button>
+                        cursor: "pointer", fontFamily: "'DM Sans', sans-serif" === rPage ? "0 4px 14px rgba(99,102,241,0.35)" : "none"}}>{pg}</button>
                     ))}
                     <button onClick={() => setRPage(p => Math.min(responses.pagination.total_pages, p + 1))}
                       disabled={rPage === responses.pagination.total_pages}
@@ -1215,9 +1207,8 @@ export default function StatisticalAnalysisPage() {
                 background: "linear-gradient(135deg, #6366f1, #7c5df7)", color: "#fff", fontSize: 13, fontWeight: 700,
                 cursor: !selectedQ1 || !selectedQ2 || ctLoad ? "not-allowed" : "pointer",
                 opacity: !selectedQ1 || !selectedQ2 || ctLoad ? 0.5 : 1,
-                fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
-                display: "flex", alignItems: "center", gap: 8,
-              }}>
+                fontFamily: "'DM Sans', sans-serif",
+                display: "flex", alignItems: "center", gap: 8}}>
                 {ctLoad ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={15} />}
                 Phân tích
               </button>
@@ -1319,9 +1310,7 @@ export default function StatisticalAnalysisPage() {
                 <button onClick={handleExportJSON} style={{
                   display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 12, border: "none",
                   background: "linear-gradient(135deg, #6366f1, #7c5df7)", color: "#fff", fontSize: 13, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                  boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
-                }}>
+                  cursor: "pointer", fontFamily: "'DM Sans', sans-serif"}}>
                   <Download size={16} /> Xuất JSON
                 </button>
               </div>

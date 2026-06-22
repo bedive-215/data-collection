@@ -19,8 +19,7 @@ const TIER_COLORS = {
   SILVER: { bg: "bg-gray-50", border: "border-gray-300", badge: "bg-gray-500" },
   GOLD: { bg: "bg-yellow-50", border: "border-yellow-300", badge: "bg-yellow-500" },
   PLATINUM: { bg: "bg-slate-50", border: "border-slate-300", badge: "bg-slate-500" },
-  DIAMOND: { bg: "bg-sky-50", border: "border-sky-300", badge: "bg-sky-500" },
-};
+  DIAMOND: { bg: "bg-sky-50", border: "border-sky-300", badge: "bg-sky-500" }};
 
 export default function AchievementsPage() {
   const { achievements, balance } = useGamification();

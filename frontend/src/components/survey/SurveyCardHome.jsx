@@ -4,10 +4,8 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
-import {
-  Lock, Share, BarChart3, Edit2, Trash2, Globe,
-  Eye, Clock, CalendarDays, FileText,
-} from "lucide-react";
+import { Lock, Share, BarChart3, Edit2, Trash2, Globe, Eye, Clock, CalendarDays, FileText } from "lucide-react";
+import { getExpiry, ParticipantsAvatars } from "@/utils/surveyHelpers";
 
 export const C = {
   surface: "#ffffff",
@@ -58,64 +56,6 @@ function getEmoji(category) {
   return CAT_EMOJI[key] || { emoji:"📋", bg:"#f4f6f8", color:"#475569" };
 }
 
-/* ── Helpers ─────────────────────────────────────────────────── */
-function fmtDate(str) {
-  if (!str) return "";
-  return new Date(str).toLocaleDateString("vi-VN", { day:"2-digit", month:"short", year:"numeric" });
-}
-
-function getExpiry(survey) {
-  if (!survey?.end_at) return null;
-  const end = new Date(survey.end_at);
-  const isExpired = end < new Date();
-  return { text: end.toLocaleDateString("vi-VN", { day:"2-digit", month:"short" }), isExpired };
-}
-
-const AV_COLORS = [
-  { bg:"#f3eeff", color:"#7c3aed" },
-  { bg:"#fdf0f6", color:"#be185d" },
-  { bg:"#eef4ff", color:"#1d4ed8" },
-  { bg:"#eef9f2", color:"#15803d" },
-  { bg:"#fff6ed", color:"#c2410c" },
-];
-
-export function ParticipantsAvatars({ participants, max = 3 }) {
-  if (!participants?.length) return null;
-  const vis   = participants.slice(0, max);
-  const extra  = participants.length - max;
-  return (
-    <div style={{ display:"flex", alignItems:"center" }}>
-      {vis.map((p, i) => {
-        const av = AV_COLORS[i % AV_COLORS.length];
-        return (
-          <div key={p.id || i} style={{
-            width:24, height:24, borderRadius:"50%",
-            border:"2px solid #fff",
-            background:av.bg, color:av.color,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:9, fontWeight:700,
-            marginLeft: i === 0 ? 0 : -6,
-            zIndex: vis.length - i, position:"relative",
-            fontFamily:C.font,
-          }}>
-            {(p.name || p.email || "?")[0].toUpperCase()}
-          </div>
-        );
-      })}
-      {extra > 0 && (
-        <div style={{
-          width:24, height:24, borderRadius:"50%",
-          border:"2px solid #fff",
-          background:"#f4f6f8", color:"#64748b",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:9, fontWeight:700, marginLeft:-6,
-          fontFamily:C.font,
-        }}>+{extra}</div>
-      )}
-    </div>
-  );
-}
-
 /* ── Status dot ─────────────────────────────────────────── */
 function StatusDot() {
   return (
@@ -123,7 +63,7 @@ function StatusDot() {
       width:6, height:6, borderRadius:"50%",
       background:"#10b981", flexShrink:0,
       display:"inline-block",
-      boxShadow:"0 0 8px rgba(16, 185, 129, 0.4)",
+
     }}/>
   );
 }
@@ -219,23 +159,22 @@ export function SurveyCardHome({
         .sch-card {
           background: #ffffff;
           border: 1px solid rgba(199, 196, 215, 0.3);
-          border-radius: 12px;
+          border-radius: 8px;
           overflow: hidden;
           cursor: pointer;
           transition:
             transform 0.25s cubic-bezier(.22,1,.36,1),
-            box-shadow 0.25s ease,
             border-color 0.2s ease;
           font-family: 'Plus Jakarta Sans','DM Sans',sans-serif;
           display: flex;
           flex-direction: column;
           height: 100%;
-          box-shadow: 0 4px 24px -2px rgba(11, 28, 48, 0.05), 0 2px 8px -2px rgba(11, 28, 48, 0.03);
+          min-height: 320px;
+
           position: relative;
         }
         .sch-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 12px 32px rgba(11, 28, 48, 0.09), 0 3px 8px rgba(11, 28, 48, 0.04);
           border-color: rgba(99, 102, 241, 0.3);
         }
         .sch-action-btn {
@@ -290,7 +229,7 @@ export function SurveyCardHome({
           border-radius: 50%;
           background: #ffffff;
           border: 1px solid rgba(199, 196, 215, 0.4);
-          box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+
           display: flex;
           align-items: center;
           justify-content: center;
@@ -306,10 +245,10 @@ export function SurveyCardHome({
         .sch-icon-wrap {
           width: 56px;
           height: 56px;
-          border-radius: 12px;
+          border-radius: 8px;
           background: #e5eeff;
           border: 1px solid rgba(199, 196, 215, 0.2);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
           display: flex;
           align-items: center;
           justify-content: center;
@@ -350,7 +289,7 @@ export function SurveyCardHome({
                   width: 6, height: 6, borderRadius: "50%",
                   background: "#10b981", flexShrink: 0,
                   display: "inline-block",
-                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.4)",
+
                   animation: "sch-pulse-anim 2.4s ease-in-out infinite",
                 }}/>
               )}
@@ -359,7 +298,7 @@ export function SurveyCardHome({
                   width: 6, height: 6, borderRadius: "50%",
                   background: "#059669", flexShrink: 0,
                   display: "inline-block",
-                  boxShadow: "0 0 8px rgba(5, 150, 105, 0.4)",
+
                 }}/>
               )}
               {status === "EXPIRED" && (
@@ -367,7 +306,7 @@ export function SurveyCardHome({
                   width: 6, height: 6, borderRadius: "50%",
                   background: "#ef4444", flexShrink: 0,
                   display: "inline-block",
-                  boxShadow: "0 0 8px rgba(239, 68, 68, 0.4)",
+
                 }}/>
               )}
               {status === "DRAFT" && (
@@ -382,7 +321,7 @@ export function SurveyCardHome({
                   width: 6, height: 6, borderRadius: "50%",
                   background: "#0284c7", flexShrink: 0,
                   display: "inline-block",
-                  boxShadow: "0 0 8px rgba(2, 132, 199, 0.4)",
+
                 }}/>
               )}
               {status === "CLOSED" && (
@@ -434,7 +373,7 @@ export function SurveyCardHome({
             {onViewAnalytics && (
               <button
                 className="sch-action-btn"
-                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                style={{ width: 28, height: 28, borderRadius: 6, color: "#464554" }}
                 title="Phân tích"
                 onClick={() => onViewAnalytics(survey.id)}
               >
@@ -444,7 +383,7 @@ export function SurveyCardHome({
             {onShare && (
               <button
                 className="sch-action-btn"
-                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                style={{ width: 28, height: 28, borderRadius: 6, color: "#464554" }}
                 title="Chia sẻ"
                 onClick={() => onShare(survey.id)}
               >
@@ -454,7 +393,7 @@ export function SurveyCardHome({
             {onLock && (
               <button
                 className="sch-action-btn"
-                style={{ width: 28, height: 28, borderRadius: 8, color: "#464554" }}
+                style={{ width: 28, height: 28, borderRadius: 6, color: "#464554" }}
                 title="Bảo mật"
                 onClick={() => onLock(survey.id)}
               >
@@ -471,6 +410,7 @@ export function SurveyCardHome({
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
+          flex: 1,
         }}>
           {/* Icon + Edit overlay */}
           <div style={{ position: "relative", marginBottom: 12 }}>
@@ -523,10 +463,10 @@ export function SurveyCardHome({
                   color: "#0b1c30", lineHeight: 1.3,
                   fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
                   border: "1.5px solid #4648d4",
-                  borderRadius: 8, padding: "6px 10px",
+                  borderRadius: 6, padding: "6px 10px",
                   outline: "none",
                   background: "#fff",
-                  boxShadow: "0 0 0 3px rgba(70,72,212,0.1)",
+
                 }}
               />
               {/* Inline date edit */}
@@ -535,7 +475,7 @@ export function SurveyCardHome({
                 padding: "7px 10px",
                 background: "rgba(70,72,212,0.04)",
                 border: "1px solid rgba(70,72,212,0.15)",
-                borderRadius: 8, marginBottom: 8,
+                borderRadius: 6, marginBottom: 8,
               }}>
                 <CalendarDays size={11} color="#4648d4" style={{ flexShrink: 0 }}/>
                 <input
@@ -546,7 +486,7 @@ export function SurveyCardHome({
                   style={{
                     flex: 1, padding: "3px 6px",
                     border: "1.5px solid #4648d4",
-                    borderRadius: 5, fontSize: 11,
+                    borderRadius: 6, fontSize: 11,
                     outline: "none",
                     fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
                     color: "#0b1c30",
@@ -558,7 +498,7 @@ export function SurveyCardHome({
                   style={{
                     padding: "3px 10px",
                     background: editSaving ? "#94a3b8" : "linear-gradient(135deg,#4648d4,#6366f1)",
-                    border: "none", borderRadius: 5,
+                    border: "none", borderRadius: 6,
                     color: "#fff", fontSize: 10, fontWeight: 700,
                     cursor: editSaving ? "not-allowed" : "pointer",
                     fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
@@ -571,7 +511,7 @@ export function SurveyCardHome({
                   style={{
                     padding: "3px 8px",
                     background: "#f4f6f8",
-                    border: "1px solid #e8ecf2", borderRadius: 5,
+                    border: "1px solid #e8ecf2", borderRadius: 6,
                     color: "#64748b", fontSize: 10, fontWeight: 600,
                     cursor: "pointer",
                     fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
@@ -673,7 +613,7 @@ export function SurveyCardHome({
             {responseCount > 0 && (
               <div style={{
                 display: "flex", alignItems: "center", gap: 4,
-                padding: "4px 10px", borderRadius: 8,
+                padding: "4px 10px", borderRadius: 6,
                 background: "rgba(70,72,212,0.06)",
                 border: "1px solid rgba(70,72,212,0.12)",
               }}>
@@ -719,16 +659,16 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
       padding:20, animation:"smFade .16s ease",
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background:"#fff", borderRadius:16,
+        background:"#fff", borderRadius:12,
         border:"1px solid #e8ecf2",
-        boxShadow:"0 20px 48px rgba(0,0,0,0.10)",
+
         width:"100%", maxWidth:440, overflow:"hidden",
         animation:"smUp .2s cubic-bezier(.16,1,.3,1)",
         fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
       }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #f4f6f8" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#6366f1,#818cf8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 3px 12px rgba(99,102,241,0.28)" }}>
+            <div style={{ width:36, height:36, borderRadius:8, background:"linear-gradient(135deg,#6366f1,#818cf8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={18} cy={5} r={3}/><circle cx={6} cy={12} r={3}/><circle cx={18} cy={19} r={3}/><line x1={8.59} y1={13.51} x2={15.42} y2={17.49}/><line x1={15.41} y1={6.51} x2={8.59} y2={10.49}/></svg>
             </div>
             <div>
@@ -737,7 +677,7 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
             </div>
           </div>
           <button onClick={onClose} style={{
-            width:30, height:30, borderRadius:8, border:"1px solid #e8ecf2",
+            width:30, height:30, borderRadius:6, border:"1px solid #e8ecf2",
             background:"transparent", cursor:"pointer", display:"flex",
             alignItems:"center", justifyContent:"center", color:"#94a3b8",
             transition:"all .15s",
@@ -750,7 +690,7 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
 
         <div style={{ padding:"18px 20px" }}>
           {error && (
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 12px", borderRadius:10, background:"rgba(239,68,68,0.05)", border:"1px solid rgba(239,68,68,0.12)", marginBottom:12 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 12px", borderRadius:6, background:"rgba(239,68,68,0.05)", border:"1px solid rgba(239,68,68,0.12)", marginBottom:12 }}>
               <span style={{ fontSize:12, color:"#ef4444" }}>{error}</span>
               <button onClick={onGenerate} style={{ padding:"3px 10px", borderRadius:6, border:"1px solid rgba(239,68,68,0.12)", background:"transparent", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer" }}>Thử lại</button>
             </div>
@@ -758,14 +698,14 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
 
           {shareUrl ? (
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(99,102,241,0.04)", borderRadius:10, border:"1px solid rgba(99,102,241,0.08)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(99,102,241,0.04)", borderRadius:6, border:"1px solid rgba(99,102,241,0.08)" }}>
                 <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 <span style={{ flex:1, fontSize:12, color:"#334155", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"monospace" }}>{shareUrl}</span>
               </div>
               <div style={{ display:"flex", gap:8 }}>
                 <button onClick={handleCopy} style={{
                   flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                  padding:"10px 0", borderRadius:10,
+                  padding:"10px 0", borderRadius:6,
                   border:`1.5px solid ${copied ? "rgba(5,150,105,0.30)" : "rgba(99,102,241,0.20)"}`,
                   background: copied ? "rgba(5,150,105,0.05)" : "transparent",
                   color: copied ? "#059669" : "#6366f1",
@@ -780,7 +720,7 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
                 </button>
                 <button onClick={() => window.open(shareUrl, "_blank")} style={{
                   width:40, display:"flex", alignItems:"center", justifyContent:"center",
-                  borderRadius:10, border:"1px solid #e8ecf2",
+                  borderRadius:6, border:"1px solid #e8ecf2",
                   background:"transparent", color:"#94a3b8", cursor:"pointer",
                   transition:"all .15s",
                 }}
@@ -793,14 +733,14 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
           ) : (
             <button onClick={onGenerate} disabled={loading} style={{
               display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-              width:"100%", padding:"12px 0", borderRadius:12, border:"none",
+              width:"100%", padding:"12px 0", borderRadius:8, border:"none",
               background: loading
                 ? "linear-gradient(135deg,#e2e8f0,#f1f5f9)"
                 : "linear-gradient(135deg,#6366f1,#818cf8)",
               color: loading ? "#94a3b8" : "#fff",
               fontSize:13, fontWeight:700, cursor: loading ? "not-allowed" : "pointer",
               fontFamily:"'Plus Jakarta Sans','DM Sans',sans-serif",
-              boxShadow: loading ? "none" : "0 4px 16px rgba(99,102,241,0.35)",
+
               transition:"all .2s",
             }}>
               {loading

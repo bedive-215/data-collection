@@ -21,8 +21,7 @@ const TYPE_CONFIG = {
   RANK_UP_BONUS: { icon: "⬆️", label: "Thăng rank", color: "text-emerald-600", bg: "bg-emerald-50" },
   PENALTY: { icon: "⚠️", label: "Thu hồi", color: "text-red-700", bg: "bg-red-100" },
   ADMIN_ADJUST: { icon: "🔧", label: "Admin điều chỉnh", color: "text-gray-600", bg: "bg-gray-50" },
-  BONUS: { icon: "✨", label: "Bonus", color: "text-violet-600", bg: "bg-violet-50" },
-};
+  BONUS: { icon: "✨", label: "Bonus", color: "text-violet-600", bg: "bg-violet-50" }};
 
 function getTypeInfo(type) {
   const cfg = TYPE_CONFIG[type];
@@ -35,8 +34,7 @@ function TransactionItem({ tx }) {
   const typeInfo = getTypeInfo(type);
   const isPositive = amount > 0;
   const time = new Date(created_at).toLocaleString("vi-VN", {
-    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
-  });
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"});
 
   return React.createElement("div", { className: "flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-amber-200 transition-all hover:shadow-sm" },
     React.createElement("div", { className: `w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 ${typeInfo.bg}` }, typeInfo.icon),
@@ -231,8 +229,7 @@ export default function StarWalletPage() {
           currentRank: balance.rank_info,
           nextRank: balance.rank_info.next,
           progress: balance.rank_info.progress_to_next || 0,
-          starsNeeded: balance.rank_info.stars_needed,
-        })
+          starsNeeded: balance.rank_info.stars_needed})
       ) : null,
 
       // Leaderboard Comparison
@@ -264,7 +261,7 @@ export default function StarWalletPage() {
         React.createElement("select", {
           value: filterType,
           onChange: e => setFilterType(e.target.value),
-          className: "text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 focus:outline-none focus:border-amber-400"
+          className: "text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 focus:outline-none"
         },
           ...filterOptions.map(opt =>
             React.createElement("option", { key: opt.value, value: opt.value }, opt.label)

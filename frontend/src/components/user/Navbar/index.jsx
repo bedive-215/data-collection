@@ -2,27 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useUser } from "../../../providers/UserProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  Bell,
-  ChevronDown,
-  ClipboardList,
-  Compass,
-  Home,
-  LayoutGrid,
-  LogOut,
-  Menu,
-  UserRound,
-  X,
-  Trophy,
-  Star,
-  Award,
-  BarChart3,
-} from "lucide-react";
+import { ChevronDown, LayoutGrid, Menu, UserRound, X } from "lucide-react";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
 import { NotificationPanel } from "../../common/Notification";
 import { useGamification } from "@/contexts/GamificationContext";
-
-const font = "'DM Sans', 'Inter', system-ui, sans-serif";
 
 function UserAvatar({ avatar, size = 32 }) {
   if (avatar) {
@@ -31,23 +14,15 @@ function UserAvatar({ avatar, size = 32 }) {
         style={{
           width: size,
           height: size,
-          borderRadius: "50%",
-          overflow: "hidden",
-          flexShrink: 0,
-          ring: "2px solid white",
-          boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
         }}
+        className="rounded-full overflow-hidden flex-shrink-0 ring-2 ring-white shadow-[0_2px_8px_rgba(99,102,241,0.15)]"
       >
         <img
           src={avatar}
           alt=""
           width={size}
           height={size}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          className="w-full h-full object-cover"
         />
       </div>
     );
@@ -57,16 +32,9 @@ function UserAvatar({ avatar, size = 32 }) {
       style={{
         width: size,
         height: size,
-        borderRadius: "50%",
-        flexShrink: 0,
-        display: "grid",
-        placeItems: "center",
         fontSize: size * 0.4,
-        fontWeight: "bold",
-        color: "white",
-        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-        boxShadow: "0 2px 8px rgba(99, 102, 241, 0.25)",
       }}
+      className="rounded-full flex-shrink-0 grid place-items-center font-bold text-white bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_2px_8px_rgba(99,102,241,0.25)]"
     >
       <UserRound size={Math.round(size * 0.52)} strokeWidth={2} />
     </div>
@@ -82,7 +50,6 @@ function NavLink({ to, matchPrefix, children }) {
   return (
     <Link
       to={to}
-      style={{ fontFamily: font }}
       className={[
         "text-[0.8125rem] font-semibold tracking-tight px-3.5 py-2 rounded-full no-underline transition-all duration-200 whitespace-nowrap",
         active
@@ -111,7 +78,6 @@ function UserDropdown({ user, displayName, onLogout, onClose }) {
 
   return (
     <div
-      style={{ fontFamily: font }}
       className="absolute top-[calc(100%+10px)] right-0 min-w-[220px] z-50 rounded-2xl border border-slate-200/90 bg-white/95 backdrop-blur-xl py-1.5 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.18),0_0_0_1px_rgba(255,255,255,0.8)_inset]"
       onClick={(e) => e.stopPropagation()}
     >
@@ -137,32 +103,19 @@ function UserDropdown({ user, displayName, onLogout, onClose }) {
           }}
           className={row}
         >
-          <UserRound size={17} className="text-slate-400 shrink-0" strokeWidth={2} />
           Hồ sơ cá nhân
         </button>
         <Link to={ROUTERS.USER.SURVEYS} onClick={onClose} className={row}>
-          <Compass size={17} className="text-slate-400 shrink-0" strokeWidth={2} />
           Khảo sát công khai
         </Link>
         <Link to={ROUTERS.USER.MY_SURVEYS} onClick={onClose} className={row}>
-          <ClipboardList size={17} className="text-slate-400 shrink-0" strokeWidth={2} />
           Khảo sát của tôi
         </Link>
-        <Link to="/user/wallet" onClick={onClose} className={row}>
-          <Star size={17} className="text-amber-500 shrink-0" strokeWidth={2} />
-          💰 Ví Sao
-        </Link>
-        <Link to="/user/leaderboard" onClick={onClose} className={row}>
-          <Trophy size={17} className="text-indigo-500 shrink-0" strokeWidth={2} />
-          🏆 Xếp hạng
-        </Link>
-        <Link to="/user/achievements" onClick={onClose} className={row}>
-          <Award size={17} className="text-purple-500 shrink-0" strokeWidth={2} />
-          🏅 Huy hiệu
+        <Link to={ROUTERS.USER.REWARDS} onClick={onClose} className={row}>
+          Phần thưởng
         </Link>
         <Link to={ROUTERS.USER.ANALYSIS_HUB} onClick={onClose} className={row}>
-          <BarChart3 size={17} className="text-indigo-500 shrink-0" strokeWidth={2} />
-          📊 Phân tích
+          Phân tích
         </Link>
       </div>
 
@@ -170,7 +123,6 @@ function UserDropdown({ user, displayName, onLogout, onClose }) {
 
       <div className="px-1.5 pb-0.5">
         <button type="button" onClick={onLogout} className={`${row} text-rose-600 hover:bg-rose-50`}>
-          <LogOut size={17} className="text-rose-500 shrink-0" strokeWidth={2} />
           Đăng xuất
         </button>
       </div>
@@ -184,18 +136,15 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
   const label = displayName || user?.full_name || user?.email || "Account";
 
   const links = [
-    { label: "Trang chủ", to: ROUTERS.USER.HOME, icon: Home },
-    { label: "Khám phá", to: ROUTERS.USER.SURVEYS, icon: Compass },
-    { label: "Của tôi", to: ROUTERS.USER.MY_SURVEYS, icon: ClipboardList },
-    { label: "💰 Ví Sao", to: "/user/wallet", icon: Star },
-    { label: "🏆 Xếp hạng", to: "/user/leaderboard", icon: Trophy },
-    { label: "🏅 Huy hiệu", to: "/user/achievements", icon: Award },
-    { label: "📊 Phân tích", to: ROUTERS.USER.ANALYSIS_HUB, icon: BarChart3 },
+    { label: "Trang chủ", to: ROUTERS.USER.HOME },
+    { label: "Khám phá", to: ROUTERS.USER.SURVEYS },
+    { label: "Của tôi", to: ROUTERS.USER.MY_SURVEYS },
+    { label: "Phần thưởng", to: ROUTERS.USER.REWARDS },
+    { label: "Phân tích", to: ROUTERS.USER.ANALYSIS_HUB },
   ];
 
   return (
     <div
-      style={{ fontFamily: font }}
       className={`fixed inset-0 z-40 flex flex-col transition-[opacity,visibility] duration-200 md:hidden ${
         open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
       }`}
@@ -233,7 +182,7 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
           </div>
         </button>
 
-        {links.map(({ label, to, icon: Icon }) => {
+        {links.map(({ label, to }) => {
           const active =
             pathname === to || (to === ROUTERS.USER.MY_SURVEYS && pathname.startsWith(`${ROUTERS.USER.MY_SURVEYS}/`)) ||
             (to === ROUTERS.USER.ANALYSIS_HUB && pathname.startsWith("/user/analysis"));
@@ -249,7 +198,6 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
                   : "text-slate-600 hover:bg-slate-100",
               ].join(" ")}
             >
-              <Icon size={20} strokeWidth={2} className={active ? "text-indigo-600" : "text-slate-400"} />
               {label}
             </Link>
           );
@@ -262,7 +210,6 @@ function MobileDrawer({ open, onClose, user, displayName, onLogout }) {
           onClick={onLogout}
           className="no-underline flex items-center gap-3 font-bold text-rose-600 px-4 py-3.5 rounded-2xl hover:bg-rose-50 transition-colors w-full border-0 bg-transparent cursor-pointer text-left text-[0.95rem]"
         >
-          <LogOut size={20} strokeWidth={2} />
           Đăng xuất
         </button>
       </div>
@@ -341,12 +288,11 @@ export default function Navbar() {
   return (
     <>
       <div
-        style={{ fontFamily: font }}
         className={`sticky top-0 z-50 transition-[padding] duration-300 ${scrolled ? "pt-2 px-[18px]" : "pt-3 px-[18px]"}`}
       >
         <nav
           className={[
-            "flex items-center justify-between gap-3 sm:gap-4 h-[3.5rem] sm:h-16 px-3 sm:px-5 rounded-[1.125rem] max-w-[1260px] w-full mx-auto border transition-[box-shadow,border-color,background] duration-300",
+            "flex items-center justify-between gap-3 sm:gap-4 h-[3.5rem] sm:h-16 px-3 sm:px-5 rounded-[1.125rem] max-w-[1260px] w-full mx-auto border transition-[border-color,background] duration-300",
             "bg-white/72 backdrop-blur-xl backdrop-saturate-150",
             "border-white/80 shadow-[0_2px_0_rgba(255,255,255,0.9)_inset,0_8px_32px_-8px_rgba(15,23,42,0.08)]",
             scrolled
@@ -365,7 +311,6 @@ export default function Navbar() {
               <span className="flex flex-col min-w-0 leading-tight">
                 <span
                   className="text-[1.05rem] sm:text-[1.15rem] font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent"
-                  style={{ fontFamily: font }}
                 >
                   {APP_BRAND.name}
                 </span>
@@ -381,10 +326,8 @@ export default function Navbar() {
               <NavLink to={ROUTERS.USER.MY_SURVEYS} matchPrefix>
                 Của tôi
               </NavLink>
-              <NavLink to="/user/wallet">💰 Ví Sao</NavLink>
-              <NavLink to="/user/leaderboard">🏆 Xếp hạng</NavLink>
-              <NavLink to="/user/achievements">🏅 Huy hiệu</NavLink>
-              <NavLink to={ROUTERS.USER.ANALYSIS_HUB}>📊 Phân tích</NavLink>
+              <NavLink to={ROUTERS.USER.REWARDS}>Phần thưởng</NavLink>
+              <NavLink to={ROUTERS.USER.ANALYSIS_HUB}>Phân tích</NavLink>
             </div>
           </div>
 

@@ -1,6 +1,5 @@
-// src/components/gamification/CheckinButton.jsx
 import React, { useState } from "react";
-import { StarDisplay } from "./StarDisplay";
+import { Star, Flame, Trophy, Loader2, CheckCircle2, Calendar } from "lucide-react";
 
 const STREAK_COLORS = {
   none: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", ring: "ring-amber-300" },
@@ -17,16 +16,16 @@ function getStreakStyle(streakCount) {
 }
 
 function getStreakEmoji(streakCount) {
-  if (!streakCount || streakCount === 0) return "📅";
-  if (streakCount >= 7) return "🔥🔥";
-  if (streakCount >= 4) return "🔥";
-  return "✨";
+  if (!streakCount || streakCount === 0) return Calendar;
+  if (streakCount >= 7) return Flame;
+  if (streakCount >= 4) return Flame;
+  return Star;
 }
 
 function getBonusText(streakCount, multiplier) {
   if (!streakCount || streakCount === 0) return "+50 sao";
-  if (streakCount >= 7) return `+100 sao (x2!)`;
-  if (streakCount >= 4) return `+75 sao (x1.5)`;
+  if (streakCount >= 7) return "+100 sao (x2!)";
+  if (streakCount >= 4) return "+75 sao (x1.5)";
   return `+${Math.floor(50 * multiplier)} sao`;
 }
 
@@ -40,17 +39,11 @@ export function CheckinButton({ status, onCheckin, loading = false }) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [result, setResult] = useState(null);
 
-  const {
-    checked_in = false,
-    current_streak = 0,
-    current_multiplier = 1.0,
-    next_bonus_tier = null,
-  } = status || {};
+  const { checked_in = false, current_streak = 0, current_multiplier = 1.0, next_bonus_tier = null } = status || {};
 
   const can_checkin = !checked_in;
-
   const streakStyle = getStreakStyle(current_streak);
-  const emoji = getStreakEmoji(current_streak);
+  const StreakIcon = getStreakEmoji(current_streak);
   const bonusText = getBonusText(current_streak, current_multiplier);
   const bonusColor = getBonusColor(current_streak);
 
@@ -67,22 +60,18 @@ export function CheckinButton({ status, onCheckin, loading = false }) {
 
   if (showSuccess && result) {
     return (
-      <div className={`
-        relative flex flex-col items-center justify-center p-4 rounded-2xl border-2
-        bg-green-50 border-green-300 text-green-800
-        transition-all duration-500
-      `}>
-        <div className="text-4xl mb-2">🎉</div>
+      <div className="relative flex flex-col items-center justify-center p-4 rounded-xl border-2 bg-green-50 border-green-300 text-green-800 transition-all duration-500">
+        <CheckCircle2 size={36} className="text-green-500 mb-2" />
         <div className="font-bold text-lg">Điểm danh thành công!</div>
-        <div className="text-2xl font-bold text-green-600 mt-1">
-          +{result.stars_earned} ⭐
+        <div className="flex items-center gap-1 text-2xl font-bold text-green-600 mt-1">
+          +{result.stars_earned} <Star size={20} fill="currentColor" />
         </div>
-        <div className="text-sm opacity-70 mt-1">
-          Streak: {result.streak_count} ngày {emoji}
+        <div className="flex items-center gap-1 text-sm opacity-70 mt-1">
+          <Flame size={14} /> Streak: {result.streak_count} ngày
         </div>
         {result.is_new_streak_record && (
-          <div className="mt-2 px-3 py-1 bg-green-200 rounded-full text-xs font-bold">
-            🏆 Kỷ lục mới!
+          <div className="mt-2 px-3 py-1 bg-green-200 rounded-full text-xs font-bold flex items-center gap-1">
+            <Trophy size={12} /> Kỷ lục mới!
           </div>
         )}
       </div>
@@ -90,74 +79,56 @@ export function CheckinButton({ status, onCheckin, loading = false }) {
   }
 
   return (
-    <div className={`
-      relative flex flex-col items-center justify-center p-4 rounded-2xl border-2
-      ${streakStyle.bg} ${streakStyle.border}
-      transition-all duration-300
-      ${can_checkin ? `ring-2 ${streakStyle.ring} ring-opacity-50 cursor-pointer hover:scale-[1.02] active:scale-[0.98]` : "opacity-75"}
-    `}>
-      {/* Header */}
+    <div
+      className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 ${streakStyle.bg} ${streakStyle.border} transition-all duration-300 ${
+        can_checkin
+          ? `ring-2 ${streakStyle.ring} ring-opacity-50 cursor-pointer hover:scale-[1.02] active:scale-[0.98]`
+          : "opacity-75"
+      }`}
+    >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-2xl">{emoji}</span>
+        <StreakIcon size={24} className={streakStyle.text} />
         <div className="text-center">
           <div className={`font-bold text-base ${streakStyle.text}`}>
-            {current_streak > 0
-              ? `Streak ${current_streak} ngày`
-              : "Chưa điểm danh"
-            }
+            {current_streak > 0 ? `Streak ${current_streak} ngày` : "Chưa điểm danh"}
           </div>
           {current_streak > 0 && (
-            <div className={`text-xs font-semibold ${bonusColor}`}>
-              Bonus x{current_multiplier}
-            </div>
+            <div className={`text-xs font-semibold ${bonusColor}`}>Bonus x{current_multiplier}</div>
           )}
         </div>
       </div>
 
-      {/* Stars reward */}
-      <div className={`
-        text-lg font-bold mb-3 px-4 py-1 rounded-full border
-        ${can_checkin ? "bg-amber-100 border-amber-300 text-amber-700" : "bg-gray-100 border-gray-300 text-gray-500"}
-      `}>
+      <div
+        className={`text-lg font-bold mb-3 px-4 py-1 rounded-full border ${
+          can_checkin ? "bg-amber-100 border-amber-300 text-amber-700" : "bg-gray-100 border-gray-300 text-gray-500"
+        }`}
+      >
         {bonusText}
       </div>
 
-      {/* Checkin button */}
       {can_checkin ? (
         <button
           onClick={handleCheckin}
           disabled={loading}
-          className={`
-            w-full py-2.5 px-4 rounded-xl font-bold text-white text-sm
-            bg-gradient-to-r from-amber-500 to-orange-500
-            hover:from-amber-600 hover:to-orange-600
-            active:scale-95 transition-all duration-150
-            disabled:opacity-60 disabled:cursor-not-allowed
-            shadow-lg shadow-amber-200
-          `}
+          className="w-full py-2.5 px-4 rounded-xl font-bold text-white text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-amber-200"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
+              <Loader2 size={16} className="animate-spin" />
               Đang xử lý...
             </span>
           ) : (
-            "✅ Điểm danh ngay"
+            <span className="flex items-center justify-center gap-1">
+              <CheckCircle2 size={16} /> Điểm danh ngay
+            </span>
           )}
         </button>
       ) : (
-        <div className={`
-          w-full py-2.5 px-4 rounded-xl font-bold text-sm text-center
-          bg-green-100 border border-green-300 text-green-700
-        `}>
-          ✓ Đã điểm danh hôm nay
+        <div className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-center bg-green-100 border border-green-300 text-green-700 flex items-center justify-center gap-1">
+          <CheckCircle2 size={14} /> Đã điểm danh hôm nay
         </div>
       )}
 
-      {/* Next bonus hint */}
       {next_bonus_tier && can_checkin && (
         <div className="mt-2 text-xs text-gray-500 text-center">
           Còn {next_bonus_tier.days_needed} ngày nữa để đạt x{next_bonus_tier.next_multiplier}!
@@ -166,5 +137,3 @@ export function CheckinButton({ status, onCheckin, loading = false }) {
     </div>
   );
 }
-
-export default CheckinButton;

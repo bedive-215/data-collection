@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "@/providers/UserProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,8 +16,7 @@ import {
   Mail,
   Phone,
   Cake,
-  Venus,
-} from "lucide-react";
+  Venus} from "lucide-react";
 import AnimatedSurveyBackdrop from "@/components/AnimatedSurveyBackdrop";
 import { ROUTERS, APP_BRAND } from "@/utils/constants";
 import { userService } from "@/services/userService";
@@ -31,25 +30,21 @@ const C = {
   text: "#0f172a",
   textSub: "#64748b",
   textDim: "#94a3b8",
-  font: "'DM Sans','Inter',system-ui,sans-serif",
-};
+  font: "'DM Sans','Inter',system-ui,sans-serif"};
 
 const glassCard = {
   background: C.surface,
   backdropFilter: "blur(22px) saturate(180%)",
   WebkitBackdropFilter: "blur(22px) saturate(180%)",
   border: `1px solid ${C.glassBorder}`,
-  borderRadius: 22,
-  boxShadow: "0 2px 0 rgba(255,255,255,0.88) inset, 0 12px 32px rgba(15,23,42,0.07)",
-};
+  borderRadius: 22};
 
 const AvatarImage = React.memo(function AvatarImage({
   src,
   alt = "Avatar",
   className = "",
   fallback = "/default-avatar.png",
-  onBroken = null,
-}) {
+  onBroken = null}) {
   const imgRef = useRef(null);
   const lastSrcRef = useRef(null);
 
@@ -85,10 +80,7 @@ function inputStyle(focused) {
     color: C.text,
     fontSize: 14,
     fontFamily: C.font,
-    outline: "none",
-    transition: "border-color .15s, box-shadow .15s",
-    boxShadow: focused ? "0 0 0 3px rgba(99,102,241,0.12)" : "none",
-  };
+    outline: "none"};
 }
 
 export default function Profile() {
@@ -97,7 +89,6 @@ export default function Profile() {
   const navigate = useNavigate();
 
   const [previewAvatar, setPreviewAvatar] = useState("/default-avatar.png");
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
@@ -108,17 +99,7 @@ export default function Profile() {
     phone_number: "",
     date_of_birth: "",
     gender: "",
-    avatar: null,
-  });
-
-  const loadProfile = useCallback(async () => {
-    await fetchMyInfo();
-    setIsInitialLoad(false);
-  }, [fetchMyInfo]);
-
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    avatar: null});
 
   useEffect(() => {
     if (user) {
@@ -129,10 +110,11 @@ export default function Profile() {
         phone_number: user.phone_number || "",
         date_of_birth: user.date_of_birth || "",
         gender: user.gender || "",
-        avatar: null,
-      });
+        avatar: null});
+    } else if (!contextLoading) {
+      fetchMyInfo();
     }
-  }, [user]);
+  }, [user, contextLoading, fetchMyInfo]);
 
   const handleAvatarBroken = () => setPreviewAvatar("/default-avatar.png");
 
@@ -159,8 +141,7 @@ export default function Profile() {
         full_name: form.full_name.trim(),
         phone_number: form.phone_number.trim(),
         date_of_birth: form.date_of_birth,
-        gender: form.gender,
-      };
+        gender: form.gender};
       await updateMyInfo(payload);
       setForm((prev) => ({ ...prev, avatar: null }));
       setIsEditing(false);
@@ -180,8 +161,7 @@ export default function Profile() {
         phone_number: user.phone_number || "",
         date_of_birth: user.date_of_birth || "",
         gender: user.gender || "",
-        avatar: null,
-      });
+        avatar: null});
       setPreviewAvatar(user.avatar || "/default-avatar.png");
     }
   };
@@ -195,7 +175,7 @@ export default function Profile() {
     }
   };
 
-  if (isInitialLoad && contextLoading) {
+  if (contextLoading && !user) {
     return (
       <div
         style={{ minHeight: "100vh", background: "transparent", fontFamily: C.font, position: "relative" }}
@@ -231,8 +211,7 @@ export default function Profile() {
                 color: "#fff",
                 fontWeight: 700,
                 fontFamily: C.font,
-                cursor: "pointer",
-              }}
+                cursor: "pointer"}}
             >
               Thử lại
             </button>
@@ -253,8 +232,7 @@ export default function Profile() {
       desc: "Họ tên, số điện thoại, ngày sinh và ảnh đại diện.",
       iconBg: "rgba(99,102,241,0.12)",
       iconColor: C.primary,
-      onClick: () => setIsEditing(true),
-    },
+      onClick: () => setIsEditing(true)},
     {
       key: "mine",
       icon: ClipboardList,
@@ -262,8 +240,7 @@ export default function Profile() {
       desc: "Tạo và quản lý biểu mẫu khảo sát của bạn.",
       iconBg: "rgba(16,185,129,0.12)",
       iconColor: "#059669",
-      to: ROUTERS.USER.MY_SURVEYS,
-    },
+      to: ROUTERS.USER.MY_SURVEYS},
     {
       key: "explore",
       icon: Compass,
@@ -271,8 +248,7 @@ export default function Profile() {
       desc: "Khám phá và tham gia các khảo sát đang mở.",
       iconBg: "rgba(14,165,233,0.12)",
       iconColor: "#0284c7",
-      to: ROUTERS.USER.SURVEYS,
-    },
+      to: ROUTERS.USER.SURVEYS},
     {
       key: "security",
       icon: Shield,
@@ -280,8 +256,7 @@ export default function Profile() {
       desc: "Đặt lại mật khẩu qua email nếu bạn quên mật khẩu.",
       iconBg: "rgba(244,63,94,0.1)",
       iconColor: "#e11d48",
-      to: ROUTERS.PUBLIC.FORGOT_PASSWORD,
-    },
+      to: ROUTERS.PUBLIC.FORGOT_PASSWORD},
   ];
 
   return (
@@ -298,8 +273,7 @@ export default function Profile() {
             flexDirection: "column",
             alignItems: "center",
             textAlign: "center",
-            borderTop: `4px solid ${C.primary}`,
-          }}
+            borderTop: `4px solid ${C.primary}`}}
         >
           <div style={{ position: "relative", marginBottom: 20 }}>
             <div
@@ -308,9 +282,7 @@ export default function Profile() {
                 height: 132,
                 borderRadius: "50%",
                 padding: 4,
-                background: "linear-gradient(135deg, #a5b4fc, #6366f1, #7c3aed)",
-                boxShadow: "0 12px 40px rgba(79,70,229,0.25)",
-              }}
+                background: "linear-gradient(135deg, #a5b4fc, #6366f1, #7c3aed)"}}
             >
               <div
                 style={{
@@ -319,8 +291,7 @@ export default function Profile() {
                   borderRadius: "50%",
                   overflow: "hidden",
                   background: C.surfaceHigh,
-                  border: "3px solid rgba(255,255,255,0.95)",
-                }}
+                  border: "3px solid rgba(255,255,255,0.95)"}}
               >
                 <AvatarImage
                   src={previewAvatar}
@@ -348,9 +319,7 @@ export default function Profile() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(79,70,229,0.4)",
-              }}
+                cursor: "pointer"}}
             >
               <Camera size={18} strokeWidth={2.25} />
             </button>
@@ -386,8 +355,7 @@ export default function Profile() {
               justifyContent: "center",
               padding: 16,
               background: "rgba(15,23,42,0.45)",
-              backdropFilter: "blur(8px)",
-            }}
+              backdropFilter: "blur(8px)"}}
             onClick={handleCancel}
             role="presentation"
           >
@@ -399,8 +367,7 @@ export default function Profile() {
                 padding: "26px 24px 24px",
                 borderTop: `4px solid ${C.primary}`,
                 maxHeight: "min(90vh, 640px)",
-                overflowY: "auto",
-              }}
+                overflowY: "auto"}}
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -422,8 +389,7 @@ export default function Profile() {
                     cursor: "pointer",
                     display: "grid",
                     placeItems: "center",
-                    color: C.textSub,
-                  }}
+                    color: C.textSub}}
                 >
                   <X size={20} />
                 </button>
@@ -459,8 +425,7 @@ export default function Profile() {
                     ...inputStyle(false),
                     opacity: 0.72,
                     cursor: "not-allowed",
-                    background: "rgba(148,163,184,0.15)",
-                  }}
+                    background: "rgba(148,163,184,0.15)"}}
                 />
                 <span style={{ fontSize: 11, color: C.textDim, marginTop: 6, display: "block" }}>
                   Email dùng để đăng nhập — liên hệ quản trị nếu cần đổi.
@@ -524,9 +489,7 @@ export default function Profile() {
                         color: form.gender === opt.value ? "#6366f1" : C.textSub,
                         fontWeight: form.gender === opt.value ? 700 : 500,
                         fontSize: 13,
-                        transition: "all 0.15s",
-                        userSelect: "none",
-                      }}
+                        userSelect: "none"}}
                     >
                       <input
                         type="radio"
@@ -553,8 +516,7 @@ export default function Profile() {
                   border: `1px dashed rgba(99,102,241,0.35)`,
                   background: "rgba(99,102,241,0.06)",
                   cursor: "pointer",
-                  marginBottom: 16,
-                }}
+                  marginBottom: 16}}
               >
                 <Camera size={20} color={C.primary} strokeWidth={2} />
                 <div style={{ textAlign: "left", flex: 1 }}>
@@ -573,8 +535,7 @@ export default function Profile() {
                     background: "rgba(254,226,226,0.85)",
                     border: "1px solid #fecaca",
                     borderRadius: 12,
-                    padding: "10px 12px",
-                  }}
+                    padding: "10px 12px"}}
                 >
                   {saveError}
                 </p>
@@ -594,8 +555,7 @@ export default function Profile() {
                     fontSize: 14,
                     color: C.textSub,
                     fontFamily: C.font,
-                    cursor: "pointer",
-                  }}
+                    cursor: "pointer"}}
                 >
                   Hủy
                 </button>
@@ -617,9 +577,7 @@ export default function Profile() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 8,
-                    boxShadow: contextLoading ? "none" : "0 4px 16px rgba(79,70,229,0.35)",
-                  }}
+                    gap: 8}}
                 >
                   {contextLoading ? (
                     <Loader2 size={18} style={{ animation: "spin 0.9s linear infinite" }} />
@@ -639,8 +597,7 @@ export default function Profile() {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 18,
-          }}
+            gap: 18}}
         >
           {menuCards.map((card) => {
             const Icon = card.icon;
@@ -656,8 +613,7 @@ export default function Profile() {
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 18,
-                    color: card.iconColor,
-                  }}
+                    color: card.iconColor}}
                 >
                   <Icon size={24} strokeWidth={2} />
                 </div>
@@ -673,9 +629,7 @@ export default function Profile() {
               textDecoration: "none",
               color: "inherit",
               cursor: "pointer",
-              border: `1px solid ${C.glassBorder}`,
-              transition: "transform .2s, box-shadow .2s, border-color .2s",
-            };
+              border: `1px solid ${C.glassBorder}`};
 
             if (card.onClick) {
               return (
@@ -686,13 +640,11 @@ export default function Profile() {
                   style={{ ...cardStyle, width: "100%", font: "inherit", display: "block" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 0 rgba(255,255,255,0.95) inset, 0 18px 44px rgba(79,70,229,0.12)";
+                    
                     e.currentTarget.style.borderColor = "rgba(129,140,248,0.35)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = glassCard.boxShadow;
+                    e.currentTarget.style.transform = "translateY(0)"
                     e.currentTarget.style.borderColor = C.glassBorder;
                   }}
                 >
@@ -708,13 +660,11 @@ export default function Profile() {
                 style={{ ...cardStyle, display: "block" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 0 rgba(255,255,255,0.95) inset, 0 18px 44px rgba(79,70,229,0.12)";
+                  
                   e.currentTarget.style.borderColor = "rgba(129,140,248,0.35)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = glassCard.boxShadow;
+                  e.currentTarget.style.transform = "translateY(0)"
                   e.currentTarget.style.borderColor = C.glassBorder;
                 }}
               >
@@ -741,9 +691,7 @@ export default function Profile() {
               fontWeight: 700,
               fontSize: 14,
               fontFamily: C.font,
-              cursor: "pointer",
-              boxShadow: "0 2px 0 rgba(255,255,255,0.9) inset, 0 8px 24px rgba(15,23,42,0.06)",
-            }}
+              cursor: "pointer"}}
           >
             <LogOut size={18} strokeWidth={2.25} />
             Đăng xuất
