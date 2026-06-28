@@ -238,17 +238,17 @@ const SurveyProvider = ({ children }) => {
     const questionPayload = [];
     if (Array.isArray(draftQuestions)) {
       for (const d of draftQuestions) {
-        const content = String(d?.content ?? "").trim();
+        const content = String(để.content ?? "").trim();
         if (!content) continue;
-        const type = d?.type || "TEXT";
+        const type = để.type || "TEXT";
         const row = {
           content,
           type,
-          required: !!d?.required,
+          required: !!để.required,
           order_index: questionPayload.length,
         };
         if (CHOICE.includes(type)) {
-          const rawOpts = Array.isArray(d?.options) ? d.options : [];
+          const rawOpts = Array.isArray(để.options) ? d.options : [];
           const seen = new Set();
           const options = [];
           for (let i = 0; i < rawOpts.length; i += 1) {
@@ -260,7 +260,7 @@ const SurveyProvider = ({ children }) => {
           }
           if (options.length < 2) continue;
           row.options = options;
-        } else if (type === "NUMBER" && d?.settings && typeof d.settings === "object") {
+        } else if (type === "NUMBER" && để.settings && typeof d.settings === "object") {
           const out = {};
           if (d.settings.min !== "" && d.settings.min != null && Number.isFinite(Number(d.settings.min))) {
             out.min = Number(d.settings.min);
@@ -270,10 +270,10 @@ const SurveyProvider = ({ children }) => {
           }
           if (Object.keys(out).length) row.settings = out;
         } else if (type === "RATING") {
-          const min = Number(d?.settings?.min ?? 1);
-          const max = Number(d?.settings?.max ?? 5);
+          const min = Number(để.settings?.min ?? 1);
+          const max = Number(để.settings?.max ?? 5);
           row.settings = { min, max };
-        } else if (type === "DATE" && d?.settings && typeof d.settings === "object") {
+        } else if (type === "DATE" && để.settings && typeof d.settings === "object") {
           row.settings = d.settings;
         }
         questionPayload.push(row);

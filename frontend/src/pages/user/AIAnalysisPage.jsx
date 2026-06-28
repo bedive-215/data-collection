@@ -236,7 +236,7 @@ export default function AIAnalysisPage() {
                 <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0f172a" }}>Phân tích bằng AI</h1>
               </div>
               <p style={{ margin: 0, fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                {survey?.title || surveyId}
+                {survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : surveyId}
               </p>
             </div>
           </div>
@@ -380,7 +380,7 @@ export default function AIAnalysisPage() {
                           : "linear-gradient(to top, #ef4444, #f87171)",
                         minHeight: 4,
                         animation: `growUp 0.6s ease-out ${i * 0.08}s both`}} />
-                      <span style={{ fontSize: 9, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{d.period?.slice(-5) || ""}</span>
+                      <span style={{ fontSize: 9, color: "#94a3b8", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{d.perio?.slice(-5) || ""}</span>
                     </div>
                   );
                 })}
@@ -399,8 +399,8 @@ export default function AIAnalysisPage() {
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  { label: "Tiêu đề", value: survey.title },
-                  { label: "Mô tả", value: survey.description || "Không có mô tả" },
+                  { label: "Tiêu đề", value: <span dangerouslySetInnerHTML={{__html:survey.title}}/> },
+                  { label: "Mô tả", value: survey.description ? <span dangerouslySetInnerHTML={{__html:survey.description}}/> : "Không có mô tả" },
                   { label: "Số câu hỏi", value: survey.questions?.length ?? 0 },
                   { label: "Trạng thái", value: survey.is_published ? "Đã công khai" : "Riêng tư" },
                   { label: "Tạo lúc", value: survey.created_at ? new Date(survey.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },

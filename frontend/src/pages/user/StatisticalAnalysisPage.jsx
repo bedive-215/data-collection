@@ -142,7 +142,7 @@ function DateHeatmap({ data }) {
                 width: 13, height: 13, borderRadius: 3,
                 background: day ? getColor(day.count) : "transparent",
                 cursor: day ? "pointer" : "default",
-                 && day.count > 0 ? `0 1px 3px ${getColor(day.count)}50` : "none",
+                boxShadow: day && day.count > 0 ? `0 1px 3px ${getColor(day.count)}50` : "none",
                 title: day ? `${day.date}: ${day.count} phản hồi` : ""}}
                 onMouseEnter={e => { if (day) e.currentTarget.style.transform = "scale(1.4)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -167,7 +167,7 @@ function FunnelViz({ dropOffData }) {
   if (!dropOffData || dropOffData.length === 0) return null;
   const sorted = [...dropOffData].sort((a, b) => b.answered_count - a.answered_count);
   const funnelData = sorted.slice(0, 10).map(d => ({
-    name: `Q${d.question_id?.slice(-3) || "?"}`, value: d.answered_count}));
+    name: `Q${d.question_i?.slice(-3) || "?"}`, value: d.answered_count}));
   return (
     <div style={{ height: 200 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -318,7 +318,7 @@ function QuestionCard({ question, index }) {
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <h4 style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", margin: 0, marginBottom: 7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {question.question_content || question.question_id?.slice(0, 8) + "…"}
+              {question.question_content || question.question_i?.slice(0, 8) + "…"}
             </h4>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TypeBadge type={question.type} />
@@ -466,7 +466,7 @@ function ResponseRow({ response }) {
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.02)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
-        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#94a3b8" }}>{response.response_id?.slice(0, 6)}</div>
+        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#94a3b8" }}>{response.response_i?.slice(0, 6)}</div>
         <div style={{ flex: 1 }}>
           <span style={{
             display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700,

@@ -445,7 +445,7 @@ export function SurveyCardHome({
                 WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                 marginBottom: 4,
               }}>
-                {survey?.title || "Không có tiêu đề"}
+                {survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : "Không có tiêu đề"}
               </h2>
             </div>
           ) : (
@@ -534,7 +534,7 @@ export function SurveyCardHome({
               fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif",
               marginBottom: 8,
             }}>
-              {survey.description}
+              {survey.description ? <span dangerouslySetInnerHTML={{__html:survey.description}}/> : null}
             </p>
           ) : null}
 
@@ -673,7 +673,7 @@ export function ShareModal({ open, onClose, surveyTitle, shareUrl, loading, erro
             </div>
             <div>
               <div style={{ fontSize:14, fontWeight:700, color:"#0b1c30" }}>Chia sẻ khảo sát</div>
-              <div style={{ fontSize:11.5, color:"#94a3b8", maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{surveyTitle}</div>
+              <div style={{ fontSize:11.5, color:"#94a3b8", maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}><span dangerouslySetInnerHTML={{__html:surveyTitle}}/></div>
             </div>
           </div>
           <button onClick={onClose} style={{

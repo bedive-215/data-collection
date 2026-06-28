@@ -15,11 +15,11 @@ import { ROUTERS } from "@/utils/constants";
    NAV ITEMS
 ──────────────────────────────────────────────────────────── */
 const navItems = [
-  { id: "dashboard",    label: "Dashboard",     icon: LayoutDashboard, path: ROUTERS.ADMIN.DASHBOARD },
-  { id: "users",        label: "Users",          icon: Users,           path: ROUTERS.ADMIN.USERS },
-  { id: "surveys",      label: "Questions",      icon: HelpCircle,      path: ROUTERS.ADMIN.SURVEYS },
-  { id: "notifications", label: "Notifications",  icon: Bell,            path: "/admin/notifications" },
-  { id: "settings",     label: "Settings",       icon: Settings,        path: ROUTERS.ADMIN.SETTINGS },
+  { id: "dashboard",    label: "Tổng quan",     icon: LayoutDashboard, path: ROUTERS.ADMIN.DASHBOARD },
+  { id: "users",        label: "Người dùng",      icon: Users,           path: ROUTERS.ADMIN.USERS },
+  { id: "surveys",      label: "Khảo sát",      icon: HelpCircle,      path: ROUTERS.ADMIN.SURVEYS },
+  { id: "notifications", label: "Thông báo",  icon: Bell,            path: "/admin/notifications" },
+  { id: "settings",     label: "Cài đặt",       icon: Settings,        path: ROUTERS.ADMIN.SETTINGS },
 ];
 
 /* ────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export default function Sidebar() {
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              background: "linear-gradient(135deg, #F59E0B, #D97706)",
+              background: "linear-gradient(135deg, #3B82F6, #2563EB)",
 
             }}
           >
@@ -55,13 +55,13 @@ export default function Sidebar() {
               className="font-bold leading-tight"
               style={{ color: "var(--admin-text)", fontSize: 16 }}
             >
-              Admin Portal
+              Trang quản trị
             </p>
             <p
               className="text-xs tracking-widest uppercase"
               style={{ color: "var(--admin-text-dim)", marginTop: 2 }}
             >
-              Control Center
+              Trung tâm điều khiển
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function Sidebar() {
           className="text-[10px] font-bold uppercase tracking-widest"
           style={{ color: "var(--admin-text-dim)", letterSpacing: "0.1em" }}
         >
-          Main Menu
+          Menu chính
         </p>
       </div>
 
@@ -89,7 +89,7 @@ export default function Sidebar() {
               to={item.path}
               className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative"
               style={{
-                background: isActive ? "rgba(245,158,11,0.1)" : "transparent",
+                background: isActive ? "rgba(59,130,246,0.1)" : "transparent",
                 color: isActive ? "var(--admin-primary)" : "var(--admin-text-sub)",
               }}
             >
@@ -167,8 +167,8 @@ export default function Sidebar() {
         <button
           className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all duration-200 active:scale-95"
           style={{
-            background: "linear-gradient(135deg, #F59E0B, #D97706)",
-            color: "#000",
+            background: "linear-gradient(135deg, #3B82F6, #2563EB)",
+            color: "#FFF",
 
           }}
         >

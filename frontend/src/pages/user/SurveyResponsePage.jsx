@@ -270,7 +270,7 @@ function SurveyResponsePage() {
                 lineHeight: 1.2,
                 color: PAGE.text}}
             >
-              {response?.data?.survey?.title || response?.data?.title || "Khảo sát đã hoàn thành"}
+              {(response?.data?.survey?.title || response?.data?.title) ? <span dangerouslySetInnerHTML={{__html: response?.data?.survey?.title || response?.data?.title}}/> : "Khảo sát đã hoàn thành"}
             </h2>
 
             <p
@@ -281,7 +281,7 @@ function SurveyResponsePage() {
                 lineHeight: 1.6,
                 color: PAGE.textSub}}
             >
-              {response?.data?.survey?.description || response?.data?.description || ""}
+              {(response?.data?.survey?.description || response?.data?.description) ? <span dangerouslySetInnerHTML={{__html: response?.data?.survey?.description || response?.data?.description}}/> : null}
             </p>
 
             <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", color: PAGE.textSub }}>

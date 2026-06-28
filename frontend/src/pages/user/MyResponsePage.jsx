@@ -256,11 +256,11 @@ export default function MyResponsePage() {
             </div>
 
             <h1 style={{ margin:0, fontSize:"clamp(20px,4vw,28px)", fontWeight:900, color:"#fff", lineHeight:1.2, marginBottom:surveyDesc ? 6 : 0 }}>
-              {surveyTitle}
+              <span dangerouslySetInnerHTML={{__html:surveyTitle}}/>
             </h1>
             {surveyDesc && (
               <p style={{ margin:0, fontSize:13, color:"rgba(255,255,255,0.8)", lineHeight:1.5 }}>
-                {surveyDesc}
+                <span dangerouslySetInnerHTML={{__html:surveyDesc}}/>
               </p>
             )}
 

@@ -82,8 +82,8 @@ function ViewerQuestionCard({ question }) {
         </span>
         {question.required && <span style={{fontSize:11,color:C.error,fontWeight:700}}>* Bắt buộc</span>}
       </div>
-      <h3 style={{fontSize:17,fontWeight:700,color:C.text,lineHeight:1.5,margin:"0 0 14px"}}>{question.content}</h3>
-      {question.description && <p style={{fontSize:13,color:C.textSub,marginBottom:12,lineHeight:1.6}}>{question.description}</p>}
+      <h3 style={{fontSize:17,fontWeight:700,color:C.text,lineHeight:1.5,margin:"0 0 14px"}} dangerouslySetInnerHTML={{__html:question.content}} />
+      {question.description && <p style={{fontSize:13,color:C.textSub,marginBottom:12,lineHeight:1.6}} dangerouslySetInnerHTML={{__html:question.description}} />}
       {question.media_url && (
         question.media_type === "video"
           ? <video src={question.media_url} controls style={{width:"100%",borderRadius:12,marginBottom:14,maxHeight:280,objectFit:"contain"}}/>
@@ -205,7 +205,7 @@ function RespondQuestionCard({ question, answer, onChange }) {
         <Icon size={11}/>{label}
         {question.required&&<span style={{color:"#ef4444",marginLeft:2}}>*</span>}
       </span>
-      <h2 style={{fontSize:18,fontWeight:700,color:"#111827",lineHeight:1.5,marginBottom:description?"0.5rem":"1.5rem"}}>{question.content}</h2>
+      <h2 style={{fontSize:18,fontWeight:700,color:"#111827",lineHeight:1.5,marginBottom:description?"0.5rem":"1.5rem"}} dangerouslySetInnerHTML={{__html:question.content}} />
 
       {question.type==="TEXT"&&(
         <input type="text" placeholder={placeholder||"Nhập câu trả lời ngắn..."} value={answer??"" }
@@ -413,7 +413,7 @@ export default function InvitedSurveyPage() {
               <ChevronLeft size={18}/>
             </button>
             <div>
-              <h1 style={{fontSize:17,fontWeight:800,color:C.text,margin:0}}>{currentSurvey.title||"Khảo sát"}</h1>
+              <h1 style={{fontSize:17,fontWeight:800,color:C.text,margin:0}}>{currentSurvey.title ? <span dangerouslySetInnerHTML={{__html:currentSurvey.title}}/> : "Khảo sát"}</h1>
               <p style={{fontSize:11,color:C.textSub,margin:"2px 0 0"}}>Chế độ xem câu hỏi</p>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:999,background:"rgba(67,97,238,0.1)",border:"1px solid rgba(67,97,238,0.2)"}}>
@@ -520,8 +520,8 @@ export default function InvitedSurveyPage() {
           <div style={{width:72,height:72,borderRadius:"50%",background:`linear-gradient(135deg,${accent}22,${accent}44)`,border:`2px solid ${accent}33`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.5rem"}}>
             <FileText size={32} color={accent}/>
           </div>
-          <h2 style={{fontSize:22,fontWeight:800,color:C.text,margin:"0 0 8px"}}>{currentSurvey.title||"Khảo sát"}</h2>
-          {currentSurvey.description&&<p style={{fontSize:14,color:C.textSub,margin:"0 0 2rem",lineHeight:1.7}}>{currentSurvey.description}</p>}
+          <h2 style={{fontSize:22,fontWeight:800,color:C.text,margin:"0 0 8px"}}>{currentSurvey.title ? <span dangerouslySetInnerHTML={{__html:currentSurvey.title}}/> : "Khảo sát"}</h2>
+          {currentSurvey.description&&<p style={{fontSize:14,color:C.textSub,margin:"0 0 2rem",lineHeight:1.7}}><span dangerouslySetInnerHTML={{__html:currentSurvey.description}}/></p>}
           <div style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.textSub,justifyContent:"center",marginBottom:"1.75rem"}}>
             <FileText size={13}/>{questions.length} câu hỏi
           </div>
@@ -547,7 +547,7 @@ export default function InvitedSurveyPage() {
             <ChevronLeft size={18}/>
           </button>
           <div style={{flex:1}}>
-            <h1 style={{fontSize:17,fontWeight:800,color:C.text,margin:0}}>{currentSurvey.title||"Làm khảo sát"}</h1>
+            <h1 style={{fontSize:17,fontWeight:800,color:C.text,margin:0}}>{currentSurvey.title ? <span dangerouslySetInnerHTML={{__html:currentSurvey.title}}/> : "Làm khảo sát"}</h1>
             <p style={{fontSize:11,color:C.textSub,margin:"2px 0 0"}}>Câu {currentIndex+1} / {total}</p>
           </div>
           <div style={{padding:"4px 14px",borderRadius:999,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",color:"#059669",fontSize:13,fontWeight:800}}>

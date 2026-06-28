@@ -46,9 +46,9 @@ function RoleBadge({ role }) {
     <span
       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border"
       style={{
-        background: isAdmin ? "rgba(245,158,11,0.1)" : "rgba(99,102,241,0.1)",
-        color: isAdmin ? "#F59E0B" : "#6366F1",
-        borderColor: isAdmin ? "rgba(245,158,11,0.2)" : "rgba(99,102,241,0.2)"}}
+        background: isAdmin ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
+        color: isAdmin ? "#3B82F6" : "#3B82F6",
+        borderColor: isAdmin ? "rgba(245,158,11,0.2)" : "rgba(59,130,246,0.2)"}}
     >
       {isAdmin ? <Shield size={11} /> : <User size={11} />}
       {role}
@@ -195,7 +195,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
           ) : (
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+              style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)" }}
             >
               <User size={18} style={{ color: "#000" }} />
             </div>
@@ -221,7 +221,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
                 : { background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)", color: "var(--admin-text-sub)" }
             }
           >
-            <Shield size={22} style={{ color: newRole === "admin" ? "#F59E0B" : "var(--admin-text-dim)" }} />
+            <Shield size={22} style={{ color: newRole === "admin" ? "#3B82F6" : "var(--admin-text-dim)" }} />
             <span className="text-xs font-bold">Admin</span>
           </button>
           <button
@@ -229,11 +229,11 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
             className="flex-1 p-4 rounded-xl border transition-all flex flex-col items-center gap-2"
             style={
               newRole === "user"
-                ? { background: "rgba(99,102,241,0.1)", border: "2px solid rgba(99,102,241,0.4)", color: "var(--admin-text)" }
+                ? { background: "rgba(59,130,246,0.1)", border: "2px solid rgba(59,130,246,0.4)", color: "var(--admin-text)" }
                 : { background: "var(--admin-bg-secondary)", border: "1px solid var(--admin-border)", color: "var(--admin-text-sub)" }
             }
           >
-            <User size={22} style={{ color: newRole === "user" ? "#6366F1" : "var(--admin-text-dim)" }} />
+            <User size={22} style={{ color: newRole === "user" ? "#3B82F6" : "var(--admin-text-dim)" }} />
             <span className="text-xs font-bold">User</span>
           </button>
         </div>
@@ -241,7 +241,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
         {newRole !== user.role && (
           <div
             className="mb-4 p-3 rounded-xl text-sm"
-            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#F59E0B" }}
+            style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#3B82F6" }}
           >
             {newRole === "admin"
               ? "Người dùng này sẽ có quyền truy cập bảng quản trị."
@@ -264,7 +264,7 @@ function RoleChangeModal({ open, onClose, onConfirm, user, loading }) {
             onClick={() => onConfirm(newRole)}
             disabled={loading || newRole === user.role}
             className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: "#F59E0B" }}
+            style={{ background: "#3B82F6" }}
           >
             {loading ? <Loader2 size={15} className="animate-spin mx-auto" /> : "Xác nhận"}
           </button>
@@ -429,7 +429,7 @@ function UserDetailModal({ open, onClose, user }) {
           ) : (
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+              style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)" }}
             >
               <User size={28} style={{ color: "#000" }} />
             </div>
@@ -532,7 +532,7 @@ function UserDetailModal({ open, onClose, user }) {
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: <Star size={16} style={{ color: "#F59E0B" }} />, value: user.star_balance ?? 0, label: "Sao", bg: "rgba(245,158,11,0.08)" },
-              { icon: <Trophy size={16} style={{ color: "#8B5CF6" }} />, value: user.current_rank ?? "BRONZE", label: "Hạng", bg: "rgba(139,92,246,0.08)" },
+              { icon: <Trophy size={16} style={{ color: "#60A5FA" }} />, value: user.current_rank ?? "BRONZE", label: "Hạng", bg: "rgba(96,165,250,0.08)" },
               { icon: <Flame size={16} style={{ color: "#EF4444" }} />, value: user.streak_count ?? 0, label: "Chuỗi", bg: "rgba(239,68,68,0.08)" },
             ].map(({ icon, value, label, bg }) => (
               <div
@@ -579,7 +579,7 @@ function UserRow({ u, onView, onRoleChange, onBlock, onUnblock, onDelete }) {
           ) : (
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+              style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)" }}
             >
               <User size={18} style={{ color: "#000" }} />
             </div>
@@ -682,8 +682,8 @@ function UserRow({ u, onView, onRoleChange, onBlock, onUnblock, onDelete }) {
               className="p-2 rounded-lg border border-transparent transition-all"
               title="Khóa tài khoản"
               onMouseEnter={e => {
-                e.currentTarget.style.background = "rgba(245,158,11,0.1)";
-                e.currentTarget.style.color = "#F59E0B";
+                e.currentTarget.style.background = "rgba(59,130,246,0.1)";
+                e.currentTarget.style.color = "#3B82F6";
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.background = "transparent";
@@ -868,9 +868,9 @@ export default function UserManagement() {
     {
       label: "Tổng người dùng",
       value: overview?.totalUsers ?? total,
-      icon: <Users size={20} style={{ color: "#F59E0B" }} />,
-      bg: "rgba(245,158,11,0.1)",
-      color: "#F59E0B"},
+      icon: <Users size={20} style={{ color: "#3B82F6" }} />,
+      bg: "rgba(59,130,246,0.1)",
+      color: "#3B82F6"},
     {
       label: "Đang hoạt động",
       value: overview?.totalActiveUsers ?? "—",
@@ -886,9 +886,9 @@ export default function UserManagement() {
     {
       label: "Tổng khảo sát",
       value: overview?.totalSurveys ?? "—",
-      icon: <ClipboardList size={20} style={{ color: "#6366F1" }} />,
-      bg: "rgba(99,102,241,0.1)",
-      color: "#6366F1"},
+      icon: <ClipboardList size={20} style={{ color: "#3B82F6" }} />,
+      bg: "rgba(59,130,246,0.1)",
+      color: "#3B82F6"},
   ];
 
   return (
@@ -986,7 +986,7 @@ export default function UserManagement() {
                 className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all"
                 style={
                   statusFilter === value
-                    ? { background: "#F59E0B", color: "#000" }
+                    ? { background: "#3B82F6", color: "#FFF" }
                     : { background: "var(--admin-bg-secondary)", color: "var(--admin-text-dim)" }
                 }
               >
@@ -1025,7 +1025,7 @@ export default function UserManagement() {
         <div className="overflow-x-auto">
           {loadingUsers ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 size={40} style={{ color: "#F59E0B" }} className="animate-spin" />
+              <Loader2 size={40} style={{ color: "#3B82F6" }} className="animate-spin" />
               <p className="text-sm font-medium" style={{ color: "var(--admin-text-dim)" }}>
                 Đang tải dữ liệu...
               </p>
@@ -1106,7 +1106,7 @@ export default function UserManagement() {
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all"
                 style={
                   p === page
-                    ? { background: "#F59E0B", color: "#000" }
+                    ? { background: "#3B82F6", color: "#FFF" }
                     : { color: "var(--admin-text-dim)" }
                 }
                 onMouseEnter={e => {

@@ -10,35 +10,35 @@ import {
   Pencil, Check, GripVertical, PlusCircle, Image,
   Type, AlignLeft, ChevronDown, List, CheckSquare,
   ToggleLeft, Star, Grid, FileUp, Calendar, Clock,
-  FileText, Video, Minus, Copy, Bold, Italic, Underline,
+  FileText, Video, Copy, Bold, Italic, Underline,
   Link, AlignLeft as AlignLeftIcon, AlignCenter, AlignRight,
   ImagePlus, Sparkles} from "lucide-react";
 import AiQuestionAssistant from "@/components/survey/AiQuestionAssistant";
 
 /* ── Design tokens — aligned with Admin Design System v2 ───────────────────── */
 const C = {
-  bg:            "#0F1117",
-  bgSecondary:   "#141620",
-  surfaceLow:    "#141620",
-  surface:       "#1A1D2E",
-  surfaceHover:  "#222638",
-  surfaceHigh:   "#222638",
-  border:        "#2A2D3E",
-  borderHover:   "#3A3D50",
-  primary:       "#F59E0B",
-  primaryHover:  "#D97706",
-  primaryGrad:   "linear-gradient(135deg,#F59E0B,#D97706)",
-  primaryDim:    "rgba(245,158,11,0.10)",
-  primaryBorder: "rgba(245,158,11,0.30)",
-  secondary:     "#6366F1",
-  secondaryDim:  "rgba(99,102,241,0.10)",
-  accent:        "#8B5CF6",
-  accentDim:     "rgba(139,92,246,0.10)",
-  text:          "#F9FAFB",
-  textSub:       "#9CA3AF",
-  textDim:       "#4B5563",
+  bg:            "#FFFFFF",
+  bgSecondary:   "#FFFFFF",
+  surfaceLow:    "#FFFFFF",
+  surface:       "#FFFFFF",
+  surfaceHover:  "#F3F4F7",
+  surfaceHigh:   "#F3F4F7",
+  border:        "#E8E6F0",
+  borderHover:   "#D1D5DB",
+  primary:       "#3B82F6",
+  primaryHover:  "#2563EB",
+  primaryGrad:   "linear-gradient(135deg,#3B82F6,#2563EB)",
+  primaryDim:    "rgba(59,130,246,0.12)",
+  primaryBorder: "rgba(59,130,246,0.30)",
+  secondary:     "#3B82F6",
+  secondaryDim:  "rgba(59,130,246,0.12)",
+  accent:        "#60A5FA",
+  accentDim:     "rgba(96,165,250,0.10)",
+  text:          "#111827",
+  textSub:       "#374151",
+  textDim:       "#9CA3AF",
   error:         "#EF4444",
-  errorBg:       "#150f0f",
+  errorBg:       "#FEF2F2",
   errorBorder:   "rgba(239,68,68,0.30)",
   font:          "'Plus Jakarta Sans','DM Sans',sans-serif"};
 
@@ -345,9 +345,12 @@ function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...",
 
   // Sync initial value once
   useEffect(() => {
-    if (editorRef.current && !editorRef.current.innerHTML && value) {
-      editorRef.current.innerHTML = value;
-      setIsEmpty(false);
+    if (editorRef.current && value) {
+      const current = editorRef.current.innerHTML;
+      if (!current || current === "<br>") {
+        editorRef.current.innerHTML = value;
+        setIsEmpty(false);
+      }
     }
   }, []);
 
@@ -1240,7 +1243,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
           {String(index+1).padStart(2,"0")}
         </span>
         <p style={{flex:1,margin:0,fontSize:14,fontWeight:600,color:hovered?C.text:C.textSub}}>
-          {q.content || <em style={{color:C.textDim}}>Câu hỏi chưa có tiêu đề</em>}
+          {q.content ? <span dangerouslySetInnerHTML={{__html: q.content}} /> : <em style={{color:C.textDim}}>Câu hỏi chưa có tiêu đề</em>}
         </p>
         <span style={{fontSize:11,color:C.textDim,flexShrink:0}}>
           {Q_TYPES.find(t=>t.value===toFEType(q.type))?.label}
@@ -1344,6 +1347,104 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   );
 }
 
+/* ── Survey Hero Card ─────────────────────────────────────────────── */
+function SurveyHeroCard({ title, description, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftDesc, setDraftDesc] = useState("");
+  const [localErr, setLocalErr] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = () => {
+    setDraftTitle(title);
+    setDraftDesc(description || "");
+    setLocalErr("");
+    setEditing(true);
+  };
+
+  if (!editing) {
+    return (
+      <div style={{
+        background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:14}}>
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:10,fontWeight:600,letterSpacing:"0.08em",color:C.textDim,textTransform:"uppercase"}}>
+              Khảo sát của bạn
+            </div>
+            <h1 style={{fontSize:18,fontWeight:600,color:"#111827",margin:"6px 0 8px",lineHeight:1.25}}>
+              {title?.trim() ? <span dangerouslySetInnerHTML={{__html:title}}/> : "Chưa đặt tiêu đề cho khảo sát này."}
+            </h1>
+            <p style={{margin:0,fontSize:13,color:C.textDim,lineHeight:1.5,whiteSpace:"pre-wrap"}}>
+              {description?.trim() ? <span dangerouslySetInnerHTML={{__html:description}}/> : "Chưa có mô tả cho khảo sát này."}
+            </p>
+          </div>
+          <button type="button" onClick={startEdit} style={{
+            display:"flex",alignItems:"center",gap:6,
+            padding:"0 12px",background:"#fff",
+            border:`1px solid ${C.primary}`,borderRadius:8,
+            fontSize:13,fontWeight:600,color:C.primary,
+            cursor:"pointer",fontFamily:C.font,height:32,flexShrink:0}}>
+            <Pencil size={13}/> Sửa
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:14}}>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div>
+          <span style={{...lbl,marginBottom:4,display:"block"}}>Tiêu đề</span>
+          <RichTextEditor
+            value={draftTitle}
+            onChange={(v) => { setDraftTitle(v); setLocalErr(""); }}
+            placeholder="Tên khảo sát"
+            minHeight={36}
+          />
+        </div>
+        <div>
+          <span style={{...lbl,marginBottom:4,display:"block"}}>Mô tả</span>
+          <RichTextEditor
+            value={draftDesc}
+            onChange={(v) => { setDraftDesc(v); setLocalErr(""); }}
+            placeholder="Mô tả khảo sát"
+            minHeight={60}
+          />
+        </div>
+      </div>
+      {localErr && <div style={{fontSize:12,color:C.error,marginTop:6,fontFamily:C.font}}>{localErr}</div>}
+      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:10}}>
+        <button onClick={()=>setEditing(false)} style={{
+          padding:"7px 14px",background:"transparent",
+          border:`1px solid ${C.border}`,borderRadius:9,
+          fontSize:12,fontWeight:600,color:C.textSub,
+          cursor:"pointer",fontFamily:C.font}}>
+          Huỷ
+        </button>
+        <button onClick={async () => {
+          const t = draftTitle.trim();
+          if (!t) { setLocalErr("Vui lòng nhập tiêu đề."); return; }
+          setSaving(true);
+          try {
+            const s = await onSave(draftTitle, draftDesc);
+            if (s) setEditing(false);
+          } finally { setSaving(false); }
+        }} disabled={saving} style={{
+          display:"flex",alignItems:"center",gap:6,
+          padding:"8px 16px",border:"none",borderRadius:9,
+          fontSize:12,fontWeight:700,
+          background:saving?C.surfaceHigh:C.primary,
+          color:saving?C.textSub:"#fff",
+          cursor:saving?"not-allowed":"pointer",fontFamily:C.font}}>
+          {saving?<><Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/> Đang lưu</>:"Lưu"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Right Sidebar ────────────────────────────────────────────────── */
 function Sidebar({ onAddQuestion }) {
   const items = [
@@ -1352,7 +1453,7 @@ function Sidebar({ onAddQuestion }) {
     { icon:<Type size={18}/>,    title:"Thêm tiêu đề",   action:()=>{} },
     { icon:<Image size={18}/>,   title:"Thêm hình ảnh",  action:()=>{} },
     { icon:<Video size={18}/>,   title:"Thêm video",     action:()=>{} },
-    { icon:<Minus size={18}/>,   title:"Thêm phần mới",  action:()=>{} },
+
   ];
   return (
     <div style={{
@@ -1366,7 +1467,7 @@ function Sidebar({ onAddQuestion }) {
             display:"flex",alignItems:"center",justifyContent:"center",
             width:44,height:44,background:"transparent",border:"none",
             cursor:"pointer",color:C.textSub,transition:"all .12s",
-            borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
+            border:"none"}}
           onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDim;e.currentTarget.style.color=C.primary;}}
           onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
         >
@@ -1606,11 +1707,14 @@ export default function QuestionPage() {
     setActiveId(null);
   }, [updateQuestion]);
 
-  const triggerAdd = () => {
-    setShowForm(v => !v);
-    setFormError("");
+  const handleClose = () => {
+    if (activeId) { setActiveId(null); }
+    if (showForm) { setShowForm(false); resetForm(); }
+  };
+  const handleAddNew = () => {
     setActiveId(null);
-    if (showForm) resetForm();
+    setShowForm(true);
+    setFormError("");
   };
 
   const isChoice    = CHOICE_TYPES.includes(type);
@@ -1651,7 +1755,7 @@ export default function QuestionPage() {
               padding:"8px 14px",
               background:C.surface,
               color:C.primary,
-              border:`1px solid rgba(99,102,241,0.35)`,
+              border:`1px solid rgba(59,130,246,0.35)`,
               borderRadius:10,
               fontSize:12,fontWeight:700,
               cursor:"pointer",fontFamily:C.font}}
@@ -1659,16 +1763,25 @@ export default function QuestionPage() {
             <Sparkles size={14}/>
             Tạo bằng AI
           </button>
-          <button onClick={triggerAdd} style={{
+          {(activeId||showForm)&&<button onClick={handleClose} style={{
+            display:"flex",alignItems:"center",gap:6,
+            padding:"8px 14px",background:"transparent",
+            color:C.textSub,
+            border:`1px solid ${C.border}`,
+            borderRadius:9,fontSize:13,fontWeight:600,
+            cursor:"pointer",fontFamily:C.font}}>
+            <X size={14}/>
+            {activeId?"Đóng":showForm?"Huỷ":""}
+          </button>}
+          <button onClick={handleAddNew} style={{
             display:"flex",alignItems:"center",gap:7,
             padding:"8px 16px",
-            background:showForm?C.surfaceHigh:C.primaryGrad,
-            color:showForm?C.textSub:"#fff",
-            border:showForm?`1px solid ${C.border}`:"none",
+            background:C.primaryGrad,
+            color:"#fff",
+            border:"none",
             borderRadius:9,fontSize:13,fontWeight:700,
             cursor:"pointer",fontFamily:C.font}}>
-            {showForm?<X size={14}/>:<Plus size={14}/>}
-            {showForm?"Huỷ":"Câu hỏi mới"}
+            <Plus size={14}/> Câu hỏi mới
           </button>
         </div>
       </div>
@@ -1679,33 +1792,17 @@ export default function QuestionPage() {
         display:"flex",gap:16,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:12}}>
 
-          {/* Form header card */}
-          <div style={{
-            background:C.surface,border:`1px solid ${C.border}`,
-            borderTop:`6px solid ${C.primary}`,borderRadius:12,
-            padding:"20px 24px",marginBottom:4}}>
-            <input
-              defaultValue="Mẫu khảo sát"
-              style={{
-                width:"100%",background:"transparent",
-                border:"none",borderBottom:`1px solid ${C.border}`,
-                color:C.text,fontSize:22,fontWeight:700,fontFamily:C.font,
-                outline:"none",padding:"4px 0 8px"}}
-              onFocus={e=>e.target.style.borderBottomColor=C.primary}
-              onBlur={e=>e.target.style.borderBottomColor=C.border}
-            />
-            <input
-              defaultValue=""
-              placeholder="Mô tả biểu mẫu"
-              style={{
-                width:"100%",background:"transparent",
-                border:"none",borderBottom:`1px solid ${C.border}`,
-                color:C.textSub,fontSize:13,fontFamily:C.font,
-                outline:"none",padding:"8px 0 4px",marginTop:8}}
-              onFocus={e=>e.target.style.borderBottomColor=C.primary}
-              onBlur={e=>e.target.style.borderBottomColor=C.border}
-            />
-          </div>
+          {/* ── Survey title/description card ── */}
+          <SurveyHeroCard
+            title={surveyTitle}
+            description={surveyDescription}
+            onSave={async (t, d) => {
+              const updated = await surveyService.updateSurvey(surveyId, { title: t, description: d || undefined });
+              const s = updated?.data?.data ?? updated?.data?.survey ?? (updated?.data?.id != null ? updated?.data : null);
+              if (s) { setSurveyTitle(s.title || ""); setSurveyDescription(s.description || ""); }
+              return s;
+            }}
+          />
 
           {/* ── New question form ── */}
           {showForm && (
@@ -1826,7 +1923,7 @@ export default function QuestionPage() {
               </button>
               <button type="button" onClick={()=>setAiOpen(true)} style={{
                 fontSize:13,fontWeight:700,color:C.primary,background:C.surface,
-                border:`1px solid rgba(99,102,241,0.35)`,cursor:"pointer",borderRadius:10,
+                border:`1px solid rgba(59,130,246,0.35)`,cursor:"pointer",borderRadius:10,
                 padding:"9px 18px",fontFamily:C.font,
                 display:"flex",alignItems:"center",gap:8}}>
                 <Sparkles size={14}/>
@@ -1852,7 +1949,7 @@ export default function QuestionPage() {
         </div>
 
         {/* Sidebar */}
-        <Sidebar onAddQuestion={triggerAdd}/>
+        <Sidebar onAddQuestion={handleAddNew}/>
       </div>
 
       <AiQuestionAssistant

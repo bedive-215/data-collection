@@ -233,7 +233,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
     <Modal open={open} onClose={onClose} title="Chia sẻ khảo sát">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ padding: "14px 16px", background: "rgba(67,97,238,0.08)", borderRadius: 14, border: `1px solid rgba(67,97,238,0.2)` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font }}>{survey?.title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</div>
           <div style={{ fontSize: 12, color: C.textSub, marginTop: 2, fontFamily: C.font }}>
             Tạo link để chia sẻ survey với mọi người
           </div>
@@ -389,7 +389,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <UserPlus size={17} color={C.primary}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.font}}>{survey?.title}</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.font}}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</div>
             <div style={{fontSize:11,color:C.textSub,marginTop:2,fontFamily:C.font}}>Nhập nhiều email để mời hàng loạt</div>
           </div>
           {emailCount>0&&<span style={{padding:"3px 10px",borderRadius:999,background:"rgba(67,97,238,0.15)",color:C.primary,fontSize:11,fontWeight:700,flexShrink:0,fontFamily:C.font}}>{emailCount} email</span>}
@@ -518,17 +518,17 @@ function ParticipantsModal({ open, onClose, survey, onGetParticipants, onDeleteP
           ):(
             filtered.map((p,i)=>{
               const av=AV[i%AV.length];
-              const deleteKey=p.participant_id??p.id;
+              const deleteKey=p.participant_i??p.id;
               const isConfirming=confirmPid===deleteKey;
               const isDeleting=deleting===deleteKey;
               const roleStyle=getRoleStyle(p.role);
               return (
-                <div key={p.participant_id??p.id??i} style={{display:"flex",alignItems:"center",gap:11,padding:"11px 14px",borderBottom:i<filtered.length-1?`1px solid rgba(0,0,0,0.05)`:"none",background:isConfirming?C.errorBg:"transparent",transition:"background .15s"}}>
+                <div key={p.participant_i??p.i??i} style={{display:"flex",alignItems:"center",gap:11,padding:"11px 14px",borderBottom:i<filtered.length-1?`1px solid rgba(0,0,0,0.05)`:"none",background:isConfirming?C.errorBg:"transparent",transition:"background .15s"}}>
                   <div style={{width:34,height:34,borderRadius:"50%",background:av.bg,color:av.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{getInitials(p.name,p.email)}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:600,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{p.name||p.email}</div>
                     {p.name&&<div style={{fontSize:11,color:C.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:C.font}}>{p.email}</div>}
-                    {!p.name&&<div style={{fontSize:10,color:C.textDim,fontFamily:C.font}}>ID: {p.id?p.id.slice(0,8)+"...":"—"}</div>}
+                    {!p.name&&<div style={{fontSize:10,color:C.textDim,fontFamily:C.font}}>ID: {p.i?p.id.slice(0,8)+"...":"—"}</div>}
                   </div>
                   {p.role&&<span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:999,flexShrink:0,color:roleStyle.color,background:roleStyle.bg,border:`1px solid ${roleStyle.border}`,fontFamily:C.font}}>{p.role==="ADMIN"?"Quản trị":p.role==="owner"?"Chủ sở hữu":p.role==="editor"?"Biên tập":p.role==="viewer"?"Người xem":p.role==="respondent"?"Người trả lời":p.role}</span>}
                   {isConfirming?(
@@ -638,7 +638,7 @@ function AnswerBlock({ item }) {
       <span style={{fontSize:12,fontWeight:isSelected?600:400,color:isSelected?"#1e40af":"#6b7280"}}>{label}</span>
     </div>
   );
-  if(options.length>0) return <div style={{display:"flex",flexDirection:"column",gap:6}}>{options.map((opt,i)=>{const label=typeof opt==="string"?opt:(opt.label??opt.value??opt.content??"");const isSelected=answerSet.has(label)||answerSet.has(String(opt.id??""));return renderOption(label,isSelected,i);})}</div>;
+  if(options.length>0) return <div style={{display:"flex",flexDirection:"column",gap:6}}>{options.map((opt,i)=>{const label=typeof opt==="string"?opt:(opt.label??opt.value??opt.content??"");const isSelected=answerSet.has(label)||answerSet.has(String(opt.i??""));return renderOption(label,isSelected,i);})}</div>;
   if(hasAnswer) return <div style={{display:"flex",flexDirection:"column",gap:6}}>{[...answerSet].map((label,i)=>renderOption(label,true,i))}</div>;
   return <p style={{fontSize:12,color:C.textDim,fontStyle:"italic",margin:0}}>Không có câu trả lời</p>;
 }
@@ -709,7 +709,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
                   <Clock size={11} color="#d97706"/>
                   <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#92400e",fontFamily:C.font}}>Hết hạn</span>
                 </div>
-                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}>{surveyTitle}</h2>
+                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}><span dangerouslySetInnerHTML={{__html:surveyTitle}}/></h2>
               </>
             ) : (
               <>
@@ -717,7 +717,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
                   <CheckCircle2 size={11} color="#16a34a"/>
                   <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#15803d",fontFamily:C.font}}>Đã hoàn thành</span>
                 </div>
-                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}>{surveyTitle}</h2>
+                <h2 style={{fontSize:18,fontWeight:800,color:C.text,margin:"0 0 4px",fontFamily:C.font}}><span dangerouslySetInnerHTML={{__html:surveyTitle}}/></h2>
                 {!loading&&<p style={{fontSize:12,color:C.textSub,margin:0,fontFamily:C.font}}>{answers.length} câu hỏi</p>}
               </>
             )}
@@ -738,7 +738,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
             <div style={{fontSize:13,color:"#92400e",fontFamily:C.font,lineHeight:1.6,marginBottom:16}}>Khảo sát này đã kết thúc. Kết quả của bạn vẫn được lưu.</div>
           </div>}
           {!loading&&!error&&!expiredWarning&&answers.length===0&&<div style={{textAlign:"center",padding:"48px 0"}}><Inbox size={36} color={C.textDim} style={{marginBottom:8}}/><div style={{fontSize:13,color:C.textSub,fontFamily:C.font}}>Không có câu trả lời.</div></div>}
-          {!loading&&!error&&!expiredWarning&&answers.length>0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{answers.map((item,idx)=><QuestionCard key={item.question_id??idx} item={item} index={idx}/>)}</div>}
+          {!loading&&!error&&!expiredWarning&&answers.length>0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{answers.map((item,idx)=><QuestionCard key={item.question_i??idx} item={item} index={idx}/>)}</div>}
         </div>
       </div>
     </div>,
@@ -772,7 +772,7 @@ function ExpiredModal({ open, onClose, survey }) {
         </div>
         <h3 style={{ margin:"0 0 8px", fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã kết thúc</h3>
         <p style={{ margin:"0 0 20px", fontSize:13, color:"#64748b", lineHeight:1.5 }}>
-          Khảo sát <strong>"{survey.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+          Khảo sát <strong>"<span dangerouslySetInnerHTML={{__html:survey.title}}/>"</strong> đã kết thúc và không còn nhận phản hồi.
         </p>
         <button
           onClick={onClose}
@@ -847,8 +847,8 @@ function PublicSurveyCard({ survey, done, onStart, onViewSubmission, index, onEx
 
       {/* Body */}
       <div style={{padding:"16px 18px",flex:1,display:"flex",flexDirection:"column"}}>
-        <h3 style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:6,lineHeight:1.4,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{survey.title}</h3>
-        <p style={{fontSize:12,color:C.textSub,marginBottom:14,lineHeight:1.6,flex:1,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{survey.description||"Không có mô tả"}</p>
+        <h3 style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:6,lineHeight:1.4,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}><span dangerouslySetInnerHTML={{__html:survey.title}}/></h3>
+        <p style={{fontSize:12,color:C.textSub,marginBottom:14,lineHeight:1.6,flex:1,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{survey.description ? <span dangerouslySetInnerHTML={{__html:survey.description}}/> : "Không có mô tả"}</p>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto"}}>
           <div style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:C.textDim,fontFamily:C.font}}>
             <Clock size={11}/><span>{createdDate}</span>
@@ -979,8 +979,8 @@ function MySurveyCard({
             </div>
           ):(
             <>
-              <h3 style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:4,lineHeight:1.5,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{survey.title}</h3>
-              <p style={{fontSize:12,color:C.textSub,lineHeight:1.6,minHeight:36,margin:"0 0 12px",fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{survey.description||"Không có mô tả"}</p>
+              <h3 style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:4,lineHeight:1.5,fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}><span dangerouslySetInnerHTML={{__html:survey.title}}/></h3>
+              <p style={{fontSize:12,color:C.textSub,lineHeight:1.6,minHeight:36,margin:"0 0 12px",fontFamily:C.font,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{survey.description ? <span dangerouslySetInnerHTML={{__html:survey.description}}/> : "Không có mô tả"}</p>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto"}}>
                 <div style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:C.textDim,fontFamily:C.font}}>
                   <Calendar size={11}/>{survey.created_at?new Date(survey.created_at).toLocaleDateString("vi-VN"):""}
@@ -1094,7 +1094,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
           </div>
           <div>
             <h3 style={{ margin:0, fontSize:17, fontWeight:700, color:"#0f172a" }}>Khảo sát đã hết hạn</h3>
-            <p style={{ margin:"4px 0 0", fontSize:12, color:"#64748b", maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{survey?.title}</p>
+            <p style={{ margin:"4px 0 0", fontSize:12, color:"#64748b", maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</p>
           </div>
         </div>
 

@@ -68,7 +68,7 @@ function SurveyCard({ survey, onView, onStats }) {
             fontFamily: C.font, marginBottom: 4,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>
-            {survey.title}
+            <span dangerouslySetInnerHTML={{__html:survey.title}}/>
           </div>
 
           {/* Stats row */}
@@ -174,7 +174,7 @@ function StatsPanel({ survey }) {
       animation: "slideInUp 0.2s ease",
     }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: C.text, fontFamily: C.font, marginBottom: 10 }}>
-        📊 {survey.title}
+        📊 <span dangerouslySetInnerHTML={{__html:survey.title}}/>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
@@ -726,7 +726,7 @@ export default function AiChatbox() {
                                 }}>
                                   <div>
                                     <div style={{ fontSize: 12, fontWeight: 700, color: C.text, fontFamily: C.font }}>
-                                      {s.title}
+                                      <span dangerouslySetInnerHTML={{__html:s.title}}/>
                                     </div>
                                     <div style={{ fontSize: 10, color: C.textSub, fontFamily: C.font, marginTop: 2 }}>
                                       {s.question_count} câu · {s.response_count} phản hồi

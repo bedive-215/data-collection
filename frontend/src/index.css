@@ -2,37 +2,37 @@
 
 /* ─── Design Tokens ──────────────────────────────────── */
 @theme {
-  --color-primary:    #F59E0B;
+  --color-primary:    #3B82F6;
   --color-on-primary: #FFFFFF;
-  --color-secondary:  #6366F1;
-  --color-accent:     #8B5CF6;
-  --color-bg-base:     #0F1117;
-  --color-bg-surface:  #1A1D2E;
-  --color-bg-card:     #141620;
+  --color-secondary:  #3B82F6;
+  --color-accent:     #60A5FA;
+  --color-bg-base:     #F0EBF8;
+  --color-bg-surface:  #FFFFFF;
+  --color-bg-card:     #FFFFFF;
   --color-success:    #10B981;
   --color-warning:    #F59E0B;
   --color-error:      #EF4444;
   --color-info:       #3B82F6;
-  --color-border:      #2A2D3E;
-  --color-border-hover:#3A3D50;
+  --color-border:      #E8E6F0;
+  --color-border-hover:#D1D5DB;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ─── CSS Custom Properties ──────────────────────────── */
 :root {
-  --admin-bg:            #0F1117;
-  --admin-bg-secondary:  #141620;
-  --admin-surface:       #1A1D2E;
-  --admin-surface-hover: #222638;
-  --admin-border:        #2A2D3E;
-  --admin-border-hover:  #3A3D50;
-  --admin-text:          #F9FAFB;
-  --admin-text-sub:      #9CA3AF;
-  --admin-text-dim:      #4B5563;
-  --admin-primary:       #F59E0B;
-  --admin-primary-hover: #D97706;
-  --admin-secondary:     #6366F1;
+  --admin-bg:            #F0EBF8;
+  --admin-bg-secondary:  #FFFFFF;
+  --admin-surface:       #FFFFFF;
+  --admin-surface-hover: #F3F4F7;
+  --admin-border:        #E8E6F0;
+  --admin-border-hover:  #D1D5DB;
+  --admin-text:          #111827;
+  --admin-text-sub:      #374151;
+  --admin-text-dim:      #9CA3AF;
+  --admin-primary:       #3B82F6;
+  --admin-primary-hover: #2563EB;
+  --admin-secondary:     #3B82F6;
   --admin-success:       #10B981;
   --admin-error:         #EF4444;
   --admin-warning:       #F59E0B;

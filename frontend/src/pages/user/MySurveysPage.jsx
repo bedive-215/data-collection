@@ -69,7 +69,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Gia hạn khảo sát</h3>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>{survey?.title}</p>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</p>
           </div>
         </div>
         <div style={{ padding: "16px 24px 20px" }}>
@@ -261,7 +261,7 @@ export default function MySurveysPage() {
         <div onClick={() => setExpiredModal({ open: false, survey: null })} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: "32px 24px", textAlign: "center", maxWidth: 400 }}>
             <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
-            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>Khảo sát <strong>"{expiredModal.survey?.title}"</strong> đã kết thúc.</p>
+            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>Khảo sát <strong>"<span dangerouslySetInnerHTML={{__html:expiredModal.survey?.title}}/>"</strong> đã kết thúc.</p>
             <button onClick={() => setExpiredModal({ open: false, survey: null })} style={{ padding: "10px 32px", background: "#f4f6f8", border: "1px solid #e8ecf2", borderRadius: 10, color: "#64748b", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đóng</button>
           </div>
         </div>

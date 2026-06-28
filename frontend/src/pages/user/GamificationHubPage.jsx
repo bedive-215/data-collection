@@ -411,7 +411,7 @@ function LeaderboardTab() {
         <div className="font-bold text-gray-800 mb-3">{periodLabel?.sub}</div>
         {loading ? (
           <LeaderboardSkeleton />
-        ) : leaderboard?.top?.length > 0 ? (
+        ) : leaderboar?.top?.length > 0 ? (
           <div className="space-y-2">
             {leaderboard.top.map((user, index) => (
               <LeaderboardCard

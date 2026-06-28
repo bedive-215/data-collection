@@ -194,7 +194,7 @@ function SurveySelector({ surveys, selected, onSelect, loading }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {survey.title || "Không có tiêu đề"}
+                      {survey.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : "Không có tiêu đề"}
                     </div>
                     <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>
                       <StatusBadge status={survey.status} />
@@ -403,7 +403,7 @@ export default function AnalysisHubPage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {selectedSurvey.title}
+                  <span dangerouslySetInnerHTML={{__html:selectedSurvey.title}}/>
                 </span>
                 <StatusBadge status={selectedSurvey.status} />
               </div>

@@ -338,7 +338,7 @@ export default function CreateSurveyComposer({ onCancel, onSuccess }) {
           <span style={{ fontSize: 15, fontWeight: 800, color: C.text, fontFamily: C.font }}>Đã tạo xong</span>
         </div>
         <p style={{ margin: "0 0 14px", fontSize: 13, color: C.textSub, lineHeight: 1.55, fontFamily: C.font }}>
-          <strong style={{ color: C.text }}>{done.survey.title}</strong>
+          <strong style={{ color: C.text }}><span dangerouslySetInnerHTML={{__html:done.survey.title}}/></strong>
         </p>
         {done.shareUrl && (
           <div style={{ marginBottom: 14 }}>

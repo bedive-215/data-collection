@@ -14,13 +14,13 @@ const TYPE_LABELS = {
     SYSTEM: "Hệ thống"};
 
 const TYPE_COLORS = {
-    SURVEY_INVITATION: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
+    SURVEY_INVITATION: { bg: "rgba(59,130,246,0.1)", color: "#3B82F6", border: "rgba(59,130,246,0.2)" },
     SURVEY_RESPONSE:    { bg: "rgba(16,185,129,0.1)", color: "#10B981", border: "rgba(16,185,129,0.2)" },
-    SURVEY_EXPIRED:    { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
-    SURVEY_PUBLISHED:  { bg: "rgba(99,102,241,0.1)", color: "#6366F1", border: "rgba(99,102,241,0.2)" },
+    SURVEY_EXPIRED:    { bg: "rgba(59,130,246,0.1)", color: "#3B82F6", border: "rgba(59,130,246,0.2)" },
+    SURVEY_PUBLISHED:  { bg: "rgba(59,130,246,0.1)", color: "#3B82F6", border: "rgba(59,130,246,0.2)" },
     SURVEY_CLOSED:     { bg: "rgba(239,68,68,0.1)", color: "#EF4444", border: "rgba(239,68,68,0.2)" },
-    NEW_PARTICIPANT:   { bg: "rgba(139,92,246,0.1)", color: "#8B5CF6", border: "rgba(139,92,246,0.2)" },
-    SURVEY_INVITATION_SENT: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "rgba(245,158,11,0.2)" },
+    NEW_PARTICIPANT:   { bg: "rgba(96,165,250,0.1)", color: "#60A5FA", border: "rgba(96,165,250,0.2)" },
+    SURVEY_INVITATION_SENT: { bg: "rgba(59,130,246,0.1)", color: "#3B82F6", border: "rgba(59,130,246,0.2)" },
     SYSTEM:            { bg: "rgba(156,163,175,0.1)", color: "#9CA3AF", border: "rgba(156,163,175,0.2)" }};
 
 const formatTime = (dateString) => {
@@ -100,9 +100,9 @@ export default function AdminNotificationsPage() {
                             disabled={loading}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                             style={{
-                                background: "rgba(245,158,11,0.1)",
-                                color: "#F59E0B",
-                                border: "1px solid rgba(245,158,11,0.2)"}}
+                                background: "rgba(59,130,246,0.1)",
+                                color: "#3B82F6",
+                                border: "1px solid rgba(59,130,246,0.2)"}}
                         >
                             {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
                             Đánh dấu đã đọc
@@ -129,8 +129,8 @@ export default function AdminNotificationsPage() {
                 style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)" }}
             >
                 {[
-                    { value: "all", label: "Tất cả", color: "#F9FAFB" },
-                    { value: "unread", label: "Chưa đọc", color: "#F59E0B" },
+                    { value: "all", label: "Tất cả", color: "#111827" },
+                    { value: "unread", label: "Chưa đọc", color: "#3B82F6" },
                     { value: "read", label: "Đã đọc", color: "#9CA3AF" },
                 ].map(({ value, label, color }) => (
                     <button
@@ -139,7 +139,7 @@ export default function AdminNotificationsPage() {
                         className="px-4 py-2 text-sm font-semibold rounded-lg transition-all"
                         style={
                             filter === value
-                                ? { background: "#F59E0B", color: "#000" }
+                                ? { background: "#3B82F6", color: "#FFF" }
                                 : { background: "transparent", color: "var(--admin-text-sub)" }
                         }
                     >

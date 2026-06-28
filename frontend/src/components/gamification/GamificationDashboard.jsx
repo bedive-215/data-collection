@@ -195,7 +195,7 @@ export function GamificationDashboard({ compact = false }) {
 
         {loading ? (
           <LeaderboardSkeleton />
-        ) : leaderboard?.top?.length > 0 ? (
+        ) : leaderboar?.top?.length > 0 ? (
           <div className="space-y-2">
             {leaderboard.top.map((user, index) => (
               <LeaderboardCard

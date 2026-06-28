@@ -141,7 +141,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 // ─── PROGRESS BAR ─────────────────────────────────────────────────────────────
-function ProgressBar({ value, max, color = "#F59E0B" }) {
+function ProgressBar({ value, max, color = "#3B82F6" }) {
   const [w, setW] = useState(0);
   const pct = max > 0 ? (value / max) * 100 : 0;
   useEffect(() => { const t = setTimeout(() => setW(pct), 60); return () => clearTimeout(t); }, [pct]);
@@ -213,7 +213,7 @@ function FunnelViz({ dropOffData }) {
   if (!dropOffData || dropOffData.length === 0) return null;
   const sorted = [...dropOffData].sort((a, b) => b.answered_count - a.answered_count);
   const funnelData = sorted.slice(0, 10).map(d => ({
-    name: `Q${d.question_id?.slice(-3) || "?"}`,
+    name: `Q${d.question_i?.slice(-3) || "?"}`,
     value: d.answered_count}));
   return (
     <ChartBox height={220}>
@@ -245,7 +245,7 @@ function NPSCard({ npsData }) {
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 12, padding: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <ThumbsUp size={17} color="#5B4EE8" />
+        <ThumbsUp size={17} color="#3B82F6" />
         <h4 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>NPS Score</h4>
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
@@ -282,9 +282,9 @@ function StatCard({ label, value, icon: Icon, color, sub, delay = 0 }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
   const iconColors = {
-    indigo:  "#5B4EE8",
+    indigo:  "#3B82F6",
     emerald: "#10b981",
-    violet:  "#8B5CF6",
+    violet:  "#60A5FA",
     amber:   "#f59e0b",
     cyan:    "#06b6d4"};
   const c = iconColors[color] || iconColors.indigo;
@@ -328,7 +328,7 @@ function EmptyState({ icon: Icon, title, desc, onAction, actionLabel }) {
       <h3 style={{ fontSize: 16, fontWeight: 600, color: "#111827", margin: 0 }}>{title}</h3>
       <p style={{ fontSize: 14, color: "#9CA3AF", maxWidth: 300, lineHeight: 1.6, margin: 0 }}>{desc}</p>
       {onAction && actionLabel && (
-        <button onClick={onAction} style={{ marginTop: 8, height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", color: "#5B4EE8", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+        <button onClick={onAction} style={{ marginTop: 8, height: 36, padding: "0 16px", borderRadius: 8, border: "none", background: "#3B82F6", color: "#FFFFFF", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           {actionLabel}
         </button>
       )}
@@ -351,7 +351,7 @@ function QuestionCard({ question, index }) {
   return (
     <div style={{
       background: "#FFFFFF",
-      border: `1px solid ${expanded ? "#5B4EE8" : "#E8E6F0"}`,
+      border: `1px solid ${expanded ? "#3B82F6" : "#E8E6F0"}`,
       borderRadius: 12, overflow: "hidden",
       opacity: animDone ? 1 : 0, transform: animDone ? "translateY(0)" : "translateY(12px)",
       transition: `all 0.4s ease ${index * 60}ms`}}>
@@ -363,12 +363,12 @@ function QuestionCard({ question, index }) {
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "#5B4EE8", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 14, color: "#FFFFFF", flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 14, color: "#FFFFFF", flexShrink: 0 }}>
             {index + 1}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <h4 style={{ fontWeight: 600, fontSize: 14, color: "#111827", margin: 0, marginBottom: 7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {question.question_content || question.question_id?.slice(0, 8) + "…"}
+              {question.question_content || question.question_i?.slice(0, 8) + "…"}
             </h4>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TypeBadge type={question.type} />
@@ -429,7 +429,7 @@ function QuestionCard({ question, index }) {
             <div style={{ paddingTop: 18 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Trung bình", value: question.avg?.toFixed(1),    color: "#F59E0B" },
+                  { label: "Trung bình", value: question.avg?.toFixed(1),    color: "#3B82F6" },
                   { label: "Thấp nhất",  value: question.min,                color: "#9CA3AF" },
                   { label: "Cao nhất",   value: question.max,                color: "#9CA3AF" },
                   { label: "Độ lệch",    value: question.stddev?.toFixed(2), color: "#9CA3AF" },
@@ -450,7 +450,7 @@ function QuestionCard({ question, index }) {
                       <Tooltip content={<ChartTooltip />} />
                       <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={40}>
                         {question.distribution.map((_, i) => (
-                          <Cell key={i} fill="#F59E0B" />
+                          <Cell key={i} fill="#3B82F6" />
                         ))}
                       </Bar>
                     </BarChart>
@@ -526,7 +526,7 @@ function ResponseRow({ response }) {
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.03)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
-        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#4B5563" }}>{response.response_id?.slice(0, 6)}</div>
+        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#4B5563" }}>{response.response_i?.slice(0, 6)}</div>
         <div style={{ flex: 1 }}>
            <span style={{
             display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 8, fontSize: 11, fontWeight: 500,
@@ -570,14 +570,14 @@ function DatePresetSelector({ activePreset, onChange }) {
   const current = DATE_PRESETS?.find(p => p.value === activePreset) || { label: "30 ngày" };
   return (
     <div style={{ position: "relative" }}>
-      <button onClick={() => setShow(!show)} style={{ display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 16px", background: "#FFFFFF", border: "1px solid #5B4EE8", borderRadius: 8, color: "#5B4EE8", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+      <button onClick={() => setShow(!show)} style={{ display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 16px", background: "#FFFFFF", border: "1px solid #3B82F6", borderRadius: 8, color: "#3B82F6", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         <Filter size={14} /> {current.label} <ChevronDown size={14} />
       </button>
       {show && (
         <>
           <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 12, padding: 6, zIndex: 200, minWidth: 155}}>
             {(DATE_PRESETS || []).map(p => (
-              <button key={p.value} onClick={() => { onChange(p.value); setShow(false); }} style={{ width: "100%", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 8, border: "none", background: p.value === activePreset ? "#5B4EE8" : "transparent", color: p.value === activePreset ? "#FFFFFF" : "#374151", fontSize: 13, fontWeight: p.value === activePreset ? 500 : 400, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textAlign: "left" }}>
+              <button key={p.value} onClick={() => { onChange(p.value); setShow(false); }} style={{ width: "100%", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 8, border: "none", background: p.value === activePreset ? "#3B82F6" : "transparent", color: p.value === activePreset ? "#FFFFFF" : "#374151", fontSize: 13, fontWeight: p.value === activePreset ? 500 : 400, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textAlign: "left" }}>
                 {p.label}
               </button>
             ))}
@@ -595,7 +595,7 @@ function TrendSwitcher({ value, onChange }) {
   return (
     <div style={{ display: "flex", background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 8, padding: 3, gap: 2 }}>
       {opts.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s", background: value === o.value ? "#5B4EE8" : "transparent", color: value === o.value ? "#FFFFFF" : "#9CA3AF" }}>
+        <button key={o.value} onClick={() => onChange(o.value)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s", background: value === o.value ? "#3B82F6" : "transparent", color: value === o.value ? "#FFFFFF" : "#9CA3AF" }}>
           {o.label}
         </button>
       ))}
@@ -608,9 +608,9 @@ function SearchBar({ value, onChange, placeholder = "Tìm kiếm phản hồi...
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-      <Search size={15} color={focused ? "#5B4EE8" : "#9CA3AF"} style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
+      <Search size={15} color={focused ? "#3B82F6" : "#9CA3AF"} style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
       <input value={value} onChange={e => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder}
-        style={{ height: 36, padding: "0 14px 0 40px", width: "100%", background: "#FFFFFF", border: `1px solid ${focused ? "#5B4EE8" : "#E8E6F0"}`, borderRadius: 8, fontSize: 14, color: "#374151", fontFamily: "'DM Sans', sans-serif", outline: "none" }}
+        style={{ height: 36, padding: "0 14px 0 40px", width: "100%", background: "#FFFFFF", border: `1px solid ${focused ? "#3B82F6" : "#E8E6F0"}`, borderRadius: 8, fontSize: 14, color: "#374151", fontFamily: "'DM Sans', sans-serif", outline: "none" }}
       />
       {value && (
         <button onClick={() => onChange("")} style={{ position: "absolute", right: 10, background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#9CA3AF", display: "flex", padding: 4 }}>
@@ -627,7 +627,7 @@ function StatusFilter({ value, onChange }) {
   return (
     <div style={{ display: "flex", gap: 6 }}>
       {opts.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: value === o.value ? "2px solid #5B4EE8" : "1px solid #E8E6F0", background: value === o.value ? "#5B4EE8" : "#FFFFFF", color: value === o.value ? "#FFFFFF" : "#374151", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+        <button key={o.value} onClick={() => onChange(o.value)} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: value === o.value ? "2px solid #3B82F6" : "1px solid #E8E6F0", background: value === o.value ? "#3B82F6" : "#FFFFFF", color: value === o.value ? "#FFFFFF" : "#374151", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           {o.label}
         </button>
       ))}
@@ -997,9 +997,9 @@ export default function AnalyticsPage() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#F4F3F8", color: "#374151", fontFamily: "'DM Sans', sans-serif", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "#F4F3F8", color: "#374151", fontSize: 14, fontFamily: "'DM Sans', sans-serif", position: "relative" }}>
       {/* Background */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 50%)" }} />
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(96,165,250,0.06) 0%, transparent 50%)" }} />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
       {/* Sticky Header */}
@@ -1007,18 +1007,18 @@ export default function AnalyticsPage() {
         <div style={{ padding: "16px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button onClick={() => navigate(-1)} style={{ width: 42, height: 42, borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B4EE8" }}>
+              <button onClick={() => navigate(-1)} style={{ width: 42, height: 42, borderRadius: 8, border: "1px solid #3B82F6", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#3B82F6" }}>
                 <ArrowLeft size={18} />
               </button>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Sparkles size={18} color="#5B4EE8" />
+                  <Sparkles size={18} color="#3B82F6" />
                   <h1 style={{ fontSize: 20, fontWeight: 600, color: "#111827", margin: 0 }}>Phân tích Khảo sát</h1>
                 </div>
                 <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, marginTop: 3, fontFamily: "monospace" }}>{surveyId}</p>
               </div>
             </div>
-            <button onClick={handleRefreshAll} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", background: "#FFFFFF", color: "#5B4EE8", border: "1px solid #5B4EE8", borderRadius: 8, height: 36, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+            <button onClick={handleRefreshAll} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", background: "#FFFFFF", color: "#3B82F6", border: "1px solid #3B82F6", borderRadius: 8, height: 36, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               <RefreshCw size={15} /> Làm mới
             </button>
           </div>
@@ -1028,7 +1028,7 @@ export default function AnalyticsPage() {
             const Icon = tab.icon;
             const is = activeTab === tab.id;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "14px 14px 0 0", border: "none", borderBottom: is ? "2px solid #5B4EE8" : "2px solid transparent", background: "transparent", color: is ? "#5B4EE8" : "#9CA3AF", fontSize: 13, fontWeight: is ? 500 : 400, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "14px 14px 0 0", border: "none", borderBottom: is ? "2px solid #3B82F6" : "2px solid transparent", background: "transparent", color: is ? "#3B82F6" : "#9CA3AF", fontSize: 13, fontWeight: is ? 500 : 400, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 <Icon size={15} /> {tab.label}
               </button>
             );
@@ -1086,7 +1086,7 @@ export default function AnalyticsPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Activity size={17} color="#5B4EE8" />
+                      <Activity size={17} color="#3B82F6" />
                     </div>
                     <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Xu hướng phản hồi</h3>
                   </div>
@@ -1098,27 +1098,27 @@ export default function AnalyticsPage() {
                       <AreaChart data={trendData}>
                         <defs>
                           <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#F59E0B" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                            <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E8E6F0" />
                         <XAxis dataKey="period" stroke="#9CA3AF" fontSize={11} />
                         <YAxis stroke="#9CA3AF" fontSize={11} />
                         <Tooltip content={<ChartTooltip />} />
-                        <Area type="monotone" dataKey="count" stroke="#F59E0B" strokeWidth={2.5} fill="url(#g1)" dot={false} activeDot={{ r: 6, fill: "#F59E0B", stroke: "#fff", strokeWidth: 2 }} />
+                        <Area type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2.5} fill="url(#g1)" dot={false} activeDot={{ r: 6, fill: "#3B82F6", stroke: "#fff", strokeWidth: 2 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </ChartBox>
                 ) : <EmptyState icon={Activity} title="Chưa có dữ liệu xu hướng" desc="Khảo sát chưa có phản hồi nào trong khoảng thời gian này" />}
-                {tErr && <p style={{ color: "#ef4444", fontSize: 12, textAlign: "center", marginTop: 8 }}>{tErr} <button onClick={fetchTrend} style={{ color: "#5B4EE8", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer" }}>Thử lại</button></p>}
+                {tErr && <p style={{ color: "#ef4444", fontSize: 12, textAlign: "center", marginTop: 8 }}>{tErr} <button onClick={fetchTrend} style={{ color: "#3B82F6", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer" }}>Thử lại</button></p>}
               </div>
 
               {/* Heatmap */}
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Calendar size={17} color="#5B4EE8" />
+                      <Calendar size={17} color="#3B82F6" />
                   </div>
                     <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Lịch hoạt động</h3>
                 </div>
@@ -1134,7 +1134,7 @@ export default function AnalyticsPage() {
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Award size={17} color="#5B4EE8" />
+                    <Award size={17} color="#3B82F6" />
                   </div>
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Tỷ lệ hoàn thành</h3>
                 </div>
@@ -1154,7 +1154,7 @@ export default function AnalyticsPage() {
                     ))}
                     {(comp?.avg_completion_time_seconds ?? 0) > 0 && (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 8 }}>
-                        <Clock size={14} color="#5B4EE8" />
+                        <Clock size={14} color="#3B82F6" />
                         <span style={{ fontSize: 14, color: "#374151" }}>Thời gian TB: <strong>{comp?.avg_completion_time_display ?? "—"}</strong></span>
                       </div>
                     )}
@@ -1166,7 +1166,7 @@ export default function AnalyticsPage() {
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <TrendingDown size={17} color="#5B4EE8" />
+                    <TrendingDown size={17} color="#3B82F6" />
                   </div>
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Drop-off theo câu hỏi</h3>
                 </div>
@@ -1182,7 +1182,7 @@ export default function AnalyticsPage() {
               <div style={{ ...chartCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <BarChart3 size={17} color="#5B4EE8" />
+                    <BarChart3 size={17} color="#3B82F6" />
                   </div>
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Phân bố câu hỏi</h3>
                 </div>
@@ -1219,7 +1219,7 @@ export default function AnalyticsPage() {
             ) : svErr ? (
               <div style={{ textAlign: "center", padding: 40 }}>
                 <p style={{ color: "#ef4444", marginBottom: 12 }}>{svErr}</p>
-                <button onClick={fetchSurvey} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", color: "#5B4EE8", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button>
+                <button onClick={fetchSurvey} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #3B82F6", background: "#FFFFFF", color: "#3B82F6", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button>
               </div>
             ) : questions.length === 0 ? (
               <EmptyState icon={Target} title="Chưa có câu hỏi" desc="Khảo sát này chưa có câu hỏi nào" actionLabel="Tạo câu hỏi" onAction={() => navigate(`/admin/surveys/${surveyId}`)} />
@@ -1252,7 +1252,7 @@ export default function AnalyticsPage() {
             <div style={{ background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ padding: "16px 20px", borderBottom: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <FileText size={17} color="#5B4EE8" />
+                  <FileText size={17} color="#3B82F6" />
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Danh sách phản hồi</h3>
                 </div>
                 <span style={{ fontSize: 14, color: "#9CA3AF", background: "#F4F3F8", padding: "4px 12px", borderRadius: 20 }}>
@@ -1271,7 +1271,7 @@ export default function AnalyticsPage() {
               {rLoad
                 ? [1,2,3,4,5].map(i => <SkeletonTableRow key={i} cols={5} theme="dark" />)
                 : rErr
-                    ? <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ef4444" }}>{rErr}</p><button onClick={() => fetchResponses(rPage)} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", color: "#5B4EE8", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button></div>
+                    ? <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ef4444" }}>{rErr}</p><button onClick={() => fetchResponses(rPage)} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #3B82F6", background: "#FFFFFF", color: "#3B82F6", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Thử lại</button></div>
                   : responses?.responses?.length > 0
                     ? responses.responses.map(r => <ResponseRow key={r.response_id} response={r} />)
                     : <div style={{ padding: "60px 20px", textAlign: "center" }}><EmptyState icon={Eye} title="Không tìm thấy phản hồi" desc={rSearch || rStatus ? "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm" : "Chưa có phản hồi nào trong khoảng thời gian này"} /></div>
@@ -1281,7 +1281,7 @@ export default function AnalyticsPage() {
                 <div style={{ padding: "14px 18px", borderTop: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                   <button onClick={() => setRPage(p => Math.max(1, p - 1))} disabled={rPage === 1} style={{ height: 36, padding: "0 14px", borderRadius: 8, border: "1px solid #E8E6F0", background: "#FFFFFF", cursor: rPage === 1 ? "not-allowed" : "pointer", fontSize: 14, opacity: rPage === 1 ? 0.4 : 1, color: "#374151", fontFamily: "'DM Sans', sans-serif" }}>←</button>
                   {Array.from({ length: Math.min(5, responses.pagination.total_pages) }, (_, i) => i + 1).map(pg => (
-                    <button key={pg} onClick={() => setRPage(pg)} style={{ width: 36, height: 36, borderRadius: 8, border: pg === rPage ? "none" : "1px solid #E8E6F0", background: pg === rPage ? "#5B4EE8" : "#FFFFFF", color: pg === rPage ? "#FFFFFF" : "#374151", fontWeight: pg === rPage ? 500 : 400, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>{pg}</button>
+                    <button key={pg} onClick={() => setRPage(pg)} style={{ width: 36, height: 36, borderRadius: 8, border: pg === rPage ? "none" : "1px solid #E8E6F0", background: pg === rPage ? "#3B82F6" : "#FFFFFF", color: pg === rPage ? "#FFFFFF" : "#374151", fontWeight: pg === rPage ? 500 : 400, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>{pg}</button>
                   ))}
                   <button onClick={() => setRPage(p => Math.min(responses.pagination.total_pages, p + 1))} disabled={rPage === responses.pagination.total_pages} style={{ height: 36, padding: "0 14px", borderRadius: 8, border: "1px solid #E8E6F0", background: "#FFFFFF", cursor: rPage === responses.pagination.total_pages ? "not-allowed" : "pointer", fontSize: 14, opacity: rPage === responses.pagination.total_pages ? 0.4 : 1, color: "#374151", fontFamily: "'DM Sans', sans-serif" }}>→</button>
                 </div>
@@ -1295,7 +1295,7 @@ export default function AnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <Zap size={17} color="#5B4EE8" />
+                <Zap size={17} color="#3B82F6" />
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Cross-Tabulation</h3>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 16 }}>
@@ -1312,7 +1312,7 @@ export default function AnalyticsPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={fetchCrossTab} disabled={!selectedQ1 || !selectedQ2 || ctLoading} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "none", background: "#5B4EE8", color: "#FFFFFF", fontSize: 14, cursor: !selectedQ1 || !selectedQ2 || ctLoading ? "not-allowed" : "pointer", opacity: !selectedQ1 || !selectedQ2 || ctLoading ? 0.5 : 1, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={fetchCrossTab} disabled={!selectedQ1 || !selectedQ2 || ctLoading} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "none", background: "#3B82F6", color: "#FFFFFF", fontSize: 14, cursor: !selectedQ1 || !selectedQ2 || ctLoading ? "not-allowed" : "pointer", opacity: !selectedQ1 || !selectedQ2 || ctLoading ? 0.5 : 1, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                 {ctLoading ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={15} />}
                 Phân tích
               </button>
@@ -1392,7 +1392,7 @@ export default function AnalyticsPage() {
                             const intensity = cell.count / maxCount;
                             return (
                               <td key={cell.option_id} style={{ padding: "11px 12px", textAlign: "center", borderBottom: "1px solid #E8E6F0" }}>
-                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 8, fontSize: 13, fontWeight: 600, background: `rgba(91,78,232,${intensity * 0.3})`, color: intensity > 0.5 ? "#FFFFFF" : "#5B4EE8" }}>
+                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 8, fontSize: 13, fontWeight: 600, background: `rgba(59,130,246,${intensity * 0.3})`, color: intensity > 0.5 ? "#FFFFFF" : "#3B82F6" }}>
                                   {cell.count}
                                 </span>
                               </td>
@@ -1414,7 +1414,7 @@ export default function AnalyticsPage() {
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F3F8", border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Brain size={17} color="#5B4EE8" />
+                  <Brain size={17} color="#3B82F6" />
                 </div>
                 <div>
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>AI Insights</h3>
@@ -1423,7 +1423,7 @@ export default function AnalyticsPage() {
                 <button
                   onClick={fetchAiInsights}
                   disabled={aiLoad}
-                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", color: "#5B4EE8", fontSize: 14, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
+                  style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #3B82F6", background: "#FFFFFF", color: "#3B82F6", fontSize: 14, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: aiLoad ? 0.6 : 1 }}
                 >
                   <RefreshCw size={13} style={aiLoad ? { animation: "spin 1s linear infinite" } : {}} />
                   Tải lại
@@ -1443,7 +1443,7 @@ export default function AnalyticsPage() {
               ) : aiErr ? (
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <p style={{ color: "#ef4444", marginBottom: 12 }}>{aiErr}</p>
-                  <button onClick={fetchAiInsights} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #5B4EE8", background: "#FFFFFF", color: "#5B4EE8", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                  <button onClick={fetchAiInsights} style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #3B82F6", background: "#FFFFFF", color: "#3B82F6", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                     Thử lại
                   </button>
                 </div>
@@ -1470,7 +1470,7 @@ export default function AnalyticsPage() {
                       const match = trimmed.match(/^\* \*\*(.+?)\*\*[:—]?\s*(.*)$/);
                       if (match) return (
                         <div key={i} style={{ margin: "10px 0 8px", paddingLeft: 8 }}>
-                          <strong style={{ color: "#5B4EE8" }}>{match[1]}</strong>
+                          <strong style={{ color: "#3B82F6" }}>{match[1]}</strong>
                           {match[2] && <span style={{ color: "#9CA3AF" }}>{match[2]}</span>}
                         </div>
                       );
@@ -1479,7 +1479,7 @@ export default function AnalyticsPage() {
                     if (trimmed.startsWith("- **")) {
                       const m = trimmed.match(/^- \*\*(.+?)\*\*[:—]?\s*(.*)$/);
                       if (m) return (
-                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid #5B4EE8" }}>
+                        <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid #3B82F6" }}>
                           <strong style={{ color: "#111827" }}>{m[1]}</strong>
                           {m[2] && <span style={{ color: "#9CA3AF" }}> — {m[2]}</span>}
                         </div>
@@ -1506,7 +1506,7 @@ export default function AnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ ...chartCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <FileSpreadsheet size={18} color="#5B4EE8" />
+                <FileSpreadsheet size={18} color="#3B82F6" />
                 <h3 style={{ fontSize: 16, fontWeight: 600, color: "#111827", margin: 0 }}>Xuất dữ liệu</h3>
               </div>
               <p style={{ fontSize: 14, color: "#9CA3AF", marginBottom: 20, lineHeight: 1.6 }}>
@@ -1515,7 +1515,7 @@ export default function AnalyticsPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {[
                   { icon: FileSpreadsheet, title: "Xuất CSV",  desc: "Định dạng Excel/Google Sheets.", format: "csv",  color: "#10b981" },
-                  { icon: Copy,            title: "Xuất JSON", desc: "Dữ liệu thô dạng JSON.",         format: "json", color: "#8B5CF6" },
+                  { icon: Copy,            title: "Xuất JSON", desc: "Dữ liệu thô dạng JSON.",         format: "json", color: "#60A5FA" },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
@@ -1535,8 +1535,8 @@ export default function AnalyticsPage() {
                         <p style={{ fontSize: 14, color: "#9CA3AF", margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Download size={14} color="#5B4EE8" />
-                        <span style={{ fontSize: 14, fontWeight: 500, color: "#5B4EE8" }}>Tải về ngay</span>
+                        <Download size={14} color="#3B82F6" />
+                        <span style={{ fontSize: 14, fontWeight: 500, color: "#3B82F6" }}>Tải về ngay</span>
                       </div>
                     </div>
                   );

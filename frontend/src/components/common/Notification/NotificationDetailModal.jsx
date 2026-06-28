@@ -296,7 +296,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: 'var(--admin-text-dim)' }}>Khảo sát</p>
-                                    <p className="text-sm font-bold truncate" style={{ color: 'var(--admin-text)' }}>{surveyTitle}</p>
+                                    <p className="text-sm font-bold truncate" style={{ color: 'var(--admin-text)' }}><span dangerouslySetInnerHTML={{__html:surveyTitle}}/></p>
                                 </div>
                             </div>
                         </div>
@@ -356,7 +356,7 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                                         </div>
                                         <div>
                                             <p className="text-[11px] text-[var(--admin-text-dim)]">Mô tả</p>
-                                            <p className="text-sm text-[var(--admin-text-sub)] line-clamp-2">{data.surveyDescription}</p>
+                                            <p className="text-sm text-[var(--admin-text-sub)] line-clamp-2"><span dangerouslySetInnerHTML={{__html:data.surveyDescription}}/></p>
                                         </div>
                                     </div>
                                 )}
@@ -414,6 +414,17 @@ const NotificationDetailModal = ({ notification, onClose, onMarkRead, onDelete }
                 {/* Footer */}
                 <div className="px-6 py-4 flex-shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-bg-secondary)] flex flex-wrap gap-2">
                     {data.surveyId && type === 'SURVEY_INVITATION' && (() => {
+                        const isExpired = endDateInfo?.isExpired;
+                        if (role === 'editor' && isExpired) {
+                            return (
+                                <button
+                                    onClick={onClose}
+                                    className="px-5 py-2.5 text-sm font-medium text-[var(--admin-text-sub)] hover:bg-[var(--admin-surface-hover)] rounded-xl transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                            );
+                        }
                         const { text, icon: ActionIcon } = getInviteActionLabel();
                         return (
                             <button

@@ -10,7 +10,7 @@ export const LEADERBOARD_PERIODS = {
 export const leaderboardService = {
   getLeaderboard: (period = "WEEKLY", limit = 10) =>
     apiClient.get(
-      `/api/v1/gamification/leaderboard?period=${period}&limit=${limit}`
+      `/api/v1/gamification/leaderboar?period=${period}&limit=${limit}`
     ),
 
   getUserRank: (period = "WEEKLY") =>

@@ -44,7 +44,7 @@ export default function AdminProfile() {
   if (loading && !user) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin" size={40} style={{ color: "#F59E0B" }} />
+        <Loader2 className="animate-spin" size={40} style={{ color: "#3B82F6" }} />
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default function AdminProfile() {
               <div
                 className="w-28 h-28 rounded-2xl flex items-center justify-center text-3xl font-bold"
                 style={{
-                  background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                  background: "linear-gradient(135deg, #3B82F6, #2563EB)",
                   border: "3px solid rgba(245,158,11,0.3)",
                   color: "#000"}}
               >
@@ -96,7 +96,7 @@ export default function AdminProfile() {
             )}
             <button
               className="absolute bottom-1 right-1 p-2.5 rounded-xl text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)" }}
+              style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)" }}
             >
               <Camera size={16} />
             </button>
@@ -111,12 +111,12 @@ export default function AdminProfile() {
             className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
             style={{
               background: "rgba(245,158,11,0.1)",
-              color: "#F59E0B",
+              color: "#3B82F6",
               border: "1px solid rgba(245,158,11,0.2)"}}
           >
             <span
               className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "#F59E0B" }}
+              style={{ background: "#3B82F6" }}
             />
             {user?.role || "Administrator"}
           </span>
@@ -246,7 +246,7 @@ export default function AdminProfile() {
               disabled={saving}
               className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-black rounded-xl transition-all disabled:opacity-50"
               style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)"}}
+                background: "linear-gradient(135deg, #3B82F6, #2563EB)"}}
             >
               {saving ? (
                 <Loader2 size={18} className="animate-spin" />

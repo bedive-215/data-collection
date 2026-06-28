@@ -20,18 +20,19 @@ import {
 
 /* -- Design tokens (flat, no glass) -- */
 const C = {
-  bg:            "#F4F3F8",
+  bg:            "#F0EBF8",
   surface:       "#FFFFFF",
-  surfaceHover:  "#F8F7FC",
+  surfaceHover:  "#F3F4F7",
   border:        "#E8E6F0",
-  primary:       "#5B4EE8",
-  primaryLight:  "#EDE9FF",
-  primaryBg:     "#F0EFF8",
+  primary:       "#3B82F6",
+  primaryGrad:   "linear-gradient(135deg,#3B82F6,#2563EB)",
+  primaryLight:  "#DBEAFE",
+  primaryBg:     "#EFF6FF",
   text:          "#374151",
   textSub:       "#9CA3AF",
   textDim:       "#9CA3AF",
   textMuted:     "#9CA3AF",
-  error:         "#E24B4A",
+  error:         "#EF4444",
   errorBg:       "#FEF2F2",
   errorBorder:   "#FECACA",
   font:          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"};
@@ -62,19 +63,19 @@ const toBEType = (feType) => feType;
 
 /* -- Question type definitions (UI only) -- */
 const Q_TYPES = [
-  { value:"TEXT",            label:"Tr? l?i ng?n",      icon:<Type size={15}/> },
-  { value:"PARAGRAPH",       label:"�o?n van",           icon:<AlignLeft size={15}/> },
-  { value:"SINGLE_CHOICE",   label:"Tr?c nghi?m",        icon:<span style={{fontSize:15,lineHeight:1}}>?</span> },
-  { value:"MULTIPLE_CHOICE", label:"H?p ki?m",           icon:<CheckSquare size={15}/> },
-  { value:"DROPDOWN",        label:"Menu th? xu?ng",     icon:<List size={15}/> },
-  { value:"LINEAR_SCALE",    label:"Ph?m vi tuy?n t�nh", icon:<ToggleLeft size={15}/> },
-  { value:"RATING",          label:"X?p h?ng",           icon:<Star size={15}/> },
-  { value:"GRID",            label:"Lu?i tr?c nghi?m",   icon:<Grid size={15}/> },
-  { value:"NUMBER",          label:"S?",                 icon:<span style={{fontSize:13,lineHeight:1,fontWeight:700}}>#</span> },
-  { value:"DATE",            label:"Ng�y",               icon:<Calendar size={15}/> },
-  { value:"TIME",            label:"Gi?",                icon:<Clock size={15}/> },
+  { value:"TEXT",            label:"Trả lời ngắn",      icon:<Type size={15}/> },
+  { value:"PARAGRAPH",       label:"Đoạn văn",           icon:<AlignLeft size={15}/> },
+  { value:"SINGLE_CHOICE",   label:"Trắc nghiệm",        icon:<span style={{fontSize:15,lineHeight:1}}>⭕</span> },
+  { value:"MULTIPLE_CHOICE", label:"Hộp kiểm",           icon:<CheckSquare size={15}/> },
+  { value:"DROPDOWN",        label:"Menu thả xuống",     icon:<List size={15}/> },
+  { value:"LINEAR_SCALE",    label:"Phạm vi tuyến tính", icon:<ToggleLeft size={15}/> },
+  { value:"RATING",          label:"Xếp hạng",           icon:<Star size={15}/> },
+  { value:"GRID",            label:"Lưới trắc nghiệm",   icon:<Grid size={15}/> },
+  { value:"NUMBER",          label:"Số",                 icon:<span style={{fontSize:13,lineHeight:1,fontWeight:700}}>#</span> },
+  { value:"DATE",            label:"Ngày",               icon:<Calendar size={15}/> },
+  { value:"TIME",            label:"Giờ",                icon:<Clock size={15}/> },
   { value:"EMAIL",          label:"Email",               icon:<Mail size={15}/> },
-  { value:"FILE_UPLOAD",     label:"T?i t?p l�n",        icon:<FileUp size={15}/> },
+  { value:"FILE_UPLOAD",     label:"Tải tập lên",        icon:<FileUp size={15}/> },
 ];
 
 const SETTINGS_TYPES = ["NUMBER", "RATING", "DATE", "TEXT", "PARAGRAPH", "LINEAR_SCALE"];
@@ -127,7 +128,7 @@ const getPlainText = (html) => {
 function Toggle({ checked, onChange }) {
   return (
     <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
-      <span style={{fontSize:12,fontWeight:500,color:C.textSub}}>B?t bu?c</span>
+      <span style={{fontSize:12,fontWeight:500,color:C.textSub}}>Bắt buộc</span>
       <div onClick={()=>onChange(!checked)} style={{
         width:44,height:24,borderRadius:999,
         background:checked?C.primary:C.border,
@@ -157,51 +158,51 @@ function SectionPanel({ sections, activeSectionId, onSelect, onDelete, onAdd }) 
   return (
     <div style={{
       background: C.surface, border: "1px solid " + C.border,
-      borderRadius: 12, padding: 20, overflow: "hidden"}}>
+      borderRadius: 10, overflow: "hidden"}}>
       <div style={{
-        padding: "10px 14px 8px",
+        padding: "8px 12px 6px",
         borderBottom: "1px solid " + C.border,
         display: "flex", alignItems: "center", justifyContent: "space-between"}}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          TRANG / PH?N
+        <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          TRANG / PHẦN
         </span>
-        <button onClick={() => setAdding(v => !v)} title="Th�m trang m?i"
+        <button onClick={() => setAdding(v => !v)} title="Thêm trang mới"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: 24, height: 24, borderRadius: 6,
+            width: 22, height: 22, borderRadius: 6,
             background: "transparent",
             border: "none", cursor: "pointer",
             color: C.primary, transition: "all .12s"}}
           onMouseEnter={e => { e.currentTarget.style.background = C.primaryBg; }}
           onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
         >
-          <Plus size={14} strokeWidth={2.5}/>
+          {adding ? <X size={12} strokeWidth={2.5}/> : <Plus size={12} strokeWidth={2.5}/>}
         </button>
       </div>
 
       {adding && (
-        <div style={{ padding: "10px 12px", borderBottom: "1px solid " + C.border, background: C.surfaceHover }}>
+        <div style={{ padding: "8px 10px", borderBottom: "1px solid " + C.border, background: C.surfaceHover }}>
           <input
             autoFocus
             type="text"
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") submit(); if (e.key === "Escape") { setAdding(false); setDraft(""); } }}
-            placeholder="T�n trang m?i..."
+            placeholder="Tên trang mới..."
             style={{
-              width: "100%", padding: "6px 10px",
+              width: "100%", padding: "5px 8px",
               border: "1px solid " + C.border, borderRadius: 6,
-              fontSize: 12, fontFamily: C.font, color: C.text,
+              fontSize: 11, fontFamily: C.font, color: C.text,
               background: "#fff", outline: "none", boxSizing: "border-box"}}
           />
-          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+          <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
             <button onClick={submit}
-              style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: C.font, background: C.primary, color: "#fff" }}>
-              Th�m
+              style={{ flex: 1, padding: "4px 6px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: C.font, background: C.primary, color: "#fff" }}>
+              Thêm
             </button>
             <button onClick={() => { setAdding(false); setDraft(""); }}
-              style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid " + C.border, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: C.font, background: "transparent", color: C.textSub }}>
-              Hu?
+              style={{ flex: 1, padding: "4px 6px", borderRadius: 6, border: "1px solid " + C.border, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: C.font, background: "transparent", color: C.textSub }}>
+              Huỷ
             </button>
           </div>
         </div>
@@ -211,20 +212,20 @@ function SectionPanel({ sections, activeSectionId, onSelect, onDelete, onAdd }) 
         onClick={() => onSelect(null)}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          width: "100%", padding: "9px 14px",
+          width: "100%", padding: "7px 11px",
           background: "transparent",
           border: "none", borderBottom: "1px solid " + C.border,
-          cursor: "pointer", fontFamily: C.font, fontSize: 13,
+          cursor: "pointer", fontFamily: C.font, fontSize: 12,
           color: C.text,
           borderLeft: activeSectionId === null ? "3px solid " + C.primary : "3px solid transparent",
-          paddingLeft: activeSectionId === null ? 11 : 14,
+          paddingLeft: activeSectionId === null ? 8 : 11,
           transition: "all .12s"}}
         onMouseEnter={e => { if (activeSectionId !== null) e.currentTarget.style.background = C.surfaceHover; }}
         onMouseLeave={e => { if (activeSectionId !== null) e.currentTarget.style.background = "transparent"; }}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Layout size={14} strokeWidth={2}/>
-          T?t c? c�u h?i
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Layout size={12} strokeWidth={2}/>
+          Tất cả câu hỏi
         </span>
       </button>
 
@@ -242,51 +243,51 @@ function SectionPanel({ sections, activeSectionId, onSelect, onDelete, onAdd }) 
           <button
             onClick={() => onSelect(sec.id)}
             style={{
-              flex: 1, display: "flex", alignItems: "center", gap: 8,
-              padding: "9px 11px",
+              flex: 1, display: "flex", alignItems: "center", gap: 6,
+              padding: "7px 9px",
               background: "none", border: "none", cursor: "pointer",
-              fontFamily: C.font, fontSize: 13,
+              fontFamily: C.font, fontSize: 12,
               color: activeSectionId === sec.id ? C.primary : C.text,
               textAlign: "left", transition: "color .12s"}}
           >
-            <ChevronRight size={12} color={C.textSub} style={{ flexShrink: 0 }}/>
+            <ChevronRight size={10} color={C.textSub} style={{ flexShrink: 0 }}/>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {sec.title || "Kh�ng c� ti�u d?"}
+              {sec.title || "Không có tiêu đề"}
             </span>
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(sec.id); }}
-            title="X�a trang"
+            title="Xóa trang"
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
-              width: 28, height: 28, marginRight: 6,
+              width: 24, height: 24, marginRight: 4,
               background: "none", border: "none", cursor: "pointer",
               color: "#CCC", borderRadius: 6, transition: "all .12s"}}
             onMouseEnter={e => { e.currentTarget.style.background = C.errorBg; e.currentTarget.style.color = C.error; }}
             onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#CCC"; }}
           >
-            <Trash2 size={12}/>
+            <Trash2 size={10}/>
           </button>
         </div>
       ))}
 
       {sections.length === 0 && !adding && (
-        <div style={{ padding: "24px 14px", textAlign: "center", display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
-          <Layout size={32} color={C.textDim} style={{ opacity: 0.4 }}/>
-          <p style={{ fontSize: 13, color: C.textSub, margin: 0, fontWeight:500 }}>
-            Chua c� trang n�o
+        <div style={{ padding: "16px 12px", textAlign: "center", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+          <Layout size={24} color={C.textDim} style={{ opacity: 0.4 }}/>
+          <p style={{ fontSize: 12, color: C.textSub, margin: 0, fontWeight:500 }}>
+            Chưa có trang nào
           </p>
           <button
             onClick={() => setAdding(true)}
             style={{
               display:"inline-flex", alignItems:"center", gap:6,
-              padding:"8px 16px",
+              padding:"6px 12px",
               background: C.primary, color:"#fff",
               border:"none", borderRadius:8,
-              fontSize:13, fontWeight:600, cursor:"pointer",
+              fontSize:12, fontWeight:600, cursor:"pointer",
               fontFamily:C.font}}
           >
-            <Plus size={14}/> Th�m trang
+            <Plus size={12}/> Thêm trang
           </button>
         </div>
       )}
@@ -352,7 +353,7 @@ function QuestionTypeDropdown({ value, onChange }) {
   );
 }
 
-/* -- ImageUploadButton � UI only -- */
+/* -- ImageUploadButton  UI only -- */
 function ImageUploadButton({ image, onImageChange, size = "sm" }) {
   const fileRef = useRef(null);
 
@@ -383,7 +384,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
             color:"#fff",cursor:"pointer",fontSize:10,
             display:"flex",alignItems:"center",justifyContent:"center",
             lineHeight:1}}
-        >�</button>
+        >×</button>
       </div>
     );
   }
@@ -394,7 +395,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
-        title="Th�m ?nh"
+        title="Thêm ảnh"
         style={{
           display:"flex", alignItems:"center", justifyContent:"center",
           width: size === "sm" ? 28 : 32,
@@ -413,7 +414,7 @@ function ImageUploadButton({ image, onImageChange, size = "sm" }) {
 }
 
 /* -- RichTextEditor -- */
-function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", minHeight = 80, hasError = false }) {
+function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 80, hasError = false }) {
   const editorRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isEmpty, setIsEmpty] = useState(!value);
@@ -494,20 +495,20 @@ function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", min
         display:"flex", alignItems:"center", gap:2, padding:"6px 10px",
         borderBottom:"1px solid " + C.border, background: C.surfaceHover,
         flexWrap:"wrap"}}>
-        {toolbarBtn("bold",    <Bold size={13}/>,      "In d?m")}
-        {toolbarBtn("italic",  <Italic size={13}/>,    "In nghi�ng")}
-        {toolbarBtn("underline",<Underline size={13}/>,"G?ch ch�n")}
+        {toolbarBtn("bold",    <Bold size={13}/>,      "In đậm")}
+        {toolbarBtn("italic",  <Italic size={13}/>,    "In nghiêng")}
+        {toolbarBtn("underline",<Underline size={13}/>,"Gạch chân")}
 
         <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
 
-        {toolbarBtn("justifyLeft",   <AlignLeftIcon size={13}/>,  "Can tr�i")}
-        {toolbarBtn("justifyCenter", <AlignCenter size={13}/>,    "Can gi?a")}
-        {toolbarBtn("justifyRight",  <AlignRight size={13}/>,     "Can ph?i")}
+        {toolbarBtn("justifyLeft",   <AlignLeftIcon size={13}/>,  "Can trái")}
+        {toolbarBtn("justifyCenter", <AlignCenter size={13}/>,    "Can giữa")}
+        {toolbarBtn("justifyRight",  <AlignRight size={13}/>,     "Căn phải")}
 
         <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
 
-        {toolbarBtn("insertUnorderedList", <span style={{fontSize:12,fontWeight:700}}>��</span>, "Danh s�ch")}
-        {toolbarBtn("insertOrderedList",   <span style={{fontSize:12,fontWeight:700}}>1.</span>,  "Danh s�ch s?")}
+        {toolbarBtn("insertUnorderedList", <span style={{fontSize:12,fontWeight:700}}></span>, "Danh sách")}
+        {toolbarBtn("insertOrderedList",   <span style={{fontSize:12,fontWeight:700}}>1.</span>,  "Danh sách có thứ tự")}
 
         <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
 
@@ -519,10 +520,10 @@ function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", min
             color:C.textSub, fontSize:11, padding:"2px 4px",
             cursor:"pointer", fontFamily:C.font, outline:"none"}}
         >
-          <option value="p">�o?n van</option>
-          <option value="h1">Ti�u d? 1</option>
-          <option value="h2">Ti�u d? 2</option>
-          <option value="h3">Ti�u d? 3</option>
+          <option value="p">Đoạn văn</option>
+          <option value="h1">Tiêu đề 1</option>
+          <option value="h2">Tiêu đề 2</option>
+          <option value="h3">Tiêu đề 3</option>
         </select>
 
         <div style={{width:1,height:18,background:C.border,margin:"0 4px"}}/>
@@ -536,7 +537,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", min
         />
         <button
           type="button"
-          title="Ch�n ?nh"
+          title="Chèn ảnh"
           onMouseDown={(e) => { e.preventDefault(); imageInputRef.current?.click(); }}
           style={{
             display:"flex", alignItems:"center", justifyContent:"center",
@@ -551,7 +552,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", min
         </button>
 
         <div style={{marginLeft:"auto",fontSize:10,color:C.textDim}}>
-          Ctrl+B � I � U
+          Ctrl+B · I · U
         </div>
       </div>
 
@@ -587,7 +588,7 @@ function RichTextEditor({ value, onChange, placeholder = "Nh?p n?i dung...", min
   );
 }
 
-/* -- QuestionImageUploadArea � UI only -- */
+/* -- QuestionImageUploadArea  UI only -- */
 function QuestionImageUploadArea({ image, onImageChange }) {
   const fileRef = useRef(null);
 
@@ -628,7 +629,7 @@ function QuestionImageUploadArea({ image, onImageChange }) {
               opacity:0,transition:"opacity .15s"}}
             onMouseEnter={e=>e.currentTarget.style.opacity="1"}
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
-          >Thay ?nh</button>
+          >Thay ảnh</button>
           <button
             type="button"
             onClick={() => onImageChange(null)}
@@ -639,12 +640,12 @@ function QuestionImageUploadArea({ image, onImageChange }) {
               opacity:0,transition:"opacity .15s"}}
             onMouseEnter={e=>e.currentTarget.style.opacity="1"}
             onMouseLeave={e=>e.currentTarget.style.opacity="0"}
-          >X�a ?nh</button>
+          >Xóa ảnh</button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
         <div style={{padding:"5px 10px",fontSize:11,color:C.textDim,background:C.surfaceHover}}>
           {image.name}
-          <span style={{marginLeft:6,color:C.primary,fontSize:10}}>UI only � chua g?i server</span>
+          <span style={{marginLeft:6,color:C.primary,fontSize:10}}>UI only · chua gợi server</span>
         </div>
       </div>
     );
@@ -668,7 +669,7 @@ function QuestionImageUploadArea({ image, onImageChange }) {
         onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textDim;}}
       >
         <ImagePlus size={16}/>
-        <span>Th�m ?nh cho c�u h?i � <span style={{color:C.textDim,fontSize:11}}>UI only</span></span>
+        <span>Thêm ảnh cho câu hỏi · <span style={{color:C.textDim,fontSize:11}}>UI only</span></span>
       </div>
     </>
   );
@@ -736,7 +737,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
             <input
               autoFocus value={label}
               onChange={e=>setLabel(e.target.value)}
-              placeholder="Label (hi?n th?)"
+              placeholder="Label (hiển thị)"
               onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(false);}}
               style={{...inp(false),flex:1,padding:"5px 10px",fontSize:13}}
             />
@@ -764,7 +765,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
           <input ref={fileRef} type="file" accept="image/*" onChange={handleOptImageFile} style={{display:"none"}}/>
           <button
             type="button"
-            title="Th�m ?nh l?a ch?n (UI only)"
+            title="Thêm ảnh lựa chỉn (UI only)"
             onClick={()=>fileRef.current?.click()}
             style={iconBtn(optImage?C.primary:"#9CA3AF")}
             onMouseEnter={e=>e.currentTarget.style.background=C.primaryBg}
@@ -788,12 +789,12 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
             </>
           ) : (
             <>
-              <button onClick={startEdit} style={iconBtn(C.primary, C.primary)} title="S?a"
+              <button onClick={startEdit} style={iconBtn(C.primary, C.primary)} title="Sửa"
                 onMouseEnter={e=>e.currentTarget.style.background=C.primaryBg}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                 <Pencil size={11}/>
               </button>
-              <button onClick={handleDel} disabled={deleting} style={iconBtn(C.error,C.errorBorder,C.errorBg)} title="X�a"
+              <button onClick={handleDel} disabled={deleting} style={iconBtn(C.error,C.errorBorder,C.errorBg)} title="Xóa"
                 onMouseEnter={e=>e.currentTarget.style.background="#fee2e2"}
                 onMouseLeave={e=>e.currentTarget.style.background=C.errorBg}>
                 {deleting?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<X size={11}/>}
@@ -810,7 +811,7 @@ function OptionRow({ opt, questionId, index, qType, onDelete, onUpdate }) {
             type="button"
             onClick={()=>setOptImage(null)}
             style={{fontSize:10,color:C.error,background:"none",border:"none",cursor:"pointer",fontFamily:C.font}}
-          >� X�a ?nh</button>
+          >× Xóa ảnh</button>
           <span style={{fontSize:10,color:C.textDim}}>UI only</span>
         </div>
       )}
@@ -875,7 +876,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
   return (
     <div>
       <span style={lbl}>
-        C�c l?a ch?n{" "}
+        Các lựa chọn{" "}
         <span style={{color:C.textDim,fontWeight:400,textTransform:"none",letterSpacing:0}}>
           (label + value)
         </span>
@@ -883,7 +884,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
 
       <div style={{display:"flex",gap:8,marginBottom:4,paddingLeft:56}}>
         <span style={{flex:1,fontSize:10,color:C.textDim,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>
-          Label (hi?n th?)
+          Label (hiển thị)
         </span>
         <span style={{flex:1,fontSize:10,color:C.textDim,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>
           Value (luu DB)
@@ -945,7 +946,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                   justifyContent:"center", flexShrink:0}}
                 onMouseEnter={e => { if (optionRows.length > 1) { e.currentTarget.style.color=C.error; e.currentTarget.style.background=C.errorBg; }}}
                 onMouseLeave={e => { e.currentTarget.style.color="#9CA3AF"; e.currentTarget.style.background="transparent"; }}
-              >�</button>
+              >×</button>
             </div>
 
             {row.image && (
@@ -955,7 +956,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
                   alt=""
                   style={{maxWidth:100,maxHeight:64,objectFit:"cover",borderRadius:6,border:"1px solid " + C.border}}
                 />
-                <span style={{fontSize:10,color:C.textDim}}>UI only � chua g?i server</span>
+                <span style={{fontSize:10,color:C.textDim}}>UI only · chua gợi server</span>
               </div>
             )}
           </div>
@@ -971,7 +972,7 @@ function InlineOptionBuilder({ qType, optionRows, onChange }) {
             fontSize:13, fontWeight:600, fontFamily:C.font,
             cursor:"pointer", display:"flex", alignItems:"center", gap:6, padding:0}}
         >
-          <PlusCircle size={14}/> Th�m l?a ch?n
+          <PlusCircle size={14}/> Thêm lựa chọn
         </button>
       </div>
 
@@ -1000,24 +1001,24 @@ function SettingsEditor({ type, settings, onChange }) {
   if (type === "TEXT" || type === "PARAGRAPH") {
     return (
       <div>
-        <span style={lbl}>Gi?i h?n k� t?</span>
+        <span style={lbl}>Giới hạn ký tự</span>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}>
-            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>T?i thi?u</span>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Tối thiểu</span>
             <input
               type="number"
               value={settings?.min_chars ?? ""}
-              placeholder="Kh�ng gi?i h?n"
+              placeholder="Không giới hạn"
               onChange={e => onChange({ ...settings, min_chars: e.target.value !== "" ? Number(e.target.value) : undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:13}}
             />
           </div>
           <div style={{flex:1}}>
-            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>T?i da</span>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Tối đa</span>
             <input
               type="number"
               value={settings?.max_chars ?? ""}
-              placeholder="Kh�ng gi?i h?n"
+              placeholder="Không giới hạn"
               onChange={e => onChange({ ...settings, max_chars: e.target.value !== "" ? Number(e.target.value) : undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:13}}
             />
@@ -1030,14 +1031,14 @@ function SettingsEditor({ type, settings, onChange }) {
   if (type === "NUMBER") {
     return (
       <div>
-        <span style={lbl}>Gi?i h?n s?</span>
+        <span style={lbl}>Giới hạn số</span>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}>
             <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Min</span>
             <input
               type="number"
               value={settings?.min ?? ""}
-              placeholder="Kh�ng gi?i h?n"
+              placeholder="Không giới hạn"
               onChange={e => onChange({ ...settings, min: e.target.value !== "" ? Number(e.target.value) : undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:13}}
             />
@@ -1047,7 +1048,7 @@ function SettingsEditor({ type, settings, onChange }) {
             <input
               type="number"
               value={settings?.max ?? ""}
-              placeholder="Kh�ng gi?i h?n"
+              placeholder="Không giới hạn"
               onChange={e => onChange({ ...settings, max: e.target.value !== "" ? Number(e.target.value) : undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:13}}
             />
@@ -1062,7 +1063,7 @@ function SettingsEditor({ type, settings, onChange }) {
     const max = settings?.max ?? 5;
     return (
       <div>
-        <span style={lbl}>Ph?m vi tuy?n t�nh</span>
+        <span style={lbl}>Phạm vi tuyến tính</span>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}>
             <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Min</span>
@@ -1085,14 +1086,14 @@ function SettingsEditor({ type, settings, onChange }) {
         </div>
         <div style={{display:"flex",gap:12,marginTop:8}}>
           <div style={{flex:1}}>
-            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nh�n min</span>
-            <input type="text" value={settings?.min_label ?? ""} placeholder="V� d?: Kh�ng h�i l�ng"
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nhãn min</span>
+            <input type="text" value={settings?.min_label ?? ""} placeholder="Ví để: Không hài lòng"
               onChange={e => onChange({ ...settings, min_label: e.target.value || undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:12}}/>
           </div>
           <div style={{flex:1}}>
-            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nh�n max</span>
-            <input type="text" value={settings?.max_label ?? ""} placeholder="V� d?: R?t h�i l�ng"
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Nhãn max</span>
+            <input type="text" value={settings?.max_label ?? ""} placeholder="Ví dụ: Rất hài lòng"
               onChange={e => onChange({ ...settings, max_label: e.target.value || undefined })}
               style={{...inp(false),padding:"7px 10px",fontSize:12}}/>
           </div>
@@ -1115,7 +1116,7 @@ function SettingsEditor({ type, settings, onChange }) {
   if (type === "RATING") {
     return (
       <div>
-        <span style={lbl}>Ph?m vi d�nh gi�</span>
+        <span style={lbl}>Phạm vi đánh giá</span>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}>
             <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Min</span>
@@ -1141,8 +1142,8 @@ function SettingsEditor({ type, settings, onChange }) {
             <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
               <span style={{fontSize:11,color:C.textSub}}>{i}</span>
               <span style={{fontSize:20,color:C.textDim,cursor:"pointer"}}
-                onMouseEnter={e=>e.currentTarget.style.color="#f59e0b"}
-                onMouseLeave={e=>e.currentTarget.style.color=C.textDim}>?</span>
+                onMouseEnter={e=>e.currentTarget.style.color="#eab308"}
+                onMouseLeave={e=>e.currentTarget.style.color=C.textDim}>☆</span>
             </div>
           ))}
         </div>
@@ -1159,27 +1160,27 @@ function QuestionBody({ q, type }) {
 
   if (type === "TEXT") return (
     <div style={{borderBottom:"1px dashed " + C.border,padding:"10px 0",fontSize:13,color:C.textDim,width:"60%"}}>
-      Van b?n c�u tr? l?i ng?n
+      Văn bản câu trả lời ngắn
     </div>
   );
   if (type === "PARAGRAPH") return (
     <div style={{borderBottom:"1px dashed " + C.border,padding:"10px 0",fontSize:13,color:C.textDim,width:"100%"}}>
-      Van b?n c�u tr? l?i d�i
+      Văn bản câu trả lời dài
     </div>
   );
   if (type === "NUMBER") return (
     <div style={{borderBottom:"1px dashed " + C.border,padding:"10px 0",fontSize:13,color:C.textDim,width:"40%"}}>
-      Nh?p s?
+      Nhập số
     </div>
   );
   if (type === "DATE") return (
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",color:C.textDim,fontSize:13}}>
-      <Calendar size={16}/> Ng�y / Th�ng / Nam
+      <Calendar size={16}/> Ngày / Tháng / Nam
     </div>
   );
   if (type === "TIME") return (
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",color:C.textDim,fontSize:13}}>
-      <Clock size={16}/> Gi? : Ph�t
+      <Clock size={16}/> Giờ : Phút
     </div>
   );
 
@@ -1187,7 +1188,7 @@ function QuestionBody({ q, type }) {
     <div>
       {opts.length === 0 ? (
         <div style={{fontSize:12,color:C.textDim,padding:"8px 0",fontStyle:"italic"}}>
-          Chua c� l?a ch?n n�o.
+          Chưa có lựa chọn nào.
         </div>
       ) : (
         opts.map((opt, i) => (
@@ -1216,8 +1217,8 @@ function QuestionBody({ q, type }) {
         <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
           <span style={{fontSize:11,color:C.textSub}}>{i}</span>
           <span style={{fontSize:22,color:C.textDim,cursor:"pointer"}}
-            onMouseEnter={e=>e.currentTarget.style.color="#f59e0b"}
-            onMouseLeave={e=>e.currentTarget.style.color=C.textDim}>?</span>
+            onMouseEnter={e=>e.currentTarget.style.color="#eab308"}
+            onMouseLeave={e=>e.currentTarget.style.color=C.textDim}>☆</span>
         </div>
       ))}
     </div>
@@ -1227,7 +1228,7 @@ function QuestionBody({ q, type }) {
     <div style={{padding:"14px 0",color:C.textDim,fontSize:13}}>
       <div style={{border:"1.5px dashed " + C.border,borderRadius:10,padding:"16px 20px",textAlign:"center"}}>
         <FileUp size={20} style={{marginBottom:6,opacity:0.5}}/>
-        <div>Ngu?i d�ng c� th? t?i t?p l�n t?i d�y</div>
+        <div>Người dùng có thể tải tập lên tại đây</div>
       </div>
     </div>
   );
@@ -1235,16 +1236,16 @@ function QuestionBody({ q, type }) {
   return null;
 }
 
-/* -- ConditionEditor � skip logic UI -- */
+/* -- ConditionEditor  skip logic UI -- */
 const OPERATORS = [
-  { value: "equals",        label: "b?ng",        types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
-  { value: "not_equals",    label: "kh�ng b?ng",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
-  { value: "contains",      label: "ch?a",         types: ["TEXT","PARAGRAPH","EMAIL"] },
-  { value: "not_contains",  label: "kh�ng ch?a",  types: ["TEXT","PARAGRAPH","EMAIL"] },
-  { value: "greater",       label: "l?n hon",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
-  { value: "less",          label: "nh? hon",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
-  { value: "answered",      label: "d� tr? l?i",    types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
-  { value: "not_answered",  label: "chua tr? l?i",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
+  { value: "equals",        label: "bằng",        types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
+  { value: "not_equals",    label: "không bằng",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","SINGLE_CHOICE","DROPDOWN","LINEAR_SCALE"] },
+  { value: "contains",      label: "chứa",         types: ["TEXT","PARAGRAPH","EMAIL"] },
+  { value: "not_contains",  label: "không chứa",  types: ["TEXT","PARAGRAPH","EMAIL"] },
+  { value: "greater",       label: "lớn hơn",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
+  { value: "less",          label: "nhỏ hơn",      types: ["NUMBER","LINEAR_SCALE","RATING"] },
+  { value: "answered",      label: "đã trả lời",    types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
+  { value: "not_answered",  label: "chưa trả lời",  types: ["TEXT","PARAGRAPH","EMAIL","NUMBER","DATE","TIME","SINGLE_CHOICE","MULTIPLE_CHOICE","DROPDOWN","RATING","LINEAR_SCALE"] },
 ];
 
 function ConditionEditor({ questions, currentQId, value, onChange }) {
@@ -1267,7 +1268,7 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
         <select value={condValue}
           onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
           style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}>
-          <option value="">� Ch?n d�p �n �</option>
+          <option value="">— Chọn đáp án —</option>
           {opts.map((o,i) => (
             <option key={i} value={typeof o === "string" ? o : (o.value ?? o.label ?? "")}>
               {typeof o === "string" ? o : (o.label ?? o.value ?? "")}
@@ -1280,27 +1281,27 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
       return (
         <input type="number" value={condValue}
           onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
-          placeholder="Gi� tr?..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
+          placeholder="Giá trị..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
       );
     }
     return (
       <input type="text" value={condValue}
         onChange={e => onChange({ source_question_id: sourceId, operator, value: e.target.value })}
-        placeholder="Gi� tr?..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
+        placeholder="Giá trị..." style={{...inp(false), padding:"5px 8px", fontSize:12, flex:1}}/>
     );
   };
 
   return (
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-        <span style={{...lbl, marginBottom:0}}>�i?u ki?n hi?n th? (Skip logic)</span>
+        <span style={{...lbl, marginBottom:0}}>Điều kiện hiển thị (Skip logic)</span>
         <button onClick={() => setOpen(v => !v)} style={{
           display:"flex",alignItems:"center",gap:5,
           padding:"4px 10px",borderRadius:7,border:"none",cursor:"pointer",
           fontSize:11,fontWeight:600,fontFamily:C.font,
           background: hasCondition ? C.primary : C.surfaceHover,
           color: hasCondition ? "#fff" : C.textSub, transition:"all .12s"}}>
-          {hasCondition ? "? C� di?u ki?n" : "+ Th�m di?u ki?n"}
+          {hasCondition ? "? Có điều kiện" : "+ Thêm điều kiện"}
         </button>
       </div>
 
@@ -1309,14 +1310,14 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
           background:C.surfaceHover,border:"1px solid " + C.border,borderRadius:10,
           padding:12,display:"flex",flexDirection:"column",gap:10,marginTop:6}}>
           <p style={{fontSize:11,color:C.textSub,margin:0,lineHeight:1.4}}>
-            C�u h?i n�y ch? hi?n th? khi di?u ki?n b�n du?i du?c th?a m�n.
+            Câu hỏi này chỉ hiển thị khi điều kiện bên dưới được thỏa mãn.
           </p>
 
           <div>
-            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>C�u h?i ngu?n</span>
+            <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Câu hỏi nguồn</span>
             <select value={sourceId} onChange={e => onChange({ source_question_id: e.target.value, operator: "", value: "" })}
               style={{...inp(false),padding:"6px 10px",fontSize:12,background:"#fff"}}>
-              <option value="">� Ch?n c�u h?i �</option>
+              <option value="">— Chọn câu hỏi —</option>
               {questions.filter(q => q.id !== currentQId).map(q => (
                 <option key={q.id} value={q.id}>
                   {String(q.order_index ?? questions.indexOf(q) + 1)}. {getPlainText(q.content ?? "").slice(0, 40)}
@@ -1327,10 +1328,10 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
 
           {sourceId && (
             <div>
-              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>�i?u ki?n</span>
+              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Điều kiện</span>
               <select value={operator} onChange={e => onChange({ source_question_id: sourceId, operator: e.target.value, value: "" })}
                 style={{...inp(false),padding:"6px 10px",fontSize:12,background:"#fff"}}>
-                <option value="">� Ch?n di?u ki?n �</option>
+                <option value="">— Chọn điều kiện —</option>
                 {availableOps.map(op => (
                   <option key={op.value} value={op.value}>{op.label}</option>
                 ))}
@@ -1340,7 +1341,7 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
 
           {sourceId && operator && !["answered","not_answered"].includes(operator) && (
             <div>
-              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Gi� tr?</span>
+              <span style={{fontSize:11,color:C.textSub,display:"block",marginBottom:4}}>Giá trị</span>
               {getValueInput()}
             </div>
           )}
@@ -1348,7 +1349,7 @@ function ConditionEditor({ questions, currentQId, value, onChange }) {
           <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
             <button onClick={() => { onChange(null); setOpen(false); }}
               style={{padding:"5px 12px",borderRadius:7,border:"1px solid " + C.border,background:"transparent",cursor:"pointer",fontSize:11,fontWeight:600,color:C.textSub,fontFamily:C.font}}>
-              X�a di?u ki?n
+              Xóa điều kiện
             </button>
             <button onClick={() => setOpen(false)}
               style={{padding:"5px 12px",borderRadius:7,border:"none",background:C.primary,cursor:"pointer",fontSize:11,fontWeight:600,color:"#fff",fontFamily:C.font}}>
@@ -1469,8 +1470,8 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
   const handleMediaUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!MEDIA_TYPES.includes(file.type)) { alert("Ch? h? tr? ?nh JPG, PNG, GIF, WEBP"); return; }
-    if (file.size > 5 * 1024 * 1024) { alert("File qu� l?n. T?i da 5MB."); return; }
+    if (!MEDIA_TYPES.includes(file.type)) { alert("Chỉ hỗ trợ ảnh JPG, PNG, GIF, WEBP"); return; }
+    if (file.size > 5 * 1024 * 1024) { alert("File quá lớn. Tối đa 5MB."); return; }
 
     setUploading(true);
     try {
@@ -1481,7 +1482,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       setMediaUrl(data?.url || data?.data?.url || "");
     } catch (err) {
       console.error(err);
-      alert("Upload th?t b?i: " + (err?.response?.data?.message || err.message));
+      alert("Upload thịt bởi: " + (err?.response?.data?.message || err.message));
     } finally { setUploading(false); }
   };
 
@@ -1494,36 +1495,36 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         style={{
           background: C.surface,
           border: "1px solid " + C.border,
-          borderRadius: 12,
-          padding: 20,
-          display: "flex", alignItems: "center", gap: 14,
+          borderRadius: 10,
+          padding: 12,
+          display: "flex", alignItems: "center", gap: 10,
           cursor: "pointer", position: "relative",
           transition: "all .18s ease"}}
       >
         <div style={{opacity:hovered?1:0,transition:"opacity .15s",flexShrink:0,display:"flex"}}>
-          <GripVertical size={16} color={"#888"} style={{cursor:"grab"}}/>
+          <GripVertical size={14} color={"#888"} style={{cursor:"grab"}}/>
         </div>
         <span style={{
           display:"inline-flex",alignItems:"center",justifyContent:"center",
-          width:20,height:20,borderRadius:"50%",
+          width:18,height:18,borderRadius:"50%",
           background:C.primaryLight,color:C.primary,
-          fontSize:11,fontWeight:600,flexShrink:0}}>
+          fontSize:10,fontWeight:600,flexShrink:0}}>
           {index+1}
         </span>
 
         <p
-          style={{flex:1,margin:0,fontSize:14,fontWeight:500,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}
+          style={{flex:1,margin:0,fontSize:13,fontWeight:500,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}
           dangerouslySetInnerHTML={{
             __html: q.content
               ? q.content
-              : "<em style=\"color:" + C.textDim + ";font-weight:400\">C�u h?i chua c� ti�u d?</em>"
+              : "<em style=\"color:" + C.textDim + ";font-weight:400\">Câu hỏi chưa có tiêu đề</em>"
           }}
         />
 
         <span style={{
-          fontSize:12,fontWeight:500,flexShrink:0,
+          fontSize:11,fontWeight:500,flexShrink:0,
           background:C.primaryBg,color:C.primary,
-          padding:"2px 10px",borderRadius:999}}>
+          padding:"1px 8px",borderRadius:999}}>
   {Q_TYPES.find(t=>t.value===toFEType(q.type))?.label}
 </span>
 
@@ -1546,8 +1547,8 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         section_id:  e.target.value || null});
     }}
     style={{
-      fontSize: 11,
-      padding: "2px 8px",
+      fontSize: 10,
+      padding: "1px 6px",
       borderRadius: 6,
       border: "1px solid " + C.border,
       background: C.surface,
@@ -1555,10 +1556,10 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
       cursor: "pointer",
       fontFamily: C.font,
       outline: "none",
-      maxWidth: 130,
+      maxWidth: 110,
       flexShrink: 0}}
   >
-    <option value="">Chua ph�n trang</option>
+    <option value="">Chưa phân trang</option>
     {sections.map(s => (
       <option key={s.id} value={s.id}>
         {s.title?.slice(0, 14)}
@@ -1571,7 +1572,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         style={{...iconBtn("#CCC"),flexShrink:0}}
         onMouseEnter={e=>{e.currentTarget.style.background=C.errorBg;e.currentTarget.style.color=C.error;e.currentTarget.style.borderColor=C.errorBorder;}}
         onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#CCC";e.currentTarget.style.borderColor="transparent";}}>
-        {isDeleting?<Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/>:<Trash2 size={12}/>}
+        {isDeleting?<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>:<Trash2 size={11}/>}
       </button>
       </div>
     );
@@ -1581,96 +1582,96 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
     <div style={{
       background: C.surface,
       border: "1px solid " + C.primary,
-      borderRadius: 12}}>
-      <div style={{display:"flex",justifyContent:"center",padding:"8px 0",borderBottom:"1px solid " + C.border}}>
-        <GripVertical size={16} color={"#888"} style={{cursor:"grab"}}/>
+      borderRadius: 10}}>
+      <div style={{display:"flex",justifyContent:"center",padding:"5px 0",borderBottom:"1px solid " + C.border}}>
+        <GripVertical size={14} color={"#888"} style={{cursor:"grab"}}/>
       </div>
 
-      <div style={{display:"flex",alignItems:"flex-start",gap:12,padding:"16px 20px 0"}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:10,padding:"12px 14px 0"}}>
         <div style={{flex:1}}>
-          <span style={{...lbl,marginBottom:6}}>N?i dung c�u h?i</span>
+          <span style={{...lbl,marginBottom:4}}>Nội dung câu hỏi</span>
           <RichTextEditor
             value={contentHtml}
             onChange={setContentHtml}
-            placeholder="C�u h?i kh�ng c� ti�u d?"
-            minHeight={56}
+            placeholder="Câu hỏi không có tiêu đề"
+            minHeight={44}
           />
         </div>
-        <div style={{marginTop:22,minWidth:200}}>
+        <div style={{marginTop:18,minWidth:180}}>
           <QuestionTypeDropdown value={type} onChange={handleTypeChange}/>
         </div>
       </div>
 
-      <div style={{padding:"8px 20px 0",paddingLeft:36,display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{padding:"6px 14px 0",paddingLeft:28,display:"flex",flexDirection:"column",gap:6}}>
         <div>
-          <span style={{...lbl, marginBottom:4}}>M� t? c�u h?i (t�y ch?n)</span>
+          <span style={{...lbl, marginBottom:3}}>Mô tả câu hỏi (tùy chọn)</span>
           <input
             type="text"
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="Th�m g?i � ho?c m� t? cho c�u h?i..."
-            style={{...inp(false), padding:"7px 10px", fontSize:12}}
+            placeholder="Thêm gợi ý hoặc mô tả cho câu hỏi..."
+            style={{...inp(false), padding:"6px 10px", fontSize:12}}
           />
         </div>
         {["TEXT","PARAGRAPH","EMAIL","DATE","NUMBER","TIME"].includes(type) && (
           <div>
-            <span style={{...lbl, marginBottom:4}}>Placeholder (t�y ch?n)</span>
+            <span style={{...lbl, marginBottom:3}}>Placeholder (tùy chọn)</span>
             <input
               type="text"
               value={placeholder}
               onChange={e => setPlaceholder(e.target.value)}
-              placeholder="Van b?n g?i � trong � nh?p li?u..."
-              style={{...inp(false), padding:"7px 10px", fontSize:12}}
+              placeholder="Văn bản gợi ý trong ô nhập liệu..."
+              style={{...inp(false), padding:"6px 10px", fontSize:12}}
             />
           </div>
         )}
       </div>
 
-      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
+      <div style={{padding:"6px 14px 0",paddingLeft:28}}>
         <div style={{display:"flex",flexDirection:"column",gap:4}}>
-          <span style={{...lbl, marginBottom:4}}>H�nh ?nh / Video (URL t�y ch?n)</span>
+          <span style={{...lbl, marginBottom:3}}>Hình ảnh / Video (URL tùy chọn)</span>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <input
               type="url"
               value={mediaUrl}
               onChange={e => setMediaUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
-              style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1}}
+              style={{...inp(false), padding:"6px 10px", fontSize:12, flex:1}}
             />
-            <label style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"7px 12px",border:"1px solid " + C.border,borderRadius:8,cursor:"pointer",fontSize:12,color:"#9CA3AF",background:C.surfaceHover,transition:"all .12s"}}
+            <label style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"6px 10px",border:"1px solid " + C.border,borderRadius:6,cursor:"pointer",fontSize:11,color:"#9CA3AF",background:C.surfaceHover,transition:"all .12s"}}
               onMouseEnter={e => { e.currentTarget.style.background = C.primaryBg; e.currentTarget.style.color = C.primary; }}
               onMouseLeave={e => { e.currentTarget.style.background = C.surfaceHover; e.currentTarget.style.color = "#9CA3AF"; }}>
-              {uploading ? <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/> : <ImagePlus size={13}/>}
+              {uploading ? <Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/> : <ImagePlus size={12}/>}
               <input type="file" accept="image/*" onChange={handleMediaUpload} style={{display:"none"}}/>
             </label>
           </div>
           {mediaUrl && (
-            <div style={{marginTop:6}}>
-              <img src={mediaUrl} alt="Preview" style={{maxWidth:120,maxHeight:80,borderRadius:6,objectFit:"cover",border:"1px solid " + C.border}}/>
+            <div style={{marginTop:4}}>
+              <img src={mediaUrl} alt="Preview" style={{maxWidth:100,maxHeight:60,borderRadius:6,objectFit:"cover",border:"1px solid " + C.border}}/>
             </div>
           )}
         </div>
       </div>
 
-      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
-        <span style={{...lbl, marginBottom:4}}>Trang / Ph?n</span>
+      <div style={{padding:"6px 14px 0",paddingLeft:28}}>
+        <span style={{...lbl, marginBottom:3}}>Trang / Phần</span>
         <select
           value={sectionId || ""}
           onChange={e => setSectionId(e.target.value || null)}
           style={{
-            width:"100%",padding:"7px 10px",
+            width:"100%",padding:"6px 10px",
             border:"1px solid " + C.border,borderRadius:6,
             fontSize:12,fontFamily:C.font,color:C.text,
             background:"#fff",outline:"none",cursor:"pointer"}}
         >
-          <option value="">� Kh�ng thu?c trang n�o �</option>
+          <option value="">— Không thuộc trang nào —</option>
           {sections.map(s => (
-            <option key={s.id} value={s.id}>{s.title || "Kh�ng c� ti�u d?"}</option>
+            <option key={s.id} value={s.id}>{s.title || "Không có tiêu đề"}</option>
           ))}
         </select>
       </div>
 
-      <div style={{padding:"8px 20px 0",paddingLeft:36}}>
+      <div style={{padding:"6px 14px 0",paddingLeft:28}}>
         <ConditionEditor
           questions={questions}
           currentQId={q.id}
@@ -1679,7 +1680,7 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
         />
       </div>
 
-      <div style={{padding:"10px 20px 0",paddingLeft:36,display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{padding:"8px 14px 0",paddingLeft:28,display:"flex",flexDirection:"column",gap:12}}>
         {isChoice && (
           <InlineOptionBuilder qType={type} optionRows={optionRows} onChange={setOptionRows}/>
         )}
@@ -1693,85 +1694,53 @@ function QuestionCard({ q, index, isActive, onActivate, onSave, onCancel, onDele
 
       <div style={{
         display:"flex", alignItems:"center", justifyContent:"flex-end",
-        gap:4, padding:"12px 20px 14px",
-        borderTop:"1px solid " + C.border, marginTop:12}}>
-        <button onClick={()=>onDuplicate(q)} title="Nh�n d�i"
+        gap:4, padding:"10px 14px 12px",
+        borderTop:"1px solid " + C.border, marginTop:10}}>
+        <button onClick={()=>onDuplicate(q)} title="Nhân đôi"
           style={iconBtn("#9CA3AF")}
           onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHover}
           onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-          <Copy size={14}/>
+          <Copy size={13}/>
         </button>
-        <button onClick={()=>onDelete(q.id)} disabled={isDeleting} title="X�a"
+        <button onClick={()=>onDelete(q.id)} disabled={isDeleting} title="Xóa"
           style={iconBtn(C.error,C.errorBorder,C.errorBg)}
           onMouseEnter={e=>e.currentTarget.style.background="#fee2e2"}
           onMouseLeave={e=>e.currentTarget.style.background=C.errorBg}>
-          {isDeleting?<Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/>:<Trash2 size={14}/>}
+          {isDeleting?<Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/>:<Trash2 size={13}/>}
         </button>
 
-        <div style={{width:1,height:24,background:C.border,margin:"0 8px"}}/>
+        <div style={{width:1,height:20,background:C.border,margin:"0 6px"}}/>
         <Toggle checked={required} onChange={setRequired}/>
-        <div style={{width:1,height:24,background:C.border,margin:"0 8px"}}/>
+        <div style={{width:1,height:20,background:C.border,margin:"0 6px"}}/>
 
         <button onClick={handleSave} disabled={saving} style={{
           display:"flex", alignItems:"center", gap:6,
-          padding:"0 16px",
+          padding:"0 12px",
           background:C.primary,
           color:"#fff",
           border:"none",
-          borderRadius:8, fontSize:14, fontWeight:600,
+          borderRadius:8, fontSize:13, fontWeight:600,
           cursor:saving?"not-allowed":"pointer",
-          fontFamily:C.font, height:36}}>
-          {saving&&<Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/>}
-          Luu
+          fontFamily:C.font, height:32}}>
+          {saving&&<Loader2 size={11} style={{animation:"spin 1s linear infinite"}}/>}
+          Lưu
         </button>
         <button onClick={onCancel} style={{
-          padding:"0 16px", background:"#fff",
+          padding:"0 12px", background:"#fff",
           border:"1px solid " + C.primary, borderRadius:8,
-          fontSize:14, fontWeight:600, color:C.primary,
-          cursor:"pointer", fontFamily:C.font, height:36,
+          fontSize:13, fontWeight:600, color:C.primary,
+          cursor:"pointer", fontFamily:C.font, height:32,
           transition:"background .12s"}}
           onMouseEnter={e=>e.currentTarget.style.background=C.primaryBg}
           onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
-          ��ng
+          Đóng
         </button>
       </div>
     </div>
   );
 }
 
-/* -- Right Sidebar -- */
-function Sidebar({ onAddQuestion }) {
-  const items = [
-    { icon:<Plus size={18}/>,    title:"Th�m c�u h?i",   action:onAddQuestion },
-    { icon:<FileText size={18}/>,title:"Import c�u h?i", action:()=>{} },
-    { icon:<Type size={18}/>,    title:"Th�m ti�u d?",   action:()=>{} },
-    { icon:<Image size={18}/>,   title:"Th�m h�nh ?nh",  action:()=>{} },
-    { icon:<Video size={18}/>,   title:"Th�m video",     action:()=>{} },
-    { icon:<Minus size={18}/>,   title:"Th�m ph?n m?i",  action:()=>{} },
-  ];
-  return (
-    <div style={{
-      position:"sticky",top:24,alignSelf:"flex-start",
-      background:C.surface,
-      border:"1px solid " + C.border,
-      borderRadius:12,padding:20,overflow:"hidden",
-      display:"flex",flexDirection:"column"}}>
-      {items.map((item,i)=>(
-        <button key={i} onClick={item.action} title={item.title}
-          style={{
-            display:"flex",alignItems:"center",justifyContent:"center",
-            width:44,height:44,background:"transparent",border:"none",
-            cursor:"pointer",color:C.textSub,borderRadius:8,transition:"all .12s",
-            borderBottom:i<items.length-1?"1px solid " + C.border:"none"}}
-          onMouseEnter={e=>{e.currentTarget.style.background=C.primaryBg;e.currentTarget.style.color=C.primary;}}
-          onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.textSub;}}
-        >
-          {item.icon}
-        </button>
-      ))}
-    </div>
-  );
-}
+
 
 /* -- Survey title / description (view + edit) -- */
 function SurveyHeroCard({ loading, title, description, onSave, saving }) {
@@ -1783,24 +1752,8 @@ function SurveyHeroCard({ loading, title, description, onSave, saving }) {
   const cardBase = {
     background: C.surface,
     border: "1px solid " + C.border,
-    borderRadius: 12,
-    padding: 20};
-
-  const inp = (tall) => ({
-    width: "100%",
-    boxSizing: "border-box",
-    background: "#fff",
-    border: "1px solid " + C.border,
-    borderRadius: 8,
-    color: C.text,
-    fontSize: tall ? 14 : 17,
-    fontWeight: tall ? 500 : 600,
-    fontFamily: C.font,
-    outline: "none",
-    padding: tall ? "10px 12px" : "11px 14px",
-    resize: tall ? "vertical" : undefined,
-    minHeight: tall ? 88 : undefined,
-    lineHeight: 1.45});
+    borderRadius: 10,
+    padding: 14};
 
   const startEdit = () => {
     setDraftTitle(title);
@@ -1811,8 +1764,8 @@ function SurveyHeroCard({ loading, title, description, onSave, saving }) {
 
   if (loading) {
     return (
-      <div style={{ ...cardBase, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 120 }}>
-        <Loader2 size={24} color={C.primary} style={{ animation: "spin 1s linear infinite" }} />
+      <div style={{ ...cardBase, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 80 }}>
+        <Loader2 size={20} color={C.primary} style={{ animation: "spin 1s linear infinite" }} />
       </div>
     );
   }
@@ -1820,92 +1773,81 @@ function SurveyHeroCard({ loading, title, description, onSave, saving }) {
   return (
     <div style={cardBase}>
       {!editing ? (
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: C.textDim, textTransform: "uppercase" }}>
-              Kh?o s�t c?a b?n
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: C.textDim, textTransform: "uppercase" }}>
+              Khảo sát của bạn
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 600, color: "#111827", margin: "8px 0 10px", lineHeight: 1.25 }}>
-              {title?.trim() ? title : "Chua d?t ti�u d?"}
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: "#111827", margin: "6px 0 8px", lineHeight: 1.25 }}>
+              {title?.trim() ? <span dangerouslySetInnerHTML={{ __html: title }} /> : "Chưa đặt tiêu đề cho khảo sát này."}
             </h1>
-            <p style={{ margin: 0, fontSize: 14, color: C.textMuted, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
-              {description?.trim() ? description : "Chua c� m� t? cho kh?o s�t n�y."}
+            <p style={{ margin: 0, fontSize: 13, color: C.textMuted, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+              {description?.trim() ? <span dangerouslySetInnerHTML={{ __html: description }} /> : "Chưa có mô tả cho khảo sát này."}
             </p>
           </div>
           <button
             type="button"
             onClick={startEdit}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "0 16px",
-              background: "#fff",
-              border: "1px solid " + C.primary,
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
-              color: C.primary,
-              cursor: "pointer",
-              fontFamily: C.font,
-              height: 36,
-              flexShrink: 0}}
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "0 12px", background: "#fff",
+              border: "1px solid " + C.primary, borderRadius: 8,
+              fontSize: 13, fontWeight: 600, color: C.primary,
+              cursor: "pointer", fontFamily: C.font, height: 32, flexShrink: 0}}
           >
-            <Pencil size={15} />
-            Ch?nh s?a
+            <Pencil size={13} />
+            Sửa
           </button>
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div>
-              <span style={{ ...lbl, marginBottom: 6, display: "block" }}>Ti�u d?</span>
-              <input
-                type="text"
+              <span style={{ ...lbl, marginBottom: 4, display: "block" }}>Tiêu đề</span>
+              <RichTextEditor
                 value={draftTitle}
-                onChange={(e) => { setDraftTitle(e.target.value); setLocalErr(""); }}
-                placeholder="T�n kh?o s�t"
-                style={inp(false)}
+                onChange={(v) => { setDraftTitle(v); setLocalErr(""); }}
+                placeholder="Tên khảo sát"
+                minHeight={36}
               />
             </div>
             <div>
-              <span style={{ ...lbl, marginBottom: 6, display: "block" }}>M� t?</span>
-              <textarea
+              <span style={{ ...lbl, marginBottom: 4, display: "block" }}>Mô tả</span>
+              <RichTextEditor
                 value={draftDesc}
-                onChange={(e) => { setDraftDesc(e.target.value); setLocalErr(""); }}
-                placeholder="M� t? ng?n (tu? ch?n)"
-                rows={3}
-                style={inp(true)}
+                onChange={(v) => { setDraftDesc(v); setLocalErr(""); }}
+                placeholder="Mô tả khảo sát"
+                minHeight={60}
               />
             </div>
           </div>
           {localErr && (
             <div style={{
-              display: "flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: 13,
-              color: C.error, background: C.errorBg, padding: "8px 12px", borderRadius: 6,
+              display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 12,
+              color: C.error, background: C.errorBg, padding: "6px 10px", borderRadius: 6,
               border: "1px solid " + C.errorBorder}}>
-              <AlertCircle size={14} />
+              <AlertCircle size={13} />
               {localErr}
             </div>
           )}
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
             <button
               type="button"
               onClick={() => { setEditing(false); setLocalErr(""); }}
               style={{
-                padding: "0 16px", background: "#fff",
+                padding: "0 12px", background: "#fff",
                 border: "1px solid " + C.primary, borderRadius: 8,
-                fontSize: 14, fontWeight: 600, color: C.primary,
-                cursor: "pointer", fontFamily: C.font, height: 36}}
+                fontSize: 13, fontWeight: 600, color: C.primary,
+                cursor: "pointer", fontFamily: C.font, height: 32}}
             >
-              Hu?
+              Huỷ
             </button>
             <button
               type="button"
               disabled={saving}
               onClick={async () => {
                 const t = draftTitle.trim();
-                if (!t) { setLocalErr("Ti�u d? kh�ng du?c d? tr?ng."); return; }
+                if (!t) { setLocalErr("Tiêu đề không được để trống."); return; }
                 try {
                   await onSave(t, draftDesc.trim());
                   setEditing(false);
@@ -1913,15 +1855,16 @@ function SurveyHeroCard({ loading, title, description, onSave, saving }) {
               }}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "0 16px",
+                padding: "0 12px",
                 background: C.primary,
                 color: "#fff",
                 border: "none",
-                borderRadius: 8, fontSize: 14, fontWeight: 600,
+                borderRadius: 8, fontSize: 13, fontWeight: 600,
+                height: 32,
                 cursor: saving ? "not-allowed" : "pointer", fontFamily: C.font}}
             >
-              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-              {saving ? "�ang luu�" : "Luu th�ng tin"}
+              {saving && <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving ? "Đang lưu..." : "Lưu"}
             </button>
           </div>
         </>
@@ -1931,7 +1874,7 @@ function SurveyHeroCard({ loading, title, description, onSave, saving }) {
 }
 
 /* -- QuestionPage -- */
-export default function QuestionPage() {
+export default function QuestionPage({ surveyTitle: propTitle, surveyDescription: propDesc } = {}) {
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const { updateSurvey } = useSurvey();
@@ -1940,9 +1883,9 @@ export default function QuestionPage() {
     createQuestion, fetchQuestionsBySurvey,
     updateQuestion, deleteQuestion, bulkCreateQuestions} = useQuestion();
 
-  const [surveyTitle, setSurveyTitle] = useState("");
-  const [surveyDescription, setSurveyDescription] = useState("");
-  const [surveyMetaLoading, setSurveyMetaLoading] = useState(true);
+  const [surveyTitle, setSurveyTitle] = useState(propTitle ?? "");
+  const [surveyDescription, setSurveyDescription] = useState(propDesc ?? "");
+  const [surveyMetaLoading, setSurveyMetaLoading] = useState(!propTitle);
   const [metaSaving, setMetaSaving] = useState(false);
 
   const [activeId,    setActiveId]    = useState(null);
@@ -2030,9 +1973,12 @@ const fetchSections = useCallback(async (sid) => {
   const sectionCount = sections.length;
   const noSectionCount = questions.filter(q => !q.section_id).length;
 
+  useEffect(() => { if (propTitle !== undefined && propTitle !== surveyTitle) setSurveyTitle(propTitle); }, [propTitle]);
+  useEffect(() => { if (propDesc !== undefined && propDesc !== surveyDescription) setSurveyDescription(propDesc); }, [propDesc]);
   useEffect(() => { if (surveyId) fetchQuestionsBySurvey(surveyId); }, [surveyId]);
 
   useEffect(() => {
+    if (propTitle !== undefined) return;
     let cancelled = false;
     if (!surveyId) return;
     (async () => {
@@ -2055,7 +2001,7 @@ const fetchSections = useCallback(async (sid) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [surveyId]);
+  }, [surveyId, propTitle]);
 
   useEffect(() => {
     if (!pendingIdRef.current) return;
@@ -2090,7 +2036,7 @@ const fetchSections = useCallback(async (sid) => {
 
     const plainContent = getPlainText(contentHtml).trim();
     if (!plainContent) {
-      setFormError("N?i dung c�u h?i kh�ng du?c d? tr?ng.");
+      setFormError("Nội dung câu hỏi không được để trống.");
       return;
     }
 
@@ -2100,14 +2046,14 @@ const fetchSections = useCallback(async (sid) => {
     if (isChoice) {
       const valid = buildBEOptions(optionRows);
       if (valid.length < 2) {
-        setFormError("C?n �t nh?t 2 l?a ch?n h?p l? (label v� value kh�ng du?c r?ng).");
+        setFormError("Cần ít nhất 2 lựa chọn hợp lệ (label và value không được rỗng).");
         return;
       }
     }
 
     if (type === "NUMBER" && settings?.min !== undefined && settings?.max !== undefined) {
       if (settings.min > settings.max) {
-        setFormError("Min ph?i nh? hon ho?c b?ng Max.");
+        setFormError("Min phải nhỏ hơn hoặc bằng Max.");
         return;
       }
     }
@@ -2121,7 +2067,7 @@ const fetchSections = useCallback(async (sid) => {
         finalMediaUrl = uploadRes?.url || uploadRes?.data?.url || finalMediaUrl;
       } catch (err) {
         console.error("[AddQuestion] Image upload failed:", err);
-        toast.error("Upload ?nh th?t b?i. C�u h?i s? du?c t?o kh�ng c� ?nh.");
+        toast.error("Upload ảnh thịt bởi. Câu hỏi s? được tạo không có ảnh.");
       }
     }
 
@@ -2180,7 +2126,7 @@ const fetchSections = useCallback(async (sid) => {
   const handleDuplicate = useCallback(async (q) => {
     const opts = q.options ?? q.option ?? [];
     const payload = {
-      content:     q.content + " (b?n sao)",
+      content:     q.content + " (bản sao)",
       type:        toBEType(toFEType(q.type)),
       required:    q.required,
       order_index: questions.length,
@@ -2254,10 +2200,10 @@ const fetchSections = useCallback(async (sid) => {
       <div style={{position:"relative",zIndex:1}}>
 
       <div style={{
-        maxWidth:1100,margin:"0 auto",padding:"4px 24px 32px",
-        display:"flex",gap:16,alignItems:"flex-start"}}>
+        maxWidth:1000,margin:"0 auto",padding:"0 20px 24px",
+        display:"flex",gap:14,alignItems:"flex-start"}}>
 
-        <div style={{width:220,flexShrink:0}}>
+        <div style={{width:180,flexShrink:0}}>
           <SectionPanel
             sections={sections}
             activeSectionId={activeSectionId}
@@ -2267,53 +2213,53 @@ const fetchSections = useCallback(async (sid) => {
           />
         </div>
 
-        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:10}}>
 
           <div style={{
             display:"flex",alignItems:"center",justifyContent:"space-between",
-            flexWrap:"wrap",gap:14}}>
+            flexWrap:"wrap",gap:10}}>
             <button
               type="button"
               onClick={() => navigate(ROUTERS.USER.MY_SURVEYS)}
               style={{
-                display:"flex",alignItems:"center",gap:8,
-                padding:"0 16px",
+                display:"flex",alignItems:"center",gap:6,
+                padding:"0 12px",
                 background:"#fff",
                 border:"1px solid " + C.primary,
-                borderRadius:8,fontSize:14,fontWeight:600,color:C.primary,
-                cursor:"pointer",fontFamily:C.font,height:36}}
+                borderRadius:8,fontSize:13,fontWeight:600,color:C.primary,
+                cursor:"pointer",fontFamily:C.font,height:32}}
             >
-              <ChevronLeft size={18} strokeWidth={2.25} />
-              Danh s�ch kh?o s�t
+              <ChevronLeft size={16} strokeWidth={2} />
+              DS khảo sát
             </button>
-            <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              {formLoading && <Loader2 size={14} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>}
-              <span style={{fontSize:13,color:C.textSub,fontWeight:500}}>{questions.length} c�u h?i</span>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+              {formLoading && <Loader2 size={13} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>}
+              <span style={{fontSize:12,color:C.textSub,fontWeight:500}}>{questions.length} câu hỏi</span>
               <button
                 type="button"
                 onClick={() => { setAiOpen(true); setShowForm(false); setActiveId(null); }}
                 style={{
-                  display:"flex",alignItems:"center",gap:8,
-                  padding:"0 16px",
+                  display:"flex",alignItems:"center",gap:6,
+                  padding:"0 12px",
                   background:"#fff",
                   color:C.primary,
                   border:"1px solid " + C.primary,
-                  borderRadius:8,fontSize:14,fontWeight:600,
-                  cursor:"pointer",fontFamily:C.font,height:36}}
+                  borderRadius:8,fontSize:13,fontWeight:600,
+                  cursor:"pointer",fontFamily:C.font,height:32}}
               >
-                <Sparkles size={16} />
+                <Sparkles size={15} />
                 AI
               </button>
               <button type="button" onClick={triggerAdd} style={{
-                display:"flex",alignItems:"center",gap:8,
-                padding:"0 16px",
+                display:"flex",alignItems:"center",gap:6,
+                padding:"0 12px",
                 background:C.primary,
                 color:"#fff",
                 border:"none",
-                borderRadius:8,fontSize:14,fontWeight:600,
-                cursor:"pointer",fontFamily:C.font,height:36}}>
-                {showForm?<X size={16}/>:<Plus size={16}/>}
-                {showForm?"Hu?":"C�u h?i m?i"}
+                borderRadius:8,fontSize:13,fontWeight:600,
+                cursor:"pointer",fontFamily:C.font,height:32}}>
+                {showForm?<X size={15}/>:<Plus size={15}/>}
+                {showForm?"Huỷ":"Câu hỏi"}
               </button>
             </div>
           </div>
@@ -2329,46 +2275,46 @@ const fetchSections = useCallback(async (sid) => {
           {showForm && (
             <div style={{
               background:C.surface,
-              border:"1px solid " + C.primary,borderRadius:12,
-              padding:20}}>
-              <h2 style={{fontSize:16,fontWeight:600,color:"#111827",margin:"0 0 16px"}}>C�u h?i m?i</h2>
+              border:"1px solid " + C.primary,borderRadius:10,
+              padding:14}}>
+              <h2 style={{fontSize:15,fontWeight:600,color:C.text,margin:"0 0 12px"}}>Câu hỏi mới</h2>
               <form onSubmit={handleAdd}>
-                <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
 
-                  <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                  <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
                     <div style={{flex:1}}>
-                      <span style={lbl}>N?i dung c�u h?i *</span>
+                      <span style={lbl}>Nội dung câu hỏi *</span>
                       <RichTextEditor
                         value={contentHtml}
                         onChange={(html) => { setContentHtml(html); setFormError(""); }}
-                        placeholder="Nh?p n?i dung c�u h?i..."
-                        minHeight={72}
+                        placeholder="Nhập nội dung câu hỏi..."
+                        minHeight={56}
                         hasError={!!formError && !getPlainText(contentHtml).trim()}
                       />
                     </div>
-                    <div style={{minWidth:200}}>
-                      <span style={lbl}>Lo?i c�u h?i</span>
+                    <div style={{minWidth:180}}>
+                      <span style={lbl}>Loại câu hỏi</span>
                       <QuestionTypeDropdown value={type} onChange={handleFormTypeChange}/>
                     </div>
                   </div>
 
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
                     <div>
-                      <span style={lbl}>M� t? c�u h?i (t�y ch?n)</span>
+                      <span style={lbl}>Mô tả câu hỏi (tùy chọn)</span>
                       <input type="text" value={description} onChange={e => setDescription(e.target.value)}
-                        placeholder="Th�m g?i � ho?c m� t?..."
-                        style={{...inp(false), padding:"7px 10px", fontSize:12}}/>
+                        placeholder="Thêm gợi ý hoặc mô tả..."
+                        style={{...inp(false), padding:"6px 10px", fontSize:12}}/>
                     </div>
                     {["TEXT","PARAGRAPH","EMAIL","DATE","NUMBER","TIME"].includes(type) && (
                       <div>
-                        <span style={lbl}>Placeholder (t�y ch?n)</span>
+                        <span style={lbl}>Placeholder (tùy chọn)</span>
                         <input type="text" value={placeholder} onChange={e => setPlaceholder(e.target.value)}
-                          placeholder="Van b?n g?i � trong � nh?p li?u..."
-                          style={{...inp(false), padding:"7px 10px", fontSize:12}}/>
+                          placeholder="Văn bản gợi ý trong ô nhập liệu..."
+                          style={{...inp(false), padding:"6px 10px", fontSize:12}}/>
                       </div>
                     )}
                     <div>
-                      <span style={lbl}>H�nh ?nh / Video (t�y ch?n)</span>
+                      <span style={lbl}>Hình ảnh / Video (tùy chọn)</span>
                       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                         <input
                           type="file"
@@ -2376,7 +2322,7 @@ const fetchSections = useCallback(async (sid) => {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 5 * 1024 * 1024) { toast.error("File qu� l?n. T?i da 5MB."); return; }
+                            if (file.size > 5 * 1024 * 1024) { toast.error("File quá lớn. Tối đa 5MB."); return; }
                             setQImage({ file, url: URL.createObjectURL(file) });
                             e.target.value = "";
                           }}
@@ -2385,26 +2331,26 @@ const fetchSections = useCallback(async (sid) => {
                         />
                         <label htmlFor="q-image-upload" style={{
                           display:"inline-flex",alignItems:"center",gap:6,
-                          padding:"7px 12px",border:"1px solid " + C.border,borderRadius:8,
-                          cursor:"pointer",fontSize:12,color:"#9CA3AF",background:C.surfaceHover,
+                          padding:"6px 10px",border:"1px solid " + C.border,borderRadius:6,
+                          cursor:"pointer",fontSize:11,color:"#9CA3AF",background:C.surfaceHover,
                           transition:"all .12s"}}>
-                          <ImagePlus size={14}/> Ch?n ?nh
+                          <ImagePlus size={13}/> Chọn ảnh
                         </label>
                         {qImage && (
-                          <img src={qImage.url} alt="Preview" style={{maxWidth:80,maxHeight:50,borderRadius:6,objectFit:"cover",border:"1px solid " + C.border}}/>
+                          <img src={qImage.url} alt="Preview" style={{maxWidth:60,maxHeight:40,borderRadius:6,objectFit:"cover",border:"1px solid " + C.border}}/>
                         )}
                         {qImage && (
                           <button type="button" onClick={() => { setQImage(null); }}
-                            style={{padding:"4px 8px",border:"none",borderRadius:6,background:"rgba(239,68,68,0.1)",color:"#dc2626",cursor:"pointer",fontSize:11,fontWeight:600}}>
-                            X�a ?nh
+                            style={{padding:"3px 8px",border:"none",borderRadius:6,background:"rgba(239,68,68,0.1)",color:"#dc2626",cursor:"pointer",fontSize:10,fontWeight:600}}>
+                            Xóa
                           </button>
                         )}
                         <input
                           type="url"
                           value={mediaUrl}
                           onChange={e => { setMediaUrl(e.target.value); setQImage(null); }}
-                          placeholder="Ho?c d�n URL ?nh..."
-                          style={{...inp(false), padding:"7px 10px", fontSize:12, flex:1, maxWidth:200}}
+                          placeholder="Hoặc dán URL ảnh..."
+                          style={{...inp(false), padding:"6px 10px", fontSize:12, flex:1, maxWidth:180}}
                         />
                       </div>
                     </div>
@@ -2425,40 +2371,40 @@ const fetchSections = useCallback(async (sid) => {
                   )}
 
                   {formError && (
-                    <div style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:C.error,background:C.errorBg,padding:"8px 12px",borderRadius:8,border:"1px solid " + C.errorBorder}}>
-                      <AlertCircle size={14}/>{formError}
+                    <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:C.error,background:C.errorBg,padding:"6px 10px",borderRadius:6,border:"1px solid " + C.errorBorder}}>
+                      <AlertCircle size={13}/>{formError}
                     </div>
                   )}
 
-                  <div style={{display:"flex",justifyContent:"flex-end",gap:10}}>
+                  <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
                     <button
                       type="button"
                       onClick={()=>{ setShowForm(false); resetForm(); }}
                       style={{
-                        padding:"0 16px",background:"#fff",
+                        padding:"0 12px",background:"#fff",
                         border:"1px solid " + C.primary,borderRadius:8,
-                        fontSize:14,fontWeight:600,color:C.primary,
-                        cursor:"pointer",fontFamily:C.font,height:36,
+                        fontSize:13,fontWeight:600,color:C.primary,
+                        cursor:"pointer",fontFamily:C.font,height:32,
                         transition:"background .12s"}}
                       onMouseEnter={e=>e.currentTarget.style.background=C.primaryBg}
                       onMouseLeave={e=>e.currentTarget.style.background="#fff"}
                     >
-                      Hu?
+                      Huỷ
                     </button>
                     <button type="submit" disabled={formLoading} style={{
                       display:"flex",alignItems:"center",gap:6,
-                      padding:"0 16px",
+                      padding:"0 12px",
                       background:formLoading?C.surfaceHover:C.primary,
                       color:"#fff",
                       border:"none",
-                      borderRadius:8,fontSize:14,fontWeight:600,
-                      cursor:formLoading?"not-allowed":"pointer",height:36,
+                      borderRadius:8,fontSize:13,fontWeight:600,
+                      cursor:formLoading?"not-allowed":"pointer",height:32,
                       fontFamily:C.font}}>
                       {formLoading
-                        ? <Loader2 size={13} style={{animation:"spin 1s linear infinite"}}/>
-                        : <Plus size={13}/>
+                        ? <Loader2 size={12} style={{animation:"spin 1s linear infinite"}}/>
+                        : <Plus size={12}/>
                       }
-                      {formLoading ? "�ang th�m..." : "Th�m c�u h?i"}
+                      {formLoading ? "Đang thêm..." : "Thêm"}
                     </button>
                   </div>
 
@@ -2468,43 +2414,43 @@ const fetchSections = useCallback(async (sid) => {
           )}
 
           {loading && questions.length === 0 ? (
-            <div style={{display:"flex",justifyContent:"center",padding:"4rem 0"}}>
-              <Loader2 size={28} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>
+            <div style={{display:"flex",justifyContent:"center",padding:"3rem 0"}}>
+              <Loader2 size={24} color={C.primary} style={{animation:"spin 1s linear infinite"}}/>
             </div>
           ) : questions.length === 0 ? (
             <div style={{
               display:"flex",flexDirection:"column",alignItems:"center",
-              justifyContent:"center",padding:"5rem 0",gap:14,
+              justifyContent:"center",gap:12,
               background:C.surface,
-              borderRadius:12,padding:20,border:"1px solid " + C.border}}>
-              <Inbox size={54} strokeWidth={1.2} color={C.textDim}/>
-              <p style={{fontSize:15,margin:0,color:C.text,fontWeight:600}}>Chua c� c�u h?i n�o</p>
-              <p style={{fontSize:13,margin:0,color:C.textSub}}>H�y t?o c�u h?i d?u ti�n ho?c nh? AI g?i �</p>
-              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+              borderRadius:10,padding:16,border:"1px solid " + C.border}}>
+              <Inbox size={44} strokeWidth={1.2} color={C.textDim}/>
+              <p style={{fontSize:14,margin:0,color:C.text,fontWeight:600}}>Chưa có câu hỏi nào</p>
+              <p style={{fontSize:12,margin:0,color:C.textSub}}>Hãy tạo câu hỏi đầu tiên hoặc nhờ AI gợi ý</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center"}}>
                 <button type="button" onClick={()=>setShowForm(true)} style={{
-                  fontSize:14,fontWeight:600,color:"#fff",background:C.primary,
+                  fontSize:13,fontWeight:600,color:"#fff",background:C.primary,
                   border:"none",cursor:"pointer",borderRadius:8,
-                  padding:"0 16px",height:36,fontFamily:C.font}}>
-                  Th�m c�u h?i d?u ti�n
+                  padding:"0 12px",height:32,fontFamily:C.font}}>
+                  + Câu hỏi đầu tiên
                 </button>
                 <button type="button" onClick={()=>setAiOpen(true)} style={{
-                  fontSize:14,fontWeight:600,color:C.primary,background:"#fff",
+                  fontSize:13,fontWeight:600,color:C.primary,background:"#fff",
                   border:"1px solid " + C.primary,cursor:"pointer",borderRadius:8,
-                  padding:"0 16px",height:36,fontFamily:C.font,
-                  display:"flex",alignItems:"center",gap:8}}>
-                  <Sparkles size={16} /> Tr? l� AI
+                  padding:"0 12px",height:32,fontFamily:C.font,
+                  display:"flex",alignItems:"center",gap:6}}>
+                  <Sparkles size={14} /> Trợ lý AI
                 </button>
               </div>
             </div>
           ) : (
-            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {activeSectionId && (() => {
                 const sec = sections.find(s => s.id === activeSectionId);
                 return sec ? (
-                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",background:C.primaryBg,borderRadius:8,border:"1px solid " + C.primaryLight}}>
-                    <Layout size={16} color={C.primary}/>
-                    <span style={{fontSize:13,fontWeight:600,color:C.primary}}>{sec.title}</span>
-                    <span style={{fontSize:12,color:C.textSub,marginLeft:"auto"}}>{displayedQuestions.length} c�u h?i</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:C.primaryBg,borderRadius:6,border:"1px solid " + C.primaryLight}}>
+                    <Layout size={14} color={C.primary}/>
+                    <span style={{fontSize:12,fontWeight:600,color:C.primary}}>{sec.title}</span>
+                    <span style={{fontSize:11,color:C.textSub,marginLeft:"auto"}}>{displayedQuestions.length} câu hỏi</span>
                   </div>
                 ) : null;
               })()}
@@ -2528,7 +2474,6 @@ const fetchSections = useCallback(async (sid) => {
           )}
         </div>
 
-        <Sidebar onAddQuestion={triggerAdd}/>
       </div>
 
       <AiQuestionAssistant

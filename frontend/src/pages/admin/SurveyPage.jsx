@@ -49,7 +49,7 @@ const C = {
     "conic-gradient(from 0deg at 50% 50%, #5B4EE8, #4A3DD6, #5B4EE8)",
     "conic-gradient(from 0deg at 50% 50%, #6366F1, #8B5CF6, #6366F1)",
     "conic-gradient(from 0deg at 50% 50%, #10B981, #3B82F6, #10B981)",
-    "conic-gradient(from 0deg at 50% 50%, #EC4899, #F59E0B, #EC4899)",
+    "conic-gradient(from 0deg at 50% 50%, #EC4899, #5B4EE8, #EC4899)",
     "conic-gradient(from 0deg at 50% 50%, #8B5CF6, #6366F1, #8B5CF6)",
     "conic-gradient(from 0deg at 50% 50%, #3B82F6, #10B981, #3B82F6)",
   ]};
@@ -242,7 +242,7 @@ function ShareLinkModal({ open, onClose, survey, onShare }) {
             <Share2 size={18} color={C.primary}/>
           </div>
           <div>
-            <div style={{fontSize:14, fontWeight:600, color:C.text}}>{survey?.title}</div>
+            <div style={{fontSize:14, fontWeight:600, color:C.text}}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</div>
             <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Chia sẻ khảo sát đến mọi người</div>
           </div>
         </div>
@@ -407,7 +407,7 @@ function InviteModal({ open, onClose, survey, onInvite }) {
           borderRadius:10, border:`1px solid ${C.border}`}}>
           <Users size={16} color={C.primary}/>
           <span style={{fontSize:13, color:C.textSub}}>
-            Mời người dùng tham gia <strong style={{color:C.text}}>{survey?.title}</strong>
+            Mời người dùng tham gia <strong style={{color:C.text}}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</strong>
           </span>
         </div>
 
@@ -518,7 +518,7 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
             <UserPlus size={18} color={C.primary}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:13, fontWeight:600, color:C.text}}>{survey?.title}</div>
+            <div style={{fontSize:13, fontWeight:600, color:C.text}}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</div>
             <div style={{fontSize:12, color:C.textSub, marginTop:2}}>Nhập nhiều email cùng lúc</div>
           </div>
           {emailCount > 0 && (
@@ -597,9 +597,18 @@ function BulkInviteModal({ open, onClose, survey, onBulkInvite }) {
                 style={{
                   ...textareaStyle,
                   border:`1.5px solid ${error ? C.error : C.border}`,
-                  lineHeight:1.7}}
-                onFocus={e => { e.target.style.borderColor = C.primary; }}
-                onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; }}
+                  lineHeight:1.7,
+                  transition:"border-color .2s, box-shadow .2s",
+                  fontSize:13,
+                  padding:"10px 12px"}}
+                onFocus={e => {
+                  e.target.style.borderColor = C.primary;
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.12)";
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = error ? C.error : C.border;
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
 
@@ -1684,7 +1693,7 @@ function SurveyCard({
                 fontSize:14, fontWeight:600, color:"#111827", lineHeight:1.4,
                 display:"-webkit-box", WebkitLineClamp:2,
                 WebkitBoxOrient:"vertical", overflow:"hidden"}}>
-                {s.title}
+                <span dangerouslySetInnerHTML={{__html:s.title}}/>
               </div>
 
               {(s.start_at || s.end_at) && (

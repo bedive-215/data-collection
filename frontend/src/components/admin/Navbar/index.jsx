@@ -39,7 +39,7 @@ export default function Navbar({ onToggleSidebar }) {
     <header
       className="w-full sticky top-0 z-40 flex items-center justify-between px-6 py-3"
       style={{
-        background: "rgba(15, 17, 23, 0.9)",
+        background: "rgba(255, 255, 255, 0.9)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--admin-border)",
@@ -60,7 +60,7 @@ export default function Navbar({ onToggleSidebar }) {
             className="font-bold"
             style={{ color: "var(--admin-text)", fontSize: 17, lineHeight: 1.2 }}
           >
-            Control Panel
+            Bảng điều khiển
           </h1>
           <p className="text-[11px]" style={{ color: "var(--admin-text-dim)" }}>
             Quản lý hệ thống khảo sát
@@ -91,13 +91,13 @@ export default function Navbar({ onToggleSidebar }) {
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                background: "linear-gradient(135deg, #3B82F6, #2563EB)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: "bold",
                 fontSize: 12,
-                color: "#000",
+                color: "#FFF",
                 flexShrink: 0,
                 overflow: "hidden",
               }}
@@ -158,9 +158,9 @@ export default function Navbar({ onToggleSidebar }) {
                 <span
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-2"
                   style={{
-                    background: "rgba(245,158,11,0.1)",
+                    background: "rgba(59,130,246,0.1)",
                     color: "var(--admin-primary)",
-                    border: "1px solid rgba(245,158,11,0.2)",
+                    border: "1px solid rgba(59,130,246,0.2)",
                   }}
                 >
                   {user?.role ?? "admin"}

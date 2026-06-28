@@ -1,8 +1,8 @@
 
 /**
- * User AnalyticsPage � Complete redesign (light theme)
+ * User AnalyticsPage  Complete redesign (light theme)
  * Features: date heatmap, trend group-by, response search/filter,
- * NPS score, funnel chart, chi-square + Cram�r's V, export JSON,
+ * NPS score, funnel chart, chi-square + Cramér's V, export JSON,
  * empty states, per-section loading/error/retry, unified light theme
  */
 import { useState, useEffect, useCallback } from "react";
@@ -29,21 +29,21 @@ import { ROUTERS } from "@/utils/constants";
 
 // --- TABS --------------------------------------------------------------------
 const PRIMARY_TABS = [
-  { id: "overview",    label: "T?ng quan",          icon: BarChart3 },
-  { id: "questions",   label: "Chi ti?t c�u h?i",   icon: Target },
-  { id: "responses",   label: "Danh s�ch ph?n h?i", icon: Users },
+  { id: "overview",    label: "Tổng quan",          icon: BarChart3 },
+  { id: "questions",   label: "Chi tiết câu hỏi",   icon: Target },
+  { id: "responses",   label: "Danh sách phản hồi", icon: Users },
 ];
 
 const MORE_TABS = [
-  { id: "gender",     label: "Gi?i t�nh",           icon: Venus },
+  { id: "gender",     label: "Giới tính",           icon: Venus },
   { id: "crosstab",    label: "Cross Tab",            icon: Table },
   { id: "ai",          label: "AI Insights",          icon: Brain },
-  { id: "export",      label: "Xu?t d? li?u",        icon: FileSpreadsheet },
+  { id: "export",      label: "Xuất dữ liệu",        icon: FileSpreadsheet },
 ];
 
 // --- HELPERS ------------------------------------------------------------------
 function fmt(n) {
-  if (typeof n !== "number") return n ?? "�";
+  if (typeof n !== "number") return n ?? "";
   return n.toLocaleString("vi-VN");
 }
 
@@ -65,12 +65,12 @@ function chiSquareTest(rows) {
   if (df < 1) return null;
   const cramersV = Math.sqrt(chiSq / (total * Math.min(Object.keys(rowTotals).length - 1, Object.keys(colTotals).length - 1)));
   const v = Math.abs(cramersV);
-  let strength = "Kh�ng"; if (v > 0.1) strength = "Y?u"; if (v > 0.3) strength = "Trung b�nh"; if (v > 0.5) strength = "M?nh"; if (v > 0.7) strength = "R?t m?nh";
+  let strength = "Không"; if (v > 0.1) strength = "Yếu"; if (v > 0.3) strength = "Trung bình"; if (v > 0.5) strength = "Mạnh"; if (v > 0.7) strength = "Rất mạnh";
   return {
     chi_square: parseFloat(chiSq.toFixed(3)),
     cramers_v: parseFloat(Math.abs(cramersV).toFixed(3)),
     degrees_of_freedom: df, total_samples: total,
-    significance: chiSq > 10.83 ? "C?c k? c� � nghia" : chiSq > 6.63 ? "R?t c� � nghia" : chiSq > 3.84 ? "C� � nghia" : "Kh�ng c� � nghia",
+    significance: chiSq > 10.83 ? "Cực kỳ có ý nghĩa" : chiSq > 6.63 ? "Rất có ý nghĩa" : chiSq > 3.84 ? "Có ý nghĩa" : "Không có ý nghĩa",
     strength, has_correlation: chiSq > 3.84};
 }
 
@@ -148,7 +148,7 @@ function DateHeatmap({ data }) {
                 background: day ? getColor(day.count) : "transparent",
                 cursor: day ? "pointer" : "default",
                 transition: "transform 0.15s",
-                title: day ? `${day.date}: ${day.count} ph?n h?i` : ""}}
+                title: day ? `${day.date}: ${day.count} phản hỏi` : ""}}
                 onMouseEnter={e => { if (day) e.currentTarget.style.transform = "scale(1.4)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
               />
@@ -157,11 +157,11 @@ function DateHeatmap({ data }) {
         ))}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, justifyContent: "flex-end" }}>
-        <span style={{ fontSize: 10, color: "#9CA3AF" }}>�t</span>
+        <span style={{ fontSize: 10, color: "#9CA3AF" }}>Ít</span>
         {[0, 0.25, 0.5, 0.75, 1].map((r, i) => (
           <div key={i} style={{ width: 11, height: 11, borderRadius: 2, background: getColor(r * max), border: "1px solid rgba(0,0,0,0.06)" }} />
         ))}
-        <span style={{ fontSize: 10, color: "#9CA3AF" }}>Nhi?u</span>
+        <span style={{ fontSize: 10, color: "#9CA3AF" }}>Nhiều</span>
       </div>
     </div>
   );
@@ -173,7 +173,7 @@ function FunnelViz({ dropOffData }) {
   const sorted = [...dropOffData].sort((a, b) => b.answered_count - a.answered_count);
   const max = sorted[0]?.answered_count || 1;
   const funnelData = sorted.slice(0, 10).map(d => ({
-    name: `Q${d.question_id?.slice(-3) || "?"}`, value: d.answered_count}));
+    name: `Q${d.question_i?.slice(-3) || "?"}`, value: d.answered_count}));
   return (
     <div style={{ height: 200 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -197,7 +197,7 @@ function FunnelViz({ dropOffData }) {
 function NPSCard({ npsData }) {
   if (!npsData) return (
     <div style={{ background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 12, padding: 20, textAlign: "center"}}>
-      <p style={{ color: "#9CA3AF", fontSize: 13, fontWeight: 400 }}>C?n c�u h?i d�nh gi� (RATING 1-10) d? t�nh NPS</p>
+      <p style={{ color: "#9CA3AF", fontSize: 13, fontWeight: 400 }}>Cần câu hỏi đánh giá (RATING 1-10) để tính NPS</p>
     </div>
   );
   const scoreColor = npsData.score >= 50 ? "#10b981" : npsData.score >= 0 ? "#f59e0b" : "#ef4444";
@@ -210,7 +210,7 @@ function NPSCard({ npsData }) {
       <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
         <div>
           <p style={{ fontSize: 48, fontWeight: 600, color: scoreColor, lineHeight: 1, margin: 0 }}>{npsData.score}</p>
-          <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4, fontWeight: 400 }}>tr�n 100</p>
+          <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4, fontWeight: 400 }}>trên 100</p>
         </div>
         <div style={{ flex: 1, paddingBottom: 4 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
@@ -249,7 +249,7 @@ function StatCard({ label, value, icon: Icon, sub, delay = 0 }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF", margin: 0, marginBottom: 4 }}>{label}</p>
-          <p style={{ fontSize: 28, fontWeight: 600, color: "#111827", margin: 0, lineHeight: 1.1 }}>{visible ? value : "�"}</p>
+          <p style={{ fontSize: 28, fontWeight: 600, color: "#111827", margin: 0, lineHeight: 1.1 }}>{visible ? value : ""}</p>
           {sub && <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 6, fontWeight: 400 }}>{sub}</p>}
         </div>
         <Icon size={20} color="#5B4EE8" style={{ flexShrink: 0 }} />
@@ -321,11 +321,11 @@ function QuestionCard({ question, index }) {
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <h4 style={{ fontWeight: 600, fontSize: 14, color: "#111827", margin: 0, marginBottom: 7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {question.question_content || question.question_id?.slice(0, 8) + "�"}
+              {question.question_content || question.question_i?.slice(0, 8) + ""}
             </h4>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TypeBadge type={question.type} />
-              <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>{question.total_responses} ph?n h?i</span>
+              <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>{question.total_responses} phản hỏi</span>
               {topOpt && <span style={{ fontSize: 11, color: "#10b981", display: "flex", alignItems: "center", gap: 4, fontWeight: 400 }}><TrendingUp size={11} /> {topOpt.label?.slice(0, 15)} ({topOpt.percent}%)</span>}
             </div>
           </div>
@@ -346,7 +346,7 @@ function QuestionCard({ question, index }) {
                   <BarChart data={question.options} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E8E6F0" horizontal={false} />
                     <XAxis type="number" stroke="#9CA3AF" fontSize={11} />
-                    <YAxis dataKey="label" type="category" stroke="#9CA3AF" fontSize={11} width={120} tickFormatter={v => v?.length > 15 ? v.slice(0, 15) + "�" : v} />
+                    <YAxis dataKey="label" type="category" stroke="#9CA3AF" fontSize={11} width={120} tickFormatter={v => v?.length > 15 ? v.slice(0, 15) + "" : v} />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="count" radius={[0, 8, 8, 0]} maxBarSize={20}>
                       {question.options.map((_, i) => (
@@ -374,14 +374,14 @@ function QuestionCard({ question, index }) {
             <div style={{ paddingTop: 18 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Trung b�nh", value: question.avg?.toFixed(1), color: "#5B4EE8" },
-                  { label: "Th?p nh?t", value: question.min, color: "#374151" },
-                  { label: "Cao nh?t", value: question.max, color: "#374151" },
-                  { label: "�? l?ch", value: question.stddev?.toFixed(2), color: "#374151" },
+                  { label: "Trung bình", value: question.avg?.toFixed(1), color: "#5B4EE8" },
+                  { label: "Thấp nhất", value: question.min, color: "#374151" },
+                  { label: "Cao nhất", value: question.max, color: "#374151" },
+                  { label: "Độ lệch", value: question.stddev?.toFixed(2), color: "#374151" },
                 ].map((item, i) => (
                   <div key={i} style={{ background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "12px", textAlign: "center" }}>
                     <p style={{ fontSize: 10, color: "#9CA3AF", marginBottom: 6, fontWeight: 500 }}>{item.label}</p>
-                    <p style={{ fontSize: 20, fontWeight: 600, color: item.color, margin: 0 }}>{item.value ?? "�"}</p>
+                    <p style={{ fontSize: 20, fontWeight: 600, color: item.color, margin: 0 }}>{item.value ?? ""}</p>
                   </div>
                 ))}
               </div>
@@ -419,7 +419,7 @@ function QuestionCard({ question, index }) {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              ) : <p style={{ color: "#9CA3AF", textAlign: "center", padding: "20px 0", fontWeight: 400 }}>Chua c� d? li?u ng�y</p>}
+              ) : <p style={{ color: "#9CA3AF", textAlign: "center", padding: "20px 0", fontWeight: 400 }}>Chưa có dữ liệu ngày</p>}
             </div>
           )}
 
@@ -429,7 +429,7 @@ function QuestionCard({ question, index }) {
                 <>
                   {question.word_frequency?.length > 0 && (
                     <div style={{ marginBottom: 14 }}>
-                      <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 10, fontWeight: 500 }}>T? kh�a n?i b?t</p>
+                      <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 10, fontWeight: 500 }}>Từ khóa nổi bật</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {question.word_frequency.slice(0, 16).map((item, i) => (
                           <span key={item.word || i} style={{ padding: "4px 10px", background: "#EDE9FF", color: "#5B4EE8", borderRadius: 999, fontSize: 12, fontWeight: 500 }}>
@@ -442,17 +442,17 @@ function QuestionCard({ question, index }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 280, overflowY: "auto" }}>
                     {question.answers.map((ans, i) => (
                       <div key={ans.id || i} style={{ background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "#374151", fontWeight: 400 }}>
-                        {ans.text || ans.answer_text || "�"}
+                        {ans.text || ans.answer_text || ""}
                       </div>
                     ))}
                   </div>
                   {question.pagination && (
                     <p style={{ fontSize: 12, color: "#9CA3AF", textAlign: "center", marginTop: 12, fontWeight: 400 }}>
-                      Hi?n th? {question.answers.length} / {question.pagination.total_answers} c�u tr? l?i
+                      Hiển thị {question.answers.length} / {question.pagination.total_answers} câu trả lời
                     </p>
                   )}
                 </>
-              ) : <div style={{ textAlign: "center", padding: "20px 0", color: "#9CA3AF", fontWeight: 400 }}>Chua c� c�u tr? l?i</div>}
+              ) : <div style={{ textAlign: "center", padding: "20px 0", color: "#9CA3AF", fontWeight: 400 }}>Chưa có câu trả lời</div>}
             </div>
           )}
         </div>
@@ -471,21 +471,21 @@ function ResponseRow({ response }) {
         onMouseEnter={e => { e.currentTarget.style.background = "#F4F3F8"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
       >
-        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#9CA3AF" }}>{response.response_id?.slice(0, 6)}</div>
+        <div style={{ width: 32, textAlign: "center", fontSize: 11, fontFamily: "monospace", color: "#9CA3AF" }}>{response.response_i?.slice(0, 6)}</div>
         <div style={{ flex: 1 }}>
           <span style={{
             display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 999, fontSize: 12, fontWeight: 500,
             background: response.status === "COMPLETED" ? "#d1fae5" : "#fef3c7",
             color: response.status === "COMPLETED" ? "#059669" : "#d97706"}}>
-            {response.status === "COMPLETED" ? "? Ho�n th�nh" : "? �ang l�m"}
+            {response.status === "COMPLETED" ? "? Hoàn thành" : "? Ðang làm"}
           </span>
         </div>
         <div style={{ fontSize: 12, color: "#9CA3AF", width: 70, textAlign: "right", fontWeight: 400 }}>
-          {response.time_to_complete_seconds ? `${Math.floor(response.time_to_complete_seconds / 60)}p ${response.time_to_complete_seconds % 60}s` : "�"}
+          {response.time_to_complete_seconds ? `${Math.floor(response.time_to_complete_seconds / 60)}p ${response.time_to_complete_seconds % 60}s` : ""}
         </div>
         <div style={{ fontSize: 12, color: "#9CA3AF", width: 40, textAlign: "right", fontWeight: 400 }}>{response.answers?.length || 0}</div>
         <div style={{ fontSize: 12, color: "#9CA3AF", width: 80, textAlign: "right", fontFamily: "monospace", fontWeight: 400 }}>
-          {response.submitted_at ? new Date(response.submitted_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) : "�"}
+          {response.submitted_at ? new Date(response.submitted_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) : ""}
         </div>
         <div style={{ width: 28, height: 28, borderRadius: 8, background: "#F4F3F8", display: "flex", alignItems: "center", justifyContent: "center", color: "#9CA3AF" }}>
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -497,7 +497,7 @@ function ResponseRow({ response }) {
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "10px 14px" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ans.question_content}</p>
-                <p style={{ fontSize: 13, color: "#374151", margin: 0, marginTop: 3, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ans.value || ans.answer_text || "�"}</p>
+                <p style={{ fontSize: 13, color: "#374151", margin: 0, marginTop: 3, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ans.value || ans.answer_text || ""}</p>
               </div>
               <TypeBadge type={ans.type} />
             </div>
@@ -552,7 +552,7 @@ function DatePresetSelector({ activePreset, onChange }) {
 
 // --- TREND SWITCHER ------------------------------------------------------------
 function TrendSwitcher({ value, onChange }) {
-  const opts = [{ label: "Ng�y", value: "day" }, { label: "Tu?n", value: "week" }, { label: "Th�ng", value: "month" }];
+  const opts = [{ label: "Ngày", value: "day" }, { label: "Tuần", value: "week" }, { label: "Tháng", value: "month" }];
   return (
     <div style={{ display: "flex", background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 8, padding: 2, gap: 2 }}>
       {opts.map(o => (
@@ -569,7 +569,7 @@ function TrendSwitcher({ value, onChange }) {
 }
 
 // --- SEARCH BAR ----------------------------------------------------------------
-function SearchBar({ value, onChange, placeholder = "T�m ki?m ph?n h?i..." }) {
+function SearchBar({ value, onChange, placeholder = "Tìm kiếm phản hồi..." }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -595,7 +595,7 @@ function SearchBar({ value, onChange, placeholder = "T�m ki?m ph?n h?i..." }) {
 
 // --- STATUS FILTER --------------------------------------------------------------
 function StatusFilter({ value, onChange }) {
-  const opts = [{ label: "T?t c?", value: "" }, { label: "Ho�n th�nh", value: "COMPLETED" }, { label: "�ang l�m", value: "IN_PROGRESS" }];
+  const opts = [{ label: "Tất cả", value: "" }, { label: "Hoàn thành", value: "COMPLETED" }, { label: "Đang làm", value: "IN_PROGRESS" }];
   return (
     <div style={{ display: "flex", gap: 6 }}>
       {opts.map(o => (
@@ -768,7 +768,7 @@ export default function UserAnalyticsPage() {
         const result = chiSquareTest(data.rows.flatMap(row => Object.values(row.breakdown || {}).map(cell => ({ option_a_id: row.option_id, option_b_id: cell.option_id, count: cell.count }))));
         setChiResult(result);
       } else { setChiResult(null); }
-    } catch { toast.error("Kh�ng t?i du?c cross-tab"); }
+    } catch { toast.error("Không tải được cross-tab"); }
     finally { setCtLoad(false); }
   }, [surveyId, selectedQ1, selectedQ2, dateFrom, dateTo]);
 
@@ -787,8 +787,8 @@ export default function UserAnalyticsPage() {
       a.download = `analytics-${surveyId}-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
-      toast.success("�� xu?t JSON");
-    } catch { toast.error("Xu?t th?t b?i"); }
+      toast.success("Đã xuất JSON");
+    } catch { toast.error("Xuất thất bại"); }
   };
 
   const handleRefreshAll = () => {
@@ -829,7 +829,7 @@ export default function UserAnalyticsPage() {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Sparkles size={18} color="#5B4EE8" />
-                <h1 style={{ fontSize: 22, fontWeight: 600, color: "#111827", margin: 0 }}>Ph�n t�ch Kh?o s�t</h1>
+                <h1 style={{ fontSize: 22, fontWeight: 600, color: "#111827", margin: 0 }}>Phân tích Khảo sát</h1>
               </div>
               <p style={{ fontSize: 12, color: "#9CA3AF", margin: 0, marginTop: 4, fontFamily: "monospace", fontWeight: 400 }}>{surveyId}</p>
             </div>
@@ -839,19 +839,19 @@ export default function UserAnalyticsPage() {
             background: "#FFF", color: "#5B4EE8", border: "1px solid #5B4EE8",
             borderRadius: 8, height: 36, padding: "0 16px", fontSize: 14,
             fontWeight: 500, cursor: "pointer", fontFamily: "system-ui"}}>
-            <RefreshCw size={15} /> L�m m?i
+            <RefreshCw size={15} /> Làm mới
           </button>
         </div>
 
         {/* Filter bar */}
         <div style={{ ...cardStyle, display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", marginBottom: 24, flexWrap: "wrap" }}>
           <Filter size={15} color="#9CA3AF" />
-          <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>Kho?ng th?i gian:</span>
+          <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>Khoảng thời gian:</span>
           <DatePresetSelector activePreset={datePreset} onChange={applyPreset} />
           {datePreset === "custom" && (
             <>
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: "7px 12px", background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 10, fontSize: 12, color: "#374151", fontFamily: "system-ui", outline: "none", cursor: "pointer" }} />
-              <span style={{ color: "#ccc" }}>�</span>
+              <span style={{ color: "#ccc" }}></span>
               <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ padding: "7px 12px", background: "#FFFFFF", border: "1px solid #E8E6F0", borderRadius: 10, fontSize: 12, color: "#374151", fontFamily: "system-ui", outline: "none", cursor: "pointer" }} />
             </>
           )}
@@ -889,7 +889,7 @@ export default function UserAnalyticsPage() {
               background: "transparent",
               color: MORE_TABS.some(t => t.id === activeTab) ? "#5B4EE8" : "#9CA3AF",
               marginBottom: -1}}>
-              Th�m <ChevronDown size={14} />
+              Thêm <ChevronDown size={14} />
             </button>
             {showMoreMenu && (
               <>
@@ -928,11 +928,11 @@ export default function UserAnalyticsPage() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
                 {sLoad ? [1,2,3,4,5].map(i => <SkeletonStatCard key={i} theme="light" />) : (
                   <>
-                    <StatCard label="T?ng b?t d?u" value={fmt(stats?.overview?.total_started || 0)} icon={Users} color="indigo" delay={0} />
-                    <StatCard label="Ho�n th�nh" value={fmt(stats?.overview?.total_completed || 0)} icon={CheckCircle} color="emerald" delay={80} />
-                    <StatCard label="T? l? ho�n th�nh" value={`${stats?.overview?.completion_rate || 0}%`} icon={TrendingUp} color="violet" delay={160} />
-                    <StatCard label="Th?i gian TB" value={stats?.overview?.avg_completion_time || "�"} icon={Clock} color="amber" delay={240} />
-                    <StatCard label="T?ng c�u h?i" value={questions.length} icon={Target} color="cyan" delay={320} />
+                    <StatCard label="Tổng bắt đầu" value={fmt(stats?.overview?.total_started || 0)} icon={Users} color="indigo" delay={0} />
+                    <StatCard label="Hoàn thành" value={fmt(stats?.overview?.total_completed || 0)} icon={CheckCircle} color="emerald" delay={80} />
+                    <StatCard label="T? l? hoàn thành" value={`${stats?.overview?.completion_rate || 0}%`} icon={TrendingUp} color="violet" delay={160} />
+                    <StatCard label="Thỏi gian TB" value={stats?.overview?.avg_completion_time || ""} icon={Clock} color="amber" delay={240} />
+                    <StatCard label="Tổng câu hỏi" value={questions.length} icon={Target} color="cyan" delay={320} />
                   </>
                 )}
               </div>
@@ -942,7 +942,7 @@ export default function UserAnalyticsPage() {
               <RetrySection error={tErr} onRetry={fetchTrend} isLoading={tLoad}>
                 <div style={{ ...cardStyle, padding: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Xu hu?ng ph?n h?i</h3>
+                      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Xu hướng phản hồi</h3>
                     <TrendSwitcher value={trendGroup} onChange={setTrendGroup} />
                   </div>
                   {tLoad ? <Shimmer height={240} /> : trend?.trend?.length > 0 ? (
@@ -966,9 +966,9 @@ export default function UserAnalyticsPage() {
                   ) : (
                     <EmptyState
                       icon={BarChart3}
-                      title="Chua c� d? li?u"
-                      desc="Kh?o s�t chua c� ph?n h?i n�o"
-                      action={{ label: "L�m m?i", onClick: fetchTrend }}
+                      title="Chưa có dữ liệu"
+                      desc="Khảo sát chưa có phản hồi nào"
+                      action={{ label: "Làm mới", onClick: fetchTrend }}
                     />
                   )}
                 </div>
@@ -978,11 +978,11 @@ export default function UserAnalyticsPage() {
                 <div style={{ ...cardStyle, padding: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                     <Calendar size={17} color="#06b6d4" />
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>L?ch ho?t d?ng</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Lịch hoạt động</h3>
                   </div>
                   {hmLoad ? <Shimmer height={160} /> : hmData?.heatmap?.length > 0 ? (
                     <DateHeatmap data={hmData.heatmap} />
-                  ) : <EmptyState icon={Calendar} title="Kh�ng c� d? li?u" desc="Chua c� ph?n h?i n�o" />}
+                  ) : <EmptyState icon={Calendar} title="Không có dữ liệu" desc="Chưa có phản hồi nào" />}
                 </div>
               </RetrySection>
             </div>
@@ -992,13 +992,13 @@ export default function UserAnalyticsPage() {
                 <div style={{ ...cardStyle, padding: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                     <Award size={17} color="#10b981" />
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>T? l? ho�n th�nh</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>T? l? hoàn thành</h3>
                   </div>
                   {cLoad ? <Shimmer height={200} /> : (
                     <div style={{ height: 200, display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
                       {[
-                        { label: "Ho�n th�nh", value: comp?.total_completed || 0, color: "#10b981" },
-                        { label: "�ang l�m", value: (comp?.total_started || 0) - (comp?.total_completed || 0), color: "#f59e0b" },
+                        { label: "Hoàn thành", value: comp?.total_completed || 0, color: "#10b981" },
+                        { label: "Ðang làm", value: (comp?.total_started || 0) - (comp?.total_completed || 0), color: "#f59e0b" },
                       ].map(item => (
                         <div key={item.label}>
                           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -1011,7 +1011,7 @@ export default function UserAnalyticsPage() {
                       {comp?.avg_completion_time_seconds > 0 && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#EDE9FF", border: "1px solid #E8E6F0", borderRadius: 12 }}>
                           <Clock size={14} color="#5B4EE8" />
-                          <span style={{ fontSize: 13, color: "#5B4EE8", fontWeight: 400 }}>Th?i gian TB: <strong style={{ fontWeight: 600 }}>{comp?.avg_completion_time_display || "�"}</strong></span>
+                          <span style={{ fontSize: 13, color: "#5B4EE8", fontWeight: 400 }}>Thỏi gian TB: <strong style={{ fontWeight: 600 }}>{comp?.avg_completion_time_display || ""}</strong></span>
                         </div>
                       )}
                     </div>
@@ -1023,11 +1023,11 @@ export default function UserAnalyticsPage() {
                 <div style={{ ...cardStyle, padding: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                     <TrendingDown size={17} color="#ef4444" />
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Drop-off theo c�u h?i</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Drop-off theo câu hỏi</h3>
                   </div>
                   {cLoad ? <Shimmer height={200} /> : comp?.drop_off_by_question?.length > 0 ? (
                     <FunnelViz dropOffData={comp.drop_off_by_question} />
-                  ) : <EmptyState icon={TrendingDown} title="Chua c� d? li?u drop-off" desc="Kh�ng c� ph?n h?i chua ho�n th�nh" />}
+                  ) : <EmptyState icon={TrendingDown} title="Chưa có dữ liệu drop-off" desc="Không có phản hồi chưa hoàn thành" />}
                 </div>
               </RetrySection>
             </div>
@@ -1038,7 +1038,7 @@ export default function UserAnalyticsPage() {
                 <div style={{ ...cardStyle, padding: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                     <BarChart3 size={17} color="#a855f7" />
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Ph�n b? c�u h?i</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Phân bố câu hỏi</h3>
                   </div>
                   {svLoad ? <Shimmer height={220} /> : choiceQs.length > 0 ? (
                     <div style={{ height: 220 }}>
@@ -1054,7 +1054,7 @@ export default function UserAnalyticsPage() {
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-                  ) : <EmptyState icon={BarChart3} title="Chua c� c�u h?i d?ng l?a ch?n" desc="Survey kh�ng c� c�u h?i l?a ch?n" />}
+                  ) : <EmptyState icon={BarChart3} title="Chưa có câu hỏi đểng lựa chọn" desc="Survey không có câu hỏi lựa chọn" />}
                 </div>
               </RetrySection>
             </div>
@@ -1069,11 +1069,11 @@ export default function UserAnalyticsPage() {
             {svLoad ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{[1,2,3].map(i => <SkeletonQuestionCard key={i} theme="light" />)}</div>
             ) : questions.length === 0 ? (
-              <EmptyState icon={Target} title="Chua c� c�u h?i" desc="Kh?o s�t n�y chua c� c�u h?i n�o" />
+              <EmptyState icon={Target} title="Chưa có câu hỏi" desc="Khảo sát này chưa có câu hỏi nào" />
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <p style={{ fontSize: 13, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>{questions.length} c�u h?i</p>
+                  <p style={{ fontSize: 13, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>{questions.length} câu hỏi</p>
                   <div style={{ display: "flex", gap: 6 }}>
                     {["SINGLE_CHOICE", "MULTIPLE_CHOICE", "RATING", "TEXT", "DATE", "NUMBER"].map(t => {
                       const count = questions.filter(q => q.type === t).length;
@@ -1095,12 +1095,12 @@ export default function UserAnalyticsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <SearchBar value={rSearch} onChange={v => { setRSearch(v); setRPage(1); }} placeholder="T�m ki?m trong c�u tr? l?i..." />
+                <SearchBar value={rSearch} onChange={v => { setRSearch(v); setRPage(1); }} placeholder="Tìm kiếm trong câu trả lời..." />
               </div>
               <StatusFilter value={rStatus} onChange={v => { setRStatus(v); setRPage(1); }} />
               {(rSearch || rStatus) && (
                 <button onClick={() => { setRSearch(""); setRStatus(""); setRPage(1); }} style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #E8E6F0", background: "#FFFFFF", color: "#9CA3AF", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "system-ui", display: "flex", alignItems: "center", gap: 6 }}>
-                  <X size={13} /> X�a l?c
+                  <X size={13} /> Xóa lọc
                 </button>
               )}
             </div>
@@ -1110,23 +1110,23 @@ export default function UserAnalyticsPage() {
                 <div style={{ padding: "16px 20px", borderBottom: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <FileText size={17} color="#5B4EE8" />
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Danh s�ch ph?n h?i</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Danh sách phản hồi</h3>
                   </div>
                   <span style={{ fontSize: 12, color: "#9CA3AF", background: "#F4F3F8", padding: "4px 12px", borderRadius: 999, fontWeight: 500 }}>
-                    {responses?.pagination?.total_responses || 0} t?ng s?
+                    {responses?.pagination?.total_responses || 0} tổng số
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 18px", borderBottom: "1px solid #E8E6F0", fontSize: 10, fontWeight: 500, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   <div style={{ width: 32, textAlign: "center" }}>ID</div>
-                  <div style={{ flex: 1 }}>Tr?ng th�i</div>
-                  <div style={{ width: 70, textAlign: "right" }}>Th?i gian</div>
-                  <div style={{ width: 40, textAlign: "right" }}>C�u</div>
-                  <div style={{ width: 80, textAlign: "right" }}>Ng�y</div>
+                  <div style={{ flex: 1 }}>Trạng thái</div>
+                  <div style={{ width: 70, textAlign: "right" }}>Thỏi gian</div>
+                  <div style={{ width: 40, textAlign: "right" }}>Câu</div>
+                  <div style={{ width: 80, textAlign: "right" }}>Ngày</div>
                   <div style={{ width: 28 }}></div>
                 </div>
                 {rLoad ? [1,2,3,4,5].map(i => <SkeletonTableRow key={i} cols={5} theme="light" />)
                   : responses?.responses?.length > 0 ? responses.responses.map(r => <ResponseRow key={r.response_id} response={r} />)
-                  : <div style={{ padding: "60px 20px" }}><EmptyState icon={rSearch || rStatus ? EyeOff : Eye} title={rSearch || rStatus ? "Kh�ng t�m th?y" : "Chua c� ph?n h?i"} desc={rSearch || rStatus ? "Th? thay d?i b? l?c" : "Chua c� ph?n h?i n�o"} /></div>
+                  : <div style={{ padding: "60px 20px" }}><EmptyState icon={rSearch || rStatus ? EyeOff : Eye} title={rSearch || rStatus ? "Không tìm thấy" : "Chưa có phản hồi"} desc={rSearch || rStatus ? "Thử thay đổi bộ lọc" : "Chưa có phản hồi nào"} /></div>
                 }
                 {responses?.pagination?.total_pages > 1 && (
                   <div style={{ padding: "14px 18px", borderTop: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -1159,12 +1159,12 @@ export default function UserAnalyticsPage() {
             <div style={{ ...cardStyle, padding: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                 <Venus size={17} color="#ec4899" />
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Ph�n t�ch theo Gi?i t�nh & �? tu?i</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Phân tích theo Giới tính & Độ tuổi</h3>
               </div>
 
               <div>
                 <label style={{ display: "block", fontSize: 12, color: "#9CA3AF", fontWeight: 500, marginBottom: 8 }}>
-                  Ch?n c�u h?i l?a ch?n d? ph�n t�ch:
+                  Chọn câu hỏi lựa chọn để phân tích:
                 </label>
                 <select
                   value={genderTabQuestion || ""}
@@ -1176,7 +1176,7 @@ export default function UserAnalyticsPage() {
                     fontSize: 13, fontFamily: "system-ui", outline: "none",
                     color: "#374151", cursor: "pointer"}}
                 >
-                  <option value="">� Ch?n c�u h?i �</option>
+                  <option value="">— Chọn câu hỏi —</option>
                   {choiceQs.map(q => (
                     <option key={q.question_id} value={q.question_id}>
                       {q.question_content?.slice(0, 80)}
@@ -1187,7 +1187,7 @@ export default function UserAnalyticsPage() {
 
               {!genderTabQuestion && (
                 <div style={{ marginTop: 20, padding: "32px 20px", textAlign: "center", color: "#9CA3AF", fontSize: 13, fontWeight: 400 }}>
-                  Vui l�ng ch?n c�u h?i l?a ch?n d? xem ph�n t�ch theo gi?i t�nh v� d? tu?i.
+                  Vui lòng chọn câu hỏi lựa chọn để xem phân tích theo giới tính và độ tuổi.
                 </div>
               )}
             </div>
@@ -1200,8 +1200,8 @@ export default function UserAnalyticsPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                       <Venus size={17} color="#ec4899" />
                       <div>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>So s�nh theo Gi?i t�nh</h3>
-                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Ph�n b? c�u tr? l?i theo Nam / N? / Kh�c</p>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>So sánh theo Giới tính</h3>
+                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Phân bố câu trả lời theo Nam / Nữ / Khác</p>
                       </div>
                     </div>
 
@@ -1209,7 +1209,7 @@ export default function UserAnalyticsPage() {
                       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                         {Object.entries(genderData).map(([gender, genderInfo], gi) => {
                           const genderColors = { MALE: "#3b82f6", FEMALE: "#ec4899", OTHER: "#a855f7", UNKNOWN: "#9CA3AF" };
-                          const genderLabels = { MALE: "Nam", FEMALE: "N?", OTHER: "Kh�c", UNKNOWN: "Chua c?p nh?t" };
+                          const genderLabels = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác", UNKNOWN: "Chưa cập nhật" };
                           const color = genderColors[gender] || "#5B4EE8";
                           const label = genderLabels[gender] || gender;
                           const data = Object.entries(genderInfo.data || {}).map(([opt, pct]) => ({ name: opt, value: pct }));
@@ -1219,7 +1219,7 @@ export default function UserAnalyticsPage() {
                               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: color }} />
                                 <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{label}</span>
-                                <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>({genderInfo.total} ph?n h?i)</span>
+                                <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>({genderInfo.total} phản hỏi)</span>
                               </div>
                               <div style={{ height: 160 }}>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1248,7 +1248,7 @@ export default function UserAnalyticsPage() {
                         })}
                       </div>
                     ) : (
-                      <EmptyState icon={Venus} title="Chua c� d? li?u" desc="Chua c� ph?n h?i n�o cho c�u h?i n�y" />
+                      <EmptyState icon={Venus} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào cho câu hỏi này" />
                     )}
                   </div>
                 </RetrySection>
@@ -1259,8 +1259,8 @@ export default function UserAnalyticsPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                       <Clock size={17} color="#f59e0b" />
                       <div>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>So s�nh theo �? tu?i</h3>
-                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Ph�n b? c�u tr? l?i theo nh�m tu?i</p>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>So sánh theo Độ tuổi</h3>
+                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Phân bố câu trả lời theo nhóm tuổi</p>
                       </div>
                     </div>
 
@@ -1276,7 +1276,7 @@ export default function UserAnalyticsPage() {
                               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: color }} />
                                 <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{ageGroup}</span>
-                                <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>({ageInfo.total} ph?n h?i)</span>
+                                <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>({ageInfo.total} phản hỏi)</span>
                               </div>
                               <div style={{ height: 140 }}>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1296,7 +1296,7 @@ export default function UserAnalyticsPage() {
                         })}
                       </div>
                     ) : (
-                      <EmptyState icon={Clock} title="Chua c� d? li?u" desc="Chua c� ph?n h?i n�o" />
+                      <EmptyState icon={Clock} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào" />
                     )}
                   </div>
                 </RetrySection>
@@ -1307,8 +1307,8 @@ export default function UserAnalyticsPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                       <Activity size={17} color="#5B4EE8" />
                       <div>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Heatmap: Tu?i � Gi?i t�nh</h3>
-                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Tuong quan chi ti?t gi?a nh�m tu?i v� gi?i t�nh</p>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Heatmap: Tuổi × Giới tính</h3>
+                        <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Tương quan chi tiết giữa nhóm tuổi và giới tính</p>
                       </div>
                     </div>
 
@@ -1318,9 +1318,9 @@ export default function UserAnalyticsPage() {
                           <thead>
                             <tr style={{ background: "#F4F3F8" }}>
                               <th style={{ padding: "11px 14px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "#9CA3AF", borderBottom: "2px solid #E8E6F0", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                                Nh�m tu?i
+                                Nhóm tuổi
                               </th>
-                              {["Nam", "N?", "Kh�c", "Chua c?p nh?t"].map(g => (
+                              {["Nam", "Nữ", "Khác", "Chưa cập nhật"].map(g => (
                                 <th key={g} style={{ padding: "11px 14px", textAlign: "center", fontSize: 11, fontWeight: 500, color: "#9CA3AF", borderBottom: "2px solid #E8E6F0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                                   {g}
                                 </th>
@@ -1336,9 +1336,9 @@ export default function UserAnalyticsPage() {
                                 <td style={{ padding: "11px 14px", fontSize: 13, fontWeight: 600, color: "#374151", borderBottom: "1px solid #E8E6F0" }}>{ageGroup}</td>
                                 {[
                                   { key: "MALE", label: "Nam" },
-                                  { key: "FEMALE", label: "N?" },
-                                  { key: "OTHER", label: "Kh�c" },
-                                  { key: "UNKNOWN", label: "Chua c?p nh?t" },
+                                  { key: "FEMALE", label: "Nữ" },
+                                  { key: "OTHER", label: "Khác" },
+                                  { key: "UNKNOWN", label: "Chưa cập nhật" },
                                 ].map(({ key, label }) => {
                                   const cell = genders[key];
                                   const maxPct = Math.max(...Object.values(insightData.insight).flatMap(g =>
@@ -1362,11 +1362,11 @@ export default function UserAnalyticsPage() {
                                             {cell.total}%
                                           </span>
                                           <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4, fontWeight: 400 }}>
-                                            ({cell.total} lu?t)
+                                            ({cell.total} lượt)
                                           </div>
                                         </div>
                                       ) : (
-                                        <span style={{ color: "#ccc", fontSize: 13 }}>�</span>
+                                        <span style={{ color: "#ccc", fontSize: 13 }}></span>
                                       )}
                                     </td>
                                   );
@@ -1376,11 +1376,11 @@ export default function UserAnalyticsPage() {
                           </tbody>
                         </table>
                         <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 12, textAlign: "right", fontWeight: 400 }}>
-                          * % = t? l? ph?n h?i trong nh�m tu?i � gi?i t�nh tuong ?ng
+                          * % = tỷ lệ phản hồi trong nhóm tuổi × giới tính tương ứng
                         </p>
                       </div>
                     ) : (
-                      <EmptyState icon={Activity} title="Chua c� d? li?u" desc="Chua c� ph?n h?i n�o" />
+                      <EmptyState icon={Activity} title="Chưa có dữ liệu" desc="Chưa có phản hồi nào" />
                     )}
                   </div>
                 </RetrySection>
@@ -1400,15 +1400,15 @@ export default function UserAnalyticsPage() {
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>Cross-Tabulation</h3>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 16 }}>
-                {[{ label: "C�u h?i A (H�ng)", val: selectedQ1, set: setSelectedQ1 },
-                  { label: "C�u h?i B (C?t)", val: selectedQ2, set: setSelectedQ2 }].map(({ label, val, set }, idx) => (
+                {[{ label: "Câu hỏi A (Hàng)", val: selectedQ1, set: setSelectedQ1 },
+                  { label: "Câu hỏi B (Cột)", val: selectedQ2, set: setSelectedQ2 }].map(({ label, val, set }, idx) => (
                   <div key={idx}>
                     <label style={{ display: "block", fontSize: 12, color: "#9CA3AF", fontWeight: 500, marginBottom: 8 }}>{label}</label>
                     <select value={val || ""} onChange={e => set(e.target.value || null)} style={{
                       width: "100%", padding: "10px 14px", background: "#FFFFFF",
                       border: "1px solid #E8E6F0", borderRadius: 12, fontSize: 13,
                       fontFamily: "system-ui", outline: "none", color: "#374151", cursor: "pointer"}}>
-                      <option value="">Ch?n c�u h?i...</option>
+                      <option value="">Chọn câu hỏi...</option>
                       {choiceQs.map(q => (<option key={q.question_id} value={q.question_id}>{q.question_content?.slice(0, 60)}</option>))}
                     </select>
                   </div>
@@ -1422,7 +1422,7 @@ export default function UserAnalyticsPage() {
                 opacity: !selectedQ1 || !selectedQ2 || ctLoad ? 0.5 : 1,
                 display: "flex", alignItems: "center", gap: 8}}>
                 {ctLoad ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={15} />}
-                Ph�n t�ch
+                Phân tích
               </button>
             </div>
 
@@ -1433,16 +1433,16 @@ export default function UserAnalyticsPage() {
                     {chiResult.has_correlation ? <ThumbsUp size={17} color="#10b981" /> : <Minus size={17} color="#f59e0b" />}
                   </div>
                   <div>
-                    <h4 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>K?t qu? ki?m d?nh Chi-Square</h4>
-                    <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>M?i tuong quan gi?a 2 c�u h?i</p>
+                    <h4 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>Kết quả kiểm định Chi-Square</h4>
+                    <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Mối tương quan giữa 2 câu hỏi</p>
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 16 }}>
                   {[
-                    { label: "Chi-Square (?�)", value: chiResult.chi_square, color: "#5B4EE8" },
-                    { label: "Cram�r's V", value: chiResult.cramers_v, color: "#5B4EE8" },
-                    { label: "B?c t? do (df)", value: chiResult.degrees_of_freedom, color: "#374151" },
-                    { label: "M?u", value: chiResult.total_samples, color: "#374151" },
+                    { label: "Chi-Square (χ²)", value: chiResult.chi_square, color: "#5B4EE8" },
+                    { label: "Cramér's V", value: chiResult.cramers_v, color: "#5B4EE8" },
+                    { label: "Bậc tự do (df)", value: chiResult.degrees_of_freedom, color: "#374151" },
+                    { label: "Mẫu", value: chiResult.total_samples, color: "#374151" },
                   ].map(item => (
                     <div key={item.label} style={{ background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "14px", textAlign: "center" }}>
                       <p style={{ fontSize: 10, color: "#9CA3AF", marginBottom: 6, fontWeight: 500 }}>{item.label}</p>
@@ -1452,9 +1452,9 @@ export default function UserAnalyticsPage() {
                 </div>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   {[
-                    { label: "� nghia th?ng k�", value: chiResult.significance, color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
-                    { label: "�? m?nh tuong quan", value: chiResult.strength, color: chiResult.has_correlation ? "#10b981" : "#9CA3AF" },
-                    { label: "K?t lu?n", value: chiResult.has_correlation ? "C� tuong quan ?" : "Kh�ng c� tuong quan", color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
+                    { label: "Ý nghĩa thống kê", value: chiResult.significance, color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
+                    { label: "Độ mạnh tương quan", value: chiResult.strength, color: chiResult.has_correlation ? "#10b981" : "#9CA3AF" },
+                    { label: "Kết luận", value: chiResult.has_correlation ? "Có tương quan" : "Không có tương quan", color: chiResult.has_correlation ? "#10b981" : "#f59e0b" },
                   ].map(item => (
                     <div key={item.label} style={{ flex: 1, minWidth: 140, background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "10px 14px" }}>
                       <p style={{ fontSize: 10, color: "#9CA3AF", marginBottom: 4, fontWeight: 500 }}>{item.label}</p>
@@ -1469,7 +1469,7 @@ export default function UserAnalyticsPage() {
               <div style={{ ...cardStyle, overflow: "hidden" }}>
                 <div style={{ padding: "16px 20px", borderBottom: "1px solid #E8E6F0" }}>
                   <h3 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>
-                    {crossTab.question_a?.label?.slice(0, 30)} � {crossTab.question_b?.label?.slice(0, 30)}
+                    {crossTab.question_a?.label?.slice(0, 30)} × {crossTab.question_b?.label?.slice(0, 30)}
                   </h3>
                 </div>
                 <div style={{ overflowX: "auto" }}>
@@ -1527,7 +1527,7 @@ export default function UserAnalyticsPage() {
                 <Brain size={17} color="#5B4EE8" />
                 <div>
                   <h3 style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: 0 }}>AI Insights</h3>
-                  <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Ph�n t�ch th�ng minh du?c t?o b?i AI</p>
+                  <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, fontWeight: 400 }}>Phân tích thông minh được tạo bởi AI</p>
                 </div>
                 <button
                   onClick={fetchAiInsights}
@@ -1535,7 +1535,7 @@ export default function UserAnalyticsPage() {
                   style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, background: "#FFF", color: "#5B4EE8", border: "1px solid #5B4EE8", borderRadius: 8, height: 36, padding: "0 16px", fontSize: 14, fontWeight: 500, cursor: aiLoad ? "not-allowed" : "pointer", fontFamily: "system-ui", opacity: aiLoad ? 0.6 : 1 }}
                 >
                   <RefreshCw size={13} style={aiLoad ? { animation: "spin 1s linear infinite" } : {}} />
-                  T?i l?i
+                  Tải lại
                 </button>
               </div>
 
@@ -1553,7 +1553,7 @@ export default function UserAnalyticsPage() {
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <p style={{ color: "#ef4444", marginBottom: 12, fontWeight: 400 }}>{aiErr}</p>
                   <button onClick={fetchAiInsights} style={{ background: "#FFF", color: "#5B4EE8", border: "1px solid #5B4EE8", borderRadius: 8, height: 36, padding: "0 16px", fontSize: 14, cursor: "pointer", fontFamily: "system-ui", fontWeight: 500 }}>
-                    Th? l?i
+                    Thử lại
                   </button>
                 </div>
               ) : aiInsights ? (
@@ -1576,7 +1576,7 @@ export default function UserAnalyticsPage() {
                     if (trimmed.startsWith("### ")) return <h4 key={i} style={{ fontSize: 15, fontWeight: 600, color: "#111827", margin: "20px 0 8px", borderBottom: "1px solid #E8E6F0", paddingBottom: 6 }}>{trimmed.slice(4)}</h4>;
                     if (trimmed.startsWith("## ")) return <h3 key={i} style={{ fontSize: 17, fontWeight: 600, color: "#111827", margin: "24px 0 10px" }}>{trimmed.slice(3)}</h3>;
                     if (trimmed.startsWith("* **")) {
-                      const match = trimmed.match(/^\* \*\*(.+?)\*\*[:�]?\s*(.*)$/);
+                      const match = trimmed.match(/^\* \*\*(.+?)\*\*[:]?\s*(.*)$/);
                       if (match) return (
                         <div key={i} style={{ margin: "10px 0 8px", paddingLeft: 8 }}>
                           <strong style={{ color: "#5B4EE8" }}>{match[1]}</strong>
@@ -1586,11 +1586,11 @@ export default function UserAnalyticsPage() {
                     }
                     if (trimmed.startsWith("*   ")) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, color: "#374151", fontWeight: 400 }}>{trimmed.slice(4).replace(/\*\*(.+?)\*\*/g, "$1")}</li>;
                     if (trimmed.startsWith("- **")) {
-                      const m = trimmed.match(/^- \*\*(.+?)\*\*[:�]?\s*(.*)$/);
+                      const m = trimmed.match(/^- \*\*(.+?)\*\*[:]?\s*(.*)$/);
                       if (m) return (
                         <div key={i} style={{ margin: "8px 0 6px", paddingLeft: 8, borderLeft: "3px solid #EDE9FF" }}>
                           <strong style={{ color: "#111827" }}>{m[1]}</strong>
-                          {m[2] && <span style={{ color: "#9CA3AF", fontWeight: 400 }}> � {m[2]}</span>}
+                          {m[2] && <span style={{ color: "#9CA3AF", fontWeight: 400 }}>  {m[2]}</span>}
                         </div>
                       );
                     }
@@ -1602,8 +1602,8 @@ export default function UserAnalyticsPage() {
               ) : (
                 <EmptyState
                   icon={Brain}
-                  title="Nh?n 'T?i l?i' d? b?t d?u"
-                  desc="AI s? ph�n t�ch d? li?u kh?o s�t v� dua ra c�c insights."
+                  title="Nhấn 'Tải lại' để bắt đầu"
+                  desc="AI sẽ phân tích dữ liệu khảo sát và đưa ra các insights."
                 />
               )}
             </div>
@@ -1618,15 +1618,15 @@ export default function UserAnalyticsPage() {
             <div style={{ ...cardStyle, padding: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <FileSpreadsheet size={18} color="#5B4EE8" />
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: "#111827", margin: 0 }}>Xu?t d? li?u</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: "#111827", margin: 0 }}>Xuất dữ liệu</h3>
               </div>
               <p style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 20, lineHeight: 1.6, fontWeight: 400 }}>
-                Xu?t to�n b? d? li?u kh?o s�t theo kho?ng th?i gian d� ch?n.
+                Xuất toàn bộ dữ liệu khảo sát theo khoảng thời gian đã chọn.
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {[
-                  { icon: FileSpreadsheet, title: "Xu?t CSV", desc: "�?nh d?ng Excel. Ph� h?p ph�n t�ch trong Excel, Google Sheets.", color: "#10b981" },
-                  { icon: Copy, title: "Xu?t JSON", desc: "D? li?u th� JSON. Luu tr?, backup ho?c chuy?n d?i.", color: "#a855f7" },
+                  { icon: FileSpreadsheet, title: "Xuất CSV", desc: "Định dạng Excel. Phù hợp phân tích trong Excel, Google Sheets.", color: "#10b981" },
+                  { icon: Copy, title: "Xuất JSON", desc: "Dữ liệu thô JSON. Lưu trữ, backup hoặc chuyển đổi.", color: "#a855f7" },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
@@ -1635,7 +1635,7 @@ export default function UserAnalyticsPage() {
                       padding: "24px", display: "flex", flexDirection: "column", gap: 12, cursor: "pointer", transition: "all 0.25s"}}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = "translateY(-2px)"; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = "#E8E6F0"; e.currentTarget.style.transform = "translateY(0)"; }}
-                      onClick={item.title === "Xu?t CSV" ? () => toast.info("CSV export s? d?ng backend endpoint. API d� s?n s�ng.") : handleExportJSON}
+                      onClick={item.title === "Xu?t CSV" ? () => toast.info("CSV export s? đểng backend endpoint. API dã s?n sàng.") : handleExportJSON}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <div style={{ width: 52, height: 52, borderRadius: 12, background: `${item.color}15`, border: "1px solid #E8E6F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1649,7 +1649,7 @@ export default function UserAnalyticsPage() {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <Download size={14} color={item.color} />
-                        <span style={{ fontSize: 13, fontWeight: 500, color: item.color }}>T?i v? ngay</span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: item.color }}>Tải về ngay</span>
                       </div>
                     </div>
                   );
@@ -1658,13 +1658,13 @@ export default function UserAnalyticsPage() {
             </div>
 
             <div style={{ ...cardStyle, padding: "24px" }}>
-              <h4 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0, marginBottom: 14 }}>T?ng quan d? li?u</h4>
+              <h4 style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0, marginBottom: 14 }}>Tổng quan dữ liệu</h4>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
                 {[
-                  { label: "T?ng ph?n h?i", value: stats?.overview?.total_started || 0 },
-                  { label: "Ho�n th�nh", value: stats?.overview?.total_completed || 0 },
-                  { label: "C�u h?i", value: questions.length },
-                  { label: "T? l? ho�n th�nh", value: `${stats?.overview?.completion_rate || 0}%` },
+                  { label: "Tổng phản hồi", value: stats?.overview?.total_started || 0 },
+                  { label: "Hoàn thành", value: stats?.overview?.total_completed || 0 },
+                  { label: "Câu hỏi", value: questions.length },
+                  { label: "Tỷ lệ hoàn thành", value: `${stats?.overview?.completion_rate || 0}%` },
                 ].map(item => (
                   <div key={item.label} style={{ background: "#F4F3F8", border: "1px solid #E8E6F0", borderRadius: 12, padding: "14px", textAlign: "center" }}>
                     <p style={{ fontSize: 10, color: "#9CA3AF", marginBottom: 6, fontWeight: 500 }}>{item.label}</p>

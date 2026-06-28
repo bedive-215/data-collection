@@ -225,7 +225,7 @@ export default function BrowseSurveysPage() {
           <div onClick={() => setExpiredModal({ open: false, survey: null })} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
             <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, border: "1px solid #e8ecf2", width: "100%", maxWidth: 400, textAlign: "center", padding: "32px 24px", fontFamily: C.font }}>
               <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>Khảo sát <strong>"{expiredModal.survey?.title}"</strong> đã kết thúc và không còn nhận phản hồi.</p>
+              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>Khảo sát <strong>"<span dangerouslySetInnerHTML={{__html:expiredModal.survey?.title}}/>"</strong> đã kết thúc và không còn nhận phản hồi.</p>
               <button onClick={() => setExpiredModal({ open: false, survey: null })} style={{ padding: "10px 32px", background: "#f4f6f8", border: "1px solid #e8ecf2", borderRadius: 10, color: "#64748b", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đóng</button>
             </div>
           </div>

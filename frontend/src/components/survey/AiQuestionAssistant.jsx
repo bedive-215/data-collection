@@ -3,6 +3,13 @@ import { Sparkles, Loader2, X, ClipboardPaste, Wand2, Check, AlertCircle } from 
 import questionService from "@/services/questionService";
 import { toast } from "react-toastify";
 
+const stripHtml = (html) => {
+  if (!html) return "";
+  const d = document.createElement("div");
+  d.innerHTML = html;
+  return d.textContent || d.innerText || "";
+};
+
 const TYPE_LABEL = {
   TEXT: "Ngắn",
   PARAGRAPH: "Đoạn",
@@ -52,8 +59,8 @@ export default function AiQuestionAssistant({
 
   useEffect(() => {
     if (open) {
-      setGenTitle(surveyTitle || "");
-      setGenDesc(surveyDescription || "");
+      setGenTitle(stripHtml(surveyTitle || ""));
+      setGenDesc(stripHtml(surveyDescription || ""));
       setSuggestions([]);
       setErr("");
     }
@@ -69,8 +76,8 @@ export default function AiQuestionAssistant({
           ? { mode: "parse", rawText: rawText.trim() }
           : {
               mode: "generate",
-              surveyTitle: genTitle.trim(),
-              surveyDescription: genDesc.trim() || undefined,
+              surveyTitle: stripHtml(genTitle.trim()),
+              surveyDescription: stripHtml(genDesc.trim()) || undefined,
               count: genCount,
             };
       const res = await questionService.aiSuggestQuestions(surveyId, body);
@@ -412,13 +419,14 @@ export default function AiQuestionAssistant({
               padding: "10px 18px",
               borderRadius: 12,
               border: "none",
-              background: loading ? C.surfaceHigh : C.primaryGrad,
-              color: loading ? C.textSub : "#fff",
+              background: (C.primaryGrad || "linear-gradient(135deg,#3B82F6,#2563EB)"),
+              color: "#fff",
               fontWeight: 700,
               fontSize: 13,
-              cursor: loading ? "not-allowed" : "pointer",
               fontFamily: C.font,
-
+              cursor: (loading || (tab === "parse" && !rawText.trim()) || (tab === "generate" && !genTitle.trim())) ? "not-allowed" : "pointer",
+              opacity: (loading || (tab === "parse" && !rawText.trim()) || (tab === "generate" && !genTitle.trim())) ? 0.4 : 1,
+              transition: "all 0.2s ease",
             }}
           >
             {loading ? <Loader2 size={16} style={{ animation: "spin 0.9s linear infinite" }} /> : <Sparkles size={16} />}

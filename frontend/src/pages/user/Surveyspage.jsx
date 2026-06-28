@@ -188,7 +188,7 @@ function SubmissionModal({ surveyId, surveyTitle, onClose }) {
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Đáp án của bạn</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{surveyTitle}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><span dangerouslySetInnerHTML={{__html:surveyTitle||""}}/></div>
             </div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
@@ -259,7 +259,7 @@ function ExpiredModal({ open, onClose, survey }) {
         </div>
         <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
         <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
-          Khảo sát <strong>"{survey.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+          Khảo sát <strong>"<span dangerouslySetInnerHTML={{__html:survey.title}}/>"</strong> đã kết thúc và không còn nhận phản hồi.
         </p>
         <button onClick={onClose} style={{ padding: "10px 32px", background: "#f4f6f8", border: "1px solid #e8ecf2", borderRadius: 10, color: "#64748b", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đóng</button>
       </div>

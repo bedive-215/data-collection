@@ -109,8 +109,8 @@ const QuestionProvider = ({ children }) => {
   /* ── CREATE ─────────────────────────────────────────────────────
    * payload đúng BE Joi schema (mở rộng):
    *   { content, type (uppercase), required, order_index, settings,
-   *     description?, placeholder?, section_id?, media_url?, media_type?,
-   *     condition?, hidden_from_analytics?, next_question_id?, next_section_id?,
+   *     description?, placeholder?, section_i?, media_url?, media_type?,
+   *     condition?, hidden_from_analytics?, next_question_i?, next_section_i?,
    *     options: [{ label, value, order_index?, is_other? }] }
    * ─────────────────────────────────────────────────────────────── */
   const createQuestion = async (surveyId, payload) => {

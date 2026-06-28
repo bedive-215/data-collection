@@ -56,7 +56,7 @@ function OwnerBlockedScreen({ survey, onGoHome, onViewAnalytics, onEditSurvey, a
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#EDE9FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, margin: "0 0 8px" }}>{survey?.title || "Khảo sát"}</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, margin: "0 0 8px" }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : "Khảo sát"}</h2>
         <p style={{ fontSize: 14, color: TEXT_SEC, margin: "0 0 24px", lineHeight: 1.6, fontWeight: 400 }}>
           Bạn là chủ sở hữu của khảo sát này. Bạn không thể tự làm khảo sát của mình.
         </p>
@@ -129,10 +129,10 @@ function AlreadySubmittedScreen({ survey, submissionData, questions, onGoHome, a
           background: WHITE, borderRadius: 12, border: "1px solid #E8E6F0", borderLeft: `8px solid ${c}`,
           padding: 20, marginBottom: 24}}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: 0 }}>{survey?.title || "Khảo sát"}</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: 0 }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : "Khảo sát"}</h1>
           </div>
           {survey?.description && (
-            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "8px 0 0", fontWeight: 400, lineHeight: 1.5 }}>{survey.description}</p>
+            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "8px 0 0", fontWeight: 400, lineHeight: 1.5 }}><span dangerouslySetInnerHTML={{__html:survey.description}}/></p>
           )}
           {submittedAt && (
             <div style={{ marginTop: 12, fontSize: 12, color: "#188038", fontWeight: 400 }}>
@@ -149,7 +149,7 @@ function AlreadySubmittedScreen({ survey, submissionData, questions, onGoHome, a
               background: WHITE, borderRadius: 12, border: "1px solid #E8E6F0", padding: 20, marginBottom: 12}}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 4, marginBottom: 12 }}>
                 <span style={{ fontSize: 16, color: TEXT_SEC, fontWeight: 400, flexShrink: 0 }}>{i + 1}.</span>
-                <h2 style={{ fontSize: 16, fontWeight: 600, color: TEXT, lineHeight: 1.5, margin: 0 }}>{q.content}</h2>
+                <h2 style={{ fontSize: 16, fontWeight: 600, color: TEXT, lineHeight: 1.5, margin: 0 }} dangerouslySetInnerHTML={{__html: q.content}} />
               </div>
               <div style={{ padding: "10px 14px", background: "#F4F3F8", borderRadius: 6, fontSize: 14, color: TEXT, fontWeight: 400 }}>
                 {renderAnswerValue(q, ans)}
@@ -262,11 +262,12 @@ function QuestionCard({ question, answer, onChange, index, hasError }) {
       <div style={{ display: "flex", alignItems: "flex-start", gap: 4, marginBottom: description ? 8 : 16 }}>
         <span style={{ fontSize: 16, color: TEXT_SEC, fontWeight: 400, flexShrink: 0 }}>{index}.</span>
         <h2 style={{ fontSize: 16, fontWeight: 600, color: TEXT, lineHeight: 1.5, margin: 0 }}>
-          {question.content}{question.required && <span style={{ color: ERROR }}>*</span>}
+          <span dangerouslySetInnerHTML={{__html: question.content}} />
+          {question.required && <span style={{ color: ERROR }}>*</span>}
         </h2>
       </div>
 
-      {description && <p style={{ fontSize: 14, color: TEXT_SEC, margin: "0 0 16px 20px", lineHeight: 1.5, fontWeight: 400 }}>{description}</p>}
+      {description && <p style={{ fontSize: 14, color: TEXT_SEC, margin: "0 0 16px 20px", lineHeight: 1.5, fontWeight: 400 }} dangerouslySetInnerHTML={{__html: description}} />}
 
       {question.media_url && (
         question.media_type === "video"
@@ -575,9 +576,9 @@ export default function SurveyTakePage() {
           {currentSurvey?.logo_url && (
             <img src={currentSurvey.logo_url} alt="" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 16 }} />
           )}
-          <h2 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: "0 0 8px" }}>{currentSurvey?.title || "Khảo sát"}</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: "0 0 8px" }}>{currentSurvey?.title ? <span dangerouslySetInnerHTML={{__html:currentSurvey.title}}/> : "Khảo sát"}</h2>
           {currentSurvey?.description && (
-            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "0 0 20px", lineHeight: 1.6, fontWeight: 400 }}>{currentSurvey.description}</p>
+            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "0 0 20px", lineHeight: 1.6, fontWeight: 400 }}><span dangerouslySetInnerHTML={{__html:currentSurvey.description}}/></p>
           )}
           {currentSurvey?.time_limit_seconds && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#fef3c7", borderRadius: 4, fontSize: 12, fontWeight: 400, color: "#92400e", marginBottom: 16 }}>
@@ -656,7 +657,7 @@ export default function SurveyTakePage() {
           padding: 20,
           marginBottom: 0}}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: 0 }}>{currentSurvey?.title || "Làm khảo sát"}</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: TEXT, margin: 0 }}>{currentSurvey?.title ? <span dangerouslySetInnerHTML={{__html:currentSurvey.title}}/> : "Làm khảo sát"}</h1>
             {timeLeft !== null && (
               <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 400, color: timeWarning ? ERROR : "#188038", fontFamily: "monospace", flexShrink: 0, marginLeft: 12 }}>
                 <Clock size={12} />{fmtTime(timeLeft)}
@@ -664,7 +665,7 @@ export default function SurveyTakePage() {
             )}
           </div>
           {currentSurvey?.description && (
-            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "8px 0 0", fontWeight: 400, lineHeight: 1.5 }}>{currentSurvey.description}</p>
+            <p style={{ fontSize: 14, color: TEXT_SEC, margin: "8px 0 0", fontWeight: 400, lineHeight: 1.5 }}><span dangerouslySetInnerHTML={{__html:currentSurvey.description}}/></p>
           )}
           <p style={{ fontSize: 12, color: ERROR, margin: "16px 0 0", fontWeight: 400 }}>* Biểu thị câu hỏi bắt buộc</p>
         </div>

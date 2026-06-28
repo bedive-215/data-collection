@@ -33,7 +33,7 @@ function ExpiredModal({ open, onClose, survey }) {
         </div>
         <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã kết thúc</h3>
         <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
-          Khảo sát <strong>"{survey?.title}"</strong> đã kết thúc và không còn nhận phản hồi.
+          Khảo sát <strong>"<span dangerouslySetInnerHTML={{__html:survey?.title}}/>"</strong> đã kết thúc và không còn nhận phản hồi.
         </p>
         <button
           onClick={onClose}
@@ -102,7 +102,7 @@ function ExtendModal({ open, onClose, survey, onExtend }) {
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Khảo sát đã hết hạn</h3>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{survey?.title}</p>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{survey?.title ? <span dangerouslySetInnerHTML={{__html:survey.title}}/> : null}</p>
           </div>
         </div>
 
