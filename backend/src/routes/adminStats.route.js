@@ -6,25 +6,27 @@ import { surveyIdParams } from "#validates/surveyIdParams.validate.js";
 
 const router = Router();
 
-router.get("/overview", 
-    authMiddleware.checkRole("admin"), 
-    AdminStatsController.getOverview);
+router.get("/overview", authMiddleware.checkRole("admin"), AdminStatsController.getOverview);
 
-router.get("/survey-by-day", 
-    authMiddleware.checkRole("admin"), 
-    AdminStatsController.getSurveyByDay);
+router.get("/survey-by-day", authMiddleware.checkRole("admin"), AdminStatsController.getSurveyByDay);
 
-router.get("/dashboard", 
-    authMiddleware.checkRole("admin"), 
-    AdminStatsController.getDashboard);
+router.get("/dashboard", authMiddleware.checkRole("admin"), AdminStatsController.getDashboard);
 
-router.get("/answered-users", 
-    authMiddleware.checkRole("admin"), 
-    AdminStatsController.getTotalUsersAnswered);
+router.get("/answered-users", authMiddleware.checkRole("admin"), AdminStatsController.getTotalUsersAnswered);
 
-router.get("/answered-users/:survey_id", 
-    authMiddleware.checkRole("admin"), 
-    validate(surveyIdParams), 
-    AdminStatsController.getUsersAnsweredBySurvey);
+router.get("/answered-users/:survey_id", authMiddleware.checkRole("admin"), validate(surveyIdParams), AdminStatsController.getUsersAnsweredBySurvey);
+
+// ─── New detailed endpoints ───────────────────────────────────────
+router.get("/full-dashboard", authMiddleware.checkRole("admin"), AdminStatsController.getFullDashboard);
+
+router.get("/response-trend", authMiddleware.checkRole("admin"), AdminStatsController.getResponseTrend);
+
+router.get("/survey-status", authMiddleware.checkRole("admin"), AdminStatsController.getSurveyStatusDistribution);
+
+router.get("/question-types", authMiddleware.checkRole("admin"), AdminStatsController.getQuestionTypeDistribution);
+
+router.get("/recent-responses", authMiddleware.checkRole("admin"), AdminStatsController.getRecentResponses);
+
+router.get("/quick-stats", authMiddleware.checkRole("admin"), AdminStatsController.getQuickStats);
 
 export default router;

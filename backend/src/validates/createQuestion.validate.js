@@ -31,7 +31,8 @@ export const createQuestionRequest = Joi.object({
             .optional(),
 
         settings: Joi.object()
-            .optional(),
+            .optional()
+            .allow(null),
 
         description: Joi.string().allow(null, "").optional(),
         placeholder: Joi.string().allow(null, "").optional(),

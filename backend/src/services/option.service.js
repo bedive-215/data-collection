@@ -115,9 +115,13 @@ class QuestionOptionService {
     }
 
 
-    async getOptionsByQuestion(question_id, survey) {
+    async getOptionsByQuestion(question_id, survey, user = null) {
         const status = getSurveyStatus(survey);
-        if (status !== "ACTIVE") throw new AppError(`Survey is ${status}`, 403);
+        const isOwner = user && survey.created_by === user.id;
+        const isAdmin = user && user.role?.toLowerCase() === "admin";
+        if (status !== "ACTIVE" && !isOwner && !isAdmin) {
+            throw new AppError(`Survey is ${status}`, 403);
+        }
 
         const question = await this._findQuestionOrFail(question_id);
 

@@ -25,7 +25,7 @@ class QuestionController {
     async getQuestionsBySurvey(req, res, next) {
         try {
             const result = await QuestionService.getQuestionsBySurvey(
-                req.survey
+                req.survey, req.user
             );
 
             return res.status(200).json(result);

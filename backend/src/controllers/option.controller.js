@@ -30,7 +30,7 @@ class QuestionOptionController {
 
             const result =
                 await QuestionOptionService.getOptionsByQuestion(
-                    question_id, req.survey
+                    question_id, req.survey, req.user
                 );
 
             return res.status(200).json({
